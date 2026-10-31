@@ -1,6 +1,5 @@
 import type {RoomWall} from '../base/Room.ts'
 
-import cinnabar from '#src/lib/gallery/cinnabar.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import {vesper} from '#src/lib/gallery/vesper.ts'
@@ -20,11 +19,7 @@ const doorway = (u: number) => ({
 const east = planWall(size, 'east', height)
 
 export default {
-  north: planWall(size, 'north', height, {
-    holes: {
-      cinnabar: cinnabar.doorway,
-    },
-  }),
+  north: planWall(size, 'north', height),
   west: planWall(size, 'west', height),
   south: planWall(size, 'south', height, {
     holes: {

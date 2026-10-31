@@ -45,10 +45,6 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['banquet-north', 'salon']],
   },
   {
-    rooms: ['vesper', 'cinnabar'],
-    holes: [['vesper-north', 'cinnabar']],
-  },
-  {
     rooms: ['antechamber', 'moonfall'],
     holes: [['antechamber-east', 'stairway'], ['moonfall-east', 'stairway']],
   },
@@ -153,7 +149,6 @@ const relations = {
         'led_middle',
         'led_south',
       ],
-      bastion: 'lantern_strip',
       sienna: 'chandelier',
     },
   },

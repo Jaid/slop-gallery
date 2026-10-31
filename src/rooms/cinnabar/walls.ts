@@ -14,7 +14,7 @@ const north = planWall(cinnabar.size, 'north', height)
 const [doorwayX, doorwayZ] = bastionApproach.path.at(-1)!
 
 export default {
-  // The arch out of the Bastion’s approach, as wide and as high as its vault, facing the arch from the Vesper down the room.
+  // The arch out of the Bastion’s approach, as wide and as high as its vault.
   north: {
     ...north,
     holes: {
@@ -25,10 +25,6 @@ export default {
     },
   },
   east: planWall(cinnabar.size, 'east', height),
-  south: planWall(cinnabar.size, 'south', height, {
-    holes: {
-      vesper: cinnabar.doorway,
-    },
-  }),
+  south: planWall(cinnabar.size, 'south', height),
   west: planWall(cinnabar.size, 'west', height),
 } satisfies Record<string, RoomWall>

@@ -1,7 +1,7 @@
 import type {RoomCamera} from '../base/Room.ts'
 
 export default {
-  // From the north-east corner, looking south-west across the pedestal under the rooflight toward the Vesper’s arch.
+  // From the north-east corner, looking south-west across the pedestal under the rooflight toward the frescoed south wall.
   overview: {
     position: [2.646, 2.856, -7.442],
     aim: {

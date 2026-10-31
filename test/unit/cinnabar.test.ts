@@ -1,6 +1,9 @@
 import {describe, expect, test} from 'bun:test'
 
-import {wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import RAPIER from '@dimforge/rapier3d-compat'
+import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+
+import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import cinnabar, {cinnabarFresco, cinnabarPedestal, cinnabarRooflight, cinnabarTerrazzo, frescoLayout} from '../../src/lib/gallery/cinnabar.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
@@ -9,8 +12,10 @@ import {vesper} from '../../src/lib/gallery/vesper.ts'
 import CinnabarWallMaterial from '../../src/lib/materials/CinnabarWallMaterial.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '../../src/lib/materials/TerrazzoFloorMaterial.ts'
 import {insideOpening, wallCoordinates} from '../../src/lib/placement/wallGeometry.ts'
+import {openings} from '../../src/worlds/gallery/relations.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 
+await RAPIER.init()
 const room = rooms.find(candidate => candidate.id === 'cinnabar')!
 const wallById = (id: string) => walls.find(wall => wall.id === id)!
 /** the positions sorted and rounded to micrometers, for comparing layouts */
@@ -41,17 +46,42 @@ describe('the Cinnabar', () => {
     expect(insideGallery([-18, 1.7, -32.5])).toBe(false)
     expect(roomAt(roomVisit(room).position)).toBe('cinnabar')
   })
-  test('one shared arch joins the Vesper and the Cinnabar, back to back on the same plane, like the Banquet’s and the Salon’s', () => {
+  test('a solid shared wall separates the Vesper and the Cinnabar', () => {
     const vesperNorth = wallById('vesper-north')
     const cinnabarSouth = wallById('cinnabar-south')
     expect(vesperNorth.center).toEqual(cinnabarSouth.center)
     expect(Math.abs(Math.cos(vesperNorth.rotation - cinnabarSouth.rotation) + 1)).toBeLessThan(1e-12)
-    const doorway = [-14, 1.7, -16] as const
     for (const wall of [vesperNorth, cinnabarSouth]) {
-      expect(wall.holes).toHaveLength(1)
-      expect(wall.holes![0]).toMatchObject(salon.doorway)
-      expect(insideOpening(wall.holes![0], wallCoordinates(wall, [...doorway]), 1.7)).toBe(true)
+      expect(wall.holes ?? []).toHaveLength(0)
+      const geometry = createArchitectureGeometry(wall)
+      const material = new MeshBasicMaterial({side: DoubleSide})
+      const world = new RAPIER.World({
+        x: 0,
+        y: 0,
+        z: 0,
+      })
+      try {
+        const mesh = new Mesh(geometry.surface, material)
+        for (const [vertices, indices] of geometry.collision) {
+          world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices))
+        }
+        world.step()
+        for (const y of [0.5, 1.7, 3.5]) {
+          for (const side of [-1, 1]) {
+            const origin = new Vector3(0, y, side)
+            const direction = new Vector3(0, 0, -side)
+            const ray = new Raycaster(origin, direction, 0, 2)
+            expect(ray.intersectObject(mesh).length).toBeGreaterThan(0)
+            expect(world.castRay(new RAPIER.Ray(origin, direction), 2, true)).not.toBeNull()
+          }
+        }
+      } finally {
+        world.free()
+        geometry.dispose()
+        material.dispose()
+      }
     }
+    expect(openings.some(({rooms: pair}) => pair.includes('vesper') && pair.includes('cinnabar'))).toBe(false)
     expect(roomAt([-14, 1.7, -15.9])).toBe('vesper')
     expect(roomAt([-14, 1.7, -16.1])).toBe('cinnabar')
     // The Vesper keeps its doors to the Lobby and the Sienna.
@@ -110,10 +140,10 @@ describe('the Cinnabar', () => {
       }
       expect(panels.filter(panel => panel.pierced)).toHaveLength(wall.holes?.length ?? 0)
     }
-    // One panel on either side of the arch on the north and south walls, four down the blank east and west walls
+    // One panel on either side of the arch on the north wall, three across the blank south wall and four down the east and west walls.
     expect(frescoLayout(wallById('cinnabar-north')).panels).toHaveLength(3)
     expect(frescoLayout(wallById('cinnabar-east')).panels).toHaveLength(4)
-    expect(frescoLayout(wallById('cinnabar-south')).panels.map(panel => panel.pierced)).toEqual([false, true, false])
+    expect(frescoLayout(wallById('cinnabar-south')).panels.map(panel => panel.pierced)).toEqual([false, false, false])
     expect(frescoLayout(wallById('cinnabar-west')).panels).toHaveLength(4)
   })
   test('its materials build their surface nodes', () => {

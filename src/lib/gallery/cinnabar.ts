@@ -1,4 +1,4 @@
-import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
+import type {Wall} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
@@ -11,17 +11,14 @@ export type FrescoPanel = {
 }
 
 /**
- * The Cinnabar sits north of the Vesper, behind the arch in the Vesper’s north wall, across the Lobby’s north extension from the Salon, whose floor plan it mirrors: its east wall backs onto the Lobby’s west extension, from the Lobby’s north wall to the Vesper’s north wall’s line.
+ * The Cinnabar sits north of the Vesper, across the Lobby’s north extension from the Salon, whose floor plan it mirrors: its east wall backs onto the Lobby’s west extension, from the Lobby’s north wall to the Vesper’s north wall’s line.
  * The Bastion climbs from the Oculus’ west bridge and enters through the doorway in the middle of its north wall.
  */
 const cinnabar = {
   center: [-salon.center[0], salon.center[1]],
   size: salon.size,
-  /** shared by the Vesper’s north wall and the Cinnabar’s south wall; both are centered on x = −14, like the Banquet’s and the Salon’s on x = 14 */
-  doorway: salon.doorway,
 } as const satisfies {
   center: readonly [number, number]
-  doorway: WallOpening
   size: readonly [number, number]
 }
 
