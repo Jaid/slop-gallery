@@ -27,12 +27,22 @@ export type Portrait = {
   year?: number
 }
 /** a grabbable object thrown into a hung work, which the work then merges with a studio photograph of */
-export type ThrownItem = {
+export type ThrownObject = {
   id: string
   /** Photographs the item as it is now. Called once, after the work is reserved for the merge. */
   snapshot: () => Promise<Blob>
   title: string
 }
+/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself */
+export type ThrownOrb = {
+  /** the orb’s glow, which tints the work instead when the merge is made locally, without AI */
+  color: string
+  id: string
+  /** what the image model is asked to do to the work */
+  prompt: string
+  title: string
+}
+export type ThrownItem = ThrownObject | ThrownOrb
 /** the aspect ratios of default works and their slots, as width:height */
 export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'
 /** a default work of the world, before it hangs in a portrait slot */

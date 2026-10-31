@@ -1,9 +1,9 @@
-import type {Portrait, ThrownItem} from '../gallery/types.ts'
+import type {Portrait, ThrownItem, ThrownOrb} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
 
 import PortraitNarration from '../audio/PortraitNarration.ts'
 import {chime, loadBlob, notify} from '../gallery/actions.ts'
-import {compositeImages, fitGeneratedImage} from '../gallery/ImageImporter.ts'
+import {compositeImages, fitGeneratedImage, tintImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
 
@@ -108,6 +108,15 @@ export default class GalleryDirector {
     const result = await mergeGenerator.generate(hanging, thrown, signal)
     return fitGeneratedImage(result, aspect)
   }
+  protected async generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number) {
+    if (!this.settings.ai || !this.key) {
+      return tintImage(work, orb.color)
+    }
+    const {default: MergeGenerator} = await import('./MergeGenerator.ts')
+    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
+    const result = await mergeGenerator.generateFromOrb(await loadBlob(work), orb.prompt, signal)
+    return fitGeneratedImage(result, aspect)
+  }
 
   async merge(first: string, second: string) {
     if (this.controller.signal.aborted) {
@@ -138,7 +147,7 @@ export default class GalleryDirector {
     }
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
-      await this.fuse(a, b.source, current, {
+      await this.fuse(a, (signal, aspect) => this.generateMerge(a.source, b.source, signal, aspect), current, {
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame.`,
         failure: 'The fusion did not finish. Both originals are still here. Check the image model or try again.',
         remove: second,
@@ -154,7 +163,7 @@ export default class GalleryDirector {
     }
   }
 
-  /** Merges the hung work `portrait` with a studio photograph of the thrown `item`, which stays in the room. */
+  /** Merges the hung work `portrait` with a studio photograph of the thrown `item` or, for an orb, reworks it by the orb’s prompt. The item stays in the room. */
   async mergeItem(portrait: string, item: ThrownItem) {
     if (this.controller.signal.aborted) {
       return
@@ -172,12 +181,18 @@ export default class GalleryDirector {
       pending: false,
     })
     const current = () => !this.controller.signal.aborted && useGallery.getState().portraits.some(p => p.id === portrait && p.source === a.source && p.merging && p.mergeJob === token)
-    notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : 'A local collage is taking shape. No AI and no upload.')
+    const orb = 'prompt' in item
+    notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${orb ? 'tint' : 'collage'} is taking shape. No AI and no upload.`)
     try {
-      await this.fuse(a, item.snapshot, current, {
+      const failure = 'The fusion did not finish. The original is still here. Check the image model or try again.'
+      await (orb ? this.fuse(a, (signal, aspect) => this.generateOrbMerge(a.source, item, signal, aspect), current, {
+        description: `“${a.title}” caught the ${item.title} and was never quite the same.`,
+        failure,
+        locally: `Tinted by hand in the ${item.title}’s glow.`,
+      }) : this.fuse(a, async (signal, aspect) => this.generateMerge(a.source, await item.snapshot(), signal, aspect), current, {
         description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
-        failure: 'The fusion did not finish. The original is still here. Check the image model or try again.',
-      })
+        failure,
+      }))
     } finally {
       this.releaseMerge(portrait, token)
       if (!(this.controller.signal.aborted as boolean)) {
@@ -186,18 +201,16 @@ export default class GalleryDirector {
     }
   }
 
-  /** Generates the merge of the hung work `a` with the image `second` (or the one it resolves to) and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove`. */
-  private async fuse(a: Portrait, second: (() => Promise<Blob>) | Portrait['source'], current: () => boolean, {description, failure, remove}: {
+  /** Generates the new image of the hung work `a` with `make` and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove`. */
+  private async fuse(a: Portrait, make: (signal: AbortSignal, aspect: number) => Promise<Blob>, current: () => boolean, {description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
     description: string
     failure: string
+    /** how the description tells a merge made without AI */
+    locally?: string
     remove?: string
   }) {
     try {
-      const generate = () => {
-        const signal = AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)])
-        const aspect = a.width / a.height
-        return typeof second === 'function' ? second().then(image => this.generateMerge(a.source, image, signal, aspect)) : this.generateMerge(a.source, second, signal, aspect)
-      }
+      const generate = () => make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(120_000)]), a.width / a.height)
       const merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {mode: this.settings.ai && this.key ? 'ai' : 'local'}}) : generate())
       if (!current()) {
         return
@@ -215,7 +228,7 @@ export default class GalleryDirector {
         title: 'An unexpected collaboration',
         creator: 'You · accidental alchemist',
         year: mergedAt.getFullYear(),
-        description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : 'A locally made cut-paper collage, joined with a little gold.'}`.slice(0, 5000),
+        description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : locally}`.slice(0, 5000),
       }
       const state = useGallery.getState()
       state.commit(state.portraits.filter(p => p.id !== remove).map(p => (p.id === a.id ? result : p)))

@@ -68,3 +68,20 @@ test('the real image adapter keeps hanging/thrown attachment order', async () =>
     secondImageBytes.toBase64(),
   ])
 })
+test('the real image adapter sends an orb’s prompt with the work as the only image', async () => {
+  const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
+    created: 1,
+    data: [{b64_json: data.toBase64()}],
+  }))
+  const work = new Blob([data], {type: 'image/png'})
+  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
+  const result = await mergeGenerator.generateFromOrb(work, 'Make it spooky.')
+  expect(result.size).toBe(data.byteLength)
+  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {
+    input_references: Array<{image_url: {url: string}}>
+    prompt: string
+  }
+  expect(request.input_references.map(r => r.image_url.url.split(',')[1])).toEqual([data.toBase64()])
+  expect(request.prompt).toEndWith('Make it spooky.')
+})

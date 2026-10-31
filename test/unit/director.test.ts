@@ -1,5 +1,5 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
-import type {Portrait} from '../../src/lib/gallery/types.ts'
+import type {Portrait, ThrownOrb} from '../../src/lib/gallery/types.ts'
 
 import {beforeEach, expect, test} from 'bun:test'
 
@@ -39,6 +39,10 @@ class TestDirector extends GalleryDirector {
   }
   protected override generateMerge(first: Portrait['source'], second: Portrait['source']) {
     this.received = [first, second]
+    return this.result.promise
+  }
+  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb) {
+    this.received = [work, orb.prompt]
     return this.result.promise
   }
 }
@@ -213,6 +217,37 @@ test('a failing photograph releases the work', async () => {
     merging: false,
   })
   director.dispose()
+})
+test('a thrown orb reworks the hung work by its prompt instead of a photograph', async () => {
+  const director = new TestDirector({
+    ...defaults,
+    ai: false,
+  }, '')
+  try {
+    const job = director.mergeItem('a', {
+      id: 'prop-orb-test',
+      title: 'Test Orb',
+      color: '#8a3cff',
+      prompt: 'Make it spooky.',
+    })
+    expect(useGallery.getState().portraits[0].merging).toBe(true)
+    await Promise.resolve()
+    expect(director.received).toEqual([a, 'Make it spooky.'])
+    const merged = new Blob(['spooky'], {type: 'image/webp'})
+    director.result.resolve(merged)
+    await job
+    const [portrait] = useGallery.getState().portraits
+    expect(portrait).toMatchObject({
+      id: 'a',
+      source: merged,
+      merging: false,
+      hung: true,
+    })
+    expect(portrait.description).toContain('caught the Test Orb')
+    expect(portrait.description).toContain('Tinted by hand in the Test Orb’s glow.')
+  } finally {
+    director.dispose()
+  }
 })
 test('generated image admission failure preserves both originals', async () => {
   const director = new TestDirector({

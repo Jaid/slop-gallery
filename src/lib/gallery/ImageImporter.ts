@@ -94,6 +94,35 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
   }
 }
 
+/** The local stand-in for an orb’s rework: the work washed in the orb’s color and darkened toward its edges by it. */
+export async function tintImage(source: Blob | string, color: string) {
+  const bitmap = await createImageBitmap(await loadBlob(source))
+  try {
+    const scale = Math.min(1, 2048 / Math.max(bitmap.width, bitmap.height))
+    const canvas = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)))
+    const context = canvas.getContext('2d')!
+    const {width: w, height: h} = canvas
+    context.drawImage(bitmap, 0, 0, w, h)
+    context.globalCompositeOperation = 'color'
+    context.globalAlpha = 0.5
+    context.fillStyle = color
+    context.fillRect(0, 0, w, h)
+    context.globalCompositeOperation = 'multiply'
+    context.globalAlpha = 1
+    const vignette = context.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.3, w / 2, h / 2, Math.hypot(w, h) / 2)
+    vignette.addColorStop(0, 'white')
+    vignette.addColorStop(1, color)
+    context.fillStyle = vignette
+    context.fillRect(0, 0, w, h)
+    return await canvas.convertToBlob({
+      type: 'image/webp',
+      quality: 0.94,
+    })
+  } finally {
+    bitmap.close()
+  }
+}
+
 export default class ImageImporter {
   private disposed = false
   private queue = Promise.resolve()

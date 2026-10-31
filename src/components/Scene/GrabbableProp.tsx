@@ -1,5 +1,5 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
-import type {Vec3} from '#src/lib/gallery.ts'
+import type {ThrownOrb, Vec3} from '#src/lib/gallery.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
@@ -38,6 +38,8 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   blockedMessage?: () => string
   children: ReactNode
   id: string
+  /** For orbs: what a work struck by the prop is reworked by, instead of merging it with a studio photograph of the prop. */
+  orb?: Pick<ThrownOrb, 'color' | 'prompt'>
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3
@@ -46,7 +48,7 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   title: string
 }
 
-export default function GrabbableProp({id, title, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
@@ -173,7 +175,12 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
       return
     }
     clearBodyThrow(current)
-    requestItemMerge(target.id, {
+    requestItemMerge(target.id, orb ? {
+      id,
+      title,
+      color: orb.color,
+      prompt: orb.prompt,
+    } : {
       id,
       title,
       snapshot: handle.snapshot,
