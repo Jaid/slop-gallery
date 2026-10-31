@@ -1,4 +1,5 @@
 import type {Subprocess} from 'bun'
+
 import {extname} from 'node:path'
 
 import getFree from 'get-free'
