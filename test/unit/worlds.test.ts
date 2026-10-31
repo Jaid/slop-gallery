@@ -5,10 +5,12 @@ import {describe, expect, test} from 'bun:test'
 import {readFileSync} from 'node:fs'
 import {dirname, resolve} from 'node:path'
 
+import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
 import {asPortrait} from '../../src/lib/placement/portraitSlots.ts'
 import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import {cellVestibule} from '../../src/rooms/cell/Cell.ts'
 import world from '../../src/worlds/current.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import galleryWalls from '../../src/worlds/gallery/walls.ts'
@@ -93,33 +95,53 @@ describe('worlds', () => {
     expect(knottingham.roomAt([0, 0, knotGalleryBounds.northZ - 5])).toBeUndefined()
     expect(knottingham.placement.contains(knottingham.placement.recoveryPosition)).toBe(true)
   })
-  test('the Sandbox is a single empty room, the Cell, which holds its spawn and is sealed by the Arena’s four walls', () => {
+  test('the Sandbox is a single room, the Cell, which holds its spawn and is sealed by the Arena’s walls, its north wall opening into its round vestibule', () => {
     expect(sandbox.rooms.map(room => room.id)).toEqual(['cell'])
     const cell = sandbox.room('cell')
     expect(cell.title).toBe('Cell')
     expect(sandbox.artworks).toEqual([])
-    expect(sandbox.lamps()).toEqual([])
+    expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule'])
     expect(sandbox.roomAt(sandbox.spawn.position)).toBe(cell)
     expect(sandbox.contains(sandbox.spawn.position)).toBe(true)
     expect(sandbox.contains([0, 1, cell.size[1]])).toBe(false)
     expect(sandbox.floorHeight(sandbox.spawn.position)).toBe(0)
     expect(sandbox.placement.contains(sandbox.placement.recoveryPosition)).toBe(true)
-    expect(sandbox.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-west'])
+    expect(sandbox.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-vestibule', 'cell-west'])
     for (const wall of sandbox.walls) {
-      expect(wall.holes).toBeUndefined()
       expect(wall.height).toBe(cell.height)
     }
+    // The only opening is the arch between the room and its vestibule.
+    const holes = sandbox.walls.flatMap(wall => (wall.holes ?? []).map(hole => `${wall.id}/${hole.name}`))
+    expect(holes).toEqual(['cell-north/vestibule', 'cell-vestibule/cell'])
     const [x, , z] = sandbox.spawn.position
-    expect(sandbox.wallDistance([x, 1, z], [0, 0, -1])).toBeCloseTo(z + cell.size[1] / 2)
-    expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeCloseTo(cell.size[0] / 2 - x)
+    const [width, depth] = cell.size
+    expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeGreaterThan(width / 2 - x - wallFace)
+    expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeLessThan(width / 2 - x + 0.1)
+    expect(sandbox.wallDistance([4, 1, z], [0, 0, -1])).toBeLessThan(z + depth / 2 + 0.1)
+    // Straight through the arch, across the vestibule to the far side of its wall.
+    const [vestibuleX, vestibuleZ] = cellVestibule.center
+    expect(sandbox.wallDistance([vestibuleX, 1, z], [0, 0, -1])).toBeGreaterThan(z - vestibuleZ + cellVestibule.radius - wallFace)
     expect(sandbox.wallDistance([x, cell.height + 1, z], [1, 0, 0])).toBe(Infinity)
+  })
+  test('the Cell’s vestibule is part of it, reached through the arch alone', () => {
+    const cell = sandbox.room('cell')
+    const [vestibuleX, vestibuleZ] = cellVestibule.center
+    const northZ = -cell.size[1] / 2
+    const half = cellVestibule.arch.width / 2
+    expect(sandbox.roomAt([vestibuleX, 1, vestibuleZ])).toBe(cell)
+    expect(sandbox.contains([vestibuleX + 2, 1, vestibuleZ])).toBe(true)
+    expect(sandbox.contains([vestibuleX + cellVestibule.radius, 1, vestibuleZ])).toBe(false)
+    expect(sandbox.contains([vestibuleX, 1, northZ])).toBe(true)
+    expect(sandbox.placement.contains([vestibuleX + half - 0.1, 1, northZ - 0.1])).toBe(true)
+    expect(sandbox.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
+    expect(sandbox.placement.contains([vestibuleX, 1, vestibuleZ - cellVestibule.radius - 0.1])).toBe(false)
   })
   test('the Sandbox’s walls have portrait slots, every one a valid hanging spot with all the others filled', () => {
     const slots = sandbox.portraitSlots()
     const occupied = slots.map(asPortrait)
     const ids = new Set(slots.map(slot => slot.id))
     expect(ids.size).toBe(slots.length)
-    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(sandbox.walls.map(wall => wall.id)))
+    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(['cell-north', 'cell-east', 'cell-south', 'cell-west']))
     for (const slot of slots) {
       const wall = sandbox.placement.wall(slot.wallId)!
       expect(slot.rotation).toBe(wall.rotation)

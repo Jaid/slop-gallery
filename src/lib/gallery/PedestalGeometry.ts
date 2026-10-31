@@ -61,6 +61,9 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
   return fluted ? toCreasedNormals(geometry.scale(100, 100, 100), Math.PI / 6).scale(0.01, 0.01, 0.01) : geometry
 }
 
+/** how high a pedestal’s cap stands over its foot, which whatever it carries rests on */
+export const pedestalHeight = 1.35
+
 /** A fluted stone plinth with a stepped foot, recessed collars and a beveled cap. */
 export default class PedestalGeometry {
   readonly bronze = mergeParts([
@@ -79,7 +82,7 @@ export default class PedestalGeometry {
     block(0.96, 0.25, 1.12, 0.005, true),
     block(1.01, 1.14, 1.19, 0.007),
     block(1.085, 1.19, 1.255, 0.014),
-    block(1.16, 1.255, 1.35, 0.012),
+    block(1.16, 1.255, pedestalHeight, 0.012),
   ])
   // Fixed concave colliders follow the actual flutes, ledges and beveled edges.
   readonly collision = [this.stone, this.bronze, this.reveals].map(colliderGeometry)

@@ -2,7 +2,7 @@ import type {Artwork, Vec3} from '#src/lib/gallery/types.ts'
 
 import {lazy} from 'react'
 
-import {HallPlacementSpace} from '#src/lib/placement/HallPlacementSpace.ts'
+import {FloorPlanPlacementSpace} from '#src/lib/placement/FloorPlanPlacementSpace.ts'
 import Cell from '#src/rooms/cell/Cell.ts'
 
 import World from '../base/World.ts'
@@ -13,33 +13,28 @@ const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx')
 /** how far the player’s body keeps its middle from the walls */
 const bodyRadius = 0.6
 
-/** A world to try things in: a single room, the Cell, with nothing in it and no works on its walls, only free portrait slots. */
+/** A world to try things in: a single room, the Cell, with nothing in it but an orb and no works on its walls, only free portrait slots. */
 export default class Sandbox extends World<Cell> {
   override readonly artworks: ReadonlyArray<Artwork> = []
   override readonly defaultRoom = 'cell'
   override readonly id = 'sandbox'
   override readonly Minimap = minimap
   // Artworks hang on any of the Cell’s four walls, and lost ones return to the spawn.
-  override readonly placement: HallPlacementSpace
+  override readonly placement: FloorPlanPlacementSpace
   override readonly Scene = scene
 
   constructor() {
     super(worlds.sandbox, [[new Cell, [0, 0, 0]]])
-    const {min, max} = this.room('cell').room.bounds
+    const cell = this.room('cell')
     const [x, , z] = this.spawn.position
-    this.placement = new HallPlacementSpace(this.walls, {
-      minX: min.x,
-      maxX: max.x,
-      northZ: min.z,
-      southZ: max.z,
-      height: max.y,
-    }, [x, 1, z])
+    this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.height, [x, 1, z])
   }
 
-  /** Anywhere between the walls a body fits, from the floor up to the ceiling. */
-  override contains([x, y, z]: Vec3) {
-    const {minX, maxX, northZ, southZ, height} = this.placement.bounds
-    return x > minX + bodyRadius && x < maxX - bodyRadius && z > northZ + bodyRadius && z < southZ - bodyRadius && y >= -0.2 && y < height
+  /** Anywhere on the floor of the Cell or its vestibule a body fits, from the floor up to the ceiling. */
+  override contains(position: Vec3) {
+    const cell = this.room('cell')
+    const [, y] = position
+    return y >= -0.2 && y < cell.height && cell.room.floorContains(cell.toLocal(position), bodyRadius)
   }
 
   /** The Cell’s floor is level everywhere. */
@@ -47,7 +42,9 @@ export default class Sandbox extends World<Cell> {
     return 0
   }
 
+  /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself, and on through the arch. */
   override wallDistance(origin: Vec3, direction: Vec3) {
-    return this.placement.wallDistance(origin, direction)
+    const hit = this.placement.findPlacement(origin, direction, 0, 0, [])
+    return hit ? Math.hypot(...hit.position.map((value, index) => value - origin[index]) as Vec3) + 0.3 : Infinity
   }
 }

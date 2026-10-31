@@ -1,7 +1,7 @@
 import Branch from 'branch-component'
 import {knotBays, knotPreviewX} from 'knot-materials/exhibition.ts'
 
-import ArenaShell from '#component/ArenaShell'
+import ArenaShell, {useArenaSurfaces} from '#component/ArenaShell'
 import KnotCandidateSign from '#component/KnotCandidateSign'
 import KnotLights from '#component/KnotLights'
 import KnotPreviewSigns from '#component/KnotPreviewSigns'
@@ -28,13 +28,14 @@ const fillLights = readPmrem() === 'slop_gallery' ? {
 
 /** The Arena’s shell and lighting, without the gallery’s rooms or their physics. */
 export default function KnotLobby() {
+  const surfaces = useArenaSurfaces()
   return <>
     <color args={['#ded8ca']} attach='background' />
     <group name='knottingham-lobby'>
       <ambientLight intensity={fillLights.ambient} />
       <hemisphereLight color={fillLights.sky} groundColor={fillLights.ground} intensity={fillLights.hemisphere} />
       <directionalLight color='#fff0d7' intensity={fillLights.key} position={[-3, 9, -16]} />
-      <ArenaShell center={center} floorOrigin={knotFloorOrigin} height={knotGalleryBounds.height} size={size} tile={knotFloorTile} walls={knottingham.walls} />
+      <ArenaShell center={center} floorOrigin={knotFloorOrigin} height={knotGalleryBounds.height} size={size} surfaces={surfaces} tile={knotFloorTile} walls={knottingham.walls} />
       <KnotLights />
       {/* A lone Knot gets a plain room: its candidate sign alone names it, without a billboard. */}
       <Branch if={knotPreviewX !== null}><KnotPreviewSigns x={knotPreviewX!} /></Branch>

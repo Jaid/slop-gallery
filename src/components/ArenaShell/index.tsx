@@ -1,5 +1,6 @@
 import type {Wall} from '#src/lib/placement/wallGeometry.ts'
 import type {FloorSize} from '#src/rooms/index.ts'
+import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
@@ -16,6 +17,23 @@ import {CheckeredMarbleFloorMaterial, cremaMarfil, neroMarquina} from '#src/lib/
 import VelvetWallMaterial from '#src/lib/materials/VelvetWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 
+/** the Arena’s materials, apart from its floor’s */
+export type ArenaSurfaces = {
+  /** the dark plaster of the ceiling */
+  ceiling: Material
+  plaster: Texture
+  /** the black lacquered baseboards and cornices */
+  trim: Material
+  /** the crushed velvet of the walls */
+  velvet: Material
+}
+/** how the Arena’s marble mirrors the room in heavy mode */
+export type ArenaPolish = {
+  /** extra share of the mirror at grazing angles */
+  grazingStrength: number
+  /** share of the mirror when looking straight down */
+  strength: number
+}
 export type ArenaShellProps = {
   /** the middle of the floor plan, in world meters */
   center: Point
@@ -23,7 +41,10 @@ export type ArenaShellProps = {
   floorOrigin: Point
   /** how high the ceiling hangs over the floor, which lies at y = 0 */
   height: number
+  /** how clearly the marble mirrors the room, faintly by default */
+  polish?: ArenaPolish
   size: FloorSize
+  surfaces: ArenaSurfaces
   /** edge length of the floor’s marble tiles */
   tile: number
   /** the walls around the floor plan, as the world placed and mitered them */
@@ -31,19 +52,19 @@ export type ArenaShellProps = {
 }
 type Point = readonly [x: number, z: number]
 
-/**
- * The Arena’s shell around a rectangular floor plan, without lights: polished cream and Nero Marquina marble in a checkerboard on a dark slab, mirroring the room in heavy mode, crushed velvet walls with black lacquered trim and a dark plaster ceiling, with colliders for the floor and the ceiling.
- */
-export default function ArenaShell({center, floorOrigin, height, size, tile, walls}: ArenaShellProps) {
-  const [x, z] = center
-  const [width, depth] = size
-  const {floorReflections, surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+/** The Arena’s own faint mirror: a whisper of the room, which the floor’s veins and the lamps’ highlights outshine. */
+const faintPolish: ArenaPolish = {
+  strength: 0.2,
+  grazingStrength: 0,
+}
+
+/** The Arena’s walls, trim and ceiling, which one or more shells and their annexes can share. */
+export function useArenaSurfaces(): ArenaSurfaces {
+  const {surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
   const plaster = useDisposable(useMemo(() => surfaceTexture('plaster', surfaceAnisotropy), [surfaceAnisotropy]))
-  const slab = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.24, depth, 2, 0.035), [width, depth]))
-  const ceiling = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.18, depth, 2, 0.045), [width, depth]))
-  const wallMaterial = useDisposable(useMemo(() => new VelvetWallMaterial, []))
+  const velvet = useDisposable(useMemo(() => new VelvetWallMaterial, []))
   // Baseboards and cornice in black semi-gloss paint under a clear lacquer, which draws a crisp line of light along every edge.
-  const trimMaterial = useDisposable(useMemo(() => new MeshPhysicalNodeMaterial({
+  const trim = useDisposable(useMemo(() => new MeshPhysicalNodeMaterial({
     clearcoat: 1,
     clearcoatRoughness: 0.12,
     color: '#141315',
@@ -51,7 +72,7 @@ export default function ArenaShell({center, floorOrigin, height, size, tile, wal
     metalness: 0,
     roughness: 0.42,
   }), []))
-  const ceilingMaterial = useDisposable(useMemo(() => {
+  const ceiling = useDisposable(useMemo(() => {
     const material = new MeshStandardNodeMaterial({
       envMapIntensity: 0.7,
       metalness: 0,
@@ -62,23 +83,46 @@ export default function ArenaShell({center, floorOrigin, height, size, tile, wal
     material.emissiveNode = finish.mul(0.18)
     return material
   }, [plaster]))
-  const floorMaterial = useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
+  return {
+    ceiling,
+    plaster,
+    trim,
+    velvet,
+  }
+}
+
+/** The Arena’s floor: polished cream and Nero Marquina marble in a checkerboard, on the tile grid from `origin`, mirroring the room in heavy mode. Every floor in a plane of its own needs one of its own, holding its reflection target. */
+export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish = faintPolish) {
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
+  const {strength, grazingStrength} = polish
+  return useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
     dark: neroMarquina,
     directSpecular: 0.1,
     drift: true,
-    grazingStrength: 0,
+    grazingStrength,
     light: cremaMarfil,
     loss: 0,
-    origin: floorOrigin,
+    origin,
     reflections: floorReflections,
     roughness: 0,
     seed: 3,
-    strength: 0.2,
+    strength,
     tile,
-  }), [floorOrigin, floorReflections, tile]))
-  const reflection = floorMaterial.reflectionTarget
+  }), [floorReflections, grazingStrength, origin, strength, tile]))
+}
+
+/**
+ * The Arena’s shell around a rectangular floor plan, without lights: its marble on a dark slab, its velvet walls with black lacquered trim and its dark plaster ceiling, with colliders for the floor and the ceiling.
+ */
+export default function ArenaShell({center, floorOrigin, height, polish, size, surfaces, tile, walls}: ArenaShellProps) {
+  const [x, z] = center
+  const [width, depth] = size
+  const slab = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.24, depth, 2, 0.035), [width, depth]))
+  const ceiling = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.18, depth, 2, 0.045), [width, depth]))
+  const marble = useArenaMarble(floorOrigin, tile, polish)
+  const reflection = marble.reflectionTarget
   return <>
-    {walls.map(wall => <WallSurface key={wall.id} material={trimMaterial} plaster={plaster} surfaceMaterial={wallMaterial} surfaceRoom='vesper' wall={wall} />)}
+    {walls.map(wall => <WallSurface key={wall.id} material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} surfaceRoom='vesper' wall={wall} />)}
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, -0.12, z]} />
       <CuboidCollider args={[width / 2, 0.09, depth / 2]} position={[x, height, z]} />
@@ -86,10 +130,10 @@ export default function ArenaShell({center, floorOrigin, height, size, tile, wal
     <mesh castShadow geometry={slab} name='arena-floor-slab' position={[x, -0.12, z]} receiveShadow>
       <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
     </mesh>
-    <mesh material={floorMaterial} name='arena-marble-floor' position={[x, 0.001, z]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh material={marble} name='arena-marble-floor' position={[x, 0.001, z]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
       <planeGeometry args={[width, depth]} />
       <Branch if={reflection}><primitive object={reflection!} /></Branch>
     </mesh>
-    <mesh castShadow geometry={ceiling} material={ceilingMaterial} name='arena-ceiling' position={[x, height, z]} receiveShadow />
+    <mesh castShadow geometry={ceiling} material={surfaces.ceiling} name='arena-ceiling' position={[x, height, z]} receiveShadow />
   </>
 }
