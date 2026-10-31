@@ -1,5 +1,4 @@
 import type {Wall} from '../placement/wallGeometry.ts'
-import type {Vec3} from './types.ts'
 
 import {wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import salon, {salonCeiling} from './salon.ts'
@@ -70,9 +69,6 @@ export const cinnabarTerrazzo = {
   /** how far from the walls’ center lines the border reaches in, on the inlays’ line */
   border: 1.25,
 } as const
-
-/** where a sculpture pedestal stands on the floor, in the middle of the room under the rooflight */
-export const cinnabarPedestal: Vec3 = [cinnabar.center[0], 0, cinnabar.center[1]]
 
 /**
  * Where the black bands stand along a wall and the panels between them, in the wall’s own coordinates, from its center: free runs between the corners and the doorways’ casings are split into panels of about {@link cinnabarFresco.panelLength}, and a band flanks every doorway, whose bay counts as a pierced panel.

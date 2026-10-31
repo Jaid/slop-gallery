@@ -6,11 +6,10 @@ import {useMemo} from 'react'
 import {CircleGeometry, ExtrudeGeometry, MeshStandardNodeMaterial, Path, Shape} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
-import Pedestal, {usePedestal} from '#component/Pedestal'
 import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
-import {cinnabarPedestal, cinnabarRooflight, cinnabarTerrazzo} from '#src/lib/gallery/cinnabar.ts'
+import {cinnabarRooflight, cinnabarTerrazzo} from '#src/lib/gallery/cinnabar.ts'
 import {salonCeiling} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '#src/lib/materials/TerrazzoFloorMaterial.ts'
@@ -20,7 +19,7 @@ import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('cinnabar')
 const circleSegments = 96
-/** The Cinnabar: a Pompeian red sculpture hall with a black socle, polished terrazzo underfoot, a plaster ceiling pierced by a round rooflight and a pedestal under it. */
+/** The Cinnabar: a Pompeian red sculpture hall with a black socle, polished terrazzo underfoot and a plaster ceiling pierced by a round rooflight. */
 export default function CinnabarRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture
@@ -43,7 +42,6 @@ export default function CinnabarRoom({glass, stone, wood}: {
     slab: terrazzo,
     reflection: terrazzo.reflectionTarget ?? undefined,
   }), [terrazzo])
-  const pedestal = usePedestal()
   return <group name='cinnabar'>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
@@ -53,7 +51,6 @@ export default function CinnabarRoom({glass, stone, wood}: {
       <Ceiling plaster={plaster} />
       <Rooflight gilt={gold} plaster={plaster} />
     </group>
-    <Pedestal {...pedestal} position={cinnabarPedestal} />
   </group>
 }
 

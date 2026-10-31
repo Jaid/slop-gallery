@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import cinnabar, {cinnabarFresco, cinnabarPedestal, cinnabarRooflight, cinnabarTerrazzo, frescoLayout} from '../../src/lib/gallery/cinnabar.ts'
+import cinnabar, {cinnabarFresco, cinnabarRooflight, cinnabarTerrazzo, frescoLayout} from '../../src/lib/gallery/cinnabar.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import salon, {salonCeiling} from '../../src/lib/gallery/salon.ts'
@@ -91,11 +91,6 @@ describe('the Cinnabar', () => {
     const vesperSouth = wallById('vesper-south')
     expect(insideOpening(vesperSouth.holes![0], wallCoordinates(vesperSouth, [-10.2, 0, 8]), 1.7)).toBe(true)
     expect(roomAt([-14, 1.7, 7.9])).toBe('vesper')
-  })
-  test('the pedestal stands in the middle of the room, under the rooflight, clear of the doorways', () => {
-    expect(cinnabarPedestal).toEqual([room.center[0], 0, room.center[1]])
-    expect(roomAt([cinnabarPedestal[0], 1.7, cinnabarPedestal[2]])).toBe('cinnabar')
-    expect(room.size[1] / 2 - 0.58).toBeGreaterThan(4)
   })
   test('the rooflight is a round opening in whole panes, inside the room, under its slab, within the sun’s reach', () => {
     const {bead, depth, frame, glassY, pane, radius} = cinnabarRooflight
