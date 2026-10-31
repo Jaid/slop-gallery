@@ -134,7 +134,8 @@ export default class extends KnotMaterial {
     this.roughnessNode = mix(float(0.34), float(0.018), mirror)
     this.iridescence = 0.3
     this.iridescenceIOR = 1.6
-    this.iridescenceThicknessRange = [180, 460]
+    this.iridescenceThicknessMinimum = 180
+    this.iridescenceThicknessMaximum = 460
     this.emissiveNode = rgb('#ffffff').mul(mirror).mul(facing.pow(6)).mul(intimate).mul(0.05)
   }
 }

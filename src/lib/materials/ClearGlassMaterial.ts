@@ -11,7 +11,8 @@ export type ClearGlassOptions = {
   ior: number
   iridescence?: number
   iridescenceIOR?: number
-  iridescenceThicknessRange?: [number, number]
+  iridescenceThicknessMaximum?: number
+  iridescenceThicknessMinimum?: number
   name: string
   specularColor?: ColorRepresentation
 }
@@ -36,7 +37,7 @@ export function paneFresnelTransmittance(ior: number) {
  * and the backdrop is dimmed by the same Fresnel reflectance of both faces, so panes turn mirror-like at grazing angles exactly like real glass.
  */
 export default class ClearGlassMaterial extends MeshPhysicalNodeMaterial {
-  constructor({absorption, clearcoat = 0, envMapIntensity = 1, ior, iridescence = 0, iridescenceIOR = 1.3, iridescenceThicknessRange = [100, 400], name, specularColor = '#ffffff'}: ClearGlassOptions) {
+  constructor({absorption, clearcoat = 0, envMapIntensity = 1, ior, iridescence = 0, iridescenceIOR = 1.3, iridescenceThicknessMaximum = 400, iridescenceThicknessMinimum = 100, name, specularColor = '#ffffff'}: ClearGlassOptions) {
     super({
       // A black body leaves only reflections; everything else comes from the backdrop.
       color: '#000000',
@@ -49,7 +50,8 @@ export default class ClearGlassMaterial extends MeshPhysicalNodeMaterial {
       clearcoatRoughness: 0.02,
       iridescence,
       iridescenceIOR,
-      iridescenceThicknessRange,
+      iridescenceThicknessMinimum,
+      iridescenceThicknessMaximum,
       envMapIntensity,
       transparent: true,
       depthWrite: false,

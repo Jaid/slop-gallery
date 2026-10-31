@@ -27,7 +27,8 @@ export default function LightSwitch({id, on, onToggle, title = 'Light switch', .
     roughness: 0.2,
     iridescence: 0.7,
     iridescenceIOR: 1.45,
-    iridescenceThicknessRange: [180, 520],
+    iridescenceThicknessMinimum: 180,
+    iridescenceThicknessMaximum: 520,
   }), []))
   const ebony = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#16110d',

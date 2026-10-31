@@ -83,7 +83,8 @@ export function createArchitecturalGlassMaterials(isHeavy: boolean): Architectur
       absorption: 0.015,
       iridescence: 0.7,
       iridescenceIOR: 1.38,
-      iridescenceThicknessRange: [220, 420],
+      iridescenceThicknessMinimum: 220,
+      iridescenceThicknessMaximum: 420,
       envMapIntensity: 1.3,
     }),
   }

@@ -94,7 +94,8 @@ export default class extends KnotMaterial {
     this.clearcoatRoughness = 0.01
     this.iridescence = 0.12
     this.iridescenceIOR = 1.3
-    this.iridescenceThicknessRange = [200, 380]
+    this.iridescenceThicknessMinimum = 200
+    this.iridescenceThicknessMaximum = 380
     this.emissiveNode = inner.mul(facing.mul(0.18).add(0.88)).mul(intimate.mul(0.15).add(1))
       .add(rgb('#ff7a10').mul(grazing.pow(3)).mul(clarity.add(0.3)).mul(0.07))
   }

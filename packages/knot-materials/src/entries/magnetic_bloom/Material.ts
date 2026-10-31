@@ -74,6 +74,7 @@ export default class extends KnotMaterial {
     this.roughness = 0.05
     this.iridescence = 0.35
     this.iridescenceIOR = 1.4
-    this.iridescenceThicknessRange = [320, 620]
+    this.iridescenceThicknessMinimum = 320
+    this.iridescenceThicknessMaximum = 620
   }
 }

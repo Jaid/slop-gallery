@@ -109,7 +109,8 @@ export default class extends KnotMaterial {
     this.clearcoatRoughnessNode = mix(float(0.42), float(0.16), scale.mask)
     this.iridescence = 0.9
     this.iridescenceIOR = 1.31
-    this.iridescenceThicknessRange = [130, 470]
+    this.iridescenceThicknessMinimum = 130
+    this.iridescenceThicknessMaximum = 470
     this.iridescenceNode = scale.mask.mul(0.92)
     this.sheen = 0.55
     this.sheenColor.set('#315cff')
