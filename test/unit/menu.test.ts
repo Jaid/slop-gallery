@@ -10,14 +10,11 @@ import {GraphicsModeProvider} from 'use-graphics-mode'
 import Menu from '#component/Menu'
 
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
-import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
-import {galleryEvents, resetGallery, startNewGame} from '../../src/lib/gallery/actions.ts'
-import defaultPortraits from '../../src/lib/gallery/defaultPortraits.ts'
-import {playerSession} from '../../src/lib/gallery/PlayerSession.ts'
-import {createDocument, markControlled, readControlled, useGallery} from '../../src/lib/gallery/store.ts'
+import {setApiKey, toggleSound} from '../../src/lib/gallery/actions.ts'
+import {markControlled, useGallery} from '../../src/lib/gallery/store.ts'
+import {startNewGame} from '../../src/lib/gameSeed.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
-import samplePortraits from './fixtures/portraits.ts'
 
 const state = useGallery.getState()
 beforeAll(async () => {
@@ -38,6 +35,10 @@ beforeEach(() => {
       setItem: (key: string, value: string) => {
         writes++
         values.set(key, value)
+      },
+      removeItem: (key: string) => {
+        writes++
+        values.delete(key)
       },
     },
   })
@@ -98,55 +99,24 @@ describe('minimal menu', () => {
     expect(useGallery.getState().hasControlled).toBe(false)
     expect(writes).toBe(0)
   })
-  test('the first in-game control enables reset and persists the flag exactly once', () => {
+  test('the first in-game control is noticed without touching storage', () => {
     useGallery.setState({locked: true})
     markControlled()
     expect(useGallery.getState().hasControlled).toBe(true)
-    expect(readControlled()).toBe(true)
     markControlled()
-    expect(writes).toBe(1)
-    expect(createDocument()).not.toHaveProperty('hasControlled')
+    expect(writes).toBe(0)
   })
-  test('blocked storage does not prevent reset becoming available', () => {
-    Object.defineProperty(globalThis, 'localStorage', {
-      configurable: true,
-      get() {
-        throw new Error('Storage blocked')
-      },
-    })
-    expect(readControlled()).toBe(false)
-    useGallery.setState({locked: true})
-    expect(() => markControlled()).not.toThrow()
-    expect(useGallery.getState().hasControlled).toBe(true)
-  })
-  test('reset restores the collection, restarts props and returns home without forgetting prior control', () => {
-    useGallery.setState({hasControlled: true})
-    useGallery.getState().commit(samplePortraits.map(p => ({...p})))
-    useGallery.getState().remove('goose')
-    const before = useGallery.getState()
-    let homes = 0
-    let stops = 0
-    const home = () => {
-      homes++
-    }
-    const stop = () => {
-      stops++
-    }
-    galleryEvents.addEventListener('home', home)
-    galleryEvents.addEventListener('stop-narration', stop)
-    try {
-      resetGallery()
-      const after = useGallery.getState()
-      expect(after.portraits).toEqual(defaultPortraits(after.seed))
-      expect(after.resetEpoch).toBe(before.resetEpoch + 1)
-      expect(after.importEpoch).toBe(before.importEpoch + 1)
-      expect(after.hasControlled).toBe(true)
-      expect(homes).toBe(1)
-      expect(stops).toBe(1)
-    } finally {
-      galleryEvents.removeEventListener('home', home)
-      galleryEvents.removeEventListener('stop-narration', stop)
-    }
+  test('only the OpenRouter key and switched audio reach storage from the store', () => {
+    toggleSound()
+    expect(useGallery.getState().sound).toBe(true)
+    expect(values.get('slop-gallery-audio')).toBe('true')
+    toggleSound()
+    expect(values.get('slop-gallery-audio')).toBe('false')
+    setApiKey('sk-or-test')
+    expect(values.get('slop-gallery-key')).toBe('sk-or-test')
+    setApiKey('')
+    expect(values.has('slop-gallery-key')).toBe(false)
+    expect(values.keys().toArray()).toEqual(['slop-gallery-audio'])
   })
 })
 function primaryActionLabel(stage: MenuStage) {
@@ -207,31 +177,30 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     Object.assign(useGallery.getInitialState(), initial)
   }
 })
-test('New game resets and enters directly; it does nothing before the scene is ready', () => {
-  const engine = Object.create(SoundEngine.prototype) as SoundEngine
-  const getSound = spyOn(SoundEngine, 'get').mockReturnValue(engine)
-  const resume = spyOn(engine, 'resume').mockResolvedValue()
-  let entered = 0
-  const enter = spyOn(pauseMenu, 'enter').mockImplementation(async () => {
-    entered++
-    expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(true)
-    expect(playerSession.snapshot().position).toEqual(slopGallery.spawn.position)
+test('New game forgets the stored seed and reloads', () => {
+  const locationDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'location')
+  let reloads = 0
+  Object.defineProperty(globalThis, 'location', {
+    configurable: true,
+    value: {
+      reload: () => {
+        reloads++
+      },
+    },
   })
   try {
-    useGallery.getState().remove('goose')
+    values.set('knot-gallery-seed', '7')
+    values.set('slop-gallery-seed', '7')
     startNewGame()
-    expect(entered).toBe(0)
-    expect(useGallery.getState().portraits.some(p => p.id === 'goose')).toBe(false)
-    useGallery.setState({
-      ready: true,
-    })
-    startNewGame()
-    expect(entered).toBe(1)
-    expect(resume).toHaveBeenCalledTimes(1)
+    expect(values.has('slop-gallery-seed')).toBe(false)
+    expect(values.get('knot-gallery-seed')).toBe('7')
+    expect(reloads).toBe(1)
   } finally {
-    resume.mockRestore()
-    getSound.mockRestore()
-    enter.mockRestore()
+    if (locationDescriptor) {
+      Object.defineProperty(globalThis, 'location', locationDescriptor)
+    } else {
+      Reflect.deleteProperty(globalThis, 'location')
+    }
   }
 })
 test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room and floor', room => {

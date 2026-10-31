@@ -9,7 +9,6 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 import Chandelier from '#component/Chandelier'
 import PendantLamps from '#component/PendantLamps'
 import Box from '#src/components/Scene/primitives.tsx'
-import {useGallery} from '#src/lib/gallery.ts'
 import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
 import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern, siennaWainscot} from '#src/lib/gallery/sienna.ts'
 import PersianRugMaterial from '#src/lib/materials/PersianRugMaterial.ts'
@@ -31,7 +30,6 @@ export default function SiennaRoom({joinery}: {
     z: Material
   }
 }) {
-  const resetEpoch = useGallery(s => s.resetEpoch)
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   // The planks blur a reflection to a faint smear, not worth a mirrored pass of the scene.
   const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, false), []))
@@ -56,7 +54,7 @@ export default function SiennaRoom({joinery}: {
       <mesh material={rug} name='sienna-carpet' position={[0, siennaRugThickness / 2, 0]} receiveShadow>
         <boxGeometry args={[siennaRugSize[0], siennaRugThickness, siennaRugSize[1]]} />
       </mesh>
-      <Chandelier key={resetEpoch} lamp='sienna-chandelier' />
+      <Chandelier lamp='sienna-chandelier' />
     </group>
     <group name='sienna-vestibule' position={[siennaVestibule.center[0], 0, siennaVestibule.center[1]]}>
       <RigidBody colliders={false} type='fixed'>

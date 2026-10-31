@@ -1,18 +1,15 @@
-import type {GalleryDocument, GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, Vec3} from './types.ts'
+import type {GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
 import world from '#src/worlds/current.ts'
 
 import {audioOverride} from '../audio/audioParameter.ts'
-import {effectiveSeed, rollSeed} from '../environmentSeed.ts'
-import {readControlled} from '../pauseMenu.ts'
-import {localStore, sessionStore} from '../temporary.ts'
+import {readStored} from '../browserStorage.ts'
+import {effectiveSeed} from '../environmentSeed.ts'
+import {gameSeed} from '../gameSeed.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
-import {playerSession} from './PlayerSession.ts'
-
-export {readControlled} from '../pauseMenu.ts'
 
 export {maximumPortraits} from './imagePolicy.ts'
 type State = GallerySettings & GallerySnapshot & {
@@ -21,12 +18,11 @@ type State = GallerySettings & GallerySnapshot & {
   add: (portrait: Portrait) => void
   ai: boolean
   apiKey: string
-  /** replaces the collection; a new `seed` starts a new environment, like a new game */
-  commit: (portraits: Array<Portrait>, seed?: number) => void
+  /** replaces the collection */
+  commit: (portraits: Array<Portrait>) => void
   dragging: boolean
   hasControlled: boolean
   held: string | null
-  importEpoch: number
   importFiles: ((files: Array<File>, target?: {
     direction: Vec3
     origin: Vec3
@@ -41,66 +37,33 @@ type State = GallerySettings & GallerySnapshot & {
   narration: NarrationState | null
   notice: string
   placement: Placement | null
-  playerEpoch: number
   ready: boolean
   remove: (id: string) => void
-  resetEpoch: number
   revision: number
   /** the id of the room of the current world the player is in, or was in last when in a passage */
   room: string
-  saveStatus: 'error' | 'loading' | 'saved' | 'saving'
-  storageRecoveryRequired: boolean
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
-function cleanPortrait(p: Portrait): Portrait {
-  return {
-    ...p,
-    pending: false,
-    merging: false,
-    reserved: false,
-    velocity: undefined,
-    mergeJob: undefined,
-    flavorJob: undefined,
-  }
-}
-function snapshot(state: GallerySnapshot): GallerySnapshot {
-  return {
-    portraits: state.portraits.map(cleanPortrait),
-    seed: state.seed,
-  }
-}
-function readKey() {
-  try {
-    return sessionStore().getItem('slop-gallery-key') ?? ''
-  } catch {
-    return ''
-  }
-}
-const initialSeed = rollSeed()
 export const useGallery = create<State>((set, get) => ({
-  portraits: defaultPortraits(initialSeed),
-  seed: initialSeed,
+  portraits: defaultPortraits(effectiveSeed(gameSeed)),
+  seed: gameSeed,
   active: null,
   activeLabel: null,
   held: null,
   locked: false,
-  hasControlled: readControlled(),
-  resetEpoch: 0,
+  hasControlled: false,
   ready: false,
   dragging: false,
   inspecting: null,
   notice: '',
   room: world.defaultRoom,
   placement: null,
-  playerEpoch: 0,
   ai: false,
-  apiKey: readKey(),
-  sound: audioOverride ?? false,
+  apiKey: readStored('apiKey') ?? '',
+  // An explicit ?audio wins over the player’s last switch.
+  sound: audioOverride ?? readStored('audio') === 'true',
   narration: null,
-  storageRecoveryRequired: false,
-  saveStatus: 'loading',
-  importEpoch: 0,
   revision: 0,
   importFiles: null,
   importTarget: null,
@@ -114,11 +77,10 @@ export const useGallery = create<State>((set, get) => ({
     }
     return {portraits}
   }),
-  commit: (portraits, seed) => {
+  commit: portraits => {
     validateCollectionImages(portraits)
     set(s => ({
       portraits,
-      seed: seed ?? s.seed,
       revision: s.revision + 1,
       held: null,
       placement: null,
@@ -138,44 +100,9 @@ export function markControlled() {
     return
   }
   useGallery.setState({hasControlled: true})
-  try {
-    localStore().setItem('slop-gallery-controlled', 'true')
-  } catch {
-    // Control history still remains available for this visit when storage is blocked.
-  }
 }
 
 /** The seed the environment of the current game state is built from, honoring the `?seed` override. */
 export function useEnvironmentSeed() {
   return effectiveSeed(useGallery(s => s.seed))
-}
-
-export function createDocument(): GalleryDocument {
-  const s = useGallery.getState()
-  const savedAt = new Date
-  return {
-    ...snapshot(s),
-    version: 1,
-    savedAt: savedAt.toISOString(),
-    player: playerSession.snapshot(),
-    settings: {
-      sound: s.sound,
-    },
-  }
-}
-
-export function restoreDocument(document: GalleryDocument) {
-  validateCollectionImages(document.portraits)
-  playerSession.restore(document.player)
-  useGallery.setState({
-    ...snapshot(document),
-    sound: document.settings.sound,
-    playerEpoch: useGallery.getState().playerEpoch + 1,
-    active: null,
-    activeLabel: null,
-    held: null,
-    placement: null,
-    revision: useGallery.getState().revision + 1,
-    importEpoch: useGallery.getState().importEpoch + 1,
-  })
 }

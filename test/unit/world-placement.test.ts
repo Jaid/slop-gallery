@@ -9,7 +9,6 @@ import {placementIssues, wallCoordinates, wallPosition} from '../../src/lib/plac
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import knottingham from '../../src/worlds/knottingham/index.ts'
 import walls, {galleryPlacement} from './fixtures/gallery.ts'
-import samplePortraits from './fixtures/portraits.ts'
 
 const knotPlacement = knottingham.placement
 const knotSpawn = knottingham.spawn
@@ -40,10 +39,6 @@ describe('museum placement', () => {
   test('the gallery world places artworks in the museum’s placement space', () => {
     expect(slopGallery.placement).toBe(galleryPlacement)
     expect(galleryPlacement.walls).toBe(walls)
-  })
-  test('stored collections are never rearranged silently', () => {
-    const portraits = samplePortraits.map(p => ({...p}))
-    expect(galleryPlacement.settle(portraits)).toBe(portraits)
   })
 })
 describe('Knottingham placement', () => {
@@ -107,83 +102,7 @@ describe('Knottingham placement', () => {
     expect(knotPlacement.contains([Number.NaN, 1, 0])).toBe(false)
   })
 })
-describe('settling stored artworks into a hall', () => {
-  const wall = knottingham.walls[2]
-  test('leaves a collection that still fits untouched', () => {
-    const portraits = [
-      artwork({
-        hung: true,
-        wallId: wall.id,
-        position: wallPosition(wall, 0, 2.5),
-        rotation: wall.rotation,
-      }),
-      artwork({
-        id: 'loose',
-        position: [knotGalleryCenter[0], 0.7, knotGalleryCenter[2]],
-      }),
-    ]
-    expect(knotPlacement.settle(portraits)).toBe(portraits)
-  })
-  test('snaps works back onto a wall that moved', () => {
-    const shifted = wallPosition(wall, 1, 2.5, 0.9)
-    const [settled] = knotPlacement.settle([
-      artwork({
-        hung: true,
-        wallId: wall.id,
-        position: shifted,
-        rotation: wall.rotation + 0.1,
-      }),
-    ]) as Array<Portrait>
-    expect(settled.hung).toBe(true)
-    expect(settled.position).toEqual(wallPosition(wall, 1, 2.5))
-    expect(settled.rotation).toBe(wall.rotation)
-  })
-  test('takes down works whose wall or spot is gone and keeps loose works inside', () => {
-    const hung = artwork({
-      hung: true,
-      wallId: wall.id,
-      position: wallPosition(wall, 0, 2.5),
-      rotation: wall.rotation,
-    })
-    const settled = knotPlacement.settle([
-      hung,
-      // overlaps the first work
-      {
-        ...hung,
-        id: 'crowded',
-      },
-      artwork({
-        id: 'vanished',
-        hung: true,
-        wallId: 'lobby-north',
-        position: [0, 2.5, -31.78],
-      }),
-      artwork({
-        id: 'outside',
-        position: [knotGalleryBounds.maxX + 40, 0.6, 0],
-        orientation: [0, 0, 0, 1],
-      }),
-      {id: 'malformed'},
-    ]) as Array<Portrait>
-    expect(settled[0]).toBe(hung)
-    expect(settled[1]).toMatchObject({
-      id: 'crowded',
-      hung: false,
-      wallId: undefined,
-    })
-    expect(Math.abs(wallCoordinates(wall, settled[1].position))).toBeLessThan(wall.width / 2)
-    expect(settled[1].position[1]).toBeCloseTo(hung.height / 2 + 0.05)
-    expect(settled[2]).toMatchObject({
-      id: 'vanished',
-      hung: false,
-      wallId: undefined,
-    })
-    expect(settled[3].orientation).toBeUndefined()
-    for (const portrait of settled.slice(1, 4)) {
-      expect(knotPlacement.contains(portrait.position)).toBe(true)
-    }
-    expect(settled[4] as unknown).toEqual({id: 'malformed'})
-  })
+describe('hall placement', () => {
   test('rejects recovery positions outside the hall', () => {
     expect(() => new HallPlacementSpace(knottingham.walls, knotGalleryBounds, [knotGalleryBounds.maxX + 1, 1, 0])).toThrow(RangeError)
   })

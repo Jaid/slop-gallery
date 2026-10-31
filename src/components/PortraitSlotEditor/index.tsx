@@ -15,7 +15,7 @@ const ray = (camera: {
 }) => [camera.position.toArray(), camera.getWorldDirection(new Vector3).toArray()] as const
 
 /**
- * `?edit_portrait_slots`: aim at a slot and press ←/→ to cycle its ratio, ↑/↓ to cycle its size, L to move its placard above or below the frame and Delete to delete it. Hold the left mouse button on a slot to drag it and release to drop it where you aim. Aimed at a bare wall, a preview of a new slot follows the crosshair; the arrows and L shape it and the right mouse button places it. Edits stay in this browser until dumped with the `dump_portrait_slots` WebMCP tool.
+ * `?edit_portrait_slots`: aim at a slot and press ←/→ to cycle its ratio, ↑/↓ to cycle its size, L to move its placard above or below the frame and Delete to delete it. Hold the left mouse button on a slot to drag it and release to drop it where you aim. Aimed at a bare wall, a preview of a new slot follows the crosshair; the arrows and L shape it and the right mouse button places it. Edits are gone with a reload, so dump them with the `dump_portrait_slots` WebMCP tool before.
  */
 export default function PortraitSlotEditor() {
   const camera = useThree(state => state.camera)

@@ -58,7 +58,6 @@ export default function Player() {
   const camera = useThree(s => s.camera)
   const [initial] = useState(() => playerSession.snapshot())
   const [angles] = useState(() => new Euler(0, 0, 0, 'YXZ'))
-  const playerEpoch = useGallery(s => s.playerEpoch)
   // where a ?spawn camera bookmark holds the camera, until the next teleport
   const heldCamera = useRef<{
     fov: number
@@ -99,7 +98,6 @@ export default function Player() {
       player.current?.teleport(destination, rotation)
       // The body is there before the player’s next update, so whatever follows it, like the room the player is in, never sees it where it was.
       bodyPose.center = [destination[0], destination[1] + defaultEgoOptions.height / 2, destination[2]]
-      // onUpdate checkpoints the resolved physical destination, including any safe-spawn fallback.
     }
     galleryEvents.addEventListener('teleport', teleport)
     return () => {
@@ -142,7 +140,7 @@ export default function Player() {
         releaseFov: camera instanceof PerspectiveCamera ? camera.fov : bookmark.fov,
       }
     }
-  }, [camera, playerEpoch])
+  }, [camera])
   const onUpdate = (state: EgoState) => {
     // The player applies the teleport, camera included, on its next frame, so the held camera is set after every update.
     if (heldCamera.current) {

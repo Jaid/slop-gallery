@@ -74,7 +74,9 @@ describe('world selection', () => {
 describe('worlds', () => {
   test('match their catalog entries', () => {
     for (const instance of [slopGallery, knottingham, sandbox]) {
-      expect(instance).toMatchObject(worlds[instance.id])
+      // Only the browser storage reads the storage key, from the catalog.
+      const {storageKey: _, ...info} = worlds[instance.id]
+      expect(instance).toMatchObject(info)
     }
   })
   test('use independent spawns, bounds and collections', () => {
@@ -265,7 +267,7 @@ test('the gallery’s showcased Knots load their full materials without Knotting
   expect(imported.has(resolve(root, 'packages/knot-materials/src/knotMaterials/ProgressiveKnotMaterials.ts'))).toBe(false)
   expect(imported.has(resolve(root, 'packages/knot-materials/src/createPlaceholderMaterial.ts'))).toBe(false)
 })
-test('Knottingham’s Arena resets only its exhibition, without duplicate sibling keys or gallery props', async () => {
+test('Knottingham’s Arena holds its lobby, spectation and exhibition, without gallery props', async () => {
   const result = await Bun.build({
     entrypoints: [resolve(root, 'src/rooms/arena/components/ArenaRoom/index.tsx')],
     target: 'bun',
@@ -274,7 +276,7 @@ test('Knottingham’s Arena resets only its exhibition, without duplicate siblin
       {
         name: 'scene-children',
         setup(build) {
-          build.onResolve({filter: new RegExp(String.raw`^#(?:component/|src/lib/gallery\.ts$)`, 'u')}, args => ({
+          build.onResolve({filter: /^#component\//u}, args => ({
             path: args.path,
             namespace: 'scene-stub',
           }))
@@ -282,7 +284,7 @@ test('Knottingham’s Arena resets only its exhibition, without duplicate siblin
             filter: /.*/u,
             namespace: 'scene-stub',
           }, ({path}) => ({
-            contents: path === '#src/lib/gallery.ts' ? 'export const useGallery = selector => selector({resetEpoch: 42})' : `export default ${JSON.stringify(path)}`,
+            contents: `export default ${JSON.stringify(path)}`,
             loader: 'js',
           }))
         },
@@ -298,5 +300,4 @@ test('Knottingham’s Arena resets only its exhibition, without duplicate siblin
     '#component/KnotSpectation',
     '#component/KnotExhibition',
   ])
-  expect(children.map(child => child.key)).toEqual([null, null, '42'])
 })

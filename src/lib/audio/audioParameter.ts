@@ -32,7 +32,7 @@ export function readAudio(input: URL | string = typeof location === 'undefined' 
   return readPermalink(input, {schema: audioSchema}).audio
 }
 
-/** Whether the page starts with audio on, or `undefined` without `?audio`, so the saved setting decides. */
+/** Whether the page starts with audio on, or `undefined` without `?audio`, so the player’s last switch decides. */
 export function readAudioOverride(input: URL | string = typeof location === 'undefined' ? '' : location.href): boolean | undefined {
   const url = new URL(input, 'http://localhost/')
   if (!url.searchParams.has('audio')) {

@@ -1,27 +1,11 @@
-import {afterEach, beforeEach, expect, test} from 'bun:test'
-
-import {IDBFactory} from 'fake-indexeddb'
+import {expect, test} from 'bun:test'
 
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
-import {resetGallery} from '../../src/lib/gallery/actions.ts'
-import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
-import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
-const previousIndexedDB = globalThis.indexedDB
-beforeEach(() => {
-  globalThis.indexedDB = new IDBFactory
-  restoreDocument({
-    ...createDocument(),
-    portraits: samplePortraits.map(p => ({...p})),
-    seed: 1,
-  })
-})
-afterEach(() => {
-  globalThis.indexedDB = previousIndexedDB
-})
 test('?seed accepts unsigned 32-bit integers and ignores anything else', () => {
   expect(readSeedOverride('?seed=1')).toBe(1)
   expect(readSeedOverride('https://slop.gallery/?graphics=fast&seed=0')).toBe(0)
@@ -36,11 +20,10 @@ test('?seed accepts unsigned 32-bit integers and ignores anything else', () => {
   expect(isSeed('7')).toBe(false)
   expect(isSeed(-1)).toBe(false)
 })
-test('an override suppresses rolling and wins over the stored seed', () => {
-  expect(rollSeed(5)).toBe(5)
+test('an override wins over the stored seed, and rolls are random', () => {
   expect(effectiveSeed(9, 5)).toBe(5)
   expect(effectiveSeed(9, undefined)).toBe(9)
-  const rolled = Array.from({length: 8}, () => rollSeed(undefined))
+  const rolled = Array.from({length: 8}, () => rollSeed())
   expect(rolled.every(isSeed)).toBe(true)
   const distinct = new Set(rolled)
   expect(distinct.size).toBeGreaterThan(1)
@@ -116,37 +99,12 @@ test('every pot placement can grow every plant, and seed 1 stays put', () => {
   // Captures from snap.ts and film.ts default to seed 1; a change here changes every one of them.
   expect(potPlacements.map(placement => pottedPlantKind(1, placement.id))).toEqual(['jade', 'palm'])
 })
-test('the seed is saved, restored and validated with the collection', async () => {
-  useGallery.setState({seed: 123_456})
-  const document = createDocument()
-  expect(document.seed).toBe(123_456)
-  const repository = new GalleryRepository
-  await repository.save(document)
-  useGallery.setState({seed: 1})
-  restoreDocument((await repository.load())!)
-  expect(useGallery.getState().seed).toBe(123_456)
-  const backup = await repository.export(document)
-  const imported = await repository.import(backup)
-  expect(imported.seed).toBe(123_456)
-  for (const seed of [undefined, -1, 1.5, maximumSeed + 1, '1', null]) {
-    expect(() => validateDocument({
-      ...document,
-      seed,
-    })).toThrow('seed')
-  }
-})
-test('a new game rolls a new seed, and collection edits keep it', () => {
-  useGallery.setState({seed: 77})
-  const seeds = new Set<number>
-  for (let attempt = 0; attempt < 4; attempt++) {
-    resetGallery()
-    seeds.add(useGallery.getState().seed)
-  }
-  expect(seeds.size).toBeGreaterThan(1)
-  useGallery.setState({seed: 77})
+test('collection edits keep the seed', () => {
+  const {seed} = useGallery.getState()
   useGallery.getState().add({
     ...samplePortraits[0],
     id: 'seed-test',
   })
-  expect(useGallery.getState().seed).toBe(77)
+  expect(useGallery.getState().seed).toBe(seed)
+  useGallery.getState().remove('seed-test')
 })

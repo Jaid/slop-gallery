@@ -32,7 +32,6 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
       held: useGallery.getState().held,
       active: useGallery.getState().active,
       activeLabel: useGallery.getState().activeLabel,
-      saveStatus: useGallery.getState().saveStatus,
       seed: effectiveSeed(useGallery.getState().seed),
       props: [...propObjects].map(([id, {body, group}]) => ({
         id,

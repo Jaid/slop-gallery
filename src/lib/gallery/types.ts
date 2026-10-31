@@ -84,13 +84,6 @@ export type GallerySnapshot = {
   /** rolled once per game state and mixed with fixed IDs for environment randomization like the potted plants */
   seed: number
 }
-export type GalleryDocument = GallerySnapshot & {
-  player: PlayerPose
-  savedAt: string
-  settings: GallerySettings
-  version: 1
-}
-
 export type PlayerPose = {
   pitch: number
   /** World-space feet position, independent of head bob and inspection cameras. */

@@ -58,11 +58,4 @@ export class GalleryPlacementSpace extends PlacementSpace {
       },
     }
   }
-
-  /**
-   * Anything that does not fit the museum is a damaged or forged collection, which validation rejects instead of silently rearranging it.
-   */
-  override settle(portraits: ReadonlyArray<unknown>) {
-    return portraits
-  }
 }

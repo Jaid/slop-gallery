@@ -80,10 +80,7 @@ const initial: GalleryState = {
   inspecting: null,
   ai: false,
   narration: null,
-  saveStatus: 'saved',
-  storageRecoveryRequired: false,
   revision: 0,
-  resetEpoch: 0,
 }
 test('gallery adapters record bounded state and lifecycle data without private gallery contents', async () => {
   const {requests, fetch} = capture()
@@ -108,16 +105,14 @@ test('gallery adapters record bounded state and lifecycle data without private g
   store.setState({
     room: 'sienna',
     ready: true,
-    saveStatus: 'saving',
   })
-  store.setState({saveStatus: 'error'})
   events.dispatchEvent(new CustomEvent('merge', {detail: ['private-first-id', 'private-second-id']}))
   telemetry.sample(store.getState())
   stop()
   stop()
   await telemetry.flush()
   const records = requests.map(request => request.body).join('\n')
-  expect(records).toContain('gallery.save')
+  expect(records).toContain('gallery.room.changed')
   expect(records).toContain('gallery.merge.requested')
   expect(records).not.toContain('secret-key')
   expect(records).not.toContain('private artwork')
@@ -204,15 +199,9 @@ test('startup, gameplay and operations share a session trace with state changes 
   store.setState({ready: true})
   store.setState({locked: true})
   const gameplay = telemetry.getContext()!
-  store.setState({
-    room: 'sienna',
-    saveStatus: 'saving',
-  })
+  store.setState({room: 'sienna'})
   await telemetry.wrap('gallery.merge', async () => {})
-  store.setState({
-    saveStatus: 'saved',
-    locked: false,
-  })
+  store.setState({locked: false})
   stop()
   await telemetry.flush()
   const traces = traceSpans(requests)
@@ -223,7 +212,6 @@ test('startup, gameplay and operations share a session trace with state changes 
   expect(play.parentSpanId).toBe(session.spanId)
   expect(startup.parentSpanId).toBe(session.spanId)
   expect(traces.find(trace => trace.name === 'three.init')?.parentSpanId).toBe(startup.spanId)
-  expect(traces.find(trace => trace.name === 'gallery.save')?.parentSpanId).toBe(gameplay.spanId)
   expect(traces.find(trace => trace.name === 'gallery.merge')?.parentSpanId).toBe(gameplay.spanId)
   expect(play.events.some(event => event.name === 'gallery.room.changed')).toBe(true)
   expect(traces.some(trace => trace.name === 'gallery.room.changed')).toBe(false)

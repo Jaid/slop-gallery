@@ -10,7 +10,6 @@ import KnotLightPanels, {knotLightDiffuserContactSkin, knotLightDiffuserSize, kn
 import KnotLightDamage, {knotLightFracture} from 'knot-materials/KnotLights.ts'
 import {useMemo, useRef, useState} from 'react'
 
-import {useGallery} from '#src/lib/gallery.ts'
 import KnotLightImpacts from '#src/lib/physics/KnotLightImpacts.ts'
 
 type LedPanelsProps = {
@@ -37,12 +36,7 @@ const powerRamp = {
 }
 
 /** Ceiling LED panes that flicker after one energetic thrown hit and drop their diffuser after the second. */
-export default function LedPanels(props: LedPanelsProps) {
-  const resetEpoch = useGallery(state => state.resetEpoch)
-  return <LedPanelSystem key={resetEpoch} {...props} />
-}
-
-function LedPanelSystem({color, name, onBrightness, powered = true, slots, surfaceIntensity}: LedPanelsProps) {
+export default function LedPanels({color, name, onBrightness, powered = true, slots, surfaceIntensity}: LedPanelsProps) {
   const damage = useMemo(() => new KnotLightDamage(slots.length), [slots.length])
   const panels = useDisposable(useMemo(() => new KnotLightPanels(slots, `${name}-led`, surfaceIntensity), [name, slots, surfaceIntensity]))
   const impacts = useMemo(() => new KnotLightImpacts, [])

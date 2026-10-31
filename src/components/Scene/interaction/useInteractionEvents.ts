@@ -3,11 +3,10 @@ import type {FirstPose, MutableRef} from './types.ts'
 import type {RootState} from '@react-three/fiber'
 
 import {useEffect} from 'react'
-import {Euler, Quaternion, Raycaster, Vector2} from 'three/webgpu'
+import {Raycaster, Vector2} from 'three/webgpu'
 
 import {enterGallery, galleryEvents, isTextInput, markControlled, useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
-import world from '#src/worlds/current.ts'
 
 import createGrabController from './grabController.ts'
 import teleportToPortrait from './teleportToPortrait.ts'
@@ -98,17 +97,6 @@ export default function useInteractionEvents({
       }
     }
     const onView = (event: Event) => teleportToPortrait(camera, (event as CustomEvent<string>).detail)
-    const home = () => {
-      grabbing.cancel()
-      const spawnRotation = new Quaternion
-      galleryEvents.dispatchEvent(new CustomEvent('teleport', {
-        detail: {
-          feet: true,
-          position: [...world.spawn.position],
-          rotation: spawnRotation.setFromEuler(new Euler(world.spawn.pitch, world.spawn.yaw, 0, 'YXZ')).toArray(),
-        },
-      }))
-    }
     const importTarget = (x: number, y: number) => {
       const bounds = renderer.domElement.getBoundingClientRect()
       const cursor = new Vector2((x - bounds.left) / bounds.width * 2 - 1, -((y - bounds.top) / bounds.height) * 2 + 1)
@@ -132,7 +120,6 @@ export default function useInteractionEvents({
     window.addEventListener('blur', blur)
     renderer.domElement.addEventListener('contextmenu', context)
     galleryEvents.addEventListener('view', onView)
-    galleryEvents.addEventListener('home', home)
     useGallery.setState({importTarget})
     galleryEvents.addEventListener('cancel-interaction', grabbing.cancel)
     return () => {
@@ -145,7 +132,6 @@ export default function useInteractionEvents({
       window.removeEventListener('blur', blur)
       renderer.domElement.removeEventListener('contextmenu', context)
       galleryEvents.removeEventListener('view', onView)
-      galleryEvents.removeEventListener('home', home)
       if (useGallery.getState().importTarget === importTarget) {
         useGallery.setState({importTarget: null})
       }

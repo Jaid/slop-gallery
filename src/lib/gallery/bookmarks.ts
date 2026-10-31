@@ -49,7 +49,7 @@ export function cameraBookmarkFeet({position}: CameraBookmark, flying = false): 
   return [position[0], flying ? feet : Math.max(world.floorHeight(position) + 0.04, feet), position[2]]
 }
 
-/** Move the player session to the `?spawn` bookmark, overriding any saved position; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. A camera bookmark wins over a spawn bookmark with the same ID, which T still reaches. Without `?spawn`, `?room` starts at the default spawn of that room. */
+/** Move the player session to the `?spawn` bookmark; for a camera bookmark, below it, and with `?development` flying with its eyes at the bookmark. A camera bookmark wins over a spawn bookmark with the same ID, which T still reaches. Without `?spawn`, `?room` starts at the default spawn of that room. */
 export function applySpawnBookmark() {
   const cameraBookmark = findCameraBookmark()
   const spawnBookmark = cameraBookmark ? null : findSpawnBookmark()

@@ -6,12 +6,10 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {lodgeWindow, lodgeWindowFloor, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import TimberGeometry, {timberProfile} from '../../src/lib/gallery/passages/TimberGeometry.ts'
 import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, galleryPlacement, insideGallery, roomAt} from './fixtures/gallery.ts'
@@ -92,7 +90,7 @@ describe('Lodge through-window', () => {
       world.free()
     }
   })
-  test('a saved recess position restores crouched without waiting for physics broad-phase initialization', () => {
+  test('a recess position restores crouched without waiting for physics broad-phase initialization', () => {
     const session = new PlayerSession(slopGallery)
     session.restore({
       position: [(lodgeWindow.roomX + lodgeWindow.tunnelX) / 2, lodgeWindow.bottom + 0.02, lodgeWindow.z],
@@ -256,10 +254,6 @@ describe('Lodge through-window', () => {
       position: wallPosition(wall, lodge.center[1] - lodgeWindow.z, (lodgeWindow.bottom + lodgeWindow.top) / 2),
     }
     expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toContain('doorway')
-    expect(() => validateDocument({
-      ...createDocument(),
-      portraits: [portrait],
-    })).toThrow('overlaps a doorway')
     expect(portrait.hung).toBe(true)
   })
 })

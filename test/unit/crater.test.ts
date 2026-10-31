@@ -7,7 +7,6 @@ import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {moonfallCrater} from '../../src/lib/gallery/moonfall/config.ts'
 import CraterGeometry from '../../src/lib/gallery/moonfall/CraterGeometry.ts'
@@ -16,12 +15,10 @@ import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
 import RopeRing from '../../src/lib/gallery/railings/RopeRing.ts'
 import StanchionRingGeometry from '../../src/lib/gallery/railings/StanchionRingGeometry.ts'
 import staircase from '../../src/lib/gallery/staircase.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
-import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
 const room = rooms.find(value => value.id === 'moonfall')!
@@ -156,7 +153,7 @@ describe('Moonfall impact hall', () => {
     expect(edges.values().filter(uses => uses === 1).toArray()).toHaveLength(moonfallCrater.rimSegments)
     expect(edges.values().every(uses => uses <= 2)).toBe(true)
   })
-  test('the crater floor participates in prop recovery, room lookup and saved player poses', () => {
+  test('the crater floor participates in prop recovery, room lookup and player poses', () => {
     for (const [x, z] of [[0, 0], [2.5, -1], [-4, 2]]) {
       const ground = room.floorY + craterTerrain.height(x, z)
       const position: Vec3 = [x + room.center[0], ground + 0.15, z + room.center[1]]
@@ -174,18 +171,7 @@ describe('Moonfall impact hall', () => {
         yaw: 1.3,
         pitch: 0,
       })
-      const document = validateDocument({
-        ...createDocument(),
-        player: session.snapshot(),
-        portraits: [
-          {
-            ...samplePortraits[0],
-            hung: false,
-            position,
-          },
-        ],
-      })
-      expect(validateDocument(document)).toEqual(document)
+      expect(slopGallery.placement.contains(position)).toBe(true)
     }
   })
   test('dropped objects land inside the depression, not on an invisible flat floor', () => {

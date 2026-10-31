@@ -136,14 +136,13 @@ export default class ImageImporter {
     direction: Vec3
     origin: Vec3
   }) {
-    const epoch = useGallery.getState().importEpoch
     // Capture the drop location before decoding; walking must not move an in-flight import.
     const pose = {
       position: [...cameraPose.position] as Vec3,
       direction: [...cameraPose.direction] as Vec3,
     }
     this.queue = this.queue.catch(() => {}).then(async () => {
-      if (this.disposed || useGallery.getState().importEpoch !== epoch) {
+      if (this.disposed) {
         return
       }
       let count = 0
@@ -177,8 +176,8 @@ export default class ImageImporter {
           } finally {
             bitmap.close()
           }
-          // A reset during decoding must not resurrect an abandoned import batch. dispose() can also run meanwhile, which the narrowing from the check above cannot see.
-          if ((this.disposed as boolean) || useGallery.getState().importEpoch !== epoch) {
+          // dispose() can run during decoding, which the narrowing from the check above cannot see.
+          if (this.disposed as boolean) {
             break
           }
           const title = file.name.replace(/\.[^.]+$/, '').replaceAll(/[-_]/g, ' ').trim().slice(0, 150) || 'An untitled arrival'

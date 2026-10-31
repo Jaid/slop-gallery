@@ -2,16 +2,15 @@ import type {PotPlacement, PottedPlantKind} from '#src/lib/gallery/plantDecorati
 
 import DestructiblePlant from '#component/DestructiblePlant'
 import PlantDecoration from '#component/PlantDecoration'
-import {useEnvironmentSeed, useGallery} from '#src/lib/gallery.ts'
+import {useEnvironmentSeed} from '#src/lib/gallery.ts'
 import {pottedPlantKind} from '#src/lib/gallery/plantDecorations/placements.ts'
 
 const destructibleKinds = ['snake', 'calathea', 'birdOfParadise', 'peaceLily'] as const
 
 export default function PottedPlant({id, pot, position}: PotPlacement) {
   const plant = pottedPlantKind(useEnvironmentSeed(), id)
-  const resetEpoch = useGallery(s => s.resetEpoch)
   if (isDestructible(plant)) {
-    return <DestructiblePlant key={`${plant}-${resetEpoch}`} id={id} kind={plant} position={position} pot={pot} />
+    return <DestructiblePlant key={plant} id={id} kind={plant} position={position} pot={pot} />
   }
   return <group key={plant} name={id}><PlantDecoration plant={plant} position={position} pot={pot} /></group>
 }

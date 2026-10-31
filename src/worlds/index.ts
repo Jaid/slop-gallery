@@ -4,7 +4,7 @@ export type WorldId = typeof worldIds[number]
 /** what the loading screen and the menu show of a world before it has loaded */
 export type WorldInfo = {
   enterLabel: string
-  /** the prefix of every key the world stores in the browser */
+  /** the prefix of every key the world stores in the browser, so that worlds never share a game */
   storageKey: string
   tagline: string
   title: string

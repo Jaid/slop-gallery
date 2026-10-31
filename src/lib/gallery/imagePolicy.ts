@@ -10,8 +10,6 @@ export const imageExtensions = {
 export const maximumPortraits = 120
 export const maximumImageBytes = 25_000_000
 export const maximumCollectionImageBytes = 150_000_000
-// Base64 expansion, escaped metadata and gzip overhead must fit even for incompressible images.
-export const maximumBackupBytes = 210_000_000
 
 export function validateImage(source: Blob) {
   if (!Object.hasOwn(imageExtensions, source.type) || source.size > maximumImageBytes) {

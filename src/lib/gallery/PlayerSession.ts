@@ -5,8 +5,6 @@ import {wrapAngle} from 'math'
 
 import currentWorld from '#src/worlds/current.ts'
 
-import {localStore} from '../temporary.ts'
-
 const copy = (pose: PlayerPose): PlayerPose => ({
   position: [...pose.position],
   yaw: pose.yaw,
@@ -30,62 +28,25 @@ export function validatePlayerPose(value: unknown, within: Pick<World, 'contains
   return within.contains(pose.position) ? pose : null
 }
 
-/** Live movement stays outside React; checkpoints contain no images. */
+/** Live movement stays outside React. */
 export default class PlayerSession {
-  revision = 0
-  private readonly checkpointKey: string
   private pose: PlayerPose
 
   /** Keeps a player’s pose in the world, starting at its spawn. */
-  constructor(private readonly world: Pick<World, 'contains' | 'floorHeight' | 'spawn' | 'storageKey'>) {
-    this.checkpointKey = `${world.storageKey}-player`
+  constructor(private readonly world: Pick<World, 'contains' | 'floorHeight' | 'spawn'>) {
     this.pose = copy(world.spawn)
   }
 
   capture(value: PlayerPose) {
     const pose = validatePlayerPose(value, this.world)
-    if (!pose || Math.abs(pose.yaw - this.pose.yaw) < 1e-6 && Math.abs(pose.pitch - this.pose.pitch) < 1e-6 && pose.position.every((n, i) => Math.abs(n - this.pose.position[i]) < 1e-6)) {
-      return
-    }
-    this.pose = pose
-    this.revision++
-  }
-
-  checkpoint(savedAt?: string) {
-    const checkpointedAt = new Date
-    try {
-      localStore().setItem(this.checkpointKey, JSON.stringify({
-        player: this.pose,
-        savedAt: savedAt ?? checkpointedAt.toISOString(),
-      }))
-      return true
-    } catch {
-      return false
+    if (pose) {
+      this.pose = pose
     }
   }
 
   restore(value: unknown) {
     const pose = validatePlayerPose(value, this.world)
     this.pose = pose ? this.onFloor(pose) : copy(this.world.spawn)
-    this.revision++
-  }
-
-  resume(savedAt: string) {
-    try {
-      const value: unknown = JSON.parse(localStore().getItem(this.checkpointKey) ?? 'null')
-      if (!value || typeof value !== 'object' || !('savedAt' in value) || !('player' in value) || typeof value.savedAt !== 'string') {
-        return
-      }
-      const time = Date.parse(value.savedAt)
-      const pose = validatePlayerPose(value.player, this.world)
-      if (pose && Number.isFinite(time) && time >= (Date.parse(savedAt) || 0)) {
-        this.restore(pose)
-        return true
-      }
-    } catch {
-      // A damaged or unavailable checkpoint must never prevent loading the collection.
-    }
-    return false
   }
 
   snapshot() {

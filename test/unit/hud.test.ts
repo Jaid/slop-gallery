@@ -8,9 +8,7 @@ import ArtworkOverlay from '#component/ArtworkOverlay'
 import {lingerBarScale} from '#component/NarrationBars'
 import NarrationIndicator, {NarrationIndicatorStack} from '#component/NarrationIndicator'
 
-import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import portraitLabel, {isPortraitLabelHit, portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 describe('title plate targeting', () => {
@@ -151,35 +149,6 @@ describe('contextual HUD', () => {
     expect(html).toContain('<small>Narrator</small>')
     expect(html).not.toContain('data-testid="audio-bars"')
   })
-})
-describe('artwork year metadata', () => {
-  test('existing collections remain valid without years', () => {
-    expect(validateDocument(createDocument()).portraits[0].year).toBeUndefined()
-  })
-  test('years survive validation and compressed backup round-trips', async () => {
-    const document = createDocument()
-    document.portraits[0] = {
-      ...document.portraits[0],
-      year: 1924,
-    }
-    const repository = new GalleryRepository
-    const result = await repository.import(await repository.export(document))
-    expect(result.portraits[0].year).toBe(1924)
-  })
-  for (const year of [1924.5, '', '2026', Number.NaN, Infinity, Number.MAX_SAFE_INTEGER + 1, {value: 2026}]) {
-    test(`invalid year metadata is rejected: ${JSON.stringify(year)}`, () => {
-      const document = createDocument()
-      expect(() => validateDocument({
-        ...document,
-        portraits: [
-          {
-            ...document.portraits[0],
-            year,
-          },
-        ],
-      })).toThrow('year')
-    })
-  }
 })
 for (const status of ['before', 'after'] as const) {
   test(`audio narrator keeps near-flat bars during ${status} silence`, () => {

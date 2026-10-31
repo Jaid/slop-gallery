@@ -4,6 +4,7 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 import useGraphicsMode from 'use-graphics-mode'
 
+import {readStored, writeStored} from '../browserStorage.ts'
 import {isHeavyCapable, readHeavyCapabilityHints} from './autoGraphics.ts'
 
 /** a `?graphics` name: a graphics mode or `auto`, which picks fast or heavy for the GPU */
@@ -98,6 +99,20 @@ export function readGraphicsMode(input?: URL | string) {
     return isAutoHeavy
   }
   return name !== useGraphicsMode.getName(false)
+}
+
+/** Whether this page starts with heavy graphics: as `?graphics` asks, or without it, as the player last switched them in the menu, which is fast until they do. */
+export function readInitialGraphicsMode(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
+  const url = new URL(input, 'http://localhost/')
+  if (url.searchParams.has('graphics')) {
+    return readGraphicsMode(input)
+  }
+  return readStored('graphics') === useGraphicsMode.getName(true)
+}
+
+/** Remembers the graphics mode the player switched to in the menu for later visits without `?graphics`. */
+export function storeGraphicsMode(isHeavy: boolean) {
+  writeStored('graphics', useGraphicsMode.getName(isHeavy))
 }
 
 /** Read whether `?graphics` asks for cinematic graphics: heavy, but budgeted for non-realtime rendering. */

@@ -98,7 +98,6 @@
     "eslint": "10.14.0",
     "eslint-config-jaid": "37.1.0",
     "eslint-plugin-branch-component": "workspace:*",
-    "fake-indexeddb": "6.2.7",
     "forward-slash-path": "0.3.0",
     "fs-extra": "11.4.1",
     "get-free": "0.2.0",

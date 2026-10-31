@@ -5,18 +5,18 @@ import {beforeEach, expect, test} from 'bun:test'
 
 import GalleryDirector from '../../src/lib/ai/GalleryDirector.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
-import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const defaults: AiSettings = readAiSettings()
 const original = {
-  ...createDocument(),
+  ...useGallery.getState(),
   portraits: samplePortraits.map(p => ({...p})),
 }
 const a = new Blob(['hanging'], {type: 'image/webp'})
 const b = new Blob(['thrown'], {type: 'image/webp'})
 beforeEach(() => {
-  restoreDocument(original)
+  useGallery.setState(original, true)
   useGallery.setState({
     sound: false,
     portraits: original.portraits.slice(0, 2).map((p, i) => ({
@@ -120,7 +120,7 @@ test('streamed artwork years are retained and invalid provider years are ignored
     expect(useGallery.getState().portraits[0].year).toBe(1924)
     director.flavorResult.resolve({year: 1925})
     await job
-    expect(createDocument().portraits[0].year).toBe(1925)
+    expect(useGallery.getState().portraits[0].year).toBe(1925)
   } finally {
     director.dispose()
   }

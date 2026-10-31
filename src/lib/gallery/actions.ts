@@ -7,17 +7,14 @@ import world from '#src/worlds/current.ts'
 
 import aimDot from '../aimDot.ts'
 import SoundEngine from '../audio/SoundEngine.ts'
+import {writeStored} from '../browserStorage.ts'
 import crosshair, {crosshairToggleKey} from '../crosshair.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
-import {rollSeed} from '../environmentSeed.ts'
 import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {graphicsTuningKey, toggleGraphicsTuning} from '../rendering/customGraphics.ts'
-import {sessionStore} from '../temporary.ts'
 import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
-import defaultPortraits from './defaultPortraits.ts'
 import {flyModeKey, toggleFlyMode} from './flyMode.ts'
-import {playerSession} from './PlayerSession.ts'
 import {useGallery} from './store.ts'
 
 const {spawn: playerSpawn} = world
@@ -134,30 +131,6 @@ export function importRejected() {
   notify('Choose PNG, JPEG, WebP, AVIF or GIF under 25 mb. Animated images are displayed as a still.')
 }
 
-export function resetGallery() {
-  playerSession.restore(world.spawn)
-  // A new game state rolls a new environment.
-  const seed = rollSeed()
-  useGallery.getState().commit(defaultPortraits(seed), seed)
-  useGallery.setState(s => ({
-    active: null,
-    activeLabel: null,
-    importEpoch: s.importEpoch + 1,
-    resetEpoch: s.resetEpoch + 1,
-  }))
-  stopNarration()
-  galleryEvents.dispatchEvent(new Event('home'))
-  notify('Back to the beginning.')
-}
-
-export function startNewGame() {
-  if (!useGallery.getState().ready) {
-    return
-  }
-  resetGallery()
-  enterGallery()
-}
-
 export async function loadBlob(source: Blob | string) {
   if (source instanceof Blob) {
     return source
@@ -195,16 +168,17 @@ export function isTextInput(target: EventTarget | null) {
 }
 
 export function setApiKey(key: string) {
-  try {
-    if (key) {
-      sessionStore().setItem('slop-gallery-key', key)
-    } else {
-      sessionStore().removeItem('slop-gallery-key')
-    }
-  } catch {
-    notify('Tab storage is unavailable. The key will only stay in memory.')
+  if (!writeStored('apiKey', key || null)) {
+    notify('Browser storage is unavailable. The key will only stay until the page closes.')
   }
   useGallery.setState({apiKey: key})
+}
+
+/** Switches the audio on or off as the player asked, which later visits start with unless `?audio` says otherwise. */
+export function toggleSound() {
+  const sound = !useGallery.getState().sound
+  useGallery.setState({sound})
+  writeStored('audio', String(sound))
 }
 
 export function handleGalleryKey(event: KeyboardEvent) {
@@ -216,7 +190,7 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   const s = useGallery.getState()
   if (event.code === 'KeyM') {
-    useGallery.setState({sound: !s.sound})
+    toggleSound()
   }
   // The aim dot only shows while playing, so the toggle is limited to that too and gives immediate visual feedback.
   if (event.code === crosshairToggleKey && s.locked && !s.dragging) {

@@ -29,14 +29,11 @@ export function readSeedOverride(input: URL | string = typeof location === 'unde
   return readPermalink(input, {schema: seedSchema}).seed
 }
 
-/** The `?seed` of this page, which replaces the seed of every game state for the session instead of rolling a new one. */
+/** The `?seed` of this page, which replaces the seed of the game for this page without replacing the stored one. */
 export const seedOverride = readSeedOverride()
 
-/** A seed for a new game state: the `?seed` override if there is one, otherwise a random one. */
-export function rollSeed(override = seedOverride) {
-  if (override !== undefined) {
-    return override
-  }
+/** A random seed for a new game state. */
+export function rollSeed() {
   const [seed] = crypto.getRandomValues(new Uint32Array(1))
   return seed
 }

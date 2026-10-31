@@ -12,7 +12,6 @@ import {corridorEndZ, corridorLanding, corridorPassage, corridorRails, corridorR
 import {insidePolygon, polygonCentroid, rectanglePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import {insideFortress} from '../../src/lib/gallery/fortressNetwork.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeWindow, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
@@ -25,7 +24,6 @@ import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometr
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import sienna, {siennaCeilingBeam, siennaCeilingBeamY, siennaVestibule, siennaVestibuleCeiling} from '../../src/lib/gallery/sienna.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
-import {createDocument} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery} from './fixtures/gallery.ts'
@@ -484,7 +482,7 @@ describe('Lodge and Corridor route', () => {
       }
     }
   }
-  test('the new room accepts hanging and loose artwork in backups, on the bay’s 45° walls too', () => {
+  test('the new room accepts hanging artwork, on the bay’s 45° walls too', () => {
     const wall = walls.find(candidate => candidate.id === 'lodge-northwest')!
     const portrait = {
       ...samplePortraits[0],
@@ -495,11 +493,6 @@ describe('Lodge and Corridor route', () => {
       rotation: wall.rotation,
     }
     expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toBe('')
-    const saved = validateDocument({
-      ...createDocument(),
-      portraits: [portrait],
-    })
-    expect(saved.portraits[0]).toMatchObject(portrait)
   })
 })
 test('passages reject malformed paths instead of producing cracked geometry', () => {

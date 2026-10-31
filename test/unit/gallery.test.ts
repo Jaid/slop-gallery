@@ -1,21 +1,20 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {dropPortrait} from '../../src/lib/gallery/actions.ts'
-import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
-import ImageImporter, {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {createDocument, maximumPortraits, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {maximumPortraits, useGallery} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
-const original = {
-  ...createDocument(),
-  portraits: samplePortraits.map(p => ({...p})),
-}
+const initial = useGallery.getState()
 beforeEach(() => {
-  restoreDocument(original)
-  useGallery.setState({sound: false})
+  useGallery.setState({
+    ...initial,
+    portraits: samplePortraits.map(p => ({...p})),
+    sound: false,
+  }, true)
 })
 describe('wall geometry', () => {
   for (const wall of walls) {
@@ -185,16 +184,6 @@ describe('image dimensions', () => {
     expect(containedRect(400, 100, 600, 300)).toEqual([0, 75, 600, 150])
     expect(containedRect(100, 400, 600, 300)).toEqual([262.5, 0, 75, 300])
   })
-  test('a queued import cannot survive a collection replacement', async () => {
-    const importer = new ImageImporter(() => {
-      throw new Error('An abandoned import was committed.')
-    })
-    const job = importer.import([new File(['image'], 'pending.png', {type: 'image/png'})])
-    restoreDocument(original)
-    await job
-    expect(useGallery.getState().portraits).toHaveLength(samplePortraits.length)
-    importer.dispose()
-  })
   test('keeps landscape, portrait and square aspect ratios at a frame area of 30 000 cm²', () => {
     for (const [width, height] of [[400, 200], [200, 400], [400, 400]]) {
       const size = imageSize(width, height)
@@ -238,17 +227,8 @@ describe('collection changes', () => {
       id: 'overflow',
     })).toThrow()
   })
-  test('documents never contain runtime state or keys', () => {
-    useGallery.setState({
-      apiKey: 'not-for-export',
-      held: 'goose',
-      notice: 'runtime',
-    })
-    expect(JSON.stringify(createDocument())).not.toContain('not-for-export')
-    expect(createDocument()).not.toHaveProperty('held')
-  })
 })
-describe('backup validation', () => {
+describe('default artworks', () => {
   test('default IDs match unique, existing artwork and narration filenames', async () => {
     const defaultIds = new Set(samplePortraits.map(p => p.id))
     expect(defaultIds.size).toBe(samplePortraits.length)
@@ -267,99 +247,5 @@ describe('backup validation', () => {
       expect(p.narration).toBe(`/audio/${p.id}.opus`)
       expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
     }
-  })
-  test('does not add recordings omitted from a save', () => {
-    const saved = {
-      ...samplePortraits[0],
-      narration: undefined,
-    }
-    expect(validateDocument({
-      ...original,
-      portraits: [saved],
-    }).portraits[0].narration).toBeUndefined()
-  })
-  test('preserves imported image identity', () => {
-    const source = new Blob(['pixels'], {type: 'image/webp'})
-    const custom = {
-      ...samplePortraits[0],
-      id: 'my-artwork',
-      source,
-      imported: true,
-    }
-    const result = validateDocument({
-      ...original,
-      portraits: [custom],
-    }).portraits[0]
-    expect(result.id).toBe(custom.id)
-    expect(result.source).toBe(source)
-  })
-  test('round-trips artwork hung in the Sienna', () => {
-    const wall = walls.find(candidate => candidate.id === 'sienna-south')!
-    const portrait = {
-      ...samplePortraits[0],
-      wallId: wall.id,
-      rotation: wall.rotation,
-      position: wallPosition(wall, 0, 2.5),
-    }
-    const saved = validateDocument({
-      ...original,
-      portraits: [portrait],
-    })
-    expect(saved.portraits[0]).toMatchObject(portrait)
-    expect(validateDocument(saved)).toEqual(saved)
-  })
-  test('rejects loose artwork outside the actual room footprint', () => {
-    expect(() => validateDocument({
-      ...original,
-      portraits: [
-        {
-          ...samplePortraits[0],
-          hung: false,
-          position: [-6, 2, 18],
-        },
-      ],
-    })).toThrow('outside the gallery')
-  })
-  test('accepts the shipped collection', () => {
-    expect(validateDocument(original).portraits.map(p => p.id)).toEqual(original.portraits.map(p => p.id))
-  })
-  test('rejects unknown top-level state instead of silently stripping it', () => {
-    expect(() => validateDocument({
-      ...original,
-      exhibition: 2,
-    })).toThrow('supported')
-  })
-  test('rejects unknown settings instead of silently stripping them', () => {
-    expect(() => validateDocument({
-      ...original,
-      settings: {
-        ...original.settings,
-        apiKey: 'injected',
-        ready: true,
-      },
-    })).toThrow('invalid settings')
-  })
-  for (const patch of [{source: 'https://example.com/tracker'}, {source: '/audio/doge.opus'}, {position: [Number.NaN, 2, 0]}, {width: 0}, {wallId: 'missing'}, {rotation: Math.PI}, {position: [0, 2, 0]}, {orientation: [0, 0, 0, 0]}]) {
-    test(`rejects malformed artwork ${JSON.stringify(patch)}`, () => {
-      expect(() => validateDocument({
-        ...original,
-        portraits: [
-          {
-            ...original.portraits[0],
-            ...patch,
-          },
-        ],
-      })).toThrow()
-    })
-  }
-  test('rejects duplicate identities and future versions', () => {
-    expect(() => validateDocument({
-      ...original,
-      portraits: [original.portraits[0], original.portraits[0]],
-    })).toThrow()
-    expect(() => validateDocument({
-      ...original,
-      version: 2,
-    })).toThrow()
   })
 })

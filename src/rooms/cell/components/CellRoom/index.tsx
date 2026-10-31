@@ -11,7 +11,6 @@ import Chandelier from '#component/Chandelier'
 import Orb from '#component/Orb'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
-import {useGallery} from '#src/lib/gallery.ts'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {halloweenOrb, orbRadius} from '#src/lib/gallery/orbs.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
@@ -39,7 +38,6 @@ const circleSegments = 96
 
 /** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the Halloween Orb on a pedestal under a second one, lit besides by the Arena’s studio fill from no visible source. */
 export default function CellRoom() {
-  const resetEpoch = useGallery(s => s.resetEpoch)
   const surfaces = useArenaSurfaces()
   const pedestal = usePedestal()
   return <group name='cell'>
@@ -49,14 +47,14 @@ export default function CellRoom() {
     <ShadowPool />
     <ArenaShell center={cell.center} floorOrigin={floorOrigin} height={cell.height} polish={polish} size={cell.size} surfaces={surfaces} tile={floorTile} walls={walls} />
     <group position={[x, 0, z]}>
-      <Chandelier key={resetEpoch} lamp={cell.room.globalId('chandelier')} />
+      <Chandelier lamp={cell.room.globalId('chandelier')} />
     </group>
     <Vestibule surfaces={surfaces} />
     <group position={[vestibuleX, 0, vestibuleZ]}>
-      <Chandelier key={resetEpoch} lamp={cell.room.globalId('vestibule_chandelier')} />
+      <Chandelier lamp={cell.room.globalId('vestibule_chandelier')} />
     </group>
     <Pedestal {...pedestal} position={[vestibuleX, 0, vestibuleZ]} />
-    <Orb key={resetEpoch} orb={halloweenOrb} position={[vestibuleX, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />
+    <Orb orb={halloweenOrb} position={[vestibuleX, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />
   </group>
 }
 

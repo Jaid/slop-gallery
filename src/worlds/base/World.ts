@@ -48,8 +48,6 @@ export default abstract class World<Kind extends Room = Room> {
   readonly rooms: ReadonlyArray<PlacedRoom<Kind>>
   /** everything the world renders: its rooms, its lighting and its props */
   abstract readonly Scene: ComponentType
-  /** the prefix of every key the world stores in the browser, so that worlds never share a save */
-  readonly storageKey: string
   readonly tagline: string
   readonly title: string
   /** image behind the loading screen’s title, relative to the public directory */
@@ -58,9 +56,8 @@ export default abstract class World<Kind extends Room = Room> {
   readonly walls: ReadonlyArray<Wall>
   private readonly byId: ReadonlyMap<Kind['id'], PlacedRoom<Kind>>
 
-  constructor({enterLabel, storageKey, tagline, title, wallpaper}: WorldInfo, placements: ReadonlyArray<RoomPlacement<Kind>>) {
+  constructor({enterLabel, tagline, title, wallpaper}: WorldInfo, placements: ReadonlyArray<RoomPlacement<Kind>>) {
     this.enterLabel = enterLabel
-    this.storageKey = storageKey
     this.tagline = tagline
     this.title = title
     this.wallpaper = wallpaper

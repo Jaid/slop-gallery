@@ -22,7 +22,7 @@ const clickText = async (page: Page, text: string) => {
   const button = await page.waitForSelector(`xpath/.//button[starts-with(normalize-space(.), "${text}")]`)
   await button!.click()
 }
-test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, physics, imports, fusion and persistence', async () => {
+test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, physics, imports, fusion and new games', async () => {
   const server = await preview({
     preview: {
       host: '127.0.0.1',
@@ -184,17 +184,18 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     }, {}, imported.id)
     const {portraits: portraitsAfterMerge} = await snapshot(page)
     expect(portraitsAfterMerge).toHaveLength(baseline)
-    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().saveStatus === 'saved')
-    await Bun.sleep(700)
+    // Only the seed survives a reload, so the merge is gone while the visit continues the same game.
     await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready)
-    const {portraits: reloadedPortraits} = await snapshot(page)
-    expect(reloadedPortraits.find(p => p.id === 'orange')!.title).toBe('An unexpected collaboration')
-    await clickText(page, 'New game')
-    await page.waitForFunction(() => globalThis.slopGallery!.snapshot!().locked)
+    const reloaded = await snapshot(page)
+    expect(reloaded.portraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
+    expect(reloaded.menuStage).toBe('return')
+    await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), clickText(page, 'New game')])
+    await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready)
+    const newGame = await snapshot(page)
+    expect(newGame.menuStage).toBe('first')
+    await enter(page)
     await page.keyboard.press('Escape')
-    const {portraits: newGamePortraits} = await snapshot(page)
-    expect(newGamePortraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
     await teleport(page, [-6.3, 1.62, -4.5], lookingUp)
     await page.waitForFunction(() => Math.abs(globalThis.slopGallery!.snapshot!().camera[0] + 6.3) < 0.01)
     const drag = (type: string, offset = 0) => page.evaluate((eventType, encoded, horizontalOffset) => {

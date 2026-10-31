@@ -1,20 +1,8 @@
 import PauseMenu from 'use-pause-menu/core'
 
-import {currentWorldInfo} from '#src/worlds/index.ts'
+import {isContinuing} from './gameSeed.ts'
 
-import {localStore} from './temporary.ts'
-
-export function readControlled() {
-  try {
-    return localStore().getItem('slop-gallery-controlled') === 'true'
-  } catch {
-    return false
-  }
-}
-
-const pauseMenu = new PauseMenu({
-  storage: localStore,
-  storageKey: `${currentWorldInfo.storageKey}-visited`,
-})
+// A stored seed is the only trace of an earlier visit, so its game can be continued or replaced by a new one.
+const pauseMenu = new PauseMenu({initialStage: isContinuing ? 'return' : 'first'})
 
 export default pauseMenu

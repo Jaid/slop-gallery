@@ -4,7 +4,7 @@ import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {salonBench, salonCeiling, salonPedestal, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import salonWindow from '../../src/lib/gallery/salonWindow.ts'
-import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
 import {insideOpening, placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
@@ -12,12 +12,12 @@ import samplePortraits from './fixtures/portraits.ts'
 
 const room = rooms.find(candidate => candidate.id === 'salon')!
 const shipped = {
-  ...createDocument(),
+  ...useGallery.getState(),
   portraits: samplePortraits.map(p => ({...p})),
+  sound: false,
 }
 beforeEach(() => {
-  restoreDocument(shipped)
-  useGallery.setState({sound: false})
+  useGallery.setState(shipped, true)
 })
 describe('the Salon', () => {
   test('sits north of the Banquet on the upper floor, beside the Lobby extension and above no lower room', () => {

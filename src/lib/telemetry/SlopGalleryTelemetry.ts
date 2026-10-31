@@ -68,7 +68,6 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     if (this.session) {
       throw new Error('Mount only one gallery telemetry attachment.')
     }
-    let saving: Span | null = null
     const initial = store.getState()
     this.session = super.startSpan('gallery.session', {attributes: {room: initial.room}})
     if (!initial.ready) {
@@ -79,9 +78,6 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
         attributes: {room: initial.room},
         parent: this.session,
       })
-    }
-    if (initial.saveStatus === 'saving') {
-      saving = this.startSpan('gallery.save')
     }
     this.sample(initial)
     this.event('session.attached', {room: initial.room})
@@ -116,23 +112,6 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
       if (state.revision !== previous.revision) {
         this.event('collection.changed', {portraits: state.portraits.length})
       }
-      if (state.resetEpoch !== previous.resetEpoch) {
-        this.event('reset')
-      }
-      if (state.saveStatus !== previous.saveStatus) {
-        if (state.saveStatus === 'saving') {
-          saving ??= this.startSpan('gallery.save')
-        } else if (saving) {
-          saving.end(state.saveStatus === 'error' ? 'error' : 'ok', {outcome: state.saveStatus})
-          saving = null
-        }
-        if (state.saveStatus === 'error') {
-          this.log('Gallery persistence failed.', {
-            level: 'error',
-            attributes: {'event.name': 'gallery.save.failed'},
-          })
-        }
-      }
       if (state.narration?.status !== previous.narration?.status || state.narration?.source !== previous.narration?.source) {
         this.event('narration.changed', {
           status: state.narration?.status ?? 'idle',
@@ -157,7 +136,6 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
       for (const remove of listeners) {
         remove()
       }
-      saving?.end('unset', {outcome: 'detached'})
       this.event('session.detached')
       this.gameplay?.end('unset', {outcome: 'detached'})
       this.startup?.end('unset', {outcome: 'detached'})
@@ -202,13 +180,12 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     for (const flag of ['hung', 'pending', 'merging', 'imported'] as const) {
       this.metric(`gallery.portraits.${flag}`, state.portraits.filter(portrait => portrait[flag]).length)
     }
-    for (const flag of ['ready', 'locked', 'ai', 'storageRecoveryRequired'] as const) {
-      this.metric(`gallery.${flag === 'storageRecoveryRequired' ? 'storage.recovery_required' : flag}`, Number(state[flag]))
+    for (const flag of ['ready', 'locked', 'ai'] as const) {
+      this.metric(`gallery.${flag}`, Number(state[flag]))
     }
     this.metric('gallery.holding', Number(state.held !== null))
     this.metric('gallery.inspecting', Number(state.inspecting !== null))
     this.metric('gallery.narration.active', Number(state.narration !== null))
-    this.metric('gallery.save.error', Number(state.saveStatus === 'error'))
     for (const {id: room} of world.rooms) {
       this.metric('gallery.room.active', Number(room === state.room), {attributes: {room}})
     }

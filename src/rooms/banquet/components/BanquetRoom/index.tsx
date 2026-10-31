@@ -10,7 +10,6 @@ import CeilingLeds from '#component/CeilingLeds'
 import LightSwitch from '#component/LightSwitch'
 import SelectorSwitch from '#component/SelectorSwitch'
 import Box from '#src/components/Scene/primitives.tsx'
-import {useGallery} from '#src/lib/gallery.ts'
 import {wallFace} from '#src/lib/gallery/architectureDimensions.ts'
 import {banquetLedSlots, banquetLightTemperatures} from '#src/lib/gallery/banquet.ts'
 import lamps from '#src/rooms/banquet/lamps.ts'
@@ -41,7 +40,6 @@ const temperatures = mapValues(banquetLightTemperatures, ({light, surface}): Cei
 /** Lit by breakable LED panes with their own dimming lights instead of fixed light boxes. */
 export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof BanquetFloor>[0], 'room'>) {
   // A new game switches the lights back on.
-  const resetEpoch = useGallery(state => state.resetEpoch)
   return <>
     <group name='banquet-room' position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
@@ -50,7 +48,7 @@ export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof
       <Box color='#e1dccc' position={[0, room.height - 0.02, 0]} size={[width, 0.18, depth]} />
       <BanquetFloor glass={glass} room={room} stone={stone} wood={wood} />
     </group>
-    <BanquetLights key={resetEpoch} />
+    <BanquetLights />
   </>
 }
 

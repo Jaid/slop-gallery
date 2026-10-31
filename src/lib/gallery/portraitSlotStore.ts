@@ -8,7 +8,6 @@ import world from '#src/worlds/current.ts'
 
 import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
-import {localStore} from '../temporary.ts'
 
 const enabledValues = new Set<unknown>([true, '', 'true'])
 const flagsSchema = optis({
@@ -44,10 +43,6 @@ export const isShowingPortraitSlots = isEditingPortraitSlots || readShowPortrait
 
 /** the ratios from tallest to widest */
 const ratioCycle: ReadonlyArray<PortraitRatio> = ['9:16', '2:3', '1:1', '3:2', '16:9']
-const storageKey = `${world.storageKey}.portrait-slot-edits`
-const shippedSlots = world.portraitSlots()
-// Edits are kept only as long as the shipped slots they started from stay the same.
-const baseline = JSON.stringify(shippedSlots)
 
 type PortraitSlotState = {
   /** the slot under the crosshair while editing */
@@ -59,44 +54,14 @@ type PortraitSlotState = {
   template: readonly [ratio: PortraitRatio, area: number, labelAbove: boolean]
 }
 
-function restore(): ReadonlyArray<PortraitSlot> {
-  if (!isEditingPortraitSlots) {
-    return shippedSlots
-  }
-  try {
-    const stored = JSON.parse(localStore().getItem(storageKey) ?? 'null') as {
-      baseline: string
-      slots: Array<PortraitSlot>
-    } | null
-    return stored?.baseline === baseline ? stored.slots : shippedSlots
-  } catch {
-    return shippedSlots
-  }
-}
-
-/** The world’s portrait slots: the shipped ones, or with `?edit_portrait_slots` the ones edited in this browser. */
+/** The world’s portrait slots: the shipped ones, with `?edit_portrait_slots` as edited on this page. */
 export const usePortraitSlots = create<PortraitSlotState>(() => ({
   aimed: null,
   dragging: null,
   template: ['1:1', slotAreas[2], false],
-  slots: restore(),
+  slots: world.portraitSlots(),
 }))
 
-if (isEditingPortraitSlots) {
-  usePortraitSlots.subscribe((state, previous) => {
-    if (state.slots === previous.slots) {
-      return
-    }
-    try {
-      localStore().setItem(storageKey, JSON.stringify({
-        baseline,
-        slots: state.slots,
-      }))
-    } catch {
-      // Edits still apply for this session.
-    }
-  })
-}
 const nextRatio = (ratio: PortraitRatio, step: -1 | 1) => ratioCycle[(ratioCycle.indexOf(ratio) + step + ratioCycle.length) % ratioCycle.length]
 /** Switches the aimed slot, or the preview of a new one, to the previous or next ratio, keeping its area. */
 export function cycleSlotRatio(id: string | null, step: -1 | 1) {

@@ -17,11 +17,8 @@ export type GalleryState = {
     pending?: boolean
   }>
   ready: boolean
-  resetEpoch: number
   revision: number
   room: string
-  saveStatus: 'error' | 'loading' | 'saved' | 'saving'
-  storageRecoveryRequired: boolean
 }
 export type GalleryStore = {
   getState: () => GalleryState

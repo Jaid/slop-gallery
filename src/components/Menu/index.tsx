@@ -10,7 +10,8 @@ import MenuNarration from '#component/MenuNarration'
 import MenuOptions from '#component/MenuOptions'
 import Minimap from '#component/Minimap'
 import OpenRouterConnection from '#component/OpenRouterConnection'
-import {enterGallery, startNewGame, useGallery} from '#src/lib/gallery.ts'
+import {enterGallery, useGallery} from '#src/lib/gallery.ts'
+import {startNewGame} from '#src/lib/gameSeed.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 import world from '#src/worlds/current.ts'
 
@@ -32,7 +33,7 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
       <div className={css.content}>
         <h1 id='menu-title' tabIndex={-1} ref={heading}><Branch if={paused} then={room.title} else={world.title} /></h1>
         <Branch not={stage === 'unfocus'}><p className={css.tagline}>{tagline}</p></Branch>
-        <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{enterButtonLabel(s.ready, stage)}<Icon name='arrow' size={18} /></button>
+        <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={stage === 'reset' ? startNewGame : enterGallery}>{enterButtonLabel(s.ready, stage)}<Icon name='arrow' size={18} /></button>
         <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
         <Branch not={stage === 'unfocus'}>
           <MenuOptions />

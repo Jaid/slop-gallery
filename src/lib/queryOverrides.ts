@@ -25,7 +25,6 @@ import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readStreamBudget} from './rendering/streamBudget.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from './roomAnnouncements.ts'
-import {readTemporary} from './temporary.ts'
 
 type Reader = (input: string) => unknown
 
@@ -63,7 +62,6 @@ const readers: Record<string, Reader> = {
   show_wireframe: readShowWireframe,
   spawn: readSpawn,
   stream_budget: readStreamBudget,
-  temporary: readTemporary,
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
   world: readWorld,

@@ -4,7 +4,7 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GraphicsMode from '../../src/components/App/GraphicsMode.tsx'
-import {fitCanvasTextureResolution, getGraphicsProfile, getSunShadowSettings, readCinematicGraphics, readGraphicsMode, readGraphicsModeName, readGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
+import {fitCanvasTextureResolution, getGraphicsProfile, getSunShadowSettings, readCinematicGraphics, readGraphicsMode, readGraphicsModeName, readGraphicsProfile, readInitialGraphicsMode, storeGraphicsMode} from '../../src/lib/rendering/graphicsMode.ts'
 import {getRenderPipelineSettings} from '../../src/lib/rendering/renderPipelineSettings.ts'
 
 function ReadProfile() {
@@ -22,6 +22,33 @@ test('graphics URL names round-trip through boolean state and default to fast', 
     expect(readGraphicsMode(`?graphics=${value}`)).toBe(false)
     expect(readCinematicGraphics(`?graphics=${value}`)).toBe(false)
     expect(readGraphicsModeName(`?graphics=${value}`)).toBe('fast')
+  }
+})
+test('without ?graphics, the page starts with the graphics the player last switched to', () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
+  const values = new Map<string, string>
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    },
+  })
+  try {
+    expect(readInitialGraphicsMode('')).toBe(false)
+    storeGraphicsMode(true)
+    expect(values.get('slop-gallery-graphics')).toBe('heavy')
+    expect(readInitialGraphicsMode('')).toBe(true)
+    expect(readInitialGraphicsMode('?graphics=fast')).toBe(false)
+    storeGraphicsMode(false)
+    expect(readInitialGraphicsMode('')).toBe(false)
+    expect(readInitialGraphicsMode('?graphics=heavy')).toBe(true)
+  } finally {
+    if (descriptor) {
+      Object.defineProperty(globalThis, 'localStorage', descriptor)
+    } else {
+      Reflect.deleteProperty(globalThis, 'localStorage')
+    }
   }
 })
 test('auto graphics read as what the page picked for its GPU, which is fast without WebGPU, and never as cinematic', () => {

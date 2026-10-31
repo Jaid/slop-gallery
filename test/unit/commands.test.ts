@@ -3,9 +3,9 @@ import {afterEach, beforeEach, expect, spyOn, test} from 'bun:test'
 import {galleryEvents, importDroppedFiles, isTextInput, viewPortrait} from '../../src/lib/gallery/actions.ts'
 import ImageImporter from '../../src/lib/gallery/ImageImporter.ts'
 import {imageFilename} from '../../src/lib/gallery/imagePolicy.ts'
-import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 
-const original = createDocument()
+const original = useGallery.getState()
 const previous = {
   HTMLElement: globalThis.HTMLElement,
   createImageBitmap: globalThis.createImageBitmap,
@@ -21,7 +21,7 @@ class ElementDouble extends EventTarget {
   }
 }
 beforeEach(() => {
-  restoreDocument(original)
+  useGallery.setState(original, true)
   useGallery.setState({
     sound: false,
     ready: false,

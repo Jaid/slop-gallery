@@ -7,7 +7,7 @@ export const placementReach = 10
 /** distance between a wall plane and the center of an artwork hanging on it */
 export const hangingOffset = 0.22
 
-/** Reasons why an artwork cannot hang at a spot, shown to the player and compared by persistence. */
+/** Reasons why an artwork cannot hang at a spot, shown to the player. */
 export const placementIssues = {
   unsticky: 'Keep the stairway clear.',
   frame: 'Leave space for the frame and its label.',
