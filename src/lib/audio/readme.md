@@ -36,6 +36,10 @@ World components sound an emitter with `useAmbienceEmitter(EmitterClass, rooms)`
 
 `ambience/Fountain.ts` is the Lobby fountain’s quiet trickle: a soft hiss plus rising-pitch bubbles and small splashes, audible within 21 m. `ambience/LodgeFire.ts` is the Lodge fire burning low: a steeply filtered roar (`stages` chains identical filters, 12 dB per octave each) under sparse fine crackles, audible within 14 m. `ambience/MoonfallOrbit.ts` gives the orbital sculpture a celestial hum: held tones (`ToneBed`, each optionally doubled a little higher to beat) over a faint rumble, audible within 32 m.
 
+## Fusions
+
+`FusionSound.ts` is the sound of a merge’s portal, heard through an HRTF panner at the portal on the effects master (so the mute covers it, and `AmbienceListener` moves the Web Audio listener even in worlds without ambience). While the portal brews, three beds run: a hum of a low fifth and its octaves through a resonant lowpass, which swells with the portal’s energy and climbs with its vortex, a shimmer trembling seven times a second and a whoosh that swells whenever a satellite passes. Every ingredient that surfaces rings a bell with a slow vibrato, one step further along a rising motif each time. The climax rises over its whole length, the result flips out on a boom, a blast of air, a fanfare of bells and a spray of glitter while the hum breaks off, and a failure falls and sputters with a dull pop while the hum sinks an octave. Everything rings in a short, bright, synthetic reverb. `FusionPortal`’s `PortalShow` cues it from the fusion’s timeline and feeds it the portal’s envelope every frame; it only starts while the portal still brews and the sound is on.
+
 ## Playback ownership
 
 `playVoices()` returns a cancellable playback with a gain parameter. It owns only its sources, filters, envelopes and local bus; it never disconnects the caller's master or closes the caller's context. Both natural completion and cancellation disconnect nodes. Voice envelopes start with intrinsic gain zero, including before delayed onsets, so sample-boundary rounding cannot leak a full-volume noise sample.
@@ -43,5 +47,7 @@ World components sound an emitter with `useAmbienceEmitter(EmitterClass, rooms)`
 ## Validation
 
 Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts` and `bun run --cwd packages/ego-player test`.
+
+`bun test/browser/run.ts fusionSound.ts` renders a fusion that succeeds after the image model took 6.5 s and one that fails after 1 s offline, driven by the portal’s own envelope every 50 ms, heard from 4 m away, and checks for silence, headroom and a silent tail; called with `{listen: true}`, it also returns both as WAVs.
 
 With the usual development server and existing debug browser running, `bun test/browser/run.ts playerAudio.ts` renders silent offline buffers. It checks all seven cues, speed/crouch/impact-dependent output, headroom, silent tails, held-zoom cancellation and mid-transition reversal. It does not play audio, simulate input, navigate, focus or resize the user's browser. `soundEffectCatalog.ts` is a standalone fixture that renders every catalog recipe the same way and checks for silence, headroom and silent tails. This checks synthesis and lifecycle behavior, not subjective in-game loudness or timbre.

@@ -78,6 +78,14 @@ bun test/browser/run.ts studioSnapshot.ts
 
 This detached fixture draws the gallery’s shared gold with a renderer of its own first, then photographs the Props’ apple twice and a white and a charcoal ball with `StudioSnapshotRenderer`. It decodes the WebPs and checks that no object pixel lies outside the middle 960 px, that the object reaches that window’s edge, that the backdrop gray contrasts with the measured lightness and that both snapshots of the apple frame alike. It reports the first (device creation) and warm snapshot times.
 
+For the sound of a merge’s portal:
+
+```sh
+bun test/browser/run.ts fusionSound.ts
+```
+
+This standalone fixture renders a succeeding and a failing fusion offline with the portal’s own envelope, heard from 4 m in front of it, and checks for nonfinite samples, silence, headroom and a silent tail. It does not play audio or touch the page.
+
 ## Oculus keyboard traversal
 
 ```sh

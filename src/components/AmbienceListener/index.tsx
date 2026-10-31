@@ -10,15 +10,16 @@ const up = new Vector3
 const position = new Vector3
 
 /**
- * Hears the world’s ambience emitters from the camera: moves the Web Audio listener along with it every frame and starts the emitters once the sound engine exists, which only happens with the player’s first click.
+ * Hears the world’s positional sounds from the camera: moves the Web Audio listener along with it every frame and starts the ambience emitters once the sound engine exists, which only happens with the player’s first click.
+ * Fusions’ portals sound positionally too, so the listener follows even in worlds without ambience.
  */
 export default function AmbienceListener() {
   useFrame(({camera}) => {
     const engine = SoundEngine.existing()
-    const {emitters} = useAmbienceEmitters.getState()
-    if (!engine || !emitters.length) {
+    if (!engine) {
       return
     }
+    const {emitters} = useAmbienceEmitters.getState()
     const {room} = useGallery.getState()
     for (const emitter of emitters) {
       emitter.setListenerRoom(room)

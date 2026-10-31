@@ -5,12 +5,17 @@ import type {Texture} from 'three/webgpu'
 import {clamp} from 'math'
 import {Color, Group, PointLight} from 'three/webgpu'
 
+import FusionSound from '#src/lib/audio/FusionSound.ts'
+import SoundEngine from '#src/lib/audio/SoundEngine.ts'
+import {useGallery} from '#src/lib/gallery.ts'
 import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
+import {orbitAngle} from '#src/lib/gallery/fusion/orbit.ts'
 import PortalVisuals, {emberPalette, paletteOf} from '#src/lib/gallery/fusion/PortalVisuals.ts'
 import {holdArtworkTexture} from '#src/lib/useArtworkTexture.ts'
 
 import Satellites from './Satellites.ts'
 
+type Stage = 'brewing' | 'climax' | 'emerged' | 'fizzle'
 type HeldImage = {
   release: () => void
   texture?: Texture<{
@@ -23,8 +28,8 @@ type HeldImage = {
 const lightRange = 8
 
 /**
- * One fusion as the scene shows it: its portal, its light and the choreography of what orbits it, all following the fusion’s clock frame by frame.
- * Disposing it hands back whatever still orbits and lets go of the images it showed.
+ * One fusion as the scene shows it: its portal, its light, its sound and the choreography of what orbits it, all following the fusion’s clock frame by frame.
+ * Disposing it hands back whatever still orbits, stops its sound and lets go of the images it showed.
  */
 export default class PortalShow {
   readonly root = new Group
@@ -41,6 +46,9 @@ export default class PortalShow {
   private readonly palette: PortalPalette
   private phase = 0
   private readonly satellites: Satellites
+  private sound?: FusionSound
+  private stage: Stage = 'brewing'
+  private turn = -1
   private readonly visuals = new PortalVisuals
 
   constructor(fusion: Fusion) {
@@ -60,6 +68,7 @@ export default class PortalShow {
 
   dispose() {
     this.satellites.dispose()
+    this.sound?.stop()
     for (const image of this.images.values()) {
       image.release()
     }
@@ -107,6 +116,52 @@ export default class PortalShow {
     }
     this.light.intensity = envelope.light
     this.light.color.copy(this.paint.swirl).lerp(this.paint.rim, envelope.flash / 2)
+    if (!this.sound && this.stage === 'brewing') {
+      this.sound = this.listen()
+    }
+    const orbit = (orbitAngle(0, elapsed, this.climax()) - orbitAngle(0, elapsed - 0.01, this.climax())) / 0.01
+    this.cue(elapsed, envelope.image && 'turn' in envelope.image ? envelope.image.turn : undefined)
+    this.sound?.update({
+      energy: envelope.energy,
+      orbit,
+      spin: envelope.spin,
+    })
+  }
+
+  private climax() {
+    const {outcome, timing} = this.fusion
+    return outcome?.kind === 'success' ? {
+      at: outcome.at,
+      duration: timing.climax,
+    } : undefined
+  }
+
+  /** Plays the sound of whatever began since the last frame: a new ingredient, the climax, the result or the fizzle. */
+  private cue(elapsed: number, turn: number | undefined) {
+    const {fusion, sound} = this
+    const {outcome, timing} = fusion
+    let stage: Stage = 'brewing'
+    if (fusion.emergedAt !== undefined) {
+      stage = 'emerged'
+    } else if (outcome?.kind === 'success' && elapsed > outcome.at) {
+      stage = 'climax'
+    } else if (outcome?.kind === 'failure' && elapsed > outcome.at) {
+      stage = 'fizzle'
+    }
+    if (stage !== this.stage) {
+      this.stage = stage
+      if (stage === 'climax') {
+        sound?.climax(Math.max(0.1, outcome!.at + timing.climax - elapsed))
+      } else if (stage === 'emerged') {
+        sound?.emerge()
+      } else if (stage === 'fizzle') {
+        sound?.fizzle(timing.fizzle)
+      }
+    }
+    if (stage === 'brewing' && turn !== undefined && turn !== this.turn) {
+      this.turn = turn
+      sound?.surface(turn)
+    }
   }
 
   /** The image, held in the artworks’ shared cache until the portal closes, once it is decoded. */
@@ -122,6 +177,17 @@ export default class PortalShow {
       this.images.set(source, image)
     }
     return image.texture
+  }
+
+  /** The portal’s sound, once the player’s first click made the sound engine and while the sound is on; it can only start while the portal still brews. */
+  private listen() {
+    const engine = SoundEngine.existing()
+    if (!engine || !useGallery.getState().sound) {
+      return
+    }
+    const sound = new FusionSound(engine, this.fusion.frame.center)
+    sound.open()
+    return sound
   }
 
   /** Shows the ingredient or the result the envelope asks for, once its image is decoded. */
