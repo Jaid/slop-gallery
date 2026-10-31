@@ -1,4 +1,4 @@
-import {mrt, normalView, output} from 'three/tsl'
+import {mrt, normalView, output, positionLocal, vec3} from 'three/tsl'
 import {BoxGeometry, Color, HalfFloatType, Mesh, MeshStandardNodeMaterial, OrthographicCamera, RenderTarget, Scene, WebGPURenderer} from 'three/webgpu'
 
 import AsyncMaterials from '../../src/main.ts'
@@ -27,6 +27,8 @@ export default async function verifyLiveTargetLifetime() {
     metalness: 0.12,
   })
   full.name = 'async-target-lifetime-test'
+  // A shader of its own: a full material that only differs from the placeholder by uniforms shares its pipelines and never compiles.
+  full.emissiveNode = vec3(0.2, 0.1, 0).mul(positionLocal.y.add(1))
   const scene = new Scene
   scene.background = new Color('#123456')
   const camera = new OrthographicCamera(-1, 1, 1, -1, 0.1, 10)
