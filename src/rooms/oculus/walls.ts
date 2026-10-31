@@ -47,7 +47,7 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
         height: doorAt[1] + displayStairway.doorHeight,
         profile: 'rectangle',
       },
-      [side === 'east' ? 'fortress' : 'bastion']: {
+      fortress: {
         u: wallCoordinates(wall, doorway),
         width: passage.width,
         bottom: doorway[1] - sillDrop,

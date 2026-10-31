@@ -2,10 +2,11 @@ import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Lamp} from '../base/Room.ts'
 
-import {bastionApproach, bastionHairpin, bastionLanterns, bastionMouth, bastionOrigin, bastionPassageLanterns, bastionRun} from '#src/lib/gallery/bastion.ts'
+import {bastionApproach, bastionHairpin, bastionLanterns, bastionMouth, bastionPassageLanterns, bastionRun} from '#src/lib/gallery/bastion.ts'
+import {fortressOrigin} from '#src/lib/gallery/fortress.ts'
 import {passageLight, passageLightCount, routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
-const [originX, originY, originZ] = bastionOrigin
+const [originX, originY, originZ] = fortressOrigin
 /** `below` meters under the middle of the lantern whose light hangs at the position, with how it shines: like the Fortress’ lanterns */
 const lantern = ([x, y, z]: Vec3, shine: Pick<Lamp, 'decay' | 'range' | 'strength'> = {}, below = 0.3): Lamp => ({
   position: [x - originX, y - below - originY, z - originZ],
@@ -29,7 +30,7 @@ export default {
   // Halfway up the west leg, round the apex of the turn and halfway up the east leg.
   lantern_west: lantern(routeLight(bastionHairpin, bastionLanterns.west)),
   lantern_turn: lantern(routeLight(bastionHairpin, bastionLanterns.turn)),
-  lantern_east: lantern(routeLight(bastionHairpin, bastionLanterns.east)),
+  lantern_climb: lantern(routeLight(bastionHairpin, bastionLanterns.east)),
   // Halfway along the run north, over the Lodge’s roof, and along the strip past the screen wall’s arch, which the Cinnabar sees through its north doorway.
   lantern_run: lantern(run),
   lantern_strip: lantern(approach),

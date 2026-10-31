@@ -18,7 +18,7 @@ await RAPIER.init()
 const geometry = new OculusGroundGeometry
 const collision = colliderGeometry(geometry)
 // The side walls the bridges lead to, with the doorways into the Fortress’ mouth at the east one’s end and the Bastion’s at the west one’s
-const bridgeWalls = walls.filter(wall => ['oculus-east', 'oculus-west'].includes(wall.id) || wall.id.startsWith('fortress-mouth_') || wall.id.startsWith('bastion-mouth_')).map(wall => ({
+const bridgeWalls = walls.filter(wall => ['oculus-east', 'oculus-west'].includes(wall.id) || wall.id.startsWith('fortress-mouth_') || wall.id.startsWith('fortress-climb_mouth_')).map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))

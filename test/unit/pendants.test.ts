@@ -53,7 +53,7 @@ const groups: Array<{
     mounts: routePendantMounts(fortressCurve, [curve.shell, curve.ribs], Object.values(fortressLanterns)),
   },
   ...[fortressMouth, fortressApproach].map(passage => {
-    const mounts = passagePendantMounts(passage, [passage === fortressMouth ? mouth.shell : approach.shell, passage === fortressMouth ? mouth.ribs : approach.ribs])
+    const mounts = passagePendantMounts(passage, passage === fortressMouth ? [mouth.shell, mouth.ribs] : [approach.shell, approach.ribs, transition.timber, transition.lining])
     return {
       label: `castle ${passage.id}`,
       body: lantern,

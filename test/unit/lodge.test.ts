@@ -9,7 +9,8 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corridorEndZ, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThreshold, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonCentroid, rectanglePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition, insideFortress} from '../../src/lib/gallery/fortress.ts'
+import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
+import {insideFortress} from '../../src/lib/gallery/fortressNetwork.ts'
 import {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
 import lodge, {insideLodgeWindow, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
@@ -395,9 +396,8 @@ describe('Lodge and Corridor route', () => {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          // From the Fortress’ level approach, past its climb from the apse, into the Lodge, north through its bay and round it along the Corridor.
-          // Starting at −17, the sprint at 120 Hz reached the Sienna’s doorway in the rare step where Rapier snaps the capsule from the Sienna’s floor down onto the top tread, which lies 18 cm under it, within the 18 cm snap to ground, and sinks it into the floor: a glitch of the stair’s top, in about one of 200 arrivals.
-          const path = [[-17.2, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, [-18.5, lodge.siennaZ]]
+          // From the flat planks beyond the Fortress’ raised timber saddle into the Lodge, north through its bay and round it along the Corridor.
+          const path = [[fortressApproach.path.at(-1)![0] + 0.4, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }

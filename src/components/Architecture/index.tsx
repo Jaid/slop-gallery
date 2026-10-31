@@ -99,7 +99,7 @@ export default function Architecture() {
     if (wall.room === 'oculus' || wall.room === 'exhibition') {
       return oculusMaterial
     }
-    if (wall.room === 'fortress' || wall.room === 'bastion') {
+    if (wall.room === 'fortress') {
       return castleStone
     }
     if (wall.room === 'lodge') {

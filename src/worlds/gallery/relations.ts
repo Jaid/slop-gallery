@@ -91,12 +91,12 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['lodge-east', 'fortress']],
   },
   {
-    rooms: ['oculus', 'bastion'],
-    holes: [['oculus-west', 'bastion']],
+    rooms: ['oculus', 'fortress'],
+    holes: [['oculus-west', 'fortress']],
   },
   {
-    rooms: ['bastion', 'cinnabar'],
-    holes: [['cinnabar-north', 'bastion']],
+    rooms: ['fortress', 'cinnabar'],
+    holes: [['cinnabar-north', 'fortress']],
   },
   {
     rooms: ['lodge', 'corridor'],
@@ -119,7 +119,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'cinnabar', 'oculus', 'sienna', 'exhibition', 'fortress', 'bastion'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'cinnabar', 'oculus', 'sienna', 'exhibition', 'fortress'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -136,7 +136,7 @@ const relations = {
     },
   },
   vesper: {
-    rooms: ['lobby', 'cinnabar', 'bastion', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
+    rooms: ['lobby', 'cinnabar', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -206,10 +206,10 @@ const relations = {
     },
   },
   cinnabar: {
-    rooms: ['vesper', 'bastion', 'lobby', 'sienna', 'banquet'],
+    rooms: ['vesper', 'fortress', 'lobby', 'sienna', 'banquet'],
     floorMirror: 'base',
     visibleLamps: {
-      bastion: 'lantern_strip',
+      fortress: 'lantern_strip',
     },
   },
   moonfall: {
@@ -234,7 +234,7 @@ const relations = {
     },
   },
   oculus: {
-    rooms: ['lobby', 'exhibition', 'fortress', 'bastion', 'salon', 'moonfall', 'banquet'],
+    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'banquet'],
     visibleLamps: {
       moonfall: [
         'planet_glow',
@@ -252,15 +252,13 @@ const relations = {
       fortress: [
         'lantern_east',
         'lantern_north',
-      ],
-      bastion: [
         'lantern_mouth',
         'lantern_elbow',
       ],
     },
   },
   exhibition: {
-    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'bastion', 'salon'],
+    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon'],
     floorMirror: 'moonfall',
     audibleAmbiences: {
       moonfall: 'orbital_sculpture',
@@ -298,7 +296,7 @@ const relations = {
     },
   },
   fortress: {
-    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'bastion'],
+    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'cinnabar', 'vesper'],
     visibleLamps: {
       corridor: 'lantern_lodge',
       lodge: [
@@ -306,11 +304,6 @@ const relations = {
         'chandelier',
       ],
     },
-  },
-  bastion: {
-    // Its mouth looks east through the doorway across the Oculus, under the Lobby’s glazed floor, to the Fortress’ doorway; its approach opens into the Cinnabar.
-    rooms: ['oculus', 'cinnabar', 'vesper', 'lobby', 'exhibition', 'fortress', 'salon'],
-    visibleLamps: {},
   },
 } satisfies Record<RoomId, RoomRelations>
 /** The floor mirror to render while the player is in the room, none for a room without one or an id the gallery doesn’t know. */

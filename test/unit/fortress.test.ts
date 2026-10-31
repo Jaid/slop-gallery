@@ -11,6 +11,7 @@ import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
+import {fortressLink} from '../../src/lib/gallery/fortressNetwork.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse, {apseArcs, insideApse} from '../../src/lib/gallery/oculusApse.ts'
@@ -123,7 +124,7 @@ describe('the Fortress’ route round the Oculus', () => {
     // The ramp down takes the whole run north and the start of the turn round the east shoulder, and the ramp up the S bend and the run west.
     expect([run.kind, eastTurn.kind, bend.kind, climb.kind]).toEqual(['line', 'arc', 'arc', 'line'])
     expect(run.ramp).toBe(eastTurn.ramp)
-    expect(bend.ramp).toBe(climb.ramp)
+    expect(bend.ramp).toBeUndefined()
     for (const piece of rest.slice(0, -2)) {
       expect(piece.ramp).toBeUndefined()
       expect([piece.startY, piece.endY]).toEqual([platformY, platformY])
@@ -145,7 +146,7 @@ describe('the Fortress’ route round the Oculus', () => {
         previous = y
       }
     }
-    expect(fortressApproach.path[0][0] - fortressApproach.path[1][0]).toBeGreaterThan(fortressTransition.length + 2)
+    expect(fortressApproach.path[0][0] - fortressApproach.path[1][0]).toBeGreaterThan(fortressTransition.length)
   })
   test('beside the passage, behind its walls, lies neither the passage nor anything else', () => {
     for (const station of stations) {
@@ -154,7 +155,9 @@ describe('the Fortress’ route round the Oculus', () => {
         const out = fortressCurve.reach(station, side) + 0.2
         const beside: Vec3 = [x - Math.sin(heading) * side * out, y + 1.6, z + Math.cos(heading) * side * out]
         expect(fortressCurve.floorAt(beside[0], beside[2])).toBeUndefined()
-        expect(insideGallery(beside)).toBe(false)
+        if (!fortressLink.contains(beside)) {
+          expect(insideGallery(beside)).toBe(false)
+        }
       }
     }
   })
@@ -280,7 +283,7 @@ describe('the Fortress’ route round the Oculus', () => {
     // The ramp down runs along the run north’s, the ramp up along the chamfer; the north wall stands level.
     expect(east.baseboardProfile).toBeDefined()
     expect(north.baseboardProfile).toBeUndefined()
-    expect(chamfer.baseboardProfile).toBeDefined()
+    expect(chamfer.baseboardProfile).toBeUndefined()
     // Never narrower than before, and widest in the corner behind the apse’s east shoulder
     const reaches = stations.map(station => fortressCurve.reach(station, 1))
     expect(Math.min(...reaches)).toBeGreaterThanOrEqual(fortressCurve.width / 2 - 1e-9)
@@ -398,7 +401,7 @@ describe('the Fortress’ route round the Oculus', () => {
         const bridge = towerFloorHeight(bridgeX, tower.z)!
         // Through the doorway and round the mouth’s elbow, like a player, at a walk; it ends before the timber transition’s saddle.
         const [elbowX] = fortressMouth.path[1]
-        const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[bridgeX, tower.z], [fortressDoorway.x + 0.6, tower.z, true], [elbowX, tower.z, true], [elbowX, route.start[1], true], ...stations.filter((_, i) => i % 2 === 0).map(({point}) => point), [-16.5, lodge.tunnelZ]]
+        const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[bridgeX, tower.z], [fortressDoorway.x + 0.6, tower.z, true], [elbowX, tower.z, true], [elbowX, route.start[1], true], ...stations.filter((_, i) => i % 2 === 0).map(({point}) => point), [fortressApproach.path[0][0] - 0.5, lodge.tunnelZ, true]]
         if (returning) {
           path.reverse()
         }

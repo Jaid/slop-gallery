@@ -18,7 +18,7 @@ export default {
   north: {
     ...north,
     holes: {
-      bastion: {
+      fortress: {
         ...bastionArch,
         u: wallCoordinates(north, [doorwayX - originX, 0, doorwayZ - originZ]),
       },

@@ -6,7 +6,7 @@ import walls from './fixtures/gallery.ts'
 const sticky = walls.filter(wall => wall.sticky !== false)
 test('portraits stick to every wall but the stairways’, the passages’, the tunnel’s and the round ones of the Oculus’ apse', () => {
   const others = walls.filter(wall => wall.sticky === false).map(wall => wall.id)
-  expect(others.filter(id => !/^(?:corridor|exhibition|moonfall)-stairs_|^corridor-wall_\d+$|^fortress-(?:approach|curve|mouth)_wall_\d+$|^bastion-(?:approach|hairpin|mouth|run)_wall_\d+$|^bastion-screen$|^exhibition-(?:east|west)$|^oculus-north(?:east|west)?$/u.test(id))).toEqual([])
+  expect(others.filter(id => !/^(?:corridor|exhibition|moonfall)-stairs_|^corridor-wall_\d+$|^fortress-(?:approach|climb_approach|climb_hairpin|climb_mouth|climb_run|curve|link|mouth)_wall_\d+$|^exhibition-(?:east|west)$|^fortress-climb_screen$|^oculus-north(?:east|west)?$/u.test(id))).toEqual([])
   expect(sticky.some(wall => wall.curveRadius)).toBe(false)
   for (const room of ['antechamber', 'banquet', 'lobby', 'lodge', 'moonfall', 'oculus', 'salon', 'sienna', 'vesper']) {
     expect(sticky.some(wall => wall.room === room)).toBe(true)

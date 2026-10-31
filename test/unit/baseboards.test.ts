@@ -66,7 +66,7 @@ describe('floor-following wall baseboards', () => {
         }
         const volume = geometry.trim.reduce((sum, part) => sum + computeMeshVolume(part), 0)
         // Besides the baseboard, the trim only cases the door at the balcony’s level, down to the sill buried in the balcony, and the arched doorway at the bridge’s end, into the Fortress on the east and into the Bastion on the west.
-        expect(wall.holes!.map(hole => hole.name)).toEqual(['staff_door', side === 'east' ? 'fortress' : 'bastion'])
+        expect(wall.holes!.map(hole => hole.name)).toEqual(['staff_door', 'fortress'])
         const casing = wall.holes!.reduce((sum, hole) => sum + casingArea(hole), 0) * (0.25 - wallFace)
         expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)) + casing, 4)
       } finally {
@@ -103,10 +103,10 @@ describe('floor-following wall baseboards', () => {
   test('the Fortress’ walls stand level along its ramps, round the apse’s east shoulder, along the straight walls outside the curve and round the S bend too, their baseboards following the eased floor', () => {
     const ramped = walls.filter(wall => wall.id.startsWith('fortress-curve_') && wall.baseboardProfile)
     // the runs and turns down from the east doorway and up toward the Lodge, the straight east wall and the chamfer outside them
-    expect(ramped.map(wall => wall.id)).toEqual([0, 1, 3, 4, 8, 9, 10].map(index => `fortress-curve_wall_${index}`))
+    expect(ramped.map(wall => wall.id)).toEqual([0, 1, 4, 9, 10].map(index => `fortress-curve_wall_${index}`))
     // The Bastion’s hairpin climbs on all six of its walls; see bastion.test.ts.
-    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !wall.id.startsWith('bastion-hairpin_')).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
-    expect(ramped.filter(wall => wall.curveRadius)).toHaveLength(2)
+    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !/^fortress-(?:climb_hairpin|link)_/.test(wall.id)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
+    expect(ramped.filter(wall => wall.curveRadius)).toHaveLength(1)
     const material = new MeshBasicMaterial
     for (const wall of ramped) {
       const geometry = createArchitectureGeometry(wall)

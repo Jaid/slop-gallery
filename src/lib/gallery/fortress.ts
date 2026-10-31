@@ -91,8 +91,8 @@ const bendAngle = Math.atan2(bendCenterZ - west.center[1], bendCenterX - west.ce
 const westTurn = west.to - bendAngle
 /** how far the bend turns back: past west, the crown’s second half turned the curve, and the west shoulder on top of that */
 const bendTurn = (crown.to - crown.from) / 2 + westTurn
-/** The ramp up to the Lodge’s floor starts with the bend, and a run as long as it takes finishes it. */
-const climbLength = rampLength(lodge.floorY - platformY) - bendRadius * bendTurn
+/** The west bend stays level for the link’s doorway; the straight run after it climbs to the Lodge’s floor. */
+const climbLength = rampLength(lodge.floorY - platformY)
 /** a window’s width along the apse’s wall, a little narrower than the gate */
 const windowWidth = 2.4
 /** how far along the crown from the gate the windows’ middles lie: as far out as they fit, 30 cm of the crown’s wall left beside their casings toward the shoulders */
@@ -167,7 +167,7 @@ export function apseOpeningPoint({arc, angle}: Pick<ApseOpening, 'angle' | 'arc'
 }
 
 /**
- * North along the Oculus’ east wall, easing down to the platform’s level as its vault rises, on into the turn round the apse’s east shoulder, then round the apse at the same distance from its walls, over its crown and into its west shoulder, from where an S bend brings it back west, easing up as gently to the Lodge’s floor.
+ * North along the Oculus’ east wall, easing down to the platform’s level as its vault rises, on into the turn round the apse’s east shoulder, then round the apse at the same distance from its walls, over its crown and into its west shoulder. A level S bend opens onto the connecting tunnel before the straight run eases up to the Lodge’s floor.
  * Its center line runs `offset` meters from the apse’s, so its turns share their centers with the apse’s arcs.
  */
 const route = new PassageRoute([runX, curveZ], -Math.PI / 2, doorwayY, mouthHeight, [
@@ -195,13 +195,13 @@ const route = new PassageRoute([runX, curveZ], -Math.PI / 2, doorwayY, mouthHeig
     angle: -westTurn,
   },
   {
+    radius: bendRadius,
+    angle: bendTurn,
+  },
+  {
     y: lodge.floorY,
     height: approachHeight,
     steps: [
-      {
-        radius: bendRadius,
-        angle: bendTurn,
-      },
       {length: climbLength},
     ],
   },
@@ -263,7 +263,14 @@ const outline: RouteOutline = {
   ],
 }
 export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, {
-  openings: curveOpenings,
+  openings: [...curveOpenings, {
+    name: 'link',
+    along: route.project(bendCenterX + Math.cos(1.25) * bendRadius, bendCenterZ + Math.sin(1.25) * bendRadius)!.along,
+    side: -1,
+    width: 2.24,
+    height: mouthHeight,
+    profile: 'arch',
+  }],
   outline,
 })
 /** From the curve west to the Lodge’s east wall, where it turns into the Lodge’s timber. */
@@ -293,17 +300,9 @@ export const fortressLanterns = {
 /** The Fortress’ passages from the Oculus to the Lodge, each continuing where the one before it ends. */
 export const fortressPassages = [fortressMouth, fortressCurve, fortressApproach] as const
 
-/** The height of the Fortress’ floor under the point, or undefined beside it. */
-export function fortressFloor(x: number, z: number) {
-  for (const passage of fortressPassages) {
-    const floor = passage.floorAt(x, z)
-    if (floor !== undefined) {
-      return floor
-    }
-  }
-}
-
-/** Whether the position lies in the Fortress, from a meter under its floor to its ceiling. */
-export function insideFortress(position: Vec3) {
-  return fortressPassages.some(passage => passage.contains(position))
+/** The level landing in the west bend, opening south toward the connecting tunnel. */
+export const fortressLinkStart = {
+  point: [bendCenterX + Math.cos(1.25) * (bendRadius + width / 2), bendCenterZ + Math.sin(1.25) * (bendRadius + width / 2)] as const,
+  heading: 1.25,
+  y: platformY,
 }

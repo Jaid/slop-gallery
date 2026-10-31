@@ -1,5 +1,4 @@
 import type {Wall} from '../placement/wallGeometry.ts'
-import type {Vec3} from './types.ts'
 
 import cinnabar from './cinnabar.ts'
 import {easedRampGradient} from './easedRamp.ts'
@@ -10,7 +9,7 @@ import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
 
 const {oculus} = lowerGallery
-/** as wide as the Fortress, which the Oculus’ east bridge leads into the way the west one leads into the Bastion */
+/** the western climb is as wide as the Fortress’ route from the east bridge */
 const {width} = fortressDoorway
 /** how far the passage’s center line runs from the center line of the Cinnabar’s west wall, which its east leg climbs along */
 const offset = fortressClearance + width / 2
@@ -55,7 +54,15 @@ export const bastionDoorway = {
   x: westWallX,
 }
 /** From the doorway west under the Cinnabar and on past its west wall, round an elbow to the south, level with the bridge’s end. */
-export const bastionMouth = new Passage('mouth', 'bastion', [[westWallX, doorwayZ], [westLegX, doorwayZ], [westLegX, turnZ]], doorwayY, width, mouthHeight)
+export const bastionMouth = new Passage('climb_mouth', 'fortress', [[westWallX, doorwayZ], [westLegX, doorwayZ], [westLegX, turnZ]], doorwayY, width, mouthHeight)
+// The connecting tunnel meets the north wall just before the elbow.
+bastionMouth.walls[2].holes = [{
+  name: 'link',
+  u: westLegX - bastionMouth.walls[2].center[0],
+  width: 2.2,
+  height: mouthHeight,
+  profile: 'arch',
+}]
 /**
  * South along the west leg, round a hairpin turn toward the east and back north along the east leg behind the Cinnabar’s west wall, easing up all the way from the bridge’s height to the Cinnabar’s floor as its vault rises.
  */
@@ -73,14 +80,14 @@ const route = new PassageRoute([westLegX, turnZ], Math.PI / 2, doorwayY, mouthHe
     ],
   },
 ])
-export const bastionHairpin = new RoutedPassage('hairpin', 'bastion', route, width)
+export const bastionHairpin = new RoutedPassage('climb_hairpin', 'fortress', route, width)
 if (Math.hypot(route.end.point[0] - eastLegX, route.end.point[1] - turnZ) > 1e-6 || Math.abs(route.end.heading + Math.PI / 2) > 1e-9) {
-  throw new Error('The Bastion’s hairpin has to end where its run north begins, heading north.')
+  throw new Error('The Fortress’ hairpin has to end where its run north begins, heading north.')
 }
 /** From the hairpin’s top on north at the Cinnabar’s floor’s level, over the mouth and then over the Lodge’s roof, to the screen wall. */
-export const bastionRun = new Passage('run', 'bastion', [[eastLegX, turnZ], [eastLegX, screenZ]], cinnabarFloorY, width, levelHeight, [], false)
+export const bastionRun = new Passage('climb_run', 'fortress', [[eastLegX, turnZ], [eastLegX, screenZ]], cinnabarFloorY, width, levelHeight, [], false)
 /** From the arch in the screen wall north to the strip, east along it behind the Cinnabar’s north wall and round a last elbow south through the doorway in the middle of that wall. */
-export const bastionApproach = new Passage('approach', 'bastion', [[eastLegX, screenZ], [eastLegX, stripZ], [cinnabar.center[0], stripZ], [cinnabar.center[0], cinnabarNorthZ]], cinnabarFloorY, stripWidth, levelHeight, [], false)
+export const bastionApproach = new Passage('climb_approach', 'fortress', [[eastLegX, screenZ], [eastLegX, stripZ], [cinnabar.center[0], stripZ], [cinnabar.center[0], cinnabarNorthZ]], cinnabarFloorY, stripWidth, levelHeight, [], false)
 /** The arch through the screen wall and through the Cinnabar’s north wall, as wide and as high as the approach’s vault. */
 export const bastionArch = {
   width: stripWidth,
@@ -89,8 +96,8 @@ export const bastionArch = {
 } as const
 /** The screen wall across the end of the run north, which closes its broad vault and opens into the narrow approach through an arch in its middle. */
 export const bastionScreen: Wall = {
-  id: 'bastion-screen',
-  room: 'bastion',
+  id: 'fortress-climb_screen',
+  room: 'fortress',
   center: [eastLegX, cinnabarFloorY, screenZ],
   // Facing south, back down the run.
   rotation: 0,
@@ -107,14 +114,11 @@ export const bastionScreen: Wall = {
     },
   ],
 }
-/** The Bastion’s passages from the Oculus to the Cinnabar, each continuing where the one before it ends. */
+/** The Fortress’ western passages from the Oculus to the Cinnabar, each continuing where the one before it ends. */
 export const bastionPassages = [bastionMouth, bastionHairpin, bastionRun, bastionApproach] as const
 
 /** how far along the hairpin the apex of its turn lies, halfway round it */
 const apex = legLength + Math.PI * turnRadius / 2
-const apexStation = route.at(apex)
-/** where the Bastion’s origin lies: on the floor at the apex of the hairpin’s turn, halfway up its climb */
-export const bastionOrigin: Vec3 = [apexStation.point[0], apexStation.y, apexStation.point[1]]
 /**
  * Which of the straight passages’ evenly spaced lanterns they keep, in mount order from their starts, see CoveredPassage: the mouth the second and the fourth of the four along its run west, which hang under the Cinnabar and before the elbow, and none in its elbow’s span;
  * the run north the middle one of its three; the approach the first of the two along the strip, the one past the elbow at the screen wall.
@@ -130,13 +134,3 @@ export const bastionLanterns = {
   turn: bastionHairpin.ribGap(apex),
   east: bastionHairpin.ribGap(route.length - legLength / 2),
 } as const
-
-/** The heights of the Bastion’s floors under the point, none beside it: two where the run north crosses over the mouth, which runs on underneath it. */
-export function bastionFloors(x: number, z: number) {
-  return bastionPassages.flatMap(passage => passage.floorAt(x, z) ?? [])
-}
-
-/** Whether the position lies in the Bastion, from a meter under its floor to its ceiling. */
-export function insideBastion(position: Vec3) {
-  return bastionPassages.some(passage => passage.contains(position))
-}

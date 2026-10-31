@@ -42,7 +42,7 @@ describe('the Cinnabar', () => {
     }
     expect(roomAt([-14, 1.7, -12])).toBe('vesper')
     // Behind its north wall lies the Bastion’s approach, in the middle; beside that, nothing.
-    expect(roomAt([-14, 1.7, -32.5])).toBe('bastion')
+    expect(roomAt([-14, 1.7, -32.5])).toBe('fortress')
     expect(insideGallery([-18, 1.7, -32.5])).toBe(false)
     expect(roomAt(roomVisit(room).position)).toBe('cinnabar')
   })

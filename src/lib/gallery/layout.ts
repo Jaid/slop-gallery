@@ -1,6 +1,5 @@
 import type {Vec3} from './types.ts'
 
-import {bastionOrigin} from './bastion.ts'
 import cinnabar from './cinnabar.ts'
 import corridor from './corridor.ts'
 import {fortressOrigin} from './fortress.ts'
@@ -32,8 +31,6 @@ const roomOrigins = {
   lodge: [lodge.center[0], lodge.floorY, lodge.center[1]],
   // in the middle of the curve round the Oculus’ apse
   fortress: fortressOrigin,
-  // at the apex of the hairpin’s turn, halfway up its climb
-  bastion: bastionOrigin,
 } as const satisfies Record<string, Vec3>
 
 export default roomOrigins

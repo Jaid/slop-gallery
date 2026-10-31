@@ -1,6 +1,7 @@
 import {Geofence} from 'geofency'
 
-import {fortressApproach, fortressCurve, fortressMouth, fortressOrigin} from '#src/lib/gallery/fortress.ts'
+import {fortressOrigin} from '#src/lib/gallery/fortress.ts'
+import {fortressNetwork} from '#src/lib/gallery/fortressNetwork.ts'
 
 import Room from '../base/Room.ts'
 import chunkBoxes from '../lib/chunkBoxes.ts'
@@ -15,15 +16,19 @@ import walls from './walls.ts'
 const slack = 0.35
 
 /**
- * The vaulted castle-stone passage from the doorway at the end of the Oculus’ east bridge, north along the Oculus and round its apse, to the Lodge’s east wall.
+ * The connected castle-stone passages from both Oculus bridges, around its apse to the Lodge and up the western hairpin to the Cinnabar.
  * Laid out around the middle of its curve, at the height of its floor there.
  */
 export default class Fortress extends Room {
-  override readonly air = chunkBoxes([fortressMouth, fortressApproach, fortressCurve].flatMap(passage => passage.chunks(slack)), fortressOrigin)
+  override readonly air = chunkBoxes(fortressNetwork.flatMap(passage => passage.chunks(slack)), fortressOrigin)
   override readonly color = '#6e675d'
   override readonly description = 'Cold stone. Long shadows. Light through iron bars.'
-  // Each box of its air at every height, as nothing lies above or below it. It comes before the Oculus, whose fence takes in the whole box around the apse it curves round.
-  override readonly fence = new Geofence(this.air.map(box => footprint([box])))
+  // Height-bounded because the west wing passes under Cinnabar and above Lodge. It also takes precedence over the Oculus’ apse box.
+  override readonly fence = new Geofence(this.air.map(box => ({
+    ...footprint([box]),
+    y: box.min.y - 1,
+    y2: box.max.y + 0.5,
+  })))
   override readonly id = 'fortress'
   override readonly spawn = spawns['']
 

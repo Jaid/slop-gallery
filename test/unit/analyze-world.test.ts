@@ -35,9 +35,10 @@ test('every gallery room is fenced around its origin', () => {
   expect(boxes.lodge[2].max[2]).toBe(boxes.lodge[0].min[2])
   expect(boxes.lodge[2].min[2]).toBeCloseTo(boxes.lodge[0].min[2] - lodgeBay.depth)
   expect([boxes.lodge[2].min[0], boxes.lodge[2].max[0], boxes.lodge[2].min[1], boxes.lodge[2].max[1]]).toEqual([boxes.lodge[0].min[0], boxes.lodge[0].max[0], boxes.lodge[0].min[1], boxes.lodge[0].max[1]])
-  // The Fortress meets the Lodge at its east wall.
-  expect(Math.max(...boxes.lodge.map(box => box.max[0]))).toBeLessThan(Math.min(...boxes.fortress.map(box => box.max[0])))
-  expect(Math.min(...boxes.fortress.map(box => box.min[0]))).toBe(boxes.lodge[0].max[0])
+  // The Fortress now wraps around the Lodge and crosses above its roof.
+  expect(Math.min(...boxes.fortress.map(box => box.min[0]))).toBeLessThan(boxes.lodge[0].min[0])
+  expect(Math.max(...boxes.fortress.map(box => box.max[0]))).toBeGreaterThan(boxes.lodge[0].max[0])
+  expect(boxes.fortress.some(box => box.min[0] === boxes.lodge[0].max[0])).toBe(true)
   // The Moonfall reaches down into its crater, deeper than its floor.
   const moonfall = slopGallery.room('moonfall')
   expect(boxes.moonfall[0].min[1]).toBeCloseTo(moonfall.floorY + craterTerrain.lowest(), 3)

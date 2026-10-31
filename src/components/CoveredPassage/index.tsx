@@ -23,15 +23,15 @@ import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/pass
 /** how thick the slabs under a passage’s floor and over its ceiling are */
 const slabDepth = 0.24
 /**
- * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps, by the passage’s name; the rest are left out, and a passage left out keeps all of them. The corridor keeps four: in the doorway passage from the Lodge’s bay, and at the north end, in the middle and at the south end of its long hall. The Fortress’ straight passages keep none, as its lanterns hang in its curve; the Bastion’s keep a few, see `bastionPassageLanterns`. Their lamps belong to the rooms, see their `lamps.ts`.
+ * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps, by the passage’s name; the rest are left out, and a passage left out keeps all of them. The corridor keeps four: in the doorway passage from the Lodge’s bay, and at the north end, in the middle and at the south end of its long hall. The Fortress’ eastern straight passages keep none, as its lanterns hang in its curve; its western climb keeps a few, see `bastionPassageLanterns`. Their lamps belong to the rooms, see their `lamps.ts`.
  */
 const passageLanterns: Partial<Record<string, ReadonlyArray<boolean>>> = {
   corridor: [true, false, false, true, false, false, true, false, false, false, true],
   'fortress-mouth': [],
   'fortress-approach': [],
-  'bastion-mouth': bastionPassageLanterns.mouth,
-  'bastion-run': bastionPassageLanterns.run,
-  'bastion-approach': bastionPassageLanterns.approach,
+  'fortress-climb_mouth': bastionPassageLanterns.mouth,
+  'fortress-climb_run': bastionPassageLanterns.run,
+  'fortress-climb_approach': bastionPassageLanterns.approach,
 }
 export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
   material: Material

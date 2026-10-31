@@ -7,7 +7,7 @@ import EgoMotor from 'ego-player/motor'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
-import {bastionApproach, bastionArch, bastionDoorway, bastionHairpin, bastionLanterns, bastionMouth, bastionOrigin, bastionRun, bastionScreen} from '../../src/lib/gallery/bastion.ts'
+import {bastionApproach, bastionArch, bastionDoorway, bastionHairpin, bastionLanterns, bastionMouth, bastionRun, bastionScreen} from '../../src/lib/gallery/bastion.ts'
 import cinnabar from '../../src/lib/gallery/cinnabar.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
@@ -29,7 +29,7 @@ const straight = [bastionMouth, bastionRun, bastionApproach] as const
 const hairpin = new RouteVaultGeometry(bastionHairpin)
 const vaults = straight.map(passage => new VaultGeometry(passage))
 const ground = new OculusGroundGeometry
-const architecture = walls.filter(wall => wall.room === 'bastion' || wall.id === 'oculus-west' || wall.id === 'cinnabar-north').map(wall => ({
+const architecture = walls.filter(wall => wall.room === 'fortress' || wall.id === 'oculus-west' || wall.id === 'cinnabar-north').map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
@@ -55,7 +55,7 @@ const along = (passage: typeof straight[number]) => passage.spans.flatMap(({star
   const t = i * 0.5 / length
   return [start[0] + (end[0] - start[0]) * t, passage.floorY, start[1] + (end[1] - start[1]) * t] as const
 }))
-describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
+describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
   test('its passages join end to end, from the doorway at the west bridge to the middle of the Cinnabar’s north wall', () => {
     expect(bastionDoorway).toEqual({
       ...fortressDoorway,
@@ -107,7 +107,7 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
         expect(passage.floorAt(x, z)).toBe(y)
         expect(insideGallery(position)).toBe(true)
         expect(floorHeight(position)).toBeCloseTo(y, 6)
-        expect(roomAt(position)).toBe('bastion')
+        expect(roomAt(position)).toBe('fortress')
       }
     }
     for (const {point: [x, z], y} of stations) {
@@ -115,18 +115,18 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
       expect(bastionHairpin.floorAt(x, z)).toBeCloseTo(y, 6)
       expect(insideGallery(position)).toBe(true)
       expect(floorHeight(position)).toBeCloseTo(y, 6)
-      expect(roomAt(position)).toBe('bastion')
+      expect(roomAt(position)).toBe('fortress')
     }
     // Where the run crosses over the mouth, the floor under a player is the one they stand on.
     const [crossingX] = bastionRun.path[0]
     const crossingZ = bastionDoorway.z
     expect(floorHeight([crossingX, 1.6, crossingZ])).toBe(0)
     expect(floorHeight([crossingX, bastionMouth.floorY + 1.6, crossingZ])).toBe(bastionMouth.floorY)
-    expect(roomAt([crossingX, 1.6, crossingZ])).toBe('bastion')
-    expect(roomAt([crossingX, bastionMouth.floorY + 1.6, crossingZ])).toBe('bastion')
+    expect(roomAt([crossingX, 1.6, crossingZ])).toBe('fortress')
+    expect(roomAt([crossingX, bastionMouth.floorY + 1.6, crossingZ])).toBe('fortress')
     // Over the Lodge, the run is the Bastion’s and the room under it stays the Lodge’s.
     const overLodge: Vec3 = [crossingX, 1.6, lodge.center[1]]
-    expect(roomAt(overLodge)).toBe('bastion')
+    expect(roomAt(overLodge)).toBe('fortress')
     expect(roomAt([crossingX, lodge.floorY + 1.6, lodge.center[1]])).toBe('lodge')
     expect(floorHeight(overLodge)).toBe(0)
   })
@@ -175,7 +175,7 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
     }
   })
   test('the screen wall closes the broad run where the narrow approach begins, with an arch as wide and as high as the approach’s vault', () => {
-    const screen = wallById('bastion-screen')
+    const screen = wallById('fortress-climb_screen')
     expect(screen.center).toEqual([bastionRun.path[1][0], 0, bastionRun.path[1][1]])
     expect(screen.width).toBe(bastionRun.width)
     expect(screen.height + 0.3).toBe(bastionRun.height)
@@ -183,7 +183,7 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
     expect(screen.sticky).toBe(false)
     expect(screen.cornice).toBe(false)
     expect(screen.miters).toEqual([1, 1])
-    expect(architecture.find(({wall}) => wall.id === 'bastion-screen')!.geometry.cornice).toEqual([])
+    expect(architecture.find(({wall}) => wall.id === 'fortress-climb_screen')!.geometry.cornice).toEqual([])
     expect(bastionApproach.walls.every(wall => wall.cornice === false)).toBe(true)
     expect(screen.holes).toEqual([{
       ...bastionArch,
@@ -191,8 +191,8 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
       u: 0,
     }])
     expect(bastionScreen).toMatchObject({
-      id: 'bastion-screen',
-      room: 'bastion',
+      id: 'fortress-climb_screen',
+      room: 'fortress',
     })
     // Its arch is the approach’s section: the approach’s walls stand at its jambs, and its crown at the approach’s.
     const jambs = bastionApproach.walls.filter(wall => Math.abs(Math.abs(wall.center[0] - bastionApproach.path[0][0]) - bastionApproach.width / 2) < 1e-6)
@@ -208,7 +208,7 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
   })
   test('the doorways at both ends match the passages that lead through them', () => {
     const oculusWest = wallById('oculus-west')
-    const bastion = oculusWest.holes!.find(hole => hole.name === 'bastion')!
+    const bastion = oculusWest.holes!.find(hole => hole.name === 'fortress')!
     const fortress = wallById('oculus-east').holes!.find(hole => hole.name === 'fortress')!
     // The Fortress’ doorway mirrored: the same opening, measured the other way along its wall
     expect<typeof fortress>({
@@ -218,33 +218,27 @@ describe('the Bastion’s way from the Oculus up to the Cinnabar', () => {
     }).toEqual(fortress)
     expect(wallPosition(oculusWest, bastion.u, 0, 0)[2]).toBeCloseTo(bastionDoorway.z, 9)
     const north = wallById('cinnabar-north')
-    const arch = north.holes!.find(hole => hole.name === 'bastion')!
+    const arch = north.holes!.find(hole => hole.name === 'fortress')!
     expect(arch).toMatchObject(bastionArch)
     const [x, , z] = wallPosition(north, arch.u, 0, 0)
     expect([x, z]).toEqual([cinnabar.center[0], cinnabar.center[1] - cinnabar.size[1] / 2])
     expect(insideOpening(arch, wallCoordinates(north, [cinnabar.center[0], 0, z]), 1.7)).toBe(true)
     expect(roomAt([cinnabar.center[0], 1.7, z + 0.1])).toBe('cinnabar')
-    expect(roomAt([cinnabar.center[0], 1.7, z - 0.1])).toBe('bastion')
+    expect(roomAt([cinnabar.center[0], 1.7, z - 0.1])).toBe('fortress')
   })
   test('its lanterns hang between the hairpin’s ribs and its lamps under them', () => {
     for (const hung of Object.values(bastionLanterns)) {
       expect(bastionHairpin.ribs.some(rib => Math.abs(rib - hung) < 0.3)).toBe(false)
     }
-    const lamps = slopGallery.room('bastion').lamps()
-    expect(lamps.map(({id}) => id).toSorted()).toEqual(['bastion-lantern_east', 'bastion-lantern_elbow', 'bastion-lantern_mouth', 'bastion-lantern_run', 'bastion-lantern_strip', 'bastion-lantern_turn', 'bastion-lantern_west'])
+    const ids = ['climb', 'elbow', 'mouth', 'run', 'strip', 'turn', 'west'].map(id => `fortress-lantern_${id}`)
+    const lamps = slopGallery.room('fortress').lamps().filter(({id}) => ids.includes(id))
+    expect(lamps.map(({id}) => id).toSorted()).toEqual(ids)
     for (const {position} of lamps) {
-      expect(roomAt(position)).toBe('bastion')
+      expect(roomAt(position)).toBe('fortress')
       // Under the crown, over a person’s head
       expect(position[1] - floorHeight(position)).toBeGreaterThan(1.7)
       expect(position[1] - floorHeight(position)).toBeLessThan(2.3)
     }
-  })
-  test('its origin lies on its floor at the apex of the hairpin’s turn', () => {
-    const [west, turn] = route.pieces
-    const apex = route.at(west.length + turn.length / 2)
-    expect(bastionOrigin).toEqual([apex.point[0], apex.y, apex.point[1]])
-    expect(bastionOrigin[1]).toBeCloseTo(bastionMouth.floorY / 2, 9)
-    expect(slopGallery.room('bastion').spawn.position[1]).toBeGreaterThan(bastionMouth.floorY)
   })
   for (const sprint of [false, true]) {
     for (const returning of [false, true]) {
