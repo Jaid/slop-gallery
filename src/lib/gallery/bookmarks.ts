@@ -10,8 +10,6 @@ import {flyMode} from './flyMode.ts'
 import {playerSession} from './PlayerSession.ts'
 import {readRoom, readSpawn} from './spawn.ts'
 
-export {readRoom, readSpawn} from './spawn.ts'
-
 /** key that teleports the player to the next bookmark with `?development`, or to the previous one with Shift */
 export const bookmarkKey = 'KeyT'
 

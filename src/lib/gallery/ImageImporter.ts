@@ -3,8 +3,8 @@ import type {Portrait, Vec3} from './types.ts'
 import world from '#src/worlds/current.ts'
 
 import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
-import {validateImage} from './imagePolicy.ts'
-import {maximumPortraits, useGallery} from './store.ts'
+import {maximumPortraits, validateImage} from './imagePolicy.ts'
+import {useGallery} from './store.ts'
 
 /** The frame of an imported image in meters: its own aspect at an area of `area` cm². */
 export function imageSize(width: number, height: number, area = 30_000) {
