@@ -27,6 +27,8 @@ export type RouteOutline = {
   side: -1 | 1
 }
 export type RoutedPassageOptions = {
+  /** whether its walls carry a cornice along their tops, true by default; a narrow passage’s vault leaves it showing */
+  cornice?: boolean
   openings?: ReadonlyArray<RouteOpening>
   outline?: RouteOutline
 }
@@ -67,6 +69,8 @@ const clamp = (value: number, low: number, high: number) => Math.min(Math.max(va
  * Its runs take straight walls and its turns curved ones, unless an {@link RouteOutline} stands in for those on one side along a stretch. Along a ramp, they stand level, from their lowest floor up to their highest ceiling, with their baseboards following the floor through the ramp’s knots.
  */
 export default class RoutedPassage {
+  /** whether its walls carry a cornice along their tops */
+  readonly cornice: boolean
   /** where straight across from the route the walls of the outline turn their inner corners, in meters along it */
   readonly creases: ReadonlyArray<number>
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
@@ -81,12 +85,13 @@ export default class RoutedPassage {
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {openings = [], outline}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, openings = [], outline}: RoutedPassageOptions = {}) {
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
+    this.cornice = cornice
     const count = Math.max(1, Math.ceil(route.length / routeRibSpacing))
     this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count)
     this.creases = []
@@ -371,6 +376,7 @@ export default class RoutedPassage {
         height: Math.max(...touching.map(({station}) => station.y + station.height)) - foot - 0.3,
         sticky: false,
         trimStyle: 'plain',
+        ...this.cornice ? {} : {cornice: false},
       }
       if (touching.every(({station}) => station.y === foot)) {
         return wall
@@ -394,6 +400,7 @@ export default class RoutedPassage {
       height: Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight) - foot - 0.3,
       sticky: false,
       trimStyle: 'plain',
+      ...this.cornice ? {} : {cornice: false},
     } as const
     if (piece.kind === 'line') {
       const middle = PassageRoute.station(piece, piece.length / 2)

@@ -4,13 +4,12 @@ import type RoutedPassage from './RoutedPassage.ts'
 import {BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
+import {vaultShellThickness} from '../architectureDimensions.ts'
 
 type Profile = ReadonlyArray<readonly [lateral: number, up: number]>
 /** the cross section of a swept solid at a station, as faces in the order they follow around it, each a polyline from where the previous one ended; every station’s has as many points in each face */
 type Section = (station: RouteStation) => ReadonlyArray<Profile>
 
-/** as thick as the vaults of the straight passages */
-const shellThickness = 0.22
 const ribDepth = 0.22
 const ribThickness = 0.085
 const pavingThickness = 0.24
@@ -124,7 +123,7 @@ export default class RouteVaultGeometry {
         [[middle - half - outer, spring], [middle - half - inner, spring]],
       ]
     }
-    this.shell = mergeParts(sweep(runs(0, route.length), ring(0, shellThickness), true))
+    this.shell = mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
     this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - ribDepth / 2, along + ribDepth / 2), ring(-ribThickness, 0), true)))
     this.paving = mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))

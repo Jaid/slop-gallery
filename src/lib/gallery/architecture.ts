@@ -92,8 +92,7 @@ function cutArchitecture(wall: Wall) {
     return bendableBlock.translate(x, y, z)
   }
   // A band running the full width ends on the bisector of an inside corner, through the corner of both wall faces, meeting the adjoining wall’s band.
-  const miter = (geometry: BufferGeometry) => {
-    const {miters} = wall
+  const miter = (geometry: BufferGeometry, miters = wall.miters) => {
     if (!miters?.some(Boolean)) {
       return geometry
     }
@@ -120,10 +119,11 @@ function cutArchitecture(wall: Wall) {
     brushes.push(result)
     return result
   }
-  const cutters = (wall.holes ?? []).map(hole => brush(extrude(openingShape(hole), 2, -0.5)))
-  const cut = (geometry: Brush | BufferGeometry) => {
+  const holes = wall.holes ?? []
+  const cutters = holes.map(hole => brush(extrude(openingShape(hole), 2, -0.5)))
+  const cut = (geometry: Brush | BufferGeometry, through = cutters) => {
     let result = geometry instanceof Brush ? geometry : brush(geometry)
-    for (const cutter of cutters) {
+    for (const cutter of through) {
       const target = brush(new BufferGeometry)
       result = evaluator.evaluate(result, cutter, SUBTRACTION, target)
     }
@@ -139,7 +139,7 @@ function cutArchitecture(wall: Wall) {
     const trimBox = (width: number, height: number, front: number, x: number, y: number) => brush(box(width, height, front - wallFace, x, y, (front + wallFace) / 2))
     const baseboardBand = (bottom: number, height: number, front: number) => {
       if (!wall.baseboardProfile) {
-        return brush(miter(box(wall.width, height, front - wallFace, 0, bottom + height / 2, (front + wallFace) / 2)))
+        return brush(miter(box(wall.width, height, front - wallFace, 0, bottom + height / 2, (front + wallFace) / 2), wall.baseboardMiters ?? wall.miters))
       }
       // Sweep each band along the actual floor contact instead of burying a
       // horizontal molding in the ramp and exposing a tapering triangular stub.
@@ -178,7 +178,10 @@ function cutArchitecture(wall: Wall) {
         molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
       }
       join(baseboardBand(baseboardHeight - 0.06, 0.06, 0.25))
-      for (const hole of wall.holes ?? []) {
+      for (const hole of holes) {
+        if (hole.casing === false) {
+          continue
+        }
         const front = openingCasingFronts[wall.trimStyle === 'plain' ? 'plain' : 'classic']
         join(brush(extrude(openingShape(hole, wallOpeningTrim, hole.bottom ? hole.bottom - wallOpeningTrim : 0), front - wallFace, wallFace)))
         if (wall.trimStyle !== 'plain' && !hole.bottom) {
@@ -204,7 +207,12 @@ function cutArchitecture(wall: Wall) {
     // Like the baseboards, both bands start at the plaster face, so their ends never share the wall’s end faces. The lower band
     // stands 1 cm proud of a classic opening casing (0.27 m), which can run up into it in low rooms.
     const corniceBand = (height: number, front: number, y: number) => miter(box(wall.width, height, front - wallFace, 0, y, (front + wallFace) / 2))
-    const cornice = wall.trimStyle === 'none' || wall.cornice === false ? [] : corniceBands.map(({height, front, drop}) => corniceBand(height, front, wall.height - drop))
+    // Bare openings cut through it, so it doesn’t run across them like a lintel.
+    const bare = cutters.filter((_, index) => holes[index].casing === false)
+    const cornice = wall.trimStyle === 'none' || wall.cornice === false ? [] : corniceBands.map(({height, front, drop}) => {
+      const band = corniceBand(height, front, wall.height - drop)
+      return bare.length ? cut(band, bare) : band
+    })
     for (const part of cornice) {
       retained.add(part)
     }
@@ -263,7 +271,7 @@ export function createArchitectureGeometry(wall: Wall) {
   return withDisposal(cutArchitecture(wall))
 }
 
-const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
+const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null, wall.baseboardMiters ?? null])
 /** Cuts each distinct layout among `walls` once. Called at module level on fixed walls, the build bakes the result for {@link provideArchitecture}. */
 export function cutArchitectures(walls: ReadonlyArray<Wall>) {
   const cuts = new Map<string, ArchitectureParts>

@@ -23,7 +23,7 @@ export type RoomCamera = Omit<CameraBookmark, 'id'>
 /** a player pose in the room to arrive or teleport at, its feet positioned relative to the room’s origin */
 export type RoomSpawn = Omit<SpawnBookmark, 'id'>
 /** a wall of the room, the middle of its foot positioned relative to the room’s origin; it faces +z into the room before turning by its rotation around y */
-export type RoomWall = Omit<Wall, 'holes' | 'id' | 'miters' | 'room'> & {
+export type RoomWall = Omit<Wall, 'baseboardMiters' | 'holes' | 'id' | 'miters' | 'room'> & {
   /** the openings through the wall by their names within it, in snake_case, along the wall from its center */
   holes?: Record<string, Omit<WallOpening, 'name'>>
 }

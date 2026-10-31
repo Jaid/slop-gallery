@@ -1,6 +1,8 @@
 export const wallTop = 5.8
 export const wallFace = 0.105
 export const wallOpeningTrim = 0.17
+/** how thick a passage’s stone barrel vault is, which springs from its walls’ center lines and so stands this far out behind them */
+export const vaultShellThickness = 0.22
 /** how far the casing round an opening stands out of its wall’s center line, by the wall’s trim style */
 export const openingCasingFronts = {
   plain: 0.25,

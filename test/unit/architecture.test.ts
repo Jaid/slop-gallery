@@ -147,6 +147,11 @@ describe('boolean architecture', () => {
                 let depth = wall.trimStyle === 'plain' ? 0.25 : classicDepth
                 if (wall.trimStyle === 'none') {
                   depth = wallFace
+                } else if (hole.casing === false) {
+                  // Without a casing, only the baseboard stands out of the reveal, unless the jamb opens the wall’s corner, where the other wall’s baseboard runs on instead.
+                  const baseboard = wall.baseboardHeight ?? 0.44
+                  const opensCorner = wall.width / 2 - side * jamb <= wallFace + 1e-6
+                  depth = y >= baseboard || opensCorner ? wallFace : (y < baseboard - 0.06 ? 0.2 : 0.25)
                 }
                 const direction = new Vector3(side, side * (wall.slope ?? 0), 0)
                 direction.normalize()

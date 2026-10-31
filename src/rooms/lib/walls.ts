@@ -47,7 +47,7 @@ export function placeWalls(room: string, [x, y, z]: Vec3, walls: Iterable<readon
  */
 export function localWalls(room: string, [x, y, z]: Vec3, walls: ReadonlyArray<Wall>, holes: Readonly<Record<string, ReadonlyArray<string>>> = {}) {
   const result: Record<string, RoomWall> = {}
-  for (const {id, room: owner, center, holes: openings = [], miters: _, ...wall} of walls) {
+  for (const {id, room: owner, center, holes: openings = [], miters: _, baseboardMiters: _baseboardMiters, ...wall} of walls) {
     if (owner !== room || !id.startsWith(`${room}-`)) {
       throw new Error(`The wall ${id} is not part of the ${room}.`)
     }

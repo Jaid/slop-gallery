@@ -4,7 +4,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {ExtrudeGeometry, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {wallFace} from '../architectureDimensions.ts'
+import {vaultShellThickness, wallFace} from '../architectureDimensions.ts'
 
 /** how far a barrel vault reaches into an elbow, burying the ends of the walls’ cornices that stop where it would otherwise end */
 const junctionOverlap = 0.01
@@ -58,7 +58,7 @@ export default class VaultGeometry {
           .rotateY(rotation)
           .translate(start[0] + dx / length * distance, passage.floorY, start[1] + dz / length * distance)
       }
-      shells.push(part(radius, shellTo - shellFrom, 0.22, (shellTo + shellFrom) / 2))
+      shells.push(part(radius, shellTo - shellFrom, vaultShellThickness, (shellTo + shellFrom) / 2))
       const spandrel = (distance: number) => {
         // Its sides stay buried in the walls, between their faces and backs.
         const halfWidth = radius - wallFace / 2

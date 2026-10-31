@@ -18,6 +18,8 @@ export const placementIssues = {
 
 export type WallOpening = {
   bottom?: number
+  /** whether a trimmed wall frames it with a casing, true by default; a bare opening, like a vault’s mouth, cuts through the wall’s cornice too instead of passing under it */
+  casing?: boolean
   glassThickness?: number
   height: number
   /** the hole’s name within its wall, in snake_case, which openings between rooms refer to it by */
@@ -37,6 +39,8 @@ export type WallReservation = WallOpening & {
 
 export type Wall = {
   baseboardHeight?: number
+  /** How far the baseboard’s ends slant back where they differ from `miters`: square where the other wall of the corner is opened down to the floor right at it, so this baseboard runs on into whatever continues past the opening. */
+  baseboardMiters?: readonly [number, number]
   /** Floor contact in local coordinates; repeated u coordinates split the trim at a vertical jump. */
   baseboardProfile?: Array<readonly [number, number]>
   center: Vec3
