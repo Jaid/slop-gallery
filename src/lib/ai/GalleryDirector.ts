@@ -6,6 +6,7 @@ import {chime, loadBlob, notify} from '../gallery/actions.ts'
 import {compositeImages, fitGeneratedImage, tintImage} from '../gallery/ImageImporter.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
+import {tieredModel} from './settings.ts'
 
 export default class GalleryDirector {
   readonly narrator: PortraitNarration
@@ -70,7 +71,7 @@ export default class GalleryDirector {
         useGallery.getState().update(portrait.id, patch)
       }
       const generate = async () => this.generateFlavor(await loadBlob(source), update, AbortSignal.any([this.controller.signal, AbortSignal.timeout(90_000)]))
-      update(await (telemetry ? telemetry.wrap('gallery.ai.flavor', generate, {attributes: {model: this.settings.text_model}}) : generate()))
+      update(await (telemetry ? telemetry.wrap('gallery.ai.flavor', generate, {attributes: {model: tieredModel(this.settings.text_model, this.settings.ai_tier)}}) : generate()))
     } catch {
       if (current()) {
         notify('The curator is unavailable. Your artwork is safe; you can edit its label in Collection.')
@@ -95,7 +96,7 @@ export default class GalleryDirector {
   protected async generateFlavor(image: Blob, onPartial: (partial: Partial<Portrait>) => void, signal: AbortSignal): Promise<Partial<Portrait>> {
     const {default: FlavorGenerator} = await import('./FlavorGenerator.ts')
     const effort = ['high', 'low', 'medium', 'minimal', 'none'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
-    const flavorGenerator = new FlavorGenerator(this.key, this.settings.text_model, effort as 'low')
+    const flavorGenerator = new FlavorGenerator(this.key, tieredModel(this.settings.text_model, this.settings.ai_tier), effort as 'low')
     return flavorGenerator.generate(image, onPartial, signal)
   }
   protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {

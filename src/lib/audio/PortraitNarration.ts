@@ -6,6 +6,7 @@ import {noop} from 'es-toolkit'
 import {SpeechCache} from 'use-narrator/core'
 
 import NarrationGenerator from '../ai/NarrationGenerator.ts'
+import {tieredModel} from '../ai/settings.ts'
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
 import {intro} from './intro.ts'
@@ -60,7 +61,7 @@ export default class PortraitNarration {
   private unsubscribe: () => void
 
   constructor(private readonly settings: AiSettings, private readonly key: string, private readonly target: Narrator = narrator) {
-    const generator = new NarrationGenerator(key, settings.audio_model, settings.narrator_voice)
+    const generator = new NarrationGenerator(key, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice)
     this.cache = new SpeechCache((speech, signal) => generator.generate(speech.text, {
       signal: AbortSignal.any([signal, AbortSignal.timeout(90_000)]),
       character: settings.narrator_character,

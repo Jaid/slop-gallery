@@ -30,7 +30,7 @@ test('stereo PCM cannot silently become a mono file at the wrong speed', async (
 })
 test('Gemini speech uses PCM and the central Slop Gallery app attribution', async () => {
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Uint8Array([0, 0, 1, 0]), {headers: {'content-type': 'audio/pcm'}}))
-  const geminiNarrator = new NarrationGenerator('test-key', 'google/gemini-3.1-flash-tts-preview', 'Algenib')
+  const geminiNarrator = new NarrationGenerator('test-key', 'google/gemini-3.8-flash-tts', 'Algenib')
   const blob = await geminiNarrator.generate('GLM 5.3')
   const [url, options] = fetchSpy.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
@@ -40,7 +40,7 @@ test('Gemini speech uses PCM and the central Slop Gallery app attribution', asyn
   expect(headers.get('X-OpenRouter-Title')).toBe('Slop Gallery')
   expect(headers.get('X-OpenRouter-Categories')).toBe('game,image-gen')
   expect(JSON.parse(options!.body as string)).toEqual({
-    model: 'google/gemini-3.1-flash-tts-preview',
+    model: 'google/gemini-3.8-flash-tts',
     voice: 'Algenib',
     input: 'GLM 5.3',
     response_format: 'pcm',
@@ -72,6 +72,6 @@ test('all raw endpoints enforce attribution and cannot leak a key to another hos
 test('rejects malformed audio and wraps only complete 16-bit PCM samples', async () => {
   expect(() => pcmWave(new ArrayBuffer(1))).toThrow()
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', {headers: {'content-type': 'application/json'}}))
-  const geminiNarrator = new NarrationGenerator('test', 'google/gemini-3.1-flash-tts-preview', 'Algenib')
+  const geminiNarrator = new NarrationGenerator('test', 'google/gemini-3.8-flash-tts', 'Algenib')
   await expect(geminiNarrator.generate('Hello')).rejects.toThrow('unsupported audio')
 })

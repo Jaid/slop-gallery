@@ -5,7 +5,7 @@ import {GraphicsModeProvider} from 'use-graphics-mode'
 
 import Menu from '#component/Menu'
 
-import {patchAiSettings, readAiSettings} from '../../src/lib/ai/settings.ts'
+import {patchAiSettings, readAiSettings, tieredModel} from '../../src/lib/ai/settings.ts'
 
 test('model and narration preferences remain configurable through URL parameters', () => {
   const customSettingsQuery = new URLSearchParams({
@@ -28,6 +28,17 @@ test('model and narration preferences remain configurable through URL parameters
     narrator_character: 'custom-character',
     eager_audio: true,
   })
+})
+test('?ai_tier appends OpenRouter’s routing variant, and nothing without a valid tier', () => {
+  expect(readAiSettings('').ai_tier).toBeUndefined()
+  expect(readAiSettings('?ai_tier=flex').ai_tier).toBe('flex')
+  expect(readAiSettings('?ai_tier=priority').ai_tier).toBe('priority')
+  for (const value of ['', 'fast', 'floor', 'FLEX', 'default']) {
+    expect(readAiSettings(`?ai_tier=${value}`).ai_tier).toBeUndefined()
+  }
+  expect(tieredModel('google/gemini-4-argon', undefined)).toBe('google/gemini-4-argon')
+  expect(tieredModel('google/gemini-4-argon', 'flex')).toBe('google/gemini-4-argon:floor')
+  expect(tieredModel('google/gemini-3.8-flash-tts', 'priority')).toBe('google/gemini-3.8-flash-tts:nitro')
 })
 test('?ai=false disables AI, while a missing parameter keeps it on', () => {
   expect(readAiSettings('?ai=false').ai).toBe(false)
