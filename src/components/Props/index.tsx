@@ -2,9 +2,9 @@ import Orb from '#component/Orb'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import Box from '#src/components/Scene/primitives.tsx'
+import cinnabar from '#src/lib/gallery/cinnabar.ts'
 import {oculusLandingPlinths} from '#src/lib/gallery/lowerGallery.ts'
 import {halloweenOrb, orbRadius} from '#src/lib/gallery/orbs.ts'
-import sienna from '#src/lib/gallery/sienna.ts'
 import gold from '#src/lib/materials/gold.ts'
 
 const [westPlinth, eastPlinth] = oculusLandingPlinths
@@ -25,7 +25,7 @@ export default function Props() {
     <GrabbableProp id='prop-ring' orbit={{radius: 0.24}} position={[eastPlinth.position[0], plinthTop(eastPlinth) + 0.06, eastPlinth.position[2]]} rotation={[Math.PI / 2, 0, 0]} title='One ring, to keep things simple' type='dynamic'>
       <mesh castShadow material={gold} receiveShadow><torusGeometry args={[0.18, 0.06, 12, 32]} /></mesh>
     </GrabbableProp>
-    {/* On the Sienna’s rug, between its spawn and the chandelier, sunk into the pile: only the floor under it collides */}
-    <Orb orb={halloweenOrb} position={[sienna.center[0] - 1, orbRadius, sienna.center[1] + 1]} />
+    {/* On the Cinnabar’s terrazzo, in the middle under its rooflight */}
+    <Orb orb={halloweenOrb} position={[cinnabar.center[0], orbRadius, cinnabar.center[1]]} />
   </>
 }

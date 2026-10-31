@@ -12,7 +12,7 @@ export type OrbKind = Omit<ThrownOrb, 'id' | 'prompt'> & {
 /** the radius of every orb’s ball, in meters */
 export const orbRadius = 0.14
 
-const halloweenAdjectives = ['unsettling', 'creepy', 'eerie', 'disturbing', 'nightmarish', 'uncanny', 'haunting', 'grotesque', 'paranormal', 'liminal', 'distorted']
+const halloweenAdjectives = ['unsettling', 'creepy', 'eerie', 'disturbing', 'nightmarish', 'uncanny', 'haunting', 'grotesque', 'paranormal', 'liminal', 'distorted', 'sinister']
 
 export const halloweenOrb: OrbKind = {
   id: 'halloween',
