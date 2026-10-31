@@ -11,9 +11,9 @@ export default class extends ExternalGenerator {
   generate(firstImage: Blob, secondImage: Blob, signal?: AbortSignal) {
     return this.edit([firstImage, secondImage], 'Please merge the provided images into a single result. It’s up to you to decide how to merge them. For example, if one image is a character and the other is a scene, you can place the character in the scene. If both images show a character, you could come up with a cool fusion of both of them or you could insert one character into the other’s scene or you could show them together – whatever makes sense to you. Feel free to be creative and artistic and come up with a result that is funny or interesting or clever or mind-blowing', signal)
   }
-  /** Reworks the artwork `image` by the prompt of an orb thrown into it. */
+  /** Reworks the artwork `image` by the prompt of an orb thrown into it, which is a whole instruction of its own and sent verbatim. */
   generateFromOrb(image: Blob, prompt: string, signal?: AbortSignal) {
-    return this.edit([image], `The provided image is an artwork that was just struck by a magic orb. Please rework the artwork as the orb demands. Feel free to be creative and artistic and come up with a result that is funny or interesting or clever or mind-blowing. The orb demands:\n\n${prompt}`, signal)
+    return this.edit([image], prompt, signal)
   }
   private async edit(sources: Array<Blob>, text: string, signal?: AbortSignal) {
     const images = await Promise.all(sources.map(image => image.arrayBuffer()))

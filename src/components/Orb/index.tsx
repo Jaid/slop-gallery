@@ -6,6 +6,7 @@ import {useMemo} from 'react'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
 import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
+import {useEnvironmentSeed} from '#src/lib/gallery.ts'
 import {orbRadius} from '#src/lib/gallery/orbs.ts'
 
 /** A glossy ball glowing faintly in its orb’s color, which rolls when knocked and reworks a work it is thrown into by the orb’s prompt. */
@@ -23,7 +24,12 @@ export default function Orb({orb, position}: {
     sheen: 1,
     sheenColor: orb.color,
   }), [orb.color]))
-  return <GrabbableProp id={`prop-orb-${orb.id}`} colliders='ball' orb={orb} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
+  const seed = useEnvironmentSeed()
+  const spell = useMemo(() => ({
+    color: orb.color,
+    prompt: orb.prompt(seed),
+  }), [orb, seed])
+  return <GrabbableProp id={`prop-orb-${orb.id}`} colliders='ball' orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
     <mesh castShadow material={material}><sphereGeometry args={[orbRadius, 48, 32]} /></mesh>
   </GrabbableProp>
 }

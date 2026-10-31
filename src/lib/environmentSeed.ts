@@ -63,6 +63,16 @@ export function environmentPick<T>(seed: number, id: string, items: ReadonlyArra
   return items[Math.floor(environmentRoll(seed, id) * items.length)]
 }
 
+/** A stable choice of `count` different items among `items` for the thing with the given `id` in the environment of `seed`, in the order of `items`. */
+export function environmentSample<T>(seed: number, id: string, items: ReadonlyArray<T>, count: number): Array<T> {
+  if (!Number.isInteger(count) || count < 0 || count > items.length) {
+    throw new Error(`Cannot pick ${count} of ${items.length} items for ${id}.`)
+  }
+  const rolls = items.map((_, index) => environmentRoll(seed, `${id}:${index}`))
+  const picked = new Set(rolls.keys().toArray().toSorted((a, b) => rolls[a] - rolls[b]).slice(0, count))
+  return items.filter((_, index) => picked.has(index))
+}
+
 /** A stable choice among the `[item, weight]` pairs for the thing with the given `id` in the environment of `seed`, each item as likely as its share of the weights. */
 export function environmentWeightedPick<T>(seed: number, id: string, items: ReadonlyArray<readonly [T, number]>): T {
   const total = items.reduce((sum, [, weight]) => sum + weight, 0)

@@ -83,5 +83,5 @@ test('the real image adapter sends an orb’s prompt with the work as the only i
     prompt: string
   }
   expect(request.input_references.map(r => r.image_url.url.split(',')[1])).toEqual([data.toBase64()])
-  expect(request.prompt).toEndWith('Make it spooky.')
+  expect(request.prompt).toBe('Make it spooky.')
 })

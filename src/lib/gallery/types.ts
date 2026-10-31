@@ -38,7 +38,7 @@ export type ThrownOrb = {
   /** the orb’s glow, which tints the work instead when the merge is made locally, without AI */
   color: string
   id: string
-  /** what the image model is asked to do to the work */
+  /** the whole instruction the image model gets along with the work, sent verbatim */
   prompt: string
   title: string
 }

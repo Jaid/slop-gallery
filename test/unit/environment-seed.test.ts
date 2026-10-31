@@ -2,9 +2,10 @@ import {afterEach, beforeEach, expect, test} from 'bun:test'
 
 import {IDBFactory} from 'fake-indexeddb'
 
-import {effectiveSeed, environmentPick, environmentRoll, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
+import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {resetGallery} from '../../src/lib/gallery/actions.ts'
 import GalleryRepository, {validateDocument} from '../../src/lib/gallery/GalleryRepository.ts'
+import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import samplePortraits from './fixtures/portraits.ts'
@@ -70,6 +71,42 @@ test('rolls spread evenly over seeds and over IDs', () => {
     expect(count).toBeGreaterThan(1800)
     expect(count).toBeLessThan(2200)
   }
+})
+test('samples pick distinct items in list order, the same for the same seed and ID', () => {
+  const items = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+  const sample = environmentSample(1, 'letters', items, 5)
+  expect(sample).toHaveLength(5)
+  const distinct = new Set(sample)
+  expect(distinct.size).toBe(5)
+  expect(sample).toEqual(items.filter(item => sample.includes(item)))
+  expect(environmentSample(1, 'letters', items, 5)).toEqual(sample)
+  const samples = new Set(Array.from({length: 200}, (_, seed) => environmentSample(seed, 'letters', items, 5).join('')))
+  expect(samples.size).toBeGreaterThan(30)
+  const picks = new Map(items.map(item => [item, 0]))
+  for (let seed = 0; seed < 8000; seed++) {
+    for (const item of environmentSample(seed, 'letters', items, 5)) {
+      picks.set(item, picks.get(item)! + 1)
+    }
+  }
+  // Each item lands in 5 of 8 samples.
+  for (const count of picks.values()) {
+    expect(count).toBeGreaterThan(4700)
+    expect(count).toBeLessThan(5300)
+  }
+  expect(environmentSample(1, 'letters', items, 0)).toEqual([])
+  expect(environmentSample(1, 'letters', items, 8)).toEqual(items)
+  expect(() => environmentSample(1, 'letters', items, 9)).toThrow()
+})
+test('the Halloween Orb’s prompt names 5 of its adjectives, the same for the same seed', () => {
+  const prompt = halloweenOrb.prompt(1)
+  expect(halloweenOrb.prompt(1)).toBe(prompt)
+  const [, list] = /make it (.+)\.$/u.exec(prompt)!
+  const adjectives = list.replace(' or ', ', ').split(', ')
+  expect(adjectives).toHaveLength(5)
+  const distinct = new Set(adjectives)
+  expect(distinct.size).toBe(5)
+  const prompts = new Set(Array.from({length: 50}, (_, seed) => halloweenOrb.prompt(seed)))
+  expect(prompts.size).toBeGreaterThan(10)
 })
 test('every pot placement can grow every plant, and seed 1 stays put', () => {
   for (const placement of potPlacements) {
