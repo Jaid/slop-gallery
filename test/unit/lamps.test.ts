@@ -59,6 +59,8 @@ test('a lamp shines in its own room and in the rooms that keep it', () => {
   expect(slopGallery.lampRooms(lamp('fortress-lantern_north')).toSorted()).toEqual(['fortress', 'lodge', 'oculus'])
   expect(slopGallery.lampRooms(lamp('corridor-lantern_landing')).toSorted()).toEqual(['corridor', 'sienna'])
   expect(slopGallery.lampRooms(lamp('sienna-vestibule')).toSorted()).toEqual(['corridor', 'sienna', 'vesper'])
+  // The Cinnabar keeps no fortress lamp on, so the strip lantern past its north doorway only shines in the Fortress.
+  expect(slopGallery.lampRooms(lamp('fortress-lantern_strip')).toSorted()).toEqual(['fortress'])
 })
 test('the passages’ lamps hang under the lanterns the fixtures hang from their vaults and ribs', () => {
   const vault = new RouteVaultGeometry(fortressCurve)

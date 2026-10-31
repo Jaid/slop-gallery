@@ -6,6 +6,7 @@ import {Box3, Frustum, Matrix4, PerspectiveCamera, Sphere, Vector3} from 'three/
 
 import lobbyLayout from '../../src/lib/gallery/lobby.ts'
 import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
+import relations from '../../src/worlds/gallery/relations.ts'
 import {rooms} from './fixtures/gallery.ts'
 
 const viewProjection = (position: Vec3, target: Vec3) => {
@@ -28,6 +29,31 @@ test('every room contains its own center', () => {
 test('every room is reachable through its portals', () => {
   const linked = new Set(portals.flatMap(portal => portal.rooms))
   expect(rooms.filter(room => !linked.has(room.id))).toEqual([])
+})
+test('the rooms only relate rooms they can reach through up to three openings', () => {
+  const neighbours = new Map<string, Set<string>>
+  for (const {rooms: pair} of portals) {
+    for (const [from, to] of [pair, [pair[1], pair[0]]] as const) {
+      neighbours.set(from, (neighbours.get(from) ?? new Set).add(to))
+    }
+  }
+  const withinThree = (start: string) => {
+    const seen = new Set([start])
+    let frontier = [start]
+    for (let depth = 0; depth < 3; depth++) {
+      frontier = frontier.flatMap(room => [...neighbours.get(room) ?? []]).filter(room => !seen.has(room) && seen.add(room))
+    }
+    return seen
+  }
+  for (const [room, {rooms: related}] of Object.entries(relations)) {
+    const reachable = withinThree(room)
+    for (const other of related) {
+      expect(`${room} relates ${reachable.has(other) ? '' : 'unreachable '}${other}`).toBe(`${room} relates ${other}`)
+    }
+  }
+  // The Cinnabar’s only doorway leads into the Fortress, so only the Fortress relates it.
+  expect(Object.entries(relations).filter(([, {rooms: related}]) => related.includes('cinnabar' as never)).map(([room]) => room)).toEqual(['fortress'])
+  expect(relations.cinnabar.rooms).toEqual(['fortress'])
 })
 test('a room shows the rooms behind the openings in view', () => {
   // From the Vesper through both side doors of the Lobby into the Banquet, through the Lobby’s glass wall into the Salon and through the Antechamber down the stairway to Moonfall, but no further.

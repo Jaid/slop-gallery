@@ -13,7 +13,7 @@ export type RoomRelations = {
   /** the other rooms whose models stay enabled: the rooms a player can see into through up to three openings; the frustum still culls them per frame */
   rooms: ReadonlyArray<RoomId>
   /** other rooms’ lamps that stay on, because they reach into this room or can be seen from it */
-  visibleLamps: ForeignIds
+  visibleLamps?: ForeignIds
 }
 
 /** an opening between two rooms: the holes of the walls it passes through, by global wall id and the hole’s name within its wall */
@@ -120,7 +120,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'cinnabar', 'oculus', 'sienna', 'exhibition', 'fortress'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'oculus', 'sienna', 'exhibition', 'fortress'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -137,7 +137,7 @@ const relations = {
     },
   },
   vesper: {
-    rooms: ['lobby', 'cinnabar', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
+    rooms: ['lobby', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -157,7 +157,7 @@ const relations = {
     },
   },
   banquet: {
-    rooms: ['lobby', 'salon', 'vesper', 'cinnabar', 'antechamber', 'oculus'],
+    rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -167,7 +167,7 @@ const relations = {
     },
   },
   antechamber: {
-    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'cinnabar', 'oculus'],
+    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -184,7 +184,7 @@ const relations = {
     },
   },
   sienna: {
-    rooms: ['vesper', 'cinnabar', 'corridor', 'lobby', 'salon'],
+    rooms: ['vesper', 'corridor', 'lobby', 'salon'],
     visibleLamps: {
       lobby: [
         'chandelier_north',
@@ -199,7 +199,7 @@ const relations = {
     },
   },
   salon: {
-    rooms: ['banquet', 'lobby', 'vesper', 'cinnabar', 'antechamber', 'oculus', 'sienna', 'exhibition'],
+    rooms: ['banquet', 'lobby', 'vesper', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -210,11 +210,8 @@ const relations = {
     },
   },
   cinnabar: {
-    rooms: ['vesper', 'fortress', 'lobby', 'sienna', 'banquet'],
+    rooms: ['fortress'],
     floorMirror: 'base',
-    visibleLamps: {
-      fortress: 'lantern_strip',
-    },
   },
   moonfall: {
     rooms: ['antechamber', 'exhibition', 'oculus'],
