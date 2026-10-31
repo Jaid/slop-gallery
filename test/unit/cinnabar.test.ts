@@ -164,9 +164,30 @@ describe('the Cinnabar', () => {
           expect(node?.isNode).toBe(true)
         }
         expect(Boolean(floor.reflection)).toBe(reflections)
+        expect(floor.mirrored.value).toBe(1)
       } finally {
         floor.dispose()
       }
+    }
+    // The Cinnabar’s polish mirrors as strongly and clearly as the Banquet’s marble.
+    const polished = new TerrazzoFloorMaterial({
+      center: room.center,
+      size: room.size,
+      field: venetianTerrazzo,
+      border: blackTerrazzo,
+      inset: cinnabarTerrazzo.border,
+      reflections: true,
+      strength: 0.4,
+      grazingStrength: 0.2,
+      loss: 0,
+      roughness: 0.1,
+    })
+    try {
+      expect(polished.reflection).not.toBeNull()
+      expect(polished.reflectionTarget).not.toBeNull()
+      expect(polished.roughness).toBe(0.1)
+    } finally {
+      polished.dispose()
     }
     expect(() => new TerrazzoFloorMaterial({
       center: [0, 0],

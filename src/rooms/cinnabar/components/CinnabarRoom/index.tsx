@@ -37,6 +37,11 @@ export default function CinnabarRoom({glass, stone, wood}: {
     border: blackTerrazzo,
     inset: cinnabarTerrazzo.border,
     reflections: floorReflections,
+    // Polished hard like the Banquet’s marble, so the red walls and the rooflight mirror clearly in it.
+    strength: 0.4,
+    grazingStrength: 0.2,
+    loss: 0,
+    roughness: 0.1,
   }), [floorReflections]))
   const floor = useMemo(() => ({
     slab: terrazzo,

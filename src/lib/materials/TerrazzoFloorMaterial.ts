@@ -17,12 +17,20 @@ export type TerrazzoFloorOptions = {
   /** the room’s middle in world x/z and its size between its walls’ center lines, which the border is measured from */
   center: readonly [number, number]
   field: TerrazzoMix
+  /** extra share of the mirror at grazing angles */
+  grazingStrength?: number
   /** how far from the walls’ center lines the field begins and the border ends */
   inset?: number
+  /** mip level the mirror is read at, 0 being its full resolution */
+  loss?: number
   /** whether the polished floor mirrors the room (heavy mode) */
   reflections?: boolean
+  /** roughness of the polished floor in heavy mode */
+  roughness?: number
   seed?: number
   size: readonly [number, number]
+  /** share of the mirror when looking straight down */
+  strength?: number
 }
 
 type Float = Node<'float'>
@@ -95,7 +103,7 @@ function chipColor({chips}: TerrazzoMix, pick: Float) {
  * Every chip is an irregular shard with a color of its own. In heavy mode the polish mirrors the room softly, bent a little by the waviness of a ground floor. Chips smaller than a pixel fade to their average before they could shimmer.
  */
 export default class TerrazzoFloorMaterial extends FloorMaterial {
-  constructor({border, center, field, inset = 0, reflections = true, seed = 0, size}: TerrazzoFloorOptions) {
+  constructor({border, center, field, grazingStrength = 0.3, inset = 0, loss = 2.5, reflections = true, roughness, seed = 0, size, strength = 0.06}: TerrazzoFloorOptions) {
     if (!(size[0] > 0 && size[1] > 0) || inset < 0) {
       throw new RangeError('A terrazzo floor needs a positive size and a border inset of at least zero.')
     }
@@ -116,14 +124,14 @@ export default class TerrazzoFloorMaterial extends FloorMaterial {
       return mix(stone, chipColor(blend, coarse.pick), coarseCoverage)
     }
     const top = normalWorldGeometry.y.step(0.5)
-    const finish = reflections ? 0.2 : 0.4
+    const finish = reflections ? roughness ?? 0.2 : 0.4
     super(null, {
       color: '#ffffff',
       roughness: finish,
       reflection: reflections ? {
-        strength: 0.06,
-        grazingStrength: 0.3,
-        loss: 2.5,
+        strength,
+        grazingStrength,
+        loss,
         mask: top,
       } : undefined,
     })
