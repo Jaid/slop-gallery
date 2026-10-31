@@ -68,7 +68,8 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
           continue
         }
         const portrait = s.portraits.find(candidate => candidate.id === id)
-        if (portrait?.reserved) {
+        // Whatever orbits a fusion’s portal is out of reach.
+        if (portrait?.reserved || portrait?.merging || propObjects.get(id)?.seized()) {
           continue
         }
         const hits = ray.current.intersectObject(object.group, true)

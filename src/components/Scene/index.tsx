@@ -4,6 +4,7 @@ import {useEffect, useLayoutEffect, useRef} from 'react'
 
 import AmbienceEmitterMarkers from '#component/AmbienceEmitterMarkers'
 import AmbienceListener from '#component/AmbienceListener'
+import Fusions from '#component/Fusions'
 import Lamps from '#component/Lamps'
 import LightLevels from '#component/LightLevels'
 import LightMarkers from '#component/LightMarkers'
@@ -39,6 +40,7 @@ export default function Scene() {
     <Skybox />
     <Lamps />
     <Portraits />
+    <Fusions />
     {/* Hidden with O, the markers keep working: editors still aim, drag and switch what they mark. */}
     <group name='scene-ui' visible={!uiHidden}>
       <Branch if={isShowingPortraitSlots} then={PortraitSlots} />

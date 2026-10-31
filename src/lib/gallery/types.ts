@@ -20,6 +20,8 @@ export type Portrait = {
   reserved?: boolean
   rotation: number
   source: Blob | string
+  /** the angular velocity a loose work takes off with, in radians per second around the world axes, along with `velocity` */
+  spin?: MathVec3
   title: string
   velocity?: MathVec3
   wallId?: string
@@ -33,14 +35,12 @@ export type ThrownObject = {
   snapshot: () => Promise<Blob>
   title: string
 }
-/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself */
-export type ThrownOrb = {
-  /** the orb’s glow, which tints the work instead when the merge is made locally, without AI */
+/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself; its photograph only shows in the merge’s portal */
+export type ThrownOrb = ThrownObject & {
+  /** the orb’s glow, which tints the work instead when the merge is made locally, without AI, and the portal of the merge */
   color: string
-  id: string
   /** the whole instruction the image model gets along with the work, sent verbatim */
   prompt: string
-  title: string
 }
 export type ThrownItem = ThrownObject | ThrownOrb
 /** the aspect ratios of default works and their slots, as width:height */

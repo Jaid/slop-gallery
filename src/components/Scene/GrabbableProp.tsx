@@ -10,6 +10,7 @@ import {RigidBody, useRapier} from '@react-three/rapier'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 
 import {cameraPose, notify, requestItemMerge, useGallery} from '#src/lib/gallery.ts'
+import {handBack} from '#src/lib/gallery/fusion/handBack.ts'
 import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 import {bodyThrow, clearBodyThrow} from '#src/lib/physics/ThrowState.ts'
@@ -24,9 +25,15 @@ export type PropHandle = {
   group: Group
   move: (origin: Vec3, position: Vec3, delta: number) => void
   release: (throwing: boolean) => void
+  /** Takes the prop out of the physics for a fusion, which flies it around by its `group` until it calls `unleash`; false while the player carries it. */
+  seize: () => boolean
+  /** whether a fusion holds the prop */
+  seized: () => boolean
   /** Photographs the prop as it is now in the studio, as a WebP for a merge. */
   snapshot: () => Promise<Blob>
   title: string
+  /** Hands the prop back to the physics where its `group` is, flying off with the velocities. */
+  unleash: (velocity: Vec3, spin: Vec3) => void
 }
 export const propObjects = new Map<string, PropHandle>
 /** a stand-in to photograph instead of the prop’s own children, built in the prop’s own frame, and how to release what was made for it */
@@ -87,10 +94,29 @@ export default function GrabbableProp({id, title, orb, orbit, children, canGrab,
     })
     controller.current = carried
     const prop = group.current
+    const rigidBody = body.current
+    let seized = false
     const handle: PropHandle = {
-      body: body.current,
+      body: rigidBody,
       group: prop,
       title,
+      seize: () => {
+        if (seized || carried.active) {
+          return false
+        }
+        seized = true
+        clearBodyThrow(rigidBody)
+        rigidBody.setEnabled(false)
+        return true
+      },
+      seized: () => seized,
+      unleash: (velocity, spin) => {
+        if (!seized) {
+          return
+        }
+        seized = false
+        handBack(rigidBody, prop, velocity, spin)
+      },
       snapshot: async () => {
         const subject = callbacks.current.snapshotSubject?.()
         if (!subject) {
@@ -104,9 +130,9 @@ export default function GrabbableProp({id, title, orb, orbit, children, canGrab,
           subject.dispose()
         }
       },
-      canGrab: () => !carried.active && (callbacks.current.canGrab?.() ?? true),
+      canGrab: () => !seized && !carried.active && (callbacks.current.canGrab?.() ?? true),
       grab: () => {
-        if (!carried.grab()) {
+        if (seized || !carried.grab()) {
           const message = callbacks.current.blockedMessage?.()
           if (message) {
             notify(message)
@@ -175,15 +201,11 @@ export default function GrabbableProp({id, title, orb, orbit, children, canGrab,
       return
     }
     clearBodyThrow(current)
-    requestItemMerge(target.id, orb ? {
-      id,
-      title,
-      color: orb.color,
-      prompt: orb.prompt,
-    } : {
+    requestItemMerge(target.id, {
       id,
       title,
       snapshot: handle.snapshot,
+      ...orb,
     })
   }
   return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>

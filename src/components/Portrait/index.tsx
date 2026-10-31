@@ -1,12 +1,12 @@
 import type {Portrait as PortraitData, Quat, Vec3} from '#src/lib/gallery.ts'
 import type {RapierRigidBody} from '@react-three/rapier'
-import type {Group, InstancedMesh} from 'three/webgpu'
+import type {Group} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import {useEffect, useRef} from 'react'
-import {Object3D, Quaternion, Vector3} from 'three/webgpu'
+import {Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
@@ -18,10 +18,7 @@ import world from '#src/worlds/current.ts'
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
-  const magic = useRef<InstancedMesh>(null)
   const held = useGallery(s => s.held === p.id)
-  const dummy = new Object3D
-  const clock = useRef(0)
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
@@ -36,9 +33,10 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       portraitObjects.delete(p.id)
     }
   }, [p.id])
+  // A fusion flies the work around by its group meanwhile, so its body neither stands in the way nor falls.
   useEffect(() => {
-    body.current?.setEnabled(!held && !p.reserved)
-  }, [held, p.reserved])
+    body.current?.setEnabled(!held && !p.reserved && !p.merging)
+  }, [held, p.reserved, p.merging])
   useEffect(() => {
     if (!body.current) {
       return
@@ -59,27 +57,15 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         y: p.velocity[1],
         z: p.velocity[2],
       }, true)
+      const [x, y, z] = p.spin ?? [2.2, 0.7, 2.8]
       body.current.setAngvel({
-        x: 2.2,
-        y: 0.7,
-        z: 2.8,
+        x,
+        y,
+        z,
       }, true)
     }
-  }, [p.hung, p.velocity])
-  useFrame((_, dt) => {
-    clock.current += Math.min(dt, 0.06)
-    if (p.merging && magic.current) {
-      for (let i = 0; i < 64; i++) {
-        const a = i * Math.PI / 32 + clock.current * 1.9
-        const pulse = 1 + Math.sin(a * 3 + clock.current) * 0.045
-        dummy.position.set(Math.cos(a) * (w / 2 + 0.35) * pulse, Math.sin(a) * (h / 2 + 0.35) * pulse, 0.25 + Math.sin(a * 2 + clock.current) * 0.3)
-        dummy.rotation.set(a, a * 2, a)
-        dummy.scale.setScalar(0.028 + i % 3 * 0.011)
-        dummy.updateMatrix()
-        magic.current.setMatrixAt(i, dummy.matrix)
-      }
-      magic.current.instanceMatrix.needsUpdate = true
-    }
+  }, [p.hung, p.velocity, p.spin])
+  useFrame(() => {
     const position = body.current?.translation()
     if (body.current && position && !p.hung && position.y < world.placement.floorHeight([position.x, position.y, position.z]) - 4) {
       const [x, y, z] = world.placement.recoveryPosition
@@ -122,6 +108,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         position: [pos.x, pos.y, pos.z] as Vec3,
         orientation: [q.x, q.y, q.z, q.w] as Quat,
         velocity: undefined,
+        spin: undefined,
       })
     }}
   >
@@ -130,7 +117,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       userData={{
         pickup: true,
         portraitId: p.id,
-      }} visible={!p.reserved} ref={group}
+      }} ref={group}
     >
       {/* Only a held work fades; hung ones stay opaque so the floor glass, which refracts opaque surfaces only, shows them in the room below. */}
       <mesh castShadow name='portrait-frame' receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]} /><meshStandardNodeMaterial key={String(held)} color='#a5804b' metalness={0.75} opacity={held ? 0.3 : 1} roughness={0.32} transparent={held} /></mesh>
@@ -140,8 +127,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         <mesh name='portrait-fillet' position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
         <mesh name='portrait-fillet' position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
       </group>)}
-      <Branch if={p.hung}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
-      <instancedMesh args={[undefined, undefined, 64]} frustumCulled={false} name='portrait-merge-sparks' visible={!!p.merging} ref={magic}><octahedronGeometry args={[1]} /><meshBasicNodeMaterial color='#efcf84' toneMapped={false} /></instancedMesh>
+      {/* The placard hides while the work orbits a fusion’s portal. */}
+      <Branch if={p.hung && !p.merging}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
     </group>
   </RigidBody>
 }

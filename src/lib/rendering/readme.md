@@ -78,6 +78,10 @@ With the dev server and the debug browser:
 bun test/browser/run.ts studioSnapshot.ts
 ```
 
+## Fusion portals
+
+A merge opens a portal in front of the hung work (`src/lib/gallery/fusion`): `PortalCore` draws it as two camera-facing quads, so it reads as a ball from every side. The disc blends normally: its vortex, the ingredient’s image and, around it, a lens that bends the opaque scene toward it through `viewportSharedTexture`, whose one copy per frame the portal shares. The glow adds onto it: the rim, the corona, the shockwaves and the flash, fading out well inside the quad, or its square would show through the bloom. Both write their color only (`TransparentSpriteOutputsNode`). `PortalSparks` (inflowing and bursting, one instanced draw) and one `EnergyTether` per satellite add on top, all animated by uniforms or on the GPU, and a shadowless point light, which the batched lights take in without rebuilding a material. `Fusions` keeps a portal with every part at radius 0 in the scene until the loading screen lifts, so their pipelines compile there instead of the first real portal popping in late; every portal shares them.
+
 ## Native regression
 
 With the existing browser on the Knottingham production origin:

@@ -3,7 +3,7 @@ import type {ThrownOrb} from './types.ts'
 import {environmentSample} from '../environmentSeed.ts'
 
 /** an orb’s kind; its prop is `prop-orb-<id>` */
-export type OrbKind = Omit<ThrownOrb, 'id' | 'prompt'> & {
+export type OrbKind = Omit<ThrownOrb, 'id' | 'prompt' | 'snapshot'> & {
   id: string
   /** the orb’s whole instruction to the image model in the environment of `seed`, sent verbatim along with the work */
   prompt: (seed: number) => string

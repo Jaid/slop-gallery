@@ -1,0 +1,142 @@
+import type Fusion from '#src/lib/gallery/fusion/Fusion.ts'
+import type {PortalPalette} from '#src/lib/gallery/fusion/PortalCore.ts'
+import type {Texture} from 'three/webgpu'
+
+import {clamp} from 'math'
+import {Color, Group, PointLight} from 'three/webgpu'
+
+import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
+import PortalVisuals, {emberPalette, paletteOf} from '#src/lib/gallery/fusion/PortalVisuals.ts'
+import {holdArtworkTexture} from '#src/lib/useArtworkTexture.ts'
+
+import Satellites from './Satellites.ts'
+
+type HeldImage = {
+  release: () => void
+  texture?: Texture<{
+    height: number
+    width: number
+  }>
+}
+
+/** how far the portal’s light reaches, in meters */
+const lightRange = 8
+
+/**
+ * One fusion as the scene shows it: its portal, its light and the choreography of what orbits it, all following the fusion’s clock frame by frame.
+ * Disposing it hands back whatever still orbits and lets go of the images it showed.
+ */
+export default class PortalShow {
+  readonly root = new Group
+  private readonly embers: PortalPalette
+  private readonly fusion: Fusion
+  private readonly images = new Map<Blob | string, HeldImage>
+  private last?: number
+  private readonly light = new PointLight('#ffffff', 0, lightRange, 2)
+  private readonly paint: PortalPalette = {
+    core: new Color,
+    rim: new Color,
+    swirl: new Color,
+  }
+  private readonly palette: PortalPalette
+  private phase = 0
+  private readonly satellites: Satellites
+  private readonly visuals = new PortalVisuals
+
+  constructor(fusion: Fusion) {
+    this.fusion = fusion
+    this.satellites = new Satellites(fusion)
+    this.palette = paletteOf(fusion.spec.color)
+    this.embers = paletteOf()
+    this.embers.core.set(emberPalette.core)
+    this.embers.swirl.set(emberPalette.swirl)
+    this.embers.rim.set(emberPalette.rim)
+    this.visuals.place(fusion.frame.center)
+    this.light.position.fromArray(fusion.frame.center)
+    this.light.name = 'fusion-light'
+    this.root.name = `fusion-${fusion.id}`
+    this.root.add(this.visuals.root, this.light)
+  }
+
+  dispose() {
+    this.satellites.dispose()
+    for (const image of this.images.values()) {
+      image.release()
+    }
+    this.images.clear()
+    this.visuals.dispose()
+  }
+
+  /** Brings everything to `elapsed` seconds into the fusion. */
+  update(elapsed: number) {
+    const {fusion, visuals} = this
+    const {frame, outcome, timing} = fusion
+    const delta = this.last === undefined ? 0 : clamp(elapsed - this.last, 0, 0.1)
+    this.last = elapsed
+    const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, fusion.spec.ingredients.length)
+    this.phase = (this.phase + envelope.spin * delta) % (Math.PI * 2000)
+    // Colors die down to embers while it fizzles.
+    this.paint.core.lerpColors(this.palette.core, this.embers.core, envelope.embers)
+    this.paint.swirl.lerpColors(this.palette.swirl, this.embers.swirl, envelope.embers)
+    this.paint.rim.lerpColors(this.palette.rim, this.embers.rim, envelope.embers)
+    visuals.paint(this.paint)
+    const {uniforms} = visuals.core
+    uniforms.radius.value = frame.radius * envelope.size
+    uniforms.energy.value = envelope.energy
+    uniforms.flash.value = envelope.flash
+    uniforms.pulse.value = envelope.pulse
+    uniforms.pulseStrength.value = envelope.pulseStrength
+    uniforms.phase.value = this.phase
+    uniforms.clock.value = elapsed
+    this.show(envelope.image)
+    const sparks = visuals.sparks.uniforms
+    sparks.radius.value = frame.radius
+    sparks.clock.value = elapsed
+    sparks.energy.value = envelope.size > 0.05 ? envelope.energy * (1 - envelope.embers) : 0
+    sparks.burst.value = envelope.burst
+    sparks.burstStrength.value = envelope.burstStrength
+    this.satellites.update(elapsed)
+    for (const [index, tether] of visuals.tethers.entries()) {
+      const from = this.satellites.centers[index]
+      tether.uniforms.clock.value = elapsed
+      tether.uniforms.energy.value = from ? Math.min(envelope.energy, 1.3) * clamp((elapsed - 0.35) / 0.5, 0, 1) : 0
+      tether.uniforms.to.value.fromArray(frame.center)
+      if (from) {
+        tether.uniforms.from.value.copy(from)
+      }
+    }
+    this.light.intensity = envelope.light
+    this.light.color.copy(this.paint.swirl).lerp(this.paint.rim, envelope.flash / 2)
+  }
+
+  /** The image, held in the artworks’ shared cache until the portal closes, once it is decoded. */
+  private image(source: Blob | string) {
+    let image = this.images.get(source)
+    if (!image) {
+      const {texture, release} = holdArtworkTexture(source)
+      const held: HeldImage = {release}
+      void texture.then(loaded => {
+        held.texture = loaded
+      }, () => {})
+      image = held
+      this.images.set(source, image)
+    }
+    return image.texture
+  }
+
+  /** Shows the ingredient or the result the envelope asks for, once its image is decoded. */
+  private show(image: ReturnType<typeof portalEnvelope>['image']) {
+    const {core} = this.visuals
+    const source = image && ('result' in image ? this.fusion.result : this.fusion.spec.ingredients[image.index])
+    const texture = source === undefined ? undefined : this.image(source)
+    if (!image || !texture) {
+      core.uniforms.clarity.value = 0
+      return
+    }
+    if (core.image.value !== texture) {
+      core.image.value = texture
+      core.uniforms.aspect.value = texture.image.width / Math.max(1, texture.image.height)
+    }
+    core.uniforms.clarity.value = image.clarity
+  }
+}

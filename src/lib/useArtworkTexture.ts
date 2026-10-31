@@ -54,19 +54,25 @@ export default function useArtworkTexture(source: Blob | string | null | undefin
     })
     return () => {
       active = false
-      entry.refs--
-      queueMicrotask(() => {
-        if (entry.refs !== 0) {
-          return
-        }
-        if (assets.get(source) === entry) {
-          assets.delete(source)
-        }
-        void entry.promise.then(texture => texture.dispose()).catch(() => {})
-      })
+      release(source, entry)
     }
   }, [source])
   return result
+}
+
+/** Loads the artwork’s texture into the cache the artworks share and keeps it there until released, so whatever shows the artwork next finds it decoded; `texture` resolves with it. */
+export function holdArtworkTexture(source: Blob | string) {
+  const entry = acquire(source)
+  let held = true
+  return {
+    texture: entry.promise,
+    release: () => {
+      if (held) {
+        held = false
+        release(source, entry)
+      }
+    },
+  }
 }
 
 function acquire(source: Blob | string) {
@@ -93,4 +99,16 @@ function acquire(source: Blob | string) {
   }
   asset.refs++
   return asset
+}
+function release(source: Blob | string, entry: Asset) {
+  entry.refs--
+  queueMicrotask(() => {
+    if (entry.refs !== 0) {
+      return
+    }
+    if (assets.get(source) === entry) {
+      assets.delete(source)
+    }
+    void entry.promise.then(texture => texture.dispose()).catch(() => {})
+  })
 }
