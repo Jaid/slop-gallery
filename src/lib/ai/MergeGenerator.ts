@@ -1,6 +1,7 @@
 import {generateImage} from 'ai'
 
 import ExternalGenerator from './ExternalGenerator.ts'
+import modelImage from './modelImage.ts'
 
 export default class extends ExternalGenerator {
   readonly model: Parameters<typeof generateImage>[0]['model']
@@ -16,7 +17,8 @@ export default class extends ExternalGenerator {
     return this.edit([image], prompt, signal)
   }
   private async edit(sources: Array<Blob>, text: string, signal?: AbortSignal) {
-    const images = await Promise.all(sources.map(image => image.arrayBuffer()))
+    // Image models reject formats like JXL, which the default works come in, and the SDK would send them labeled as PNG.
+    const images = await Promise.all(sources.map(image => modelImage(image)))
     const {image} = await generateImage({
       model: this.model,
       abortSignal: signal ?? AbortSignal.timeout(180_000),

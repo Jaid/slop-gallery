@@ -2,6 +2,7 @@ import {afterEach, expect, spyOn, test} from 'bun:test'
 
 import FlavorGenerator from '../../src/lib/ai/FlavorGenerator.ts'
 import MergeGenerator from '../../src/lib/ai/MergeGenerator.ts'
+import * as modelImageModule from '../../src/lib/ai/modelImage.ts'
 
 const bitmap = globalThis.createImageBitmap
 let fetchSpy: ReturnType<typeof spyOn<typeof globalThis, 'fetch'>> | undefined
@@ -84,4 +85,36 @@ test('the real image adapter sends an orb’s prompt with the work as the only i
   }
   expect(request.input_references.map(r => r.image_url.url.split(',')[1])).toEqual([data.toBase64()])
   expect(request.prompt).toBe('Make it spooky.')
+})
+test('the real image adapter re-encodes an image of a format image models reject, like a JXL work, to WebP', async () => {
+  const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
+    created: 1,
+    data: [{b64_json: data.toBase64()}],
+  }))
+  // A bare JXL codestream signature, whatever its media type claims.
+  const work = new Blob([new Uint8Array([0xFF, 0x0A, 0xFA, 0x1F, 0x19, 0x00])], {type: 'image/png'})
+  const webp = new Uint8Array([0x52, 0x49, 0x46, 0x46, 0x1A, 0x00, 0x00, 0x00, 0x57, 0x45, 0x42, 0x50, 0x56, 0x50, 0x38, 0x4C])
+  const encoded: Array<Blob> = []
+  const toWebp = spyOn(modelImageModule, 'toWebp').mockImplementation(image => {
+    encoded.push(image)
+    return Promise.resolve(new Blob([webp], {type: 'image/webp'}))
+  })
+  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
+  try {
+    await mergeGenerator.generateFromOrb(work, 'Make it spooky.')
+  } finally {
+    toWebp.mockRestore()
+  }
+  expect(encoded).toEqual([work])
+  const request = JSON.parse(fetchSpy.mock.calls[0][1]!.body as string) as {input_references: Array<{image_url: {url: string}}>}
+  expect(request.input_references.map(r => r.image_url.url)).toEqual([`data:image/webp;base64,${webp.toBase64()}`])
+})
+test('only PNG, JPEG and WebP signatures count as formats image models take', () => {
+  expect(modelImageModule.modelImageType(new Uint8Array([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]))).toBe('image/png')
+  expect(modelImageModule.modelImageType(new Uint8Array([0xFF, 0xD8, 0xFF, 0xE0]))).toBe('image/jpeg')
+  expect(modelImageModule.modelImageType(new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x45, 0x42, 0x50]))).toBe('image/webp')
+  expect(modelImageModule.modelImageType(new Uint8Array([0x52, 0x49, 0x46, 0x46, 0, 0, 0, 0, 0x57, 0x41, 0x56, 0x45]))).toBeUndefined()
+  expect(modelImageModule.modelImageType(new Uint8Array([0xFF, 0x0A, 0xFA, 0x1F]))).toBeUndefined()
+  expect(modelImageModule.modelImageType(new Uint8Array([0, 0, 0, 0x0C, 0x4A, 0x58, 0x4C, 0x20]))).toBeUndefined()
 })
