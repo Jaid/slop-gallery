@@ -4,8 +4,8 @@ import {expect, test} from 'bun:test'
 
 import RetainedLifetime from 'disposable-lifetime'
 import {knotsById} from 'knot-materials'
+import ProgressiveKnotMaterials from 'knot-materials/knotMaterials/ProgressiveKnotMaterials.ts'
 import KnotMaterial from 'knot-materials/lib/KnotMaterial.ts'
-import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
 import {Color, Mesh, MeshPhysicalNodeMaterial, PerspectiveCamera, RenderTarget, Scene} from 'three/webgpu'
 
 /** a renderer that never renders, only offering the debug hooks the material queue chains into */

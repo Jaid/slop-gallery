@@ -25,7 +25,10 @@ src/
   types.ts
   rarities.ts             # Exhaustive, centrally curated rarity map
   createPlaceholderMaterial.ts
-  ProgressiveKnotMaterials.ts
+  knotMaterials/
+    base/KnotMaterials.ts
+    DirectKnotMaterials.ts
+    ProgressiveKnotMaterials.ts
   geometry.ts
   StudioEnvironment.ts
 scripts/
@@ -35,7 +38,7 @@ scripts/
 
 Every knot lives directly in `src/entries/<id>`. Candidate folders contain attribution, shared candidate-specific utilities, and candidate/model assets—not nested knot entries. Shared shader functions live in `src/lib`; a helper used only by one candidate lives in that candidate's `lib`; a helper used only by one knot lives directly in its `Material.ts`. Materials import the narrow helper files they need. `src/lib/index.ts` also provides a barrel.
 
-`main.ts` and the metadata barrels never import shaders. The application can inspect the catalogue without evaluating any material constructors. `materials.ts` is the Vite-specific lazy loader, which gives every entry's `Material.ts` a chunk of its own; scenes pass it to `ProgressiveKnotMaterials` and `RuntimeKnotIconRenderer`, so they only download the shaders of the knots they show.
+`main.ts` and the metadata barrels never import shaders. The application can inspect the catalogue without evaluating any material constructors. `materials.ts` is the Vite-specific lazy loader, which gives every entry's `Material.ts` a chunk of its own; scenes pass it to `ProgressiveKnotMaterials`, `DirectKnotMaterials` and `RuntimeKnotIconRenderer`, so they only download the shaders of the knots they show.
 
 ## Metadata and identity
 
@@ -92,6 +95,8 @@ For vertex displacement, metadata must declare a conservative maximum distance i
 Placeholders use the entry's exact `placeholder.color`. The seven shading options are `smooth`, `ghost`, `metal`, `glass`, `stone`, `liquid`, and `fabric`. The intended spelling is `smooth`.
 
 `createPlaceholderMaterial` provides lit surfaces without loading any entry shader. Heavy mode adds physical glass transmission, fabric sheen, and liquid clearcoat where appropriate. Fast mode stays on cheaper standard lit materials; its glass is tinted transparency rather than a transmission pass. Ghosts remain visibly translucent. `ProgressiveKnotMaterials.placeholderMaterials` owns these fallback surfaces and replaces them with warmed-up full materials. Each entry’s shader module only loads once a mesh shows its knot, through the loader the caller passes (`materials.ts` gives every `Material.ts` a chunk of its own), so a scene downloads exactly the shaders of the knots it holds. Because Knottingham exists to review entry shaders, full materials are constructed and warmed up in both graphics modes; fast mode only keeps the interim placeholders on the cheap standard path. Resource disposal waits for pending compilation to settle before releasing geometry or textures.
+
+Scenes whose renderer already brings in new materials without stalling, like Slop Gallery’s streaming renderer, use `DirectKnotMaterials` instead. It has no placeholders and no warmup queue: the shaders load once the scene subscribes, and its `getSnapshot()` (for `useSyncExternalStore`) lists each knot’s full material once it has arrived, so the scene only mounts a knot then, with its `coreMaterial` on a child mesh if it has one. Both classes extend `KnotMaterials`, which owns the shared `KnotResources`, the environment and the on-demand loading.
 
 ### Opaque cores under alpha-cut shells
 

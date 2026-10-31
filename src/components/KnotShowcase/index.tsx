@@ -1,12 +1,10 @@
 import type {ShowcasedKnot} from '#src/lib/gallery/showcasedKnots.ts'
 
-import {useThree} from '@react-three/fiber'
 import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
+import DirectKnotMaterials from 'knot-materials/knotMaterials/DirectKnotMaterials.ts'
 import loadKnotMaterial from 'knot-materials/materials.ts'
-import ProgressiveKnotMaterials from 'knot-materials/ProgressiveKnotMaterials.ts'
-import {useEffect, useMemo} from 'react'
-import useGraphicsMode from 'use-graphics-mode'
+import {useEffect, useMemo, useSyncExternalStore} from 'react'
 
 import InteractiveObject from '#component/InteractiveObject'
 import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
@@ -22,17 +20,18 @@ import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
 
 const isRotating = readKnotRotation()
 const propId = ({entry}: ShowcasedKnot) => `prop-knot-${entry.id}`
+/** A core sits inside its shell, which takes every hit. */
+const ignoreRaycast = () => {}
 
 /**
  * Knots the gallery showcases like Knottingham’s: each floats and turns until something knocks it out, only then can it be grabbed, and inspecting it announces its title and its model.
- * Their materials and the announcements only load with them. `knots` must keep its identity while it stays the same, since a new one builds every material anew.
+ * Their materials and the announcements only load with them. A Knot only enters once its shader has arrived and then wears its full material right away, without Knottingham’s placeholders, leaving it to the renderer to stream it in like the rest of the gallery.
+ * `knots` must keep its identity while it stays the same, since a new one builds every material anew.
  */
 export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKnot>}) {
-  const camera = useThree(state => state.camera)
-  const renderer = useThree(state => state.renderer)
-  const isHeavy = useGraphicsMode()
   const rotation = useMemo(() => new KnotRotation, [])
-  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knots.map(knot => knot.entry), loadKnotMaterial, isHeavy, getPmremEnvironment()), [camera, isHeavy, knots, renderer]))
+  const materials = useDisposable(useMemo(() => new DirectKnotMaterials(knots.map(knot => knot.entry), loadKnotMaterial, getPmremEnvironment()), [knots]))
+  const worn = useSyncExternalStore(materials.subscribe, materials.getSnapshot, materials.getSnapshot)
   useEffect(() => trackLoadingItems(() => materials.pendingMaterials.map(material => `knot-material:${material}`)), [materials])
   const outOfShowcase = (id: string) => {
     const body = propObjects.get(id)?.body
@@ -117,8 +116,13 @@ export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKno
   const {resources} = materials
   return <>
     {knots.map((knot, index) => {
+      const material = worn[index]
+      if (!material) {
+        return null
+      }
       const {entry, position, rotation: yaw = 0} = knot
       const {geometry, colliderVertices} = resources.items[index]
+      const {coreMaterial} = material
       const id = propId(knot)
       return <GrabbableProp key={id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={() => outOfShowcase(id)} colliders={false} orbit={{radius: geometry.boundingSphere!.radius}} position={position} recoverAsDynamic={() => outOfShowcase(id)} rotation={[0, yaw, 0]} title={`${entry.title} · ${entry.modelTitle}`} type='fixed'>
         <ConvexHullCollider
@@ -129,8 +133,11 @@ export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKno
           }}
         />
         <InteractiveObject id={id} action='Listen' inspectable title={entry.title} onActivate={() => narrateModel(id)}>
-          <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${entry.id}`} raycast={resources.raycast} receiveShadow ref={materials.refs[index]} onBeforeRender={materials.observers[index]}>
+          <mesh castShadow material={material} name={`knot-${entry.id}`} raycast={resources.raycast} receiveShadow>
             <primitive attach='geometry' object={geometry} />
+            {coreMaterial && <mesh castShadow material={coreMaterial} name={`knot-${entry.id}-core`} raycast={ignoreRaycast} receiveShadow>
+              <primitive attach='geometry' object={geometry} />
+            </mesh>}
           </mesh>
         </InteractiveObject>
       </GrabbableProp>

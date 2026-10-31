@@ -1,5 +1,6 @@
+import type KnotMaterial from './lib/KnotMaterial.ts'
 import type {Rarity} from './rarities.ts'
-import type {MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 export type KnotId = keyof typeof import('./entries/index.ts')
 export type KnotCandidateId = keyof typeof import('./candidates/index.ts')
@@ -45,7 +46,7 @@ export type KnotEntry = KnotData & {
   rarity: Rarity
 }
 
-export type KnotMaterialConstructor = new (environment: Texture) => MeshPhysicalNodeMaterial
+export type KnotMaterialConstructor = new (environment: Texture) => KnotMaterial
 export type KnotMaterialModule = {default: KnotMaterialConstructor}
 /** hands out the material class of an entry, at once or once its module has loaded */
 export type KnotMaterialLoader = (entry: Pick<KnotEntry, 'id'>) => KnotMaterialConstructor | Promise<KnotMaterialConstructor>
