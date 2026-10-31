@@ -7,7 +7,8 @@ import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {corridorEndZ, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThreshold, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
+import {corridorEndZ, corridorLanding, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThreshold, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonCentroid, rectanglePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import {insideFortress} from '../../src/lib/gallery/fortressNetwork.ts'
@@ -19,8 +20,10 @@ import {towerBridge} from '../../src/lib/gallery/oculusTower.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import SaddleGeometry from '../../src/lib/gallery/passages/SaddleGeometry.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
+import {passageRibs, timberRibs, timberRibSpacing} from '../../src/lib/gallery/passages/timberLayout.ts'
 import TransitionGeometry from '../../src/lib/gallery/passages/TransitionGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
+import sienna, {siennaCeilingBeam, siennaCeilingBeamY, siennaVestibule, siennaVestibuleCeiling} from '../../src/lib/gallery/sienna.ts'
 import StairRunner from '../../src/lib/gallery/stairs/StairRunner.ts'
 import {createDocument} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
@@ -29,16 +32,16 @@ import walls, {floorHeight, insideGallery} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
-const routePassages = [fortressApproach, corridorPassage] as const
+const routePassages = [fortressApproach, corridorPassage, corridorLanding] as const
 const insideRoute = (position: Vec3) => insideLodgeWindow(position) || insideFortress(position) || insideCorridor(position)
-const routeWalls = walls.filter(wall => ['corridor', 'lodge'].includes(wall.room) || wall.id.startsWith('fortress-approach_') || ['sienna-west', 'vesper-west'].includes(wall.id))
+const routeWalls = walls.filter(wall => ['corridor', 'lodge', 'sienna'].includes(wall.room) || wall.id.startsWith('fortress-approach_') || wall.id === 'vesper-west')
 const architecture = routeWalls.map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
 const windowGeometry = new LodgeWindowGeometry
 const transition = new TransitionGeometry(fortressTransition)
-const vaults = [new VaultGeometry(fortressApproach, fortressTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
+const vaults = [new VaultGeometry(fortressApproach, fortressTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.passage(corridorLanding), TimberGeometry.stairs(corridorStairs, true)]
 const thresholdSaddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
 const saddles = [transition.sill, thresholdSaddle]
 afterAll(() => {
@@ -81,7 +84,8 @@ function createWorld(fps: number) {
     }
   }
   for (const block of corridorStairs.blocks) {
-    box(block.position, block.size)
+    const blockRotation = new Quaternion
+    box(block.position, block.size).setRotation(blockRotation.setFromAxisAngle(new Vector3(0, 1, 0), block.yaw ?? 0))
   }
   for (const beam of corridorRails) {
     const beamRotation = new Quaternion
@@ -96,6 +100,8 @@ function createWorld(fps: number) {
   }
   box([-14, -0.15, 14], [12, 0.3, 12])
   box([-14, 5.9, 14], [12, 0.3, 12])
+  box([siennaVestibule.center[0], -0.15, siennaVestibule.center[1]], [siennaVestibule.size[0], 0.3, siennaVestibule.size[1]])
+  box([siennaVestibule.center[0], siennaVestibuleCeiling.y, siennaVestibule.center[1]], [siennaVestibule.size[0], siennaVestibuleCeiling.thickness, siennaVestibule.size[1]])
   // The Lodge’s furniture, window seat and hearth, as the room mounts them.
   for (const {position, yaw, size} of lodgeFurnitureColliders()) {
     const turn = new Quaternion
@@ -111,7 +117,7 @@ describe('Lodge and Corridor route', () => {
     expect(corridorPassage.width).toBe(4)
     expect(corridorStairs.width).toBe(corridorPassage.width)
     expect(lodge.approachX + corridorPassage.width / 2).toBeCloseTo(-31.7)
-    for (const id of ['sienna-west', 'lodge-north']) {
+    for (const id of ['sienna-west', 'sienna-vestibule_east', 'sienna-vestibule_west', 'lodge-north']) {
       const wall = walls.find(value => value.id === id)!
       const hole = wall.holes![0]
       expect(hole.width).toBe(corridorPassage.width)
@@ -121,7 +127,7 @@ describe('Lodge and Corridor route', () => {
     const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
     try {
       const meshes = [geometry.shell, geometry.ribs].map(part => new Mesh(part, material))
-      for (const z of [-28, -20, 0, 7]) {
+      for (const z of [-38, -28, -15, 1]) {
         for (const side of [-1, 1]) {
           const x = lodge.approachX + side * (corridorPassage.width / 2 - 0.3)
           expect(corridorPassage.floorAt(x, z)).toBe(lodge.floorY)
@@ -140,26 +146,30 @@ describe('Lodge and Corridor route', () => {
   })
   test('the timber lining closes the corners behind its knees where it stops at an elbow', () => {
     const material = new MeshBasicMaterial
-    const geometry = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
+    const timber = [TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.passage(corridorLanding), TimberGeometry.stairs(corridorStairs, true)]
     try {
-      const meshes = [geometry.shell, geometry.ribs].map(part => new Mesh(part, material))
-      const half = corridorPassage.width / 2
-      const {spans} = corridorPassage
-      // From inside each open elbow, 20 cm before each adjoining lining end, look into it, high in the corner between wall, ceiling and chamfer.
-      const ends = spans.slice(1).flatMap((after, i) => [[spans[i], spans[i].to + 0.2, -1], [after, after.from - 0.2, 1]] as const)
-      for (const [{start, end, length}, along, toward] of ends) {
-        const [dx, dz] = [(end[0] - start[0]) / length, (end[1] - start[1]) / length]
-        for (const side of [-1, 1]) {
-          const origin = new Vector3(start[0] + dx * along - dz * side * (half - 0.25), lodge.floorY + corridorPassage.height - 0.15, start[1] + dz * along + dx * side * (half - 0.25))
-          const ray = new Raycaster(origin, new Vector3(dx * toward, 0, dz * toward))
-          const hit = ray.intersectObjects(meshes)[0]
-          expect(hit).toBeDefined()
-          expect(hit.distance).toBeGreaterThan(0.15)
-          expect(hit.distance).toBeLessThan(0.25)
+      const meshes = timber.flatMap(geometry => [geometry.shell, geometry.ribs].map(part => new Mesh(part, material)))
+      for (const passage of [corridorPassage, corridorLanding]) {
+        const half = passage.width / 2
+        const {spans} = passage
+        // From inside each open elbow, 20 cm before each adjoining lining end, look into it, high in the corner between wall, ceiling and chamfer.
+        const ends = spans.slice(1).flatMap((after, i) => [[spans[i], spans[i].to + 0.2, -1], [after, after.from - 0.2, 1]] as const)
+        for (const [{start, end, length}, along, toward] of ends) {
+          const [dx, dz] = [(end[0] - start[0]) / length, (end[1] - start[1]) / length]
+          for (const side of [-1, 1]) {
+            const origin = new Vector3(start[0] + dx * along - dz * side * (half - 0.25), passage.floorY + passage.height - 0.15, start[1] + dz * along + dx * side * (half - 0.25))
+            const ray = new Raycaster(origin, new Vector3(dx * toward, 0, dz * toward))
+            const hit = ray.intersectObjects(meshes)[0]
+            expect(hit).toBeDefined()
+            expect(hit.distance).toBeGreaterThan(0.15)
+            expect(hit.distance).toBeLessThan(0.25)
+          }
         }
       }
     } finally {
-      geometry.dispose()
+      for (const geometry of timber) {
+        geometry.dispose()
+      }
       material.dispose()
     }
   })
@@ -167,8 +177,8 @@ describe('Lodge and Corridor route', () => {
     for (const returning of [false, true]) {
       test(`the outer timber lanes are physically walkable, offset ${offset}, returning ${returning}`, () => {
         const world = createWorld(60)
-        const start = returning ? 6 : -27.5
-        const end = returning ? -27.5 : 6
+        const start = returning ? 1.5 : -39
+        const end = returning ? -39 : 1.5
         const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(lodge.approachX + offset, lodge.floorY + 0.04, start))
         const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
         const motor = new EgoMotor(RAPIER, world, body, collider)
@@ -361,9 +371,9 @@ describe('Lodge and Corridor route', () => {
     const hole = wall.holes!.find(value => value.name === 'fortress')!
     expect(wall.center[1] + hole.bottom!).toBeCloseTo(fortressDoorway.y - 0.02)
     expect(wallPosition(wall, hole.u, fortressDoorway.y, 0)).toEqual([expect.closeTo(fortressDoorway.x), fortressDoorway.y, expect.closeTo(fortressDoorway.z)])
-    const sienna = walls.find(candidate => candidate.id === 'sienna-west')!
-    expect(wallPosition(sienna, sienna.holes![0].u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
-    expect(sienna.holes![0].u + lodge.timberWidth / 2 + 0.17).toBeLessThan(sienna.width / 2)
+    const siennaWest = walls.find(candidate => candidate.id === 'sienna-west')!
+    expect(wallPosition(siennaWest, siennaWest.holes![0].u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
+    expect(siennaWest.holes![0].u + lodge.timberWidth / 2 + 0.17).toBeLessThan(siennaWest.width / 2)
     // The Corridor leaves the Lodge through the middle of the bay’s back wall; only the window looks out of the west wall into it.
     const north = walls.find(candidate => candidate.id === 'lodge-north')!
     const [doorwayX, doorwayZ] = corridorPassage.path[0]
@@ -372,14 +382,19 @@ describe('Lodge and Corridor route', () => {
     expect(walls.find(candidate => candidate.id === 'lodge-west')!.holes!.map(value => value.name)).toEqual(['window'])
     expect(walls.find(candidate => candidate.id === 'lodge-south')!.holes).toBeUndefined()
   })
-  test('Sienna opens directly onto descending treads with a continuous runner inset between the handrails', () => {
+  test('the diagonal stair flight climbs to the landing before the Sienna’s vestibule, with a continuous runner and 2 m rib bays', () => {
     const first = corridorStairs.blocks[0]
     expect(first.tread).toBe(true)
     expect(first.top).toBeLessThan(0)
-    expect(first.position[0] + first.size[0] / 2).toBe(-20)
-    expect(corridorStairs.axis).toBe(0)
+    expect(corridorStairs.axis).toBeUndefined()
+    expect(corridorStairs.heading).toEqual([expect.closeTo(-Math.SQRT1_2), expect.closeTo(-Math.SQRT1_2)])
+    // The 26-step flight rises more than the player’s 18 cm snap to ground per step, so walking off the landing never snaps down onto the top tread.
+    expect(corridorStairs.count).toBe(26)
+    expect(corridorStairs.rise).toBeGreaterThan(0.18)
+    expect(first.position[0] - corridorStairs.heading[0] * first.size[0] / 2).toBeCloseTo(corridorStairs.start[0])
+    expect(first.position[2] - corridorStairs.heading[1] * first.size[0] / 2).toBeCloseTo(corridorStairs.start[2])
     // Rod finials stay on bare oak, inside the handrail posts.
-    const railOffset = Math.abs(corridorRails[0].position[2] - lodge.siennaZ)
+    const railOffset = Math.hypot(corridorRails[0].position[0] - (corridorStairs.start[0] + corridorStairs.end[0]) / 2, corridorRails[0].position[2] - (corridorStairs.start[2] + corridorStairs.end[2]) / 2)
     expect(corridorRunner.finialOffset + corridorRunner.finialRadius).toBeLessThan(railOffset - 0.1)
     expect(corridorRunner.halfWidth).toBeLessThan(corridorStairs.width / 2 - 0.4)
     // Rods sit on every tread, behind its center, and nosings fit within the rise.
@@ -390,14 +405,39 @@ describe('Lodge and Corridor route', () => {
       expect(corridorRunner.pathDistance(step, 'riser', corridorStairs.rise)).toBeCloseTo(corridorRunner.pathDistance(step + 1, 'tread', 0))
       expect(corridorRunner.pathDistance(step, 'tread', corridorStairs.run)).toBeCloseTo(corridorRunner.pathDistance(step, 'riser', 0))
     }
+    // Every lined stretch spaces its wooden ribs at most 2.0 m apart.
+    expect(timberRibSpacing).toBeLessThanOrEqual(2)
+    const ribRuns = [
+      ...corridorPassage.spans.map((_, i) => passageRibs(corridorPassage, i)),
+      ...corridorLanding.spans.map((_, i) => passageRibs(corridorLanding, i)),
+      timberRibs(0, corridorStairs.length),
+    ].filter(ribs => ribs.length > 0)
+    expect(ribRuns.length).toBeGreaterThan(0)
+    for (const ribs of ribRuns) {
+      for (let i = 1; i < ribs.length; i++) {
+        expect(ribs[i][0] - ribs[i - 1][1]).toBeLessThanOrEqual(timberRibSpacing + 1e-9)
+      }
+    }
+    // The Sienna owns the 4.8 × 4.8 m vestibule, flush with its north wall, whose 4.3 m ceiling clears the 3.4 m arches’ casings, the cornice and the joists.
+    expect(siennaVestibule.size).toEqual([expect.closeTo(4.8), expect.closeTo(4.8)])
+    expect(siennaVestibule.height).toBe(4.3)
+    expect(siennaVestibule.center[1] - siennaVestibule.size[1] / 2).toBeCloseTo(sienna.center[1] - sienna.size[1] / 2)
+    expect(slopGallery.roomAt([siennaVestibule.center[0], 1.6, siennaVestibule.center[1]])?.id).toBe('sienna')
+    expect(insideGallery([siennaVestibule.center[0], siennaVestibule.height + 0.5, siennaVestibule.center[1]])).toBe(false)
+    const casingTop = corridorLanding.height + 0.17
+    const vestibuleWallTop = siennaVestibule.height
+    const lowestCorniceBottom = Math.min(...corniceBands.map(band => vestibuleWallTop - band.drop - band.height / 2))
+    const joistBottom = siennaCeilingBeamY(siennaVestibule.height) - siennaCeilingBeam.height / 2
+    expect(lowestCorniceBottom).toBeGreaterThan(casingTop)
+    expect(joistBottom).toBeGreaterThan(casingTop)
   })
   for (const fps of [30, 60, 120]) {
     for (const returning of [false, true]) {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          // From the flat planks beyond the Fortress’ raised timber saddle into the Lodge, north through its bay and round it along the Corridor.
-          const path = [[fortressApproach.path.at(-1)![0] + 0.4, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, [-18.5, lodge.siennaZ]]
+          // From the flat planks beyond the Fortress’ raised timber saddle into the Lodge, north through its bay, round it along the Corridor, up the diagonal flight and through the landing and the Sienna’s vestibule.
+          const path = [[fortressApproach.path.at(-1)![0] + 0.4, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, ...corridorLanding.path.toReversed(), [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }
@@ -471,7 +511,7 @@ test('passages reject malformed paths instead of producing cracked geometry', ()
 })
 test('faceted timber portals keep their centerlines and level elbows open', () => {
   const material = new MeshBasicMaterial({side: DoubleSide})
-  const timber = [TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.stairs(corridorStairs)]
+  const timber = [TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.passage(corridorLanding), TimberGeometry.stairs(corridorStairs, true)]
   try {
     const meshes = timber.flatMap(geometry => [geometry.shell, geometry.ribs].map(part => new Mesh(part, material)))
     for (const mesh of meshes) {
@@ -482,7 +522,8 @@ test('faceted timber portals keep their centerlines and level elbows open', () =
     }
     const segments: Array<[Vec3, Vec3]> = [
       ...corridorPassage.spans.map(({start, end}): [Vec3, Vec3] => [[start[0], lodge.floorY + 1.6, start[1]], [end[0], lodge.floorY + 1.6, end[1]]]),
-      [[corridorStairs.end[0], lodge.floorY + 1.6, lodge.siennaZ], [-20, 1.6, lodge.siennaZ]],
+      [[corridorStairs.end[0], corridorStairs.end[1] + 1.6, corridorStairs.end[2]], [corridorStairs.start[0], corridorStairs.start[1] + 1.6, corridorStairs.start[2]]],
+      ...corridorLanding.spans.map(({start, end}): [Vec3, Vec3] => [[start[0], corridorLanding.floorY + 1.6, start[1]], [end[0], corridorLanding.floorY + 1.6, end[1]]]),
     ]
     for (const [start, end] of segments) {
       const origin = new Vector3(...start)

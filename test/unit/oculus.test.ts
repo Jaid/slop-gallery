@@ -250,7 +250,7 @@ describe('oculus and connecting tunnel', () => {
 })
 test('stair flights reject degenerate dimensions rather than emitting broken geometry', () => {
   expect(() => new StairFlight('invalid', [0, 0, 0], [0, -4, 0], 2.6, 20)).toThrow(RangeError)
-  expect(() => new StairFlight('invalid', [0, 0, 0], [8, -4, 1], 2.6, 20)).toThrow(RangeError)
+  expect(() => new StairFlight('invalid', [0, 0, 0], [8, 0, 1], 2.6, 20)).toThrow(RangeError)
   expect(() => new StairFlight('invalid', [0, 0, 0], [8, -4, 0], 2.6, 0)).toThrow(RangeError)
   expect(() => new StairFlight('invalid', [0, 0, 0], [8, -4, 0], 2.6, 20, 9)).toThrow(RangeError)
 })

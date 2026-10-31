@@ -5,7 +5,7 @@ import {MeshBVH} from 'three-mesh-bvh'
 import {Box3, Mesh, MeshBasicMaterial, Raycaster, TorusKnotGeometry, Vector3} from 'three/webgpu'
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
-import {siennaCeilingBeam, siennaCeilingBeamOffsets} from '../../src/lib/gallery/sienna.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY} from '../../src/lib/gallery/sienna.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 import {rooms} from './fixtures/gallery.ts'
@@ -71,7 +71,7 @@ describe('chandelier geometry', () => {
     const geometry = new ChandelierGeometry
     try {
       const sienna = rooms.find(room => room.id === 'sienna')!
-      const beamBottom = siennaCeilingBeam.centerY - siennaCeilingBeam.height / 2
+      const beamBottom = siennaCeilingBeamY(sienna.height) - siennaCeilingBeam.height / 2
       const offsets = siennaCeilingBeamOffsets(sienna.size[0])
       expect(offsets).toHaveLength(siennaCeilingBeam.count)
       // The joists still span the room evenly, with half a bay to each wall.

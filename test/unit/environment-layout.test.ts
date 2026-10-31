@@ -3,7 +3,7 @@ import {expect, test} from 'bun:test'
 import {Box3, Euler, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
+import {corridorLanding, corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {fountainBench, fountainBenches} from '../../src/lib/gallery/fountain/benches.ts'
 import fountain from '../../src/lib/gallery/fountain/config.ts'
 import SlattedBenchGeometry from '../../src/lib/gallery/fountain/SlattedBenchGeometry.ts'
@@ -71,14 +71,14 @@ test('four matching slatted benches surround the fountain under the middle chand
 })
 test('timber entrances have a single exposed face across the ribs, lining and structural wall ends', () => {
   const material = new MeshBasicMaterial
-  // Each leaves its room straight out of a wall: the stair flight west out of the Sienna, the passage north out of the Lodge’s bay.
+  // Each leaves its room straight out of a wall: the landing west out of the Sienna’s vestibule, the passage north out of the Lodge’s bay.
   const entrances = [
     {
-      timber: TimberGeometry.stairs(corridorStairs),
-      start: corridorStairs.start,
-      width: corridorStairs.width,
+      timber: TimberGeometry.passage(corridorLanding),
+      start: [corridorLanding.path[0][0], corridorLanding.floorY, corridorLanding.path[0][1]],
+      width: corridorLanding.width,
       into: new Vector3(1, 0, 0),
-      wallIds: ['sienna-west', 'corridor-stairs_return_north', 'corridor-stairs_return_south'],
+      wallIds: ['sienna-vestibule_west', ...corridorLanding.walls.map(wall => wall.id)],
     },
     {
       timber: TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts),

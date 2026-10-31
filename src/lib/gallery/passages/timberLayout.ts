@@ -6,6 +6,8 @@ export type TimberSpan = {
   entryProjection?: number
   from?: number
   height: number
+  /** whether the corners behind the knees are boarded up at both ends, where the lining ends in the open rather than in a room’s wall; by default only where it stops inside its span */
+  spandrels?: boolean
   start: Vec3
   to?: number
   width: number
@@ -13,6 +15,8 @@ export type TimberSpan = {
 
 /** How far a timber lining projects past the structural wall ends at a room entrance, like a fitted reveal. */
 export const timberEntranceProjection = 0.03
+/** At most this far between two ribs of a lining, leaving a bay of plank backing wide enough for a work between them while framing the Lodge’s window cleanly. */
+export const timberRibSpacing = 1.8
 
 /** The timber spans lining a passage, one per span of its path. */
 export function passageTimberSpans(passage: Passage): Array<Required<TimberSpan>> {
@@ -25,12 +29,13 @@ export function passageTimberSpans(passage: Passage): Array<Required<TimberSpan>
     // Keep the entire elbow open; the passage's timber ceiling closes these junctions.
     from,
     to,
+    spandrels: false,
   }))
 }
 
-/** The ribs of a lining running from `front` to `to` along its span, as the distances where each starts and ends: one flush with either end and the rest evenly between, at most 1.3 m apart. */
+/** The ribs of a lining running from `front` to `to` along its span, as the distances where each starts and ends: one flush with either end and the rest evenly between, at most {@link timberRibSpacing} apart. */
 export function timberRibs(front: number, to: number) {
-  const count = Math.max(1, Math.ceil((to - front) / 1.3))
+  const count = Math.max(1, Math.ceil((to - front) / timberRibSpacing))
   const depth = Math.min(0.19, (to - front) / 3)
   return Array.from({length: count + 1}, (_, rib) => {
     const start = front + (to - front - depth) * rib / count

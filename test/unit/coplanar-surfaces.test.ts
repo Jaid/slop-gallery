@@ -7,7 +7,7 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
-import corridor, {corridorPassage} from '../../src/lib/gallery/corridor.ts'
+import corridor, {corridorLanding, corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonArea} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
@@ -200,7 +200,7 @@ describe('inside corners of room walls', () => {
   })
 })
 describe('passage elbows', () => {
-  for (const passage of [corridorPassage, fortressMouth]) {
+  for (const passage of [corridorPassage, corridorLanding, fortressMouth]) {
     test(`${passage.id}: walls close the inner corner of every elbow`, () => {
       const meshes = passageSurfaces(passage)
       const half = passage.width / 2
@@ -218,16 +218,17 @@ describe('passage elbows', () => {
     })
   }
   test('timber passages roof only their elbows with slabs, below which the linings stop', () => {
-    // Round the Lodge’s bay, the corridor turns by a right angle and twice by 45°, then once more by a right angle toward the Sienna.
-    const turns = [Math.PI / 2, Math.PI / 4, Math.PI / 4, Math.PI / 2]
-    expect(corridorPassage.junctions).toHaveLength(turns.length)
-    for (const [i, junction] of corridorPassage.junctions.entries()) {
-      const [x, z] = corridorPassage.path[i + 1]
-      expect(insidePolygon(junction, x, z)).toBe(true)
-      // Two right triangles, each as long as the passage is wide and reaching as far into the next span as its elbow does.
-      expect(polygonArea(junction)).toBeCloseTo(corridorPassage.width ** 2 * Math.tan(turns[i] / 2), 6)
-      expect(corridorPassage.spans[i].length - corridorPassage.spans[i].to).toBeCloseTo(corridorPassage.width / 2 * Math.tan(turns[i] / 2), 9)
-      expect(corridorPassage.spans[i + 1].from).toBeCloseTo(corridorPassage.width / 2 * Math.tan(turns[i] / 2), 9)
+    // Round the Lodge’s bay, the corridor turns by a right angle and twice by 45°, then by 45° onto the diagonal flight; the landing turns by 45° off it into the vestibule.
+    for (const [passage, turns] of [[corridorPassage, [Math.PI / 2, Math.PI / 4, Math.PI / 4, Math.PI / 4]], [corridorLanding, [Math.PI / 4]]] as const) {
+      expect(passage.junctions).toHaveLength(turns.length)
+      for (const [i, junction] of passage.junctions.entries()) {
+        const [x, z] = passage.path[i + 1]
+        expect(insidePolygon(junction, x, z)).toBe(true)
+        // Two right triangles, each as long as the passage is wide and reaching as far into the next span as its elbow does.
+        expect(polygonArea(junction)).toBeCloseTo(passage.width ** 2 * Math.tan(turns[i] / 2), 6)
+        expect(passage.spans[i].length - passage.spans[i].to).toBeCloseTo(passage.width / 2 * Math.tan(turns[i] / 2), 9)
+        expect(passage.spans[i + 1].from).toBeCloseTo(passage.width / 2 * Math.tan(turns[i] / 2), 9)
+      }
     }
     const geometry = TimberGeometry.passage(corridorPassage)
     disposables.push(geometry)

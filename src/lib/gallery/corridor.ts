@@ -5,8 +5,11 @@ import {cutFloorOpening} from './floorPolygons.ts'
 import lodge, {lodgeBay, lodgeWindowCutout} from './lodge.ts'
 import Passage from './passages/Passage.ts'
 import {passageRibs} from './passages/timberLayout.ts'
-import StairFlight, {stairHeadroom} from './stairs/StairFlight.ts'
+import sienna, {siennaVestibule} from './sienna.ts'
+import StairFlight from './stairs/StairFlight.ts'
 import StairRunner from './stairs/StairRunner.ts'
+
+type Point = readonly [number, number]
 
 const half = lodge.timberWidth / 2
 const lodgeWestX = lodge.center[0] - lodge.size[0] / 2
@@ -21,49 +24,74 @@ const runZ = backZ - clearance - half
 const diagonal = lodgeWestX + northZ - (clearance + half) * Math.SQRT2
 /** where the diagonal hands over to the long hall south */
 const hallNorthZ = diagonal - lodge.approachX
+/** how far an open elbow of a 45° turn reaches into either of the spans it joins */
+const elbow = half * Math.tan(Math.PI / 8)
+/** where the vestibule’s west wall stands, which the Corridor ends at */
+const vestibuleX = siennaVestibule.center[0] - siennaVestibule.size[0] / 2
+/** how much of the landing’s passage is lined between the vestibule’s arch and its open elbow, a short reveal inside the arch */
+const landingReveal = 0.3
+/** where the landing turns from the diagonal east into the vestibule’s arch: its lined reveal and its open elbow short of the wall */
+const landingTurn: Point = [vestibuleX - landingReveal - elbow, lodge.siennaZ]
+/** where the hall ends, turning 45° onto the diagonal to the landing: as far north of the arch’s line as the landing’s turn lies east of the hall, as the diagonal gains as much east as south */
+const hallSouthZ = lodge.siennaZ - (landingTurn[0] - lodge.approachX)
+/** a point `along` meters down the diagonal from another */
+const downDiagonal = ([x, z]: Point, along: number): Point => [x + along * Math.SQRT1_2, z + along * Math.SQRT1_2]
+/** the flight’s bottom and top, an open elbow down the diagonal from the hall’s end and an open elbow up it from the landing’s turn */
+const flightFoot = downDiagonal([lodge.approachX, hallSouthZ], elbow)
+const flightHead = downDiagonal(landingTurn, -elbow)
 /** The long hall south from the diagonal round the Lodge’s bay to the turn toward the Sienna, which the Corridor is laid out around. */
 const corridor = {
-  center: [lodge.approachX, (hallNorthZ + lodge.siennaZ) / 2],
-  size: [lodge.timberWidth, lodge.siennaZ - hallNorthZ],
+  center: [lodge.approachX, (hallNorthZ + hallSouthZ) / 2],
+  size: [lodge.timberWidth, hallSouthZ - hallNorthZ],
   floorY: lodge.floorY,
   height: 3.4,
 } as const
 
 /**
- * From the doorway in the middle of the Lodge’s bay north, west along the bay’s back wall and diagonally along its north-west wall round to the long hall, which runs south past the Lodge’s window, then east to the stair flight up to the Sienna. Its walls keep the same distance from the Lodge’s all the way round.
+ * From the doorway in the middle of the Lodge’s bay north, west along the bay’s back wall and diagonally along its north-west wall round to the long hall, which runs south past the Lodge’s window and turns 45° south-east onto the diagonal, where the stair flight up to the Sienna’s vestibule begins. Its walls keep the same distance from the Lodge’s all the way round.
  */
-export const corridorPassage = new Passage('corridor', 'corridor', [[doorwayX, backZ], [doorwayX, runZ], [diagonal - runZ, runZ], [lodge.approachX, hallNorthZ], [lodge.approachX, lodge.siennaZ], [-31, lodge.siennaZ]], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
+export const corridorPassage = new Passage('corridor', 'corridor', [[doorwayX, backZ], [doorwayX, runZ], [diagonal - runZ, runZ], [lodge.approachX, hallNorthZ], [lodge.approachX, hallSouthZ], flightFoot], lodge.floorY, lodge.timberWidth, corridor.height, [lodgeWindowCutout])
+/**
+ * The landing at the Sienna’s floor between the flight’s top and the arch of the Sienna’s vestibule: from the arch west, a short lined reveal, then an open elbow turning 45° north-west onto the diagonal, where the flight begins.
+ */
+export const corridorLanding = new Passage('landing', 'corridor', [[vestibuleX, lodge.siennaZ], landingTurn, flightHead], sienna.floorY, lodge.timberWidth, corridor.height)
 /** The doorway passage from the Lodge’s bay north to the run along it, `from` to `to` meters out of the bay, as a rectangle across the passage. */
 const doorwayPassage = (from: number, to: number): FloorRectangle => ({
   center: [doorwayX, backZ - (from + to) / 2],
   size: [lodge.timberWidth, to - from],
 })
-/** Where the Corridor ends toward the Lodge: halfway through the doorway passage between them, as far north of the bay’s back wall as the walls of the run along it. */
-export const corridorEndZ = backZ - corridorPassage.spans[0].to / 2
-/** The Lodge’s half of the doorway passage from the Corridor, laid with the Lodge’s planks to mark it. */
+/** The rib of the doorway passage nearest its middle, which the joint between the Lodge’s planks and the Corridor’s boards lies under. */
+const jointRib = passageRibs(corridorPassage, 0).reduce((nearest, rib) => {
+  const middle = corridorPassage.spans[0].to / 2
+  return Math.abs((rib[0] + rib[1]) / 2 - middle) < Math.abs((nearest[0] + nearest[1]) / 2 - middle) ? rib : nearest
+})
+/** Where the Corridor ends toward the Lodge: under the rib of the doorway passage between them nearest its middle. */
+export const corridorEndZ = backZ - (jointRib[0] + jointRib[1]) / 2
+/** The Lodge’s part of the doorway passage from the Corridor, laid with the Lodge’s planks to mark it. */
 export const lodgeThreshold = doorwayPassage(0, backZ - corridorEndZ)
 /** The Corridor’s board floor, without the Lodge’s threshold; collision still uses the full floors. */
 export const corridorPaving = corridorPassage.floors.flatMap(floor => cutFloorOpening(floor, lodgeThreshold))
-const jointRib = passageRibs(corridorPassage, 0).find(([start, end]) => backZ - end <= corridorEndZ && corridorEndZ <= backZ - start)!
-/** The timber saddle where the Lodge’s planks meet the Corridor’s boards: across the doorway passage, under the rib that stands over that joint and as deep as the rib. */
+/** The timber saddle where the Lodge’s planks meet the Corridor’s boards: across the doorway passage, under the rib over that joint and as deep as the rib. */
 export const lodgeThresholdSaddle = doorwayPassage(...jointRib)
-// The first tread begins at Sienna’s west doorway, without an intervening landing.
-export const corridorStairs = new StairFlight('return', [-20, 0, lodge.siennaZ], [-31, lodge.floorY, lodge.siennaZ], lodge.timberWidth, 28, 0, 0.35, 'corridor')
+/**
+ * The flight down the diagonal from the landing’s open elbow to the hall’s, between the two 45° turns. Its top tread begins at the landing’s floor and its bottom one ends on the hall’s, without any landing of its own: the elbows are its landings.
+ * Its steps rise 19 cm, more than the player snaps down to the ground, so the landing’s floor never snaps a player down onto the top tread. It is lined as high over its grade as both passages over their floors.
+ */
+export const corridorStairs = new StairFlight('return', [flightHead[0], sienna.floorY, flightHead[1]], [flightFoot[0], lodge.floorY, flightFoot[1]], lodge.timberWidth, 26, 0, 0, 'corridor', corridor.height)
 // A 2.4 m runner leaves wide oak margins and clears both handrails’ posts.
 export const corridorRunner = new StairRunner(corridorStairs, 2.4)
-export const corridorRails = [-1, 1].map(side => corridorStairs.beam(1, 0.065, 0.065, lodge.siennaZ + side * (corridorStairs.width / 2 - 0.23)))
-export const corridorWalls = [...corridorPassage.walls, ...[-1, 1].map(side => corridorStairs.wall(side))].map(wall => ({
+export const corridorRails = [-1, 1].map(side => corridorStairs.beam(1, 0.065, 0.065, side * (corridorStairs.width / 2 - 0.23)))
+export const corridorWalls = [...corridorPassage.walls, ...corridorLanding.walls, ...[-1, 1].map(side => corridorStairs.wall(side))].map(wall => ({
   ...wall,
   trimStyle: 'none' as const,
 }))
 
 export function corridorStairFloor(x: number, z: number) {
-  return corridorStairs.blocks.find(block => Math.abs(x - block.position[0]) <= block.size[0] / 2 + 1e-6 && Math.abs(z - block.position[2]) <= block.size[2] / 2 + 1e-6)?.top
+  return corridorStairs.floorAt(x, z)
 }
 
 export function insideCorridor(position: Vec3) {
-  const floor = corridorStairFloor(position[0], position[2])
-  return corridorPassage.contains(position) || floor !== undefined && position[1] >= floor - 1 && position[1] <= floor + stairHeadroom
+  return corridorPassage.contains(position) || corridorLanding.contains(position) || corridorStairs.contains(position)
 }
 
 export default corridor

@@ -2,9 +2,9 @@ import type {PendantBody, PendantMount} from '../../src/lib/gallery/pendants/ind
 
 import {afterAll, describe, expect, test} from 'bun:test'
 
-import {DoubleSide, ExtrudeGeometry, Mesh, MeshBasicMaterial, Raycaster, Shape, Vector2, Vector3} from 'three/webgpu'
+import {BoxGeometry, DoubleSide, ExtrudeGeometry, Mesh, MeshBasicMaterial, Raycaster, Shape, Vector2, Vector3} from 'three/webgpu'
 
-import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
+import {corridorLanding, corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {fortressApproach, fortressCurve, fortressLanterns, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
@@ -15,25 +15,42 @@ import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {CeilingProbe, LanternBody, PendantGeometry} from '../../src/lib/gallery/pendants/index.ts'
 import {corridorLightSpacing, passageLightDrop, passagePendantMounts, routePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
 import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pendants/PendantGeometry.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern} from '../../src/lib/gallery/sienna.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
 const mouth = new VaultGeometry(fortressMouth)
 const curve = new RouteVaultGeometry(fortressCurve)
 const approach = new VaultGeometry(fortressApproach, fortressTransition.length)
 const corridor = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
-const stairs = TimberGeometry.stairs(corridorStairs)
+const landing = TimberGeometry.passage(corridorLanding)
+const stairs = TimberGeometry.stairs(corridorStairs, true)
 const transition = new TransitionGeometry(fortressTransition)
 const lodgeWindow = new LodgeWindowGeometry
 const material = new MeshBasicMaterial({side: DoubleSide})
-// The flat roof slabs over passage elbows, as rendered by CoveredPassage.
-const slabs = [fortressMouth, fortressApproach, corridorPassage].flatMap(passage => passage.floors.map(floor => {
-  const slab = new ExtrudeGeometry(new Shape(floor.map(([x, z]) => new Vector2(x, -z))), {
-    depth: 0.24,
-    bevelEnabled: false,
-  })
-  return slab.rotateX(-Math.PI / 2).translate(0, passage.floorY + passage.height, 0)
-}))
-const meshes = [mouth.shell, mouth.ribs, curve.shell, curve.ribs, approach.shell, approach.ribs, corridor.shell, corridor.ribs, stairs.shell, stairs.ribs, transition.timber, transition.lining, lodgeWindow.frame, lodgeWindow.lining, ...slabs].map(geometry => {
+const translatedBox = (size: [number, number, number], position: [number, number, number]) => {
+  const box = new BoxGeometry(...size)
+  return box.translate(...position)
+}
+// The flat roof slabs over passage elbows, as rendered by CoveredPassage, and the Sienna vestibule’s ceiling slab and joists.
+const slabs = [
+  ...[fortressMouth, fortressApproach].flatMap(passage => passage.floors.map(floor => {
+    const slab = new ExtrudeGeometry(new Shape(floor.map(([x, z]) => new Vector2(x, -z))), {
+      depth: 0.24,
+      bevelEnabled: false,
+    })
+    return slab.rotateX(-Math.PI / 2).translate(0, passage.floorY + passage.height, 0)
+  })),
+  ...[corridorPassage, corridorLanding].flatMap(passage => passage.junctions.map(floor => {
+    const slab = new ExtrudeGeometry(new Shape(floor.map(([x, z]) => new Vector2(x, -z))), {
+      depth: 0.24,
+      bevelEnabled: false,
+    })
+    return slab.rotateX(-Math.PI / 2).translate(0, passage.floorY + passage.height, 0)
+  })),
+  translatedBox([siennaVestibule.size[0], siennaVestibuleCeiling.thickness, siennaVestibule.size[1]], [siennaVestibule.center[0], siennaVestibuleCeiling.y, siennaVestibule.center[1]]),
+  ...siennaCeilingBeamOffsets(siennaVestibule.size[0], 2).map(x => translatedBox([siennaCeilingBeam.width, siennaCeilingBeam.height, siennaVestibule.size[1]], [siennaVestibule.center[0] + x, siennaCeilingBeamY(siennaVestibule.height), siennaVestibule.center[1]])),
+]
+const meshes = [mouth.shell, mouth.ribs, curve.shell, curve.ribs, approach.shell, approach.ribs, corridor.shell, corridor.ribs, landing.shell, landing.ribs, stairs.shell, stairs.ribs, transition.timber, transition.lining, lodgeWindow.frame, lodgeWindow.lining, ...slabs].map(geometry => {
   const mesh = new Mesh(geometry, material)
   mesh.updateMatrixWorld()
   return mesh
@@ -64,12 +81,24 @@ const groups: Array<{
   {
     label: 'timber corridor',
     body: lantern,
-    lights: Array.from({length: 11}, () => corridorPassage.floorY + corridorPassage.height - passageLightDrop),
+    lights: Array.from({length: 9}, () => corridorPassage.floorY + corridorPassage.height - passageLightDrop),
     mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing, corridor.ribs),
+  },
+  {
+    label: 'timber corridor landing',
+    body: lantern,
+    lights: Array.from({length: 2}, () => corridorLanding.floorY + corridorLanding.height - passageLightDrop),
+    mounts: passagePendantMounts(corridorLanding, [landing.shell, landing.ribs], corridorLightSpacing, landing.ribs),
+  },
+  {
+    label: 'sienna vestibule',
+    body: lantern,
+    lights: [siennaVestibuleCeiling.y - siennaVestibuleCeiling.thickness / 2 - passageLightDrop],
+    mounts: [siennaVestibuleLantern],
   },
 ]
 afterAll(() => {
-  for (const geometry of [mouth, curve, approach, corridor, stairs, transition, lodgeWindow, ...slabs]) {
+  for (const geometry of [mouth, curve, approach, corridor, landing, stairs, transition, lodgeWindow, ...slabs]) {
     geometry.dispose()
   }
   material.dispose()
@@ -81,7 +110,8 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs its drop under its passage’s crown', () => {
     expect(groups[0].mounts).toHaveLength(2)
-    expect(groups.at(-1)!.mounts).toHaveLength(11)
+    expect(groups[3].mounts).toHaveLength(9)
+    expect(groups[4].mounts).toHaveLength(2)
     for (const {mounts, lights} of groups) {
       expect(mounts).toHaveLength(lights.length)
       for (const [i, mount] of mounts.entries()) {

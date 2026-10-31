@@ -58,11 +58,14 @@ test('objects belong to every room they reach into', () => {
   expect(roomsOverlapping(new Box3(new Vector3(-15, 1, -1), new Vector3(-13, 3, 1)))).toEqual(['vesper'])
   expect(roomsOverlapping(new Box3(new Vector3(500, 1, 500), new Vector3(501, 2, 501)))).toEqual([])
 })
-test('the Corridor’s stair flight up to the Sienna belongs to the Corridor', () => {
-  expect(roomContaining([-25, -1.5, 10.4])).toBe('corridor')
-  expect(roomsOverlapping(new Box3(new Vector3(-26, -2, 9), new Vector3(-24, 0, 12)))).toEqual(['corridor'])
-  // Flying at the hall’s south end, where the flight turns off, with the Sienna’s doorway out of view.
-  expect(roomsAt([-33.27, -3.12, 4.36])).toEqual(['corridor'])
+test('the Corridor’s stair flight and landing belong to the Corridor, and the vestibule beyond to the Sienna', () => {
+  expect(roomContaining([-29.8, -0.9, 6.5])).toBe('corridor')
+  expect(roomContaining([-26.1, 1.6, 10.2])).toBe('corridor')
+  expect(roomContaining([-22.4, 1.6, 10.4])).toBe('sienna')
+  expect(roomsOverlapping(new Box3(new Vector3(-30.5, -2.5, 5.8), new Vector3(-29.1, -0.5, 7.2)))).toEqual(['corridor'])
+  expect(roomsOverlapping(new Box3(new Vector3(-25.3, 0.5, 9.8), new Vector3(-24.3, 2.5, 11))).toSorted()).toEqual(['corridor', 'sienna'])
+  // Flying at the hall’s south end, where the flight turns off onto the diagonal, with the vestibule’s arch out of view.
+  expect(roomsAt([-33.7, -3.4, 2.6])).toEqual(['corridor'])
 })
 test('a camera stands in the rooms around it', () => {
   expect(roomsAt([-14, 1.6, 0])).toEqual(['vesper'])

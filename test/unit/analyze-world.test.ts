@@ -6,6 +6,7 @@ import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasi
 
 import {lodgeBay} from '../../src/lib/gallery/lodge.ts'
 import {craterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
+import {siennaVestibule} from '../../src/lib/gallery/sienna.ts'
 import {registerLamp} from '../../src/lib/rendering/lamps.ts'
 import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -24,9 +25,12 @@ test('every gallery room is fenced around its origin', () => {
   const boxes = Object.fromEntries(worldRooms.map(room => [room.id, [room.fence].flat()]))
   // Single boxes stay unwrapped.
   expect(Array.isArray(worldRooms.find(room => room.id === 'vesper')!.fence)).toBe(false)
-  // The passage round the Lodge’s bay and down the long hall, cut into strips along its diagonal, and last the stair flight up to the Sienna’s doorway.
+  // The passage round the Lodge’s bay and down the long hall, the diagonal stair flight, and the landing before the Sienna’s vestibule, which belongs to the Sienna.
   expect(boxes.corridor.length).toBeGreaterThan(9)
-  expect(boxes.corridor.at(-1)!.max[0]).toBe(-20)
+  expect(boxes.sienna).toHaveLength(2)
+  expect(boxes.sienna[1].min[0]).toBeCloseTo(siennaVestibule.center[0] - siennaVestibule.size[0] / 2)
+  expect(boxes.sienna[1].max[1]).toBe(siennaVestibule.height)
+  expect(Math.max(...boxes.corridor.filter(box => box.max[2] > 0).map(box => box.max[0]))).toBeCloseTo(boxes.sienna[1].min[0])
   // The Corridor and the Lodge meet halfway through the doorway passage between them, north of the bay.
   expect(boxes.lodge).toHaveLength(3)
   expect(boxes.corridor.filter(({min, max}) => max[2] === boxes.lodge[1].min[2] && min[0] === boxes.lodge[1].min[0] && max[0] === boxes.lodge[1].max[0])).toHaveLength(1)

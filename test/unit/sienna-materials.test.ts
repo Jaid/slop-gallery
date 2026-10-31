@@ -18,6 +18,11 @@ describe('the Sienna’s wainscot', () => {
   test('panels tile each wall in 2 m steps without running into an opening or past the wall’s ends', () => {
     for (const wall of siennaWalls) {
       const panels = siennaWainscot(wall)
+      // The vestibule’s 4.8 m east and west walls hold 4 m arches, leaving 40 cm piers too narrow for a 2 m panel; every other wall has room.
+      if (wall.id === 'sienna-vestibule_east' || wall.id === 'sienna-vestibule_west') {
+        expect(panels).toEqual([])
+        continue
+      }
       expect(panels.length).toBeGreaterThan(0)
       for (const u of panels) {
         expect(Math.abs(u) + panelWidth / 2).toBeLessThanOrEqual(wall.width / 2 + 1e-9)
@@ -30,9 +35,13 @@ describe('the Sienna’s wainscot', () => {
         expect((panels[index] - panels[index - 1]) % panelWidth).toBeCloseTo(0)
       }
     }
-    // A plain wall is paneled from end to end.
+    // Plain walls are paneled with as many centered 2 m bays as fit, in the vestibule too.
     const south = siennaWalls.find(wall => wall.id === 'sienna-south')!
     expect(siennaWainscot(south)).toHaveLength(south.width / panelWidth)
+    for (const id of ['sienna-vestibule_north', 'sienna-vestibule_south']) {
+      const wall = siennaWalls.find(candidate => candidate.id === id)!
+      expect(siennaWainscot(wall)).toEqual([-1, 1])
+    }
   })
 })
 describe('the Sienna’s floor', () => {

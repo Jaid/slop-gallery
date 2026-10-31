@@ -75,7 +75,7 @@ export const lodgeWindowCutout: PassageCutout = {
   size: [lodgeWindow.roomX - lodge.approachX + 0.04, lodgeWindow.top - lodgeWindow.bottom + lodgeWindow.lining * 2, lodgeWindow.width + lodgeWindow.lining * 2],
 }
 
-// Clear the two post remnants below the sill without cutting the plank backing or wall.
+// Clear the post remnant below the sill without cutting the plank backing or wall.
 export const lodgeWindowRibCutouts: ReadonlyArray<PassageCutout> = [
   {
     position: [lodgeWindowCutout.position[0], (lodge.floorY - 0.3 + lodgeWindow.bottom) / 2, lodgeWindow.z],

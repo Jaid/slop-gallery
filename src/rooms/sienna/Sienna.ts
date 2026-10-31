@@ -1,10 +1,10 @@
-import type {FloorSize, GroundSurface} from '../base/Room.ts'
+import type {GroundSurface} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
 import {Geofence} from 'geofency'
 
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
-import {siennaRugSize} from '#src/lib/gallery/sienna.ts'
+import sienna, {siennaRugSize, siennaVestibule} from '#src/lib/gallery/sienna.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
@@ -16,21 +16,22 @@ import slots from './slots.ts'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
 
-const size: FloorSize = [12, 12]
-const height = 5.8
-
 export default class Sienna extends Room {
-  override readonly air = floorBox(size, 0, height)
+  override readonly air = [
+    floorBox(sienna.size, 0, sienna.height),
+    // The vestibule west of its arch, lower, where the Corridor arrives.
+    floorBox(siennaVestibule.size, 0, siennaVestibule.height, [siennaVestibule.center[0] - sienna.center[0], siennaVestibule.center[1] - sienna.center[1]]),
+  ]
   override readonly color = '#674b37'
   override readonly description = 'Low light. Rich textures. Questionable company.'
-  // Everything over its floor plan from the slab up; it comes before the Corridor, so the wall with the doorway between them is the Sienna’s.
-  override readonly fence = new Geofence([{
-    ...footprint([this.air]),
+  // Everything over its floor plan and its vestibule’s from the slab up; it comes before the Corridor, so the vestibule’s wall with the arch between them is the Sienna’s.
+  override readonly fence = new Geofence(this.air.map(box => ({
+    ...footprint([box]),
     floor: groundFenceY,
-  }])
-  override readonly height = height
+  })))
+  override readonly height = sienna.height
   override readonly id = 'sienna'
-  override readonly size = size
+  override readonly size = sienna.size
   override readonly spawn = spawns['']
 
   constructor() {

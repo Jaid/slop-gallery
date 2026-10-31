@@ -2,6 +2,7 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 
 import {expect, test} from 'bun:test'
 
+import {groundFenceY} from '../../src/lib/gallery/floors.ts'
 import {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import tunnelDisplays from '../../src/lib/gallery/tunnelDisplays.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -19,9 +20,12 @@ for (let index = 0; index < data.length; index += 3) {
 const formerFortress = ([x, , z]: Vec3) => x > -20 && x < 2.2 && z > -39.73 && z < -35
 /** Where the Corridor’s hall turned into the Lodge’s west wall, before it led round the bay into its back wall instead. The Lodge’s logs and the Corridor’s boards close it now. */
 const formerDoorway = ([x, , z]: Vec3) => x > -31.7 && x < -30 && z > -39.6 && z < -35.6
+/** Where the Corridor’s hall ran on south to the Sienna’s arch line and climbed straight east to the Sienna’s west wall, before it turned onto the diagonal flight to the Sienna’s vestibule; the east end of that sunken flight now lies under the vestibule’s floor slab. */
+const formerStairs = ([x, , z]: Vec3) => x > -35.7 && x < -20 && z > 2.6 && z < 12.4
+const underVestibule = ([x, y, z]: Vec3) => x > -24.8 && x < -20 && z > 8 && z < 12.8 && y < groundFenceY
 test('the rooms’ fences cover every point of the gallery’s reachable air', () => {
   expect(samples.length).toBeGreaterThan(80_000)
-  const walledOff = samples.filter(position => (formerFortress(position) || formerDoorway(position)) && !slopGallery.contains(position))
+  const walledOff = samples.filter(position => (formerFortress(position) || formerDoorway(position) || formerStairs(position)) && !slopGallery.contains(position) || underVestibule(position))
   // Most of the former Fortress is the apse’s and the curve’s now.
   expect(walledOff.filter(formerFortress).length).toBeLessThan(samples.filter(formerFortress).length / 3)
   // The former doorway lies wholly between the walls.

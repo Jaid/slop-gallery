@@ -12,19 +12,20 @@ import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import StairRunnerMaterial from '#src/lib/materials/StairRunnerMaterial.ts'
 
-/** The flight from the corridor up to Sienna. Its materials must be lit by {@link lightIndoors}, like the treads. */
+/** The flight from the corridor up the diagonal to the landing at the Sienna’s vestibule. Its materials must be lit by {@link lightIndoors}, like the treads. */
 export default function CorridorStairs({timber, lining}: {
   lining: Material
   timber: Material
 }) {
-  const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs), []))
+  // It runs between the open elbows of the passages at both of its ends.
+  const frame = useDisposable(useMemo(() => TimberGeometry.stairs(corridorStairs, true), []))
   // The runner, rods and nosings are shaded into the treads, so every step stays a single box.
   const treads = useDisposable(useMemo(() => lightIndoors(new StairRunnerMaterial(corridorRunner)), []))
   return <StaticBatch name='corridor-wooden-stairs'>
     <RigidBody colliders={false} type='fixed'>
-      {corridorStairs.blocks.map((block, i) => <group key={i}>
-        <CuboidCollider args={[block.size[0] / 2, block.size[1] / 2, block.size[2] / 2]} position={block.position} />
-        <Box material={treads} name='corridor-stair-tread' position={block.position} size={block.size} />
+      {corridorStairs.blocks.map((block, i) => <group key={i} position={block.position} rotation={[0, block.yaw ?? 0, 0]}>
+        <CuboidCollider args={[block.size[0] / 2, block.size[1] / 2, block.size[2] / 2]} />
+        <Box material={treads} name='corridor-stair-tread' size={block.size} />
       </group>)}
       <TimberFrame geometry={frame} lining={lining} material={timber} />
       {corridorRails.map((beam, i) => <group key={i} position={beam.position} rotation={beam.rotation}>

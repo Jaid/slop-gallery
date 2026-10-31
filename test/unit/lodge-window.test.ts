@@ -44,7 +44,7 @@ afterAll(() => {
   }
 })
 describe('Lodge through-window', () => {
-  test('removes exactly the two posts beneath the window without cutting the backing or neighboring frames', () => {
+  test('removes the post beneath the window without cutting the backing or neighboring frames', () => {
     const original = TimberGeometry.passage(corridorPassage)
     const before = [original.shell, original.ribs].map(geometry => new Mesh(geometry, material))
     const after = [timber.shell, timber.ribs].map(geometry => new Mesh(geometry, material))
@@ -86,7 +86,7 @@ describe('Lodge through-window', () => {
         }
         previouslyRemoved = removed
       }
-      expect(removedPosts).toBe(2)
+      expect(removedPosts).toBe(1)
     } finally {
       original.dispose()
       world.free()

@@ -2,7 +2,7 @@ import type {Vec3} from '#src/lib/gallery/types.ts'
 import type PlacedRoom from '../base/PlacedRoom.ts'
 import type {GalleryRoom} from './SlopGallery.ts'
 
-import {corridorPassage, corridorStairFloor, insideCorridor} from '#src/lib/gallery/corridor.ts'
+import {corridorLanding, corridorPassage, corridorStairFloor, insideCorridor} from '#src/lib/gallery/corridor.ts'
 import {fortressFloors, insideFortress} from '#src/lib/gallery/fortressNetwork.ts'
 import {insideLodgeWindow, lodgeBayFloor, lodgeWindowFloor} from '#src/lib/gallery/lodge.ts'
 import lowerGallery, {rampFloorHeight, tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
@@ -10,6 +10,7 @@ import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
 import {insideApse, platformFloorHeight} from '#src/lib/gallery/oculusApse.ts'
 import {balconyFloorHeight} from '#src/lib/gallery/oculusBalcony.ts'
 import {towerFloorHeight} from '#src/lib/gallery/oculusTower.ts'
+import {siennaVestibule, siennaVestibuleFloor} from '#src/lib/gallery/sienna.ts'
 import {insideStairway, stairFloorHeight} from '#src/lib/gallery/staircase.ts'
 import {displayFloorHeight, insideTunnelDisplay} from '#src/lib/gallery/tunnelDisplays.ts'
 
@@ -45,6 +46,8 @@ export default class GalleryNavigation {
       ...this.halls.filter(room => inPlan(room, x, z)).map(room => groundOf(room, x, z)),
       ...fortressFloors(x, z),
       corridorPassage.floorAt(x, z),
+      corridorLanding.floorAt(x, z),
+      siennaVestibuleFloor(x, z),
       platformFloorHeight(x, z),
       tunnelContains([x, tunnelFloorHeight(z), z]) ? tunnelFloorHeight(z) : undefined,
       lodgeWindowFloor(x, z),
@@ -65,7 +68,9 @@ export default class GalleryNavigation {
     }
     const [x, y, z] = position
     const ground = Math.min(room.floorY, groundOf(room, x, z))
-    // Up to the top of its main box, the vault’s or the dome’s crown included.
-    return y >= ground - 1 && y <= room.air[0].max.y + 0.2 && (inPlan(room, x, z) || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined || room.id === 'oculus' && insideApse(x, z))
+    const main = inPlan(room, x, z)
+    const ceiling = room.id === 'sienna' && !main ? siennaVestibule.height : room.air[0].max.y
+    // Up to the top of its box, the vault’s or the dome’s crown included, or the vestibule’s lower ceiling.
+    return y >= ground - 1 && y <= ceiling + 0.2 && (main || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined || room.id === 'sienna' && siennaVestibuleFloor(x, z) !== undefined || room.id === 'oculus' && insideApse(x, z))
   }
 }

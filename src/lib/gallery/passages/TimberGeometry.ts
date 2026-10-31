@@ -7,7 +7,6 @@ import {Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
-import {stairHeadroom} from '../stairs/StairFlight.ts'
 import {passageTimberSpans, timberEntranceProjection, timberRibs} from './timberLayout.ts'
 
 export type {TimberSpan} from './timberLayout.ts'
@@ -116,14 +115,18 @@ export default class TimberGeometry {
   static passage(passage: Passage, ribCutouts: ReadonlyArray<PassageCutout> = []) {
     return new TimberGeometry(passageTimberSpans(passage), passage.cutouts, ribCutouts)
   }
-  static stairs(stairs: StairFlight) {
+  /**
+   * The lining over a stair flight, as high over its grade as its headroom: from its top, where it tucks into a room’s wall, to its bottom, or with `open` from one open elbow of a passage to another, its corners boarded up at both ends.
+   */
+  static stairs(stairs: StairFlight, open = false) {
     return new TimberGeometry([
       {
         start: stairs.start,
         end: stairs.end,
         width: stairs.width,
-        height: stairHeadroom,
-        entryProjection: timberEntranceProjection,
+        height: stairs.headroom,
+        entryProjection: open ? 0 : timberEntranceProjection,
+        spandrels: open,
       },
     ])
   }
@@ -136,7 +139,7 @@ export default class TimberGeometry {
     if ([...cutouts, ...ribCutouts].some(cutout => ![...cutout.position, ...cutout.size].every(Number.isFinite) || cutout.size.some(size => size <= 0))) {
       throw new RangeError('Timber cutouts need finite centers and positive dimensions.')
     }
-    const sections = spans.map(({start, end, width, height, entryProjection = 0, from = 0, to = Math.hypot(end[0] - start[0], end[2] - start[2])}) => {
+    const sections = spans.map(({start, end, width, height, entryProjection = 0, from = 0, to = Math.hypot(end[0] - start[0], end[2] - start[2]), spandrels = false}) => {
       const dx = end[0] - start[0]
       const dz = end[2] - start[2]
       const length = Math.hypot(dx, dz)
@@ -151,6 +154,7 @@ export default class TimberGeometry {
         entryProjection,
         from,
         to,
+        spandrels,
         dx,
         dz,
         length,
@@ -158,7 +162,7 @@ export default class TimberGeometry {
     })
     const shells: Array<BufferGeometry> = []
     const ribs: Array<BufferGeometry> = []
-    for (const {start, end, width, height, entryProjection, from, to, dx, dz, length} of sections) {
+    for (const {start, end, width, height, entryProjection, from, to, spandrels, dx, dz, length} of sections) {
       if (to <= from) {
         continue
       }
@@ -177,10 +181,10 @@ export default class TimberGeometry {
       shells.push(...timberRing(backing, outside, to - front, front, transform))
       // Lining ends at an open elbow show the void behind the knees end-on; room entrances are closed by the room wall.
       const spandrel = Math.min(spandrelDepth, (to - front) / 2)
-      if (from > 0) {
+      if (spandrels || from > 0) {
         shells.push(...timberSpandrels(outside, spandrel, front, transform))
       }
-      if (to < length) {
+      if (spandrels || to < length) {
         shells.push(...timberSpandrels(outside, spandrel, to - spandrel, transform))
       }
       for (const [ribStart, ribEnd] of timberRibs(front, to)) {

@@ -7,6 +7,7 @@ import lobby from './lobby.ts'
 import lodge from './lodge.ts'
 import lowerGallery, {tunnelCenter} from './lowerGallery.ts'
 import salon, {salonSouthZ} from './salon.ts'
+import sienna from './sienna.ts'
 import staircase from './staircase.ts'
 
 const {moonfall, oculus} = lowerGallery
@@ -21,7 +22,7 @@ const roomOrigins = {
   // From the Salon’s south wall to the Vesper’s south wall’s line.
   banquet: [14, 0, (salonSouthZ + 8) / 2],
   antechamber: [0, 0, staircase.z],
-  sienna: [-14, 0, 14],
+  sienna: [sienna.center[0], sienna.floorY, sienna.center[1]],
   salon: [salon.center[0], 0, salon.center[1]],
   cinnabar: [cinnabar.center[0], 0, cinnabar.center[1]],
   moonfall: [moonfall.center[0], lowerGallery.floorY, moonfall.center[1]],

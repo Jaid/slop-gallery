@@ -43,23 +43,24 @@ export default class StairRunnerMaterial extends MeshPhysicalNodeMaterial {
       envMapIntensity: 0.3,
     })
     const {flight, halfWidth} = runner
-    const {run, rise, count, direction, entryLanding, start} = flight
-    const alongX = flight.axis === 0
-    const downhill = alongX ? vec3(direction, 0, 0) : vec3(0, 0, direction)
-    const across = alongX ? vec3(0, 0, 1) : vec3(1, 0, 0)
+    const {run, rise, count, entryLanding, start, heading: [hx, hz]} = flight
+    // Down the flight and across it to the right, whichever way it runs.
+    const downhill = vec3(hx, 0, hz)
+    const across = vec3(-hz, 0, hx)
     const up = vec3(0, 1, 0)
     const geometryNormal = normalWorldGeometry
-    const along = (point: Node<'vec3'>) => (alongX ? point.x : point.z).sub(start[flight.axis]).mul(direction).sub(entryLanding)
+    const along = positionWorld.x.sub(start[0]).mul(hx).add(positionWorld.z.sub(start[2]).mul(hz)).sub(entryLanding).toVar('stairAlong')
+    const downhillFacing = geometryNormal.dot(downhill).toVar('stairDownhill')
     // Step index from a point just inside the block, so faces on a block boundary belong to their own block.
-    const step = along(positionWorld.sub(geometryNormal.mul(0.004))).div(run).floor().clamp(-1, count).toVar('stairStep')
-    const s = along(positionWorld).sub(step.mul(run)).toVar('stairS')
+    const step = along.sub(downhillFacing.mul(0.004)).div(run).floor().clamp(-1, count).toVar('stairStep')
+    const s = along.sub(step.mul(run)).toVar('stairS')
     const top = float(start[1]).sub(step.add(1).min(count).mul(rise))
     const h = top.sub(positionWorld.y).toVar('stairH')
-    const u = (alongX ? positionWorld.z : positionWorld.x).sub(start[flight.crossAxis]).toVar('stairU')
-    const uAbs = u.abs()
+    const u = positionWorld.z.sub(start[2]).mul(hx).sub(positionWorld.x.sub(start[0]).mul(hz)).toVar('stairU')
+    const uAbs = u.abs().toVar('stairUAbs')
     const uSign = u.sign()
     const isTop = geometryNormal.y.greaterThan(0.5)
-    const isRiser = geometryNormal.dot(downhill).greaterThan(0.5)
+    const isRiser = downhillFacing.greaterThan(0.5)
     const tread = step.greaterThanEqual(0).and(step.lessThan(count))
     const rodded = step.greaterThanEqual(0)
     const t = step.mul(runner.stepLength).add(select(isTop, s, h.add(run))).toVar('stairPath')

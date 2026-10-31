@@ -6,7 +6,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import CorridorStairs from '#component/CorridorStairs'
 import CoveredPassage from '#component/CoveredPassage'
-import {corridorPassage, corridorPaving} from '#src/lib/gallery/corridor.ts'
+import {corridorLanding, corridorPassage, corridorPaving} from '#src/lib/gallery/corridor.ts'
 import {lodgeWindowRibCutouts} from '#src/lib/gallery/lodge.ts'
 import lodgeTimber from '#src/lib/gallery/lodgeTimber.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
@@ -20,6 +20,7 @@ export default function CorridorRoom({lining, wood}: {
   const timber = useDisposable(useMemo(() => lightIndoors(new MeshStandardNodeMaterial(lodgeTimber(wood))), [wood]))
   return <group name='corridor-room'>
     <CoveredPassage material={lining} passage={corridorPassage} paving={corridorPaving} ribCutouts={lodgeWindowRibCutouts} sole timber={timber} />
+    <CoveredPassage material={lining} passage={corridorLanding} sole timber={timber} />
     <CorridorStairs lining={lining} timber={timber} />
   </group>
 }

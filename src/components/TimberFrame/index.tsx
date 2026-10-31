@@ -11,7 +11,8 @@ export default function TimberFrame({geometry, material, lining}: {
   lining: Material
   material: Material
 }) {
-  const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
+  // A lining of open elbows alone has no planks or ribs to collide with.
+  const collision = [geometry.shell, geometry.ribs].filter(part => part.hasAttribute('position')).map(colliderGeometry)
   return <>
     {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
     <mesh castShadow geometry={geometry.shell} material={lining} name='timber-plank-shell' receiveShadow />

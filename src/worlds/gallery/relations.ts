@@ -49,8 +49,9 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['antechamber-east', 'stairway'], ['moonfall-east', 'stairway']],
   },
   {
+    // The arch out of the Sienna’s vestibule onto the Corridor’s landing; the arch between the Sienna and its vestibule lies within the Sienna.
     rooms: ['sienna', 'corridor'],
-    holes: [['sienna-west', 'corridor']],
+    holes: [['sienna-vestibule_west', 'corridor']],
   },
   {
     rooms: ['moonfall', 'exhibition'],
@@ -149,7 +150,10 @@ const relations = {
         'led_middle',
         'led_south',
       ],
-      sienna: 'chandelier',
+      sienna: [
+        'chandelier',
+        'vestibule',
+      ],
     },
   },
   banquet: {
@@ -187,9 +191,9 @@ const relations = {
         'chandelier_middle',
         'chandelier_south',
       ],
+      // Through the vestibule’s arch: the lantern in the landing’s elbow, and down the flight the one at its foot.
       corridor: [
-        'lantern_north',
-        'lantern_middle',
+        'lantern_landing',
         'lantern_south',
       ],
     },
@@ -226,7 +230,10 @@ const relations = {
   corridor: {
     rooms: ['sienna', 'lodge', 'vesper', 'fortress'],
     visibleLamps: {
-      sienna: 'chandelier',
+      sienna: [
+        'chandelier',
+        'vestibule',
+      ],
       lodge: [
         'fire',
         'chandelier',
