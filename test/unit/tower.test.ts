@@ -5,6 +5,7 @@ import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {bastionMouth} from '../../src/lib/gallery/bastion.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
@@ -16,8 +17,8 @@ import {addOculusRailings} from './helpers/oculusRailings.ts'
 await RAPIER.init()
 const geometry = new OculusGroundGeometry
 const collision = colliderGeometry(geometry)
-// The side walls the bridges lead to, with the doorway into the Fortress’ mouth at the east one’s end
-const bridgeWalls = walls.filter(wall => ['oculus-east', 'oculus-west'].includes(wall.id) || wall.id.startsWith('fortress-mouth_')).map(wall => ({
+// The side walls the bridges lead to, with the doorways into the Fortress’ mouth at the east one’s end and the Bastion’s at the west one’s
+const bridgeWalls = walls.filter(wall => ['oculus-east', 'oculus-west'].includes(wall.id) || wall.id.startsWith('fortress-mouth_') || wall.id.startsWith('bastion-mouth_')).map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
@@ -391,8 +392,10 @@ describe('cylindrical Oculus platform', () => {
               world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...part.wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), part.wall.rotation)))
             }
           }
-          for (const floor of fortressMouth.floors) {
-            world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, fortressMouth.floorY - 0.24, fortressMouth.floorY))!)
+          for (const mouth of [fortressMouth, bastionMouth]) {
+            for (const floor of mouth.floors) {
+              world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, mouth.floorY - 0.24, mouth.floorY))!)
+            }
           }
           world.timestep = 1 / fps
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tower.x, ramp.endY + 0.04, tower.z))

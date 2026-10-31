@@ -204,7 +204,7 @@ function cutArchitecture(wall: Wall) {
     // Like the baseboards, both bands start at the plaster face, so their ends never share the wall’s end faces. The lower band
     // stands 1 cm proud of a classic opening casing (0.27 m), which can run up into it in low rooms.
     const corniceBand = (height: number, front: number, y: number) => miter(box(wall.width, height, front - wallFace, 0, y, (front + wallFace) / 2))
-    const cornice = wall.trimStyle === 'none' ? [] : corniceBands.map(({height, front, drop}) => corniceBand(height, front, wall.height - drop))
+    const cornice = wall.trimStyle === 'none' || wall.cornice === false ? [] : corniceBands.map(({height, front, drop}) => corniceBand(height, front, wall.height - drop))
     for (const part of cornice) {
       retained.add(part)
     }
@@ -263,7 +263,7 @@ export function createArchitectureGeometry(wall: Wall) {
   return withDisposal(cutArchitecture(wall))
 }
 
-const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
+const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null])
 /** Cuts each distinct layout among `walls` once. Called at module level on fixed walls, the build bakes the result for {@link provideArchitecture}. */
 export function cutArchitectures(walls: ReadonlyArray<Wall>) {
   const cuts = new Map<string, ArchitectureParts>

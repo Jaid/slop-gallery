@@ -17,6 +17,18 @@ export const ribSearch = 0.8
 /** A rib is barely wider than a canopy, so the search for one goes in 1 cm steps not to skip over it. */
 const ribStep = 0.01
 
+/** How many lights a span of the passage gets, at most `spacing` apart: at least one. */
+export function passageLightCount(passage: Passage, span: number, spacing = passageLightSpacing) {
+  return Math.max(1, Math.ceil(passage.spans[span].length / spacing))
+}
+
+/** The light of the lantern `index` of the passage’s span, counted from the span’s start, under the crown: the span’s lights hang evenly spaced along it, see {@link passageLightCount}. */
+export function passageLight(passage: Passage, span: number, index: number, spacing = passageLightSpacing): Vec3 {
+  const {start, end} = passage.spans[span]
+  const t = (index + 0.5) / passageLightCount(passage, span, spacing)
+  return [start[0] + (end[0] - start[0]) * t, passage.floorY + passage.height - passageLightDrop, start[1] + (end[1] - start[1]) * t]
+}
+
 /**
  * Evenly spaced lights along every span, hung from the vault, timber lining or the flat roof slabs over the elbows. Given timber
  * `ribs`, each light hangs from the nearest one instead where one is in reach.
@@ -29,15 +41,11 @@ export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<B
     },
   ])
   const ribProbe = ribs && new CeilingProbe([ribs])
-  return passage.spans.flatMap(({start, end}, span) => {
-    const count = Math.max(1, Math.ceil(Math.hypot(end[0] - start[0], end[1] - start[1]) / spacing))
-    return Array.from({length: count}, (_, i) => {
-      const t = (i + 0.5) / count
-      const light: Vec3 = [start[0] + (end[0] - start[0]) * t, passage.floorY + passage.height - passageLightDrop, start[1] + (end[1] - start[1]) * t]
-      const along: Vec3 = [end[0] - start[0], 0, end[1] - start[1]]
-      return ribProbe?.mount(light, along, ribSearch, ribStep) ?? mountOrThrow(probe, light, along, `${passage.id} span ${span}`)
-    })
-  })
+  return passage.spans.flatMap(({start, end}, span) => Array.from({length: passageLightCount(passage, span, spacing)}, (_, index) => {
+    const light = passageLight(passage, span, index, spacing)
+    const along: Vec3 = [end[0] - start[0], 0, end[1] - start[1]]
+    return ribProbe?.mount(light, along, ribSearch, ribStep) ?? mountOrThrow(probe, light, along, `${passage.id} span ${span}`)
+  }))
 }
 
 /** The light of a lantern `along` meters down a routed passage, under its crown, which lies midway between its walls. */

@@ -140,7 +140,7 @@ const samplePortraits: Array<Portrait> = [
     position: [
       -17,
       2.65,
-      -7.78,
+      -15.78,
     ],
     rotation: 0,
     width: 1.9,
@@ -156,9 +156,9 @@ const samplePortraits: Array<Portrait> = [
     source: '/art/fruit.jxl',
     narration: '/audio/fruit.opus',
     position: [
-      -12.5,
+      -10.5,
       2.65,
-      -7.78,
+      -15.78,
     ],
     rotation: 0,
     width: 3.1,

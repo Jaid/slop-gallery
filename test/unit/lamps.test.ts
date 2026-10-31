@@ -37,7 +37,7 @@ const lanterns = (passage: Passage, surfaces: ReadonlyArray<BufferGeometry>, kep
 }
 test('every lamp has a world-wide id of its own and lies in its own room', () => {
   expect(byId.size).toBe(lamps.length)
-  expect(lamps.length).toBe(34)
+  expect(lamps.length).toBe(41)
   for (const {id, position, room} of lamps) {
     expect(`${id} in ${slopGallery.roomAt(position)?.id}`).toBe(`${id} in ${room}`)
   }

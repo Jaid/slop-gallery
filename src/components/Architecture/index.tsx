@@ -16,6 +16,7 @@ import {cutArchitectures, provideArchitecture} from '#src/lib/gallery/architectu
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import BanquetMaterials from '#src/lib/materials/BanquetMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
+import CinnabarMaterials from '#src/lib/materials/CinnabarMaterials.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
@@ -45,7 +46,7 @@ export default function Architecture() {
       dispose: () => disposeArchitecturalGlassMaterials(materials),
     }
   }, [isHeavy]))
-  // The Lodge, the Fortress and the corridor run underground, beyond the reach of the sun.
+  // The Lodge, the Fortress, the Bastion and the corridor run underground, beyond the reach of the sun.
   const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
   // The corridor and its stairs see nothing but their own lanterns.
   const corridorWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
@@ -86,6 +87,8 @@ export default function Architecture() {
   }), [joineryPanel, joineryX, joineryZ])
   // The Banquet’s walls are painted with gilt boiserie, laid out around each wall’s doorways.
   const banquet = useDisposable(useMemo(() => new BanquetMaterials, []))
+  // The Cinnabar’s are frescoed in Pompeian red over a black socle, their panels laid out around each wall’s doorways too.
+  const cinnabar = useDisposable(useMemo(() => new CinnabarMaterials, []))
   const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     map: stone,
     color: '#4c5558',
@@ -96,7 +99,7 @@ export default function Architecture() {
     if (wall.room === 'oculus' || wall.room === 'exhibition') {
       return oculusMaterial
     }
-    if (wall.room === 'fortress') {
+    if (wall.room === 'fortress' || wall.room === 'bastion') {
       return castleStone
     }
     if (wall.room === 'lodge') {
@@ -125,6 +128,9 @@ export default function Architecture() {
     }
     if (wall.room === 'sienna') {
       return damask
+    }
+    if (wall.room === 'cinnabar') {
+      return cinnabar.surface(wall)
     }
     return banquet.surface(wall)
   }

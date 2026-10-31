@@ -58,6 +58,14 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
       <SalonWindow glass={glass.salon} />
     </>
   },
+  cinnabar: async () => {
+    const {default: Room} = await import('#src/rooms/cinnabar/components/CinnabarRoom/index.tsx')
+    return ({glass, stone, wood}) => <Room glass={glass.lobby} stone={stone} wood={wood} />
+  },
+  bastion: async () => {
+    const {default: Room} = await import('#src/rooms/bastion/components/BastionRoom/index.tsx')
+    return ({castleStone}) => <Room material={castleStone} />
+  },
   lodge: async () => {
     const [{default: Room}, {default: LodgeWindow}, {default: LodgeThreshold}] = await Promise.all([import('#src/rooms/lodge/components/LodgeRoom/index.tsx'), import('#component/LodgeWindow'), import('#src/rooms/lodge/components/LodgeThreshold/index.tsx')])
     return ({glass, lodge, windowReveal, wood}) => <>

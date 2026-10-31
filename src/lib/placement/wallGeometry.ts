@@ -40,6 +40,8 @@ export type Wall = {
   /** Floor contact in local coordinates; repeated u coordinates split the trim at a vertical jump. */
   baseboardProfile?: Array<readonly [number, number]>
   center: Vec3
+  /** whether the wall carries a cornice along its top when trimmed, true by default */
+  cornice?: boolean
   /** Signed bend radius, measured from the untrimmed wall plane. */
   curveRadius?: number
   height: number

@@ -1,11 +1,12 @@
 import type {RoomPortraitSlot} from '../base/Room.ts'
 
 export default {
+  // East of the arch into the Cinnabar, between its casing and the corner.
   north_0: {
     wallId: 'north',
     ratio: '1:1',
     area: 100_000,
-    position: [0, 3.2, -7.78],
+    position: [3.75, 3.2, -11.78],
     rotation: 0,
   },
   west_0: {

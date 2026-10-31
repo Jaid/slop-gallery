@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -8 12 16" fill="#fff">
-  <path d="M 5.7 7.7 H 5.2 V 8 H 2.4 V 7.7 H -5.7 V -7.7 H 5.7 V -1.5 H 6 V 1.3 H 5.7 Z"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-6 -12 12 24" fill="#fff">
+  <path d="M -5.7 -11.7 H -1.4 V -12 H 1.4 V -11.7 H 5.7 V 2.5 H 6 V 5.3 H 5.7 V 11.7 H 5.2 V 12 H 2.4 V 11.7 H -5.7 Z"/>
   <g fill="#d4d4d4">
-    <rect x="-0.58" y="0.42" width="1.16" height="1.16"/>
+    <rect x="-0.58" y="4.42" width="1.16" height="1.16"/>
   </g>
 </svg>

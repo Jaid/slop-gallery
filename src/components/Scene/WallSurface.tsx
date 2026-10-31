@@ -34,6 +34,7 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     vesper: '#658578',
     antechamber: '#ded4b8',
     salon: '#34506a',
+    cinnabar: '#8e2f24',
   }
   const color = colors[surfaceRoom] ?? '#eee7d7'
   const trims: Partial<Record<Wall['room'], string>> = {
@@ -41,6 +42,8 @@ export default function WallSurface({wall, plaster, glass, material, surfaceMate
     oculus: '#303d42',
     vesper: '#44655a',
     salon: '#1f2f3e',
+    // ivory stucco, as the baseboards and cornices of Pompeii’s red rooms were
+    cinnabar: '#e3d9c4',
   }
   const trim = trims[surfaceRoom] ?? '#ded5c1'
   const geometry = architectureGeometry(wall)

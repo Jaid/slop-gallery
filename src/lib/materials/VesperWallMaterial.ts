@@ -14,7 +14,7 @@ export const vesperFans = {
   /**
    * radius of one fan
    *
-   * Fans repeat every two radii, the guilloche every `wavelength`. Both divide the 2 m by which the Vesper’s walls differ in length, so every corner meets the pattern at the same phase from either side and folds it like a mirror.
+   * Fans repeat every two radii, the guilloche every `wavelength`. Both divide the 12 m by which the Vesper’s walls differ in length, so every corner meets the pattern at the same phase from either side and folds it like a mirror.
    */
   radius: 0.25,
   /** rise from one row of fans to the next, as a share of the radius; every row hides the lower half of the one above */

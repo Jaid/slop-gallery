@@ -1,6 +1,7 @@
 import type {RoomWall} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
+import {bastionDoorway} from '#src/lib/gallery/bastion.ts'
 import {apseOpeningPoint, apseOpenings, fortressDoorway} from '#src/lib/gallery/fortress.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerGallery.ts'
@@ -15,18 +16,19 @@ const [originX, originY, originZ] = roomOrigins.oculus
 const height = oculus.ceiling.topY - oculus.ceiling.thickness - oculus.floorY - 0.3
 const [, depth] = oculus.size
 const local = ([x, y, z]: Vec3): Vec3 => [x - originX, y - originY, z - originZ]
-/** The doorway’s sill sits 2 cm under the bridge’s deck, which covers it and the bottom of its casing. */
+/** The doorways’ sills sit 2 cm under the bridges’ decks, which cover them and the bottoms of their casings. */
 const sillDrop = 0.02
 /**
  * A side wall along the ramps, whose baseboard follows them up to the turning landing, with the door at the balcony’s level onto the staff stairway down to the tunnel’s display on that side.
- * The east one opens into the Fortress where the east bridge meets it.
+ * The east one opens into the Fortress where the east bridge meets it, the west one into the Bastion where the west bridge does.
  */
 const sideWall = (side: 'east' | 'west'): RoomWall => {
   const ramp = oculusRamps.find(value => value.side === side)!
   const wall = planWall(oculus.size, side, height, {trimStyle: 'plain'})
   const {stairway: {door}} = tunnelDisplays.find(display => display.side === side)!
   const doorAt = local(door)
-  const doorway = local([fortressDoorway.x, fortressDoorway.y, fortressDoorway.z])
+  const passage = side === 'east' ? fortressDoorway : bastionDoorway
+  const doorway = local([passage.x, passage.y, passage.z])
   return {
     ...wall,
     baseboardProfile: [
@@ -45,15 +47,13 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
         height: doorAt[1] + displayStairway.doorHeight,
         profile: 'rectangle',
       },
-      ...side === 'east' ? {
-        fortress: {
-          u: wallCoordinates(wall, doorway),
-          width: fortressDoorway.width,
-          bottom: doorway[1] - sillDrop,
-          height: doorway[1] + fortressDoorway.height,
-          profile: 'arch',
-        },
-      } : {},
+      [side === 'east' ? 'fortress' : 'bastion']: {
+        u: wallCoordinates(wall, doorway),
+        width: passage.width,
+        bottom: doorway[1] - sillDrop,
+        height: doorway[1] + passage.height,
+        profile: 'arch',
+      },
     },
   }
 }

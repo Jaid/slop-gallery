@@ -67,6 +67,6 @@ describe('plain doorway trim', () => {
       trimStyle: undefined,
     })).toBe(classic)
     expect(classic.trim[0].boundingBox!.max.z).toBeCloseTo(0.325, 6)
-    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['exhibition', 'fortress', 'lodge', 'oculus'].includes(value.room))).toBe(true)
+    expect(walls.filter(value => value.trimStyle === 'plain').every(value => ['bastion', 'exhibition', 'fortress', 'lodge', 'oculus'].includes(value.room))).toBe(true)
   })
 })

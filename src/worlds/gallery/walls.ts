@@ -5,6 +5,8 @@ import miterCorners from '#src/lib/gallery/cornerMiters.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import antechamber from '#src/rooms/antechamber/walls.ts'
 import banquet from '#src/rooms/banquet/walls.ts'
+import bastion from '#src/rooms/bastion/walls.ts'
+import cinnabar from '#src/rooms/cinnabar/walls.ts'
 import corridor from '#src/rooms/corridor/walls.ts'
 import exhibition from '#src/rooms/exhibition/walls.ts'
 import fortress from '#src/rooms/fortress/walls.ts'
@@ -25,7 +27,9 @@ const roomWalls: ReadonlyArray<readonly [keyof typeof roomOrigins, Record<string
   ['antechamber', antechamber],
   ['sienna', sienna],
   ['salon', salon],
+  ['cinnabar', cinnabar],
   ['moonfall', moonfall],
+  ['bastion', bastion],
   ['lodge', lodge],
   ['corridor', corridor],
   ['fortress', fortress],

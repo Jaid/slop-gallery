@@ -56,7 +56,7 @@ export const towerBridge = {
   /** how far they climb from the deck to their walls, easing in and out like the ramp */
   rise: 0.6,
 }
-/** the west bridge leads to the west wall, where a room is yet to come, and the east one into the Fortress */
+/** the west bridge leads into the Bastion and the east one into the Fortress */
 export const towerBridges = (['west', 'east'] as const).map(side => ({
   side,
   /** the direction it leaves the tower in, as an angle in the floor plan, atan2 of z and x */

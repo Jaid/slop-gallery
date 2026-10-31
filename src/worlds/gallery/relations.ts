@@ -45,6 +45,10 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['banquet-north', 'salon']],
   },
   {
+    rooms: ['vesper', 'cinnabar'],
+    holes: [['vesper-north', 'cinnabar']],
+  },
+  {
     rooms: ['antechamber', 'moonfall'],
     holes: [['antechamber-east', 'stairway'], ['moonfall-east', 'stairway']],
   },
@@ -91,6 +95,14 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['lodge-east', 'fortress']],
   },
   {
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-west', 'bastion']],
+  },
+  {
+    rooms: ['bastion', 'cinnabar'],
+    holes: [['cinnabar-north', 'bastion']],
+  },
+  {
     rooms: ['lodge', 'corridor'],
     holes: [['lodge-north', 'corridor']],
   },
@@ -111,7 +123,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'oculus', 'sienna', 'exhibition', 'fortress'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'cinnabar', 'oculus', 'sienna', 'exhibition', 'fortress', 'bastion'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -128,7 +140,7 @@ const relations = {
     },
   },
   vesper: {
-    rooms: ['lobby', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
+    rooms: ['lobby', 'cinnabar', 'bastion', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -141,11 +153,12 @@ const relations = {
         'led_middle',
         'led_south',
       ],
+      bastion: 'lantern_strip',
       sienna: 'chandelier',
     },
   },
   banquet: {
-    rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
+    rooms: ['lobby', 'salon', 'vesper', 'cinnabar', 'antechamber', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -155,7 +168,7 @@ const relations = {
     },
   },
   antechamber: {
-    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'oculus'],
+    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'cinnabar', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -172,7 +185,7 @@ const relations = {
     },
   },
   sienna: {
-    rooms: ['vesper', 'corridor', 'lobby', 'salon'],
+    rooms: ['vesper', 'cinnabar', 'corridor', 'lobby', 'salon'],
     visibleLamps: {
       lobby: [
         'chandelier_north',
@@ -187,7 +200,7 @@ const relations = {
     },
   },
   salon: {
-    rooms: ['banquet', 'lobby', 'vesper', 'antechamber', 'oculus', 'sienna', 'exhibition'],
+    rooms: ['banquet', 'lobby', 'vesper', 'cinnabar', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -195,6 +208,13 @@ const relations = {
         'led_middle',
         'led_south',
       ],
+    },
+  },
+  cinnabar: {
+    rooms: ['vesper', 'bastion', 'lobby', 'sienna', 'banquet'],
+    floorMirror: 'base',
+    visibleLamps: {
+      bastion: 'lantern_strip',
     },
   },
   moonfall: {
@@ -219,7 +239,7 @@ const relations = {
     },
   },
   oculus: {
-    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'banquet'],
+    rooms: ['lobby', 'exhibition', 'fortress', 'bastion', 'salon', 'moonfall', 'banquet'],
     visibleLamps: {
       moonfall: [
         'planet_glow',
@@ -238,10 +258,14 @@ const relations = {
         'lantern_east',
         'lantern_north',
       ],
+      bastion: [
+        'lantern_mouth',
+        'lantern_elbow',
+      ],
     },
   },
   exhibition: {
-    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon'],
+    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'bastion', 'salon'],
     floorMirror: 'moonfall',
     audibleAmbiences: {
       moonfall: 'orbital_sculpture',
@@ -279,7 +303,7 @@ const relations = {
     },
   },
   fortress: {
-    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon'],
+    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'bastion'],
     visibleLamps: {
       corridor: 'lantern_lodge',
       lodge: [
@@ -287,6 +311,11 @@ const relations = {
         'chandelier',
       ],
     },
+  },
+  bastion: {
+    // Its mouth looks east through the doorway across the Oculus, under the Lobby’s glazed floor, to the Fortress’ doorway; its approach opens into the Cinnabar.
+    rooms: ['oculus', 'cinnabar', 'vesper', 'lobby', 'exhibition', 'fortress', 'salon'],
+    visibleLamps: {},
   },
 } satisfies Record<RoomId, RoomRelations>
 /** The floor mirror to render while the player is in the room, none for a room without one or an id the gallery doesn’t know. */
