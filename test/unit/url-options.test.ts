@@ -45,10 +45,13 @@ describe('URL options', () => {
       expect(readWireframeHighlight(search)).toBeUndefined()
     }
   })
-  test('?show_wireframe is enabled by a bare or true flag only', () => {
+  test('?show_wireframe is off unless it is true or a line width in hundredths of a pixel', () => {
     expect(readShowWireframe('?show_wireframe')).toBe(true)
     expect(readShowWireframe('?show_wireframe=true')).toBe(true)
-    for (const search of ['', '?show_wireframe=false', '?show_wireframe=1', '?vision_mode=wireframe']) {
+    expect(readShowWireframe('?show_wireframe=1')).toBe(1)
+    expect(readShowWireframe('?show_wireframe=50')).toBe(50)
+    expect(readShowWireframe('?show_wireframe=250')).toBe(250)
+    for (const search of ['', '?show_wireframe=false', '?show_wireframe=0', '?show_wireframe=0.5', '?show_wireframe=-50', '?show_wireframe=thin', '?vision_mode=wireframe']) {
       expect(readShowWireframe(search)).toBe(false)
     }
   })

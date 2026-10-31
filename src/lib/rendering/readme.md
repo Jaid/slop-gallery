@@ -24,6 +24,10 @@ current-frame scene color + depth + normals + velocity
 
 Both run on linear color before the output transform. Any choice other than `false` in fast graphics mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
 
+## Wireframe
+
+`?show_wireframe` replaces the whole pipeline with the hidden-line `WireframeRenderPipeline` from `capture-session`. A bare `?show_wireframe` or `true` draws the classic 1 px hardware lines over a depth-writing fill, unsmoothed. A positive integer instead draws antialiased edges as part of the fill, that many hundredths of a pixel wide in total (`?show_wireframe=100` is 1 px, `50` matches `set_wireframe`’s default), from each fragment’s distance to its triangle’s edges.
+
 ## Albedo
 
 `?albedo` replaces the whole pipeline with `AlbedoRenderPipeline`: one 4× multisampled scene pass whose context swaps every material’s result for its diffuse color, so each surface shows its base color, maps, vertex colors and opacity as if evenly lit from all sides at full strength. Lights, shadows (their maps don’t render at all), the environment, emission, fog, tone mapping, exposure and every postprocessing effect leave no trace; only the conversion to the output color space remains. Glass that refracts its backdrop itself (cast floor, vault and crown glass) is opaque and brings the view through it in as emission; it declares `emissionIsTransmission`, so it keeps that view, which then shows the albedo behind it. `?show_wireframe` takes precedence over it.

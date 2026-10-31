@@ -3,9 +3,10 @@ import {WireframeRenderPipeline} from 'capture-session'
 import {useEffect, useState} from 'react'
 
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
+import {showWireframe} from '#src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '#src/lib/rendering/wireframeHighlight.ts'
 
-/** Replace the regular frame with a hidden-line wireframe of the scene. */
+/** Replace the regular frame with a hidden-line wireframe of the scene: classic hardware lines for `?show_wireframe=true`, antialiased edges of the given width in hundredths of a pixel for a number. */
 const WireframeVision = () => {
   const renderer = useThree(state => state.renderer)
   const scene = useThree(state => state.scene)
@@ -14,6 +15,11 @@ const WireframeVision = () => {
   const [highlight] = useState(() => readWireframeHighlight())
   useEffect(() => {
     const pipeline = new WireframeRenderPipeline(renderer, scene, camera, highlight)
+    if (typeof showWireframe === 'number') {
+      pipeline.lineWidth = showWireframe / 100
+    } else {
+      pipeline.lineStyle = 'lines'
+    }
     activateRenderPipeline(store, pipeline)
     return () => {
       releaseRenderPipeline(store, pipeline)
