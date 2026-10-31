@@ -13,7 +13,6 @@ import DisplayPedestalGeometry, {pedestalOverhang} from '../../src/lib/gallery/D
 import lowerGallery, {tunnelFloorHeight, tunnelSlope} from '../../src/lib/gallery/lowerGallery.ts'
 import tunnelDisplays, {displayNorthExtension, tunnelDisplayWindow} from '../../src/lib/gallery/tunnelDisplays.ts'
 import exhibitionKnots, {exhibitionKnotOffset, exhibitionPedestal, exhibitionPedestalLobes, exhibitionRarityChances, exhibitionSidecar, exhibitionSlots} from '../../src/rooms/exhibition/knots.ts'
-import salonKnot from '../../src/rooms/salon/knot.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const displayOf = (slot: (typeof exhibitionSlots)[number]) => tunnelDisplays.find(display => display.exhibits.some(exhibit => exhibit.id === slot.id))!
@@ -31,7 +30,7 @@ test('weighted picks follow their weights and depend only on seed and ID', () =>
   expect(() => environmentWeightedPick(1, 'weightless', [['a', 0]])).toThrow()
   expect(() => environmentWeightedPick(1, 'negative', [['a', 2], ['b', -1]])).toThrow()
 })
-test('the seed alone picks six distinct Knots, never the Salon’s, rolling the rarity first', () => {
+test('the seed alone picks six distinct Knots, rolling the rarity first', () => {
   expect(exhibitionRarityChances.reduce((sum, [, chance]) => sum + chance, 0)).toBeCloseTo(1, 9)
   expect(exhibitionKnots(7).map(knot => knot.entry.id)).toEqual(exhibitionKnots(7).map(knot => knot.entry.id))
   const rarities = new Map<number, number>
@@ -40,7 +39,6 @@ test('the seed alone picks six distinct Knots, never the Salon’s, rolling the 
     expect(picks).toHaveLength(6)
     const ids = new Set(picks.map(knot => knot.entry.id))
     expect(ids.size).toBe(6)
-    expect(ids.has(salonKnot(seed).id)).toBe(false)
     for (const {entry} of picks) {
       rarities.set(entry.rarity, (rarities.get(entry.rarity) ?? 0) + 1)
     }

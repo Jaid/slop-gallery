@@ -8,7 +8,6 @@ import {environmentPick, environmentWeightedPick} from '#src/lib/environmentSeed
 import oculusBalcony from '#src/lib/gallery/oculusBalcony.ts'
 import oculusTower from '#src/lib/gallery/oculusTower.ts'
 import exhibitionKnots, {exhibitionRarityChances} from '#src/rooms/exhibition/knots.ts'
-import salonKnot from '#src/rooms/salon/knot.ts'
 
 const deckY = oculusTower.floorY + oculusTower.height
 /** where the deck ends toward the balcony, due south of the tower’s axis */
@@ -25,9 +24,9 @@ export const oculusKnotSign = {
 /** It continues the numbering of the Exhibition’s six, whose tunnel leads into the Oculus. */
 export const oculusKnotLabel = '#07'
 
-/** The Knot the Oculus shows in the environment of `seed`: its rarity rolled like an Exhibition Knot’s, then one of that rarity which neither the Salon nor the Exhibition shows. */
+/** The Knot the Oculus shows in the environment of `seed`: its rarity rolled like an Exhibition Knot’s, then one of that rarity which the Exhibition doesn’t show. */
 export default function oculusKnot(seed: number): KnotEntry {
-  const taken = new Set([salonKnot(seed).id, ...exhibitionKnots(seed).map(knot => knot.entry.id)])
+  const taken = new Set(exhibitionKnots(seed).map(knot => knot.entry.id))
   const rarity = environmentWeightedPick(seed, 'oculus-rarity', exhibitionRarityChances)
   return environmentPick(seed, 'oculus-knot', knots.filter(knot => knot.rarity === rarity && !taken.has(knot.id)))
 }

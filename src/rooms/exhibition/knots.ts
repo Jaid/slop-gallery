@@ -9,7 +9,6 @@ import {knotSign} from 'knot-materials/signs.ts'
 import {environmentPick, environmentWeightedPick} from '#src/lib/environmentSeed.ts'
 import {tunnelFloorHeight, tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
 import tunnelDisplays, {tunnelDisplayWindow} from '#src/lib/gallery/tunnelDisplays.ts'
-import salonKnot from '#src/rooms/salon/knot.ts'
 
 /** how likely each rarity is for one of the Exhibition’s Knots; the Knot is then picked among the rarity’s */
 export const exhibitionRarityChances = [
@@ -107,10 +106,10 @@ export const exhibitionSlots = tunnelDisplays.flatMap(display => {
 
 /**
  * The Knots the Exhibition shows in the environment of `seed`, one per slot. Each slot rolls its rarity by `exhibitionRarityChances` first and then a Knot of that rarity, both with ids of its own, so the seed alone decides them.
- * No Knot shows twice, nor the Salon’s.
+ * No Knot shows twice.
  */
 export default function exhibitionKnots(seed: number): Array<ShowcasedKnot> {
-  const taken = new Set([salonKnot(seed).id])
+  const taken = new Set<string>
   return exhibitionSlots.map(slot => {
     const rarity = environmentWeightedPick(seed, `exhibition-rarity:${slot.id}`, exhibitionRarityChances)
     const pool = knotsByRarity.get(rarity)!.filter(knot => !taken.has(knot.id))

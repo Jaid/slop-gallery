@@ -6,15 +6,13 @@ import oculusBalcony from '../../src/lib/gallery/oculusBalcony.ts'
 import tower, {towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import exhibitionKnots, {exhibitionRarityChances} from '../../src/rooms/exhibition/knots.ts'
 import oculusKnot, {oculusKnotPosition, oculusKnotSign} from '../../src/rooms/oculus/knot.ts'
-import salonKnot from '../../src/rooms/salon/knot.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const deckY = tower.floorY + tower.height
-test('the seed alone picks the Oculus’ Knot, never one the Salon or the Exhibition shows, of any rarity the Exhibition rolls', () => {
+test('the seed alone picks the Oculus’ Knot, never one the Exhibition shows, of any rarity the Exhibition rolls', () => {
   expect(oculusKnot(7).id).toBe(oculusKnot(7).id)
   const picks = Array.from({length: 400}, (_, seed) => {
     const knot = oculusKnot(seed)
-    expect(knot.id).not.toBe(salonKnot(seed).id)
     expect(exhibitionKnots(seed).map(({entry}) => entry.id)).not.toContain(knot.id)
     return knot
   })
