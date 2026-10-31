@@ -7,7 +7,8 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/web
 
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
-import {corridorPassage} from '../../src/lib/gallery/corridor.ts'
+import corridor, {corridorPassage} from '../../src/lib/gallery/corridor.ts'
+import {insidePolygon, polygonArea} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
@@ -143,8 +144,8 @@ describe('inside corners of room walls', () => {
     expect(obtuse[1].miters![1]).toBeCloseTo(bayMiter, 8)
   })
   // Where both walls ran their baseboards and cornices into the corner, the bands overlapped with shared tops, bottoms and fronts.
-  // The tunnel doorway’s casing fills the corner of the bay’s north-east wall and the east wall up to the arch’s springing, so only the cornices meet there.
-  for (const [first, second, baseboard] of [['lodge-south', 'lodge-east', true], ['lodge-south', 'lodge-west', true], ['vesper-north', 'vesper-west', true], ['lodge-northwest', 'lodge-west', true], ['lodge-northwest', 'lodge-north', true], ['lodge-north', 'lodge-northeast', true], ['lodge-northeast', 'lodge-east', false]] as const) {
+  // The casings of the tunnel’s doorway and the Corridor’s fill the corners beside them, of the east wall and of the bay’s back wall, up to their arches’ springing, so only the cornices meet there.
+  for (const [first, second, baseboard] of [['lodge-south', 'lodge-east', true], ['lodge-south', 'lodge-west', true], ['vesper-north', 'vesper-west', true], ['lodge-northwest', 'lodge-west', true], ['lodge-northwest', 'lodge-north', false], ['lodge-north', 'lodge-northeast', false], ['lodge-northeast', 'lodge-east', false]] as const) {
     test(`${first} and ${second} meet with single, mitered trim surfaces`, () => {
       const a = wallById(first)
       const b = wallById(second)
@@ -170,15 +171,15 @@ describe('inside corners of room walls', () => {
     })
   }
   test('the bay’s 45° walls start behind the casings of the Lodge’s doorways beside them', () => {
-    for (const [doorway, diagonal] of [['lodge-west', 'lodge-northwest'], ['lodge-east', 'lodge-northeast']] as const) {
+    for (const [doorway, name, diagonal] of [['lodge-north', 'corridor', 'lodge-northwest'], ['lodge-north', 'corridor', 'lodge-northeast'], ['lodge-east', 'fortress', 'lodge-northeast']] as const) {
       const wall = wallById(doorway)
       const bay = wallById(diagonal)
-      const hole = wall.holes![0]
+      const hole = wall.holes!.find(value => value.name === name)!
+      /** how far in front of the 45° wall’s log face the point lies */
+      const inFront = (point: Vector3) => point.x * inward(bay).x + point.z * inward(bay).z - (bay.center[0] * inward(bay).x + bay.center[2] * inward(bay).z) - wallFace
       // The casing’s outer edge toward the bay, on the log face.
       const edges = [-1, 1].map(side => new Vector3(...wallPosition(wall, hole.u + side * (hole.width / 2 + wallOpeningTrim), wall.center[1], wallFace)))
-      const edge = edges.reduce((north, candidate) => (candidate.z < north.z ? candidate : north))
-      const inFront = edge.x * inward(bay).x + edge.z * inward(bay).z - (bay.center[0] * inward(bay).x + bay.center[2] * inward(bay).z) - wallFace
-      expect(inFront).toBeGreaterThan(0.03)
+      expect(Math.min(...edges.map(inFront))).toBeGreaterThan(0.03)
     }
   })
   test('the Lodge’s widened doorway keeps a plumb reveal beside the bay', () => {
@@ -203,15 +204,12 @@ describe('passage elbows', () => {
     test(`${passage.id}: walls close the inner corner of every elbow`, () => {
       const meshes = passageSurfaces(passage)
       const half = passage.width / 2
-      for (let i = 1; i < passage.path.length - 1; i++) {
-        const [px, pz] = passage.path[i - 1]
-        const [x, z] = passage.path[i]
-        const [nx, nz] = passage.path[i + 1]
-        // The inner corner lies against the incoming travel and toward the outgoing one.
-        const inner = [x - Math.sign(x - px) * half + Math.sign(nx - x) * half, z - Math.sign(z - pz) * half + Math.sign(nz - z) * half] as const
-        const faceCorner = new Vector3(inner[0] + Math.sign(x - inner[0]) * wallFace, passage.floorY + 1.6, inner[1] + Math.sign(z - inner[1]) * wallFace)
+      for (const [i, [inner]] of passage.junctions.entries()) {
+        const [x, z] = passage.path[i + 1]
+        // The corner of both walls’ faces lies on the line from the elbow’s middle to the corner of their center lines inside the turn, as far before it as the faces stand in front of their walls’ center lines are to half the width.
+        const faceCorner = new Vector3(inner[0] + (x - inner[0]) * wallFace / half, passage.floorY + 1.6, inner[1] + (z - inner[1]) * wallFace / half)
         const origin = new Vector3(x, passage.floorY + 1.6, z)
-        // Aimed just past the corner of the faces, into what was an open square between both walls’ ends.
+        // Aimed just past the corner of the faces, into what was an open wedge between both walls’ ends.
         const toCorner = faceCorner.clone().sub(origin).normalize()
         const target = faceCorner.clone().addScaledVector(toCorner, 0.03)
         const hits = nearestHits(meshes, origin, target.clone().sub(origin))
@@ -220,18 +218,22 @@ describe('passage elbows', () => {
     })
   }
   test('timber passages roof only their elbows with slabs, below which the linings stop', () => {
-    expect(corridorPassage.junctions).toHaveLength(2)
-    for (const [i, {center, size}] of corridorPassage.junctions.entries()) {
+    // Round the Lodge’s bay, the corridor turns by a right angle and twice by 45°, then once more by a right angle toward the Sienna.
+    const turns = [Math.PI / 2, Math.PI / 4, Math.PI / 4, Math.PI / 2]
+    expect(corridorPassage.junctions).toHaveLength(turns.length)
+    for (const [i, junction] of corridorPassage.junctions.entries()) {
       const [x, z] = corridorPassage.path[i + 1]
-      expect(center[0]).toBeCloseTo(x)
-      expect(center[1]).toBeCloseTo(z)
-      expect(size).toEqual([corridorPassage.width, corridorPassage.width])
+      expect(insidePolygon(junction, x, z)).toBe(true)
+      // Two right triangles, each as long as the passage is wide and reaching as far into the next span as its elbow does.
+      expect(polygonArea(junction)).toBeCloseTo(corridorPassage.width ** 2 * Math.tan(turns[i] / 2), 6)
+      expect(corridorPassage.spans[i].length - corridorPassage.spans[i].to).toBeCloseTo(corridorPassage.width / 2 * Math.tan(turns[i] / 2), 9)
+      expect(corridorPassage.spans[i + 1].from).toBeCloseTo(corridorPassage.width / 2 * Math.tan(turns[i] / 2), 9)
     }
     const geometry = TimberGeometry.passage(corridorPassage)
     disposables.push(geometry)
     // Along a span, the lining’s crown is the ceiling, in the plane a slab’s underside would occupy.
     const mesh = new Mesh(geometry.shell, material)
-    const [x, z] = [lodge.approachX, (lodge.returnZ + lodge.siennaZ) / 2]
+    const [x, z] = corridor.center
     const upward = new Raycaster(new Vector3(x, corridorPassage.floorY + 1, z), new Vector3(0, 1, 0))
     const hit = upward.intersectObject(mesh)[0]
     expect(hit.point.y).toBeCloseTo(corridorPassage.floorY + corridorPassage.height, 5)

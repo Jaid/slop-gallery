@@ -24,13 +24,13 @@ test('every gallery room is fenced around its origin', () => {
   const boxes = Object.fromEntries(worldRooms.map(room => [room.id, [room.fence].flat()]))
   // Single boxes stay unwrapped.
   expect(Array.isArray(worldRooms.find(room => room.id === 'vesper')!.fence)).toBe(false)
-  // The hall, and the stair flight up to the Sienna’s doorway.
-  expect(boxes.corridor).toHaveLength(2)
-  expect(boxes.corridor[1].max[0]).toBe(-20)
-  // The Corridor and the Lodge meet halfway through the doorway passage between them.
+  // The passage round the Lodge’s bay and down the long hall, cut into strips along its diagonal, and last the stair flight up to the Sienna’s doorway.
+  expect(boxes.corridor.length).toBeGreaterThan(9)
+  expect(boxes.corridor.at(-1)!.max[0]).toBe(-20)
+  // The Corridor and the Lodge meet halfway through the doorway passage between them, north of the bay.
   expect(boxes.lodge).toHaveLength(3)
-  expect(boxes.lodge[1].min[0]).toBe(boxes.corridor[0].max[0])
-  expect(boxes.lodge[1].max[0]).toBe(boxes.lodge[0].min[0])
+  expect(boxes.corridor.filter(({min, max}) => max[2] === boxes.lodge[1].min[2] && min[0] === boxes.lodge[1].min[0] && max[0] === boxes.lodge[1].max[0])).toHaveLength(1)
+  expect(boxes.lodge[1].max[2]).toBe(boxes.lodge[2].min[2])
   // The Lodge’s bay lies north of its square, as wide and as high.
   expect(boxes.lodge[2].max[2]).toBe(boxes.lodge[0].min[2])
   expect(boxes.lodge[2].min[2]).toBeCloseTo(boxes.lodge[0].min[2] - lodgeBay.depth)

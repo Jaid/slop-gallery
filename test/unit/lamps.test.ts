@@ -37,7 +37,7 @@ const lanterns = (passage: Passage, surfaces: ReadonlyArray<BufferGeometry>, kep
 }
 test('every lamp has a world-wide id of its own and lies in its own room', () => {
   expect(byId.size).toBe(lamps.length)
-  expect(lamps.length).toBe(33)
+  expect(lamps.length).toBe(34)
   for (const {id, position, room} of lamps) {
     expect(`${id} in ${slopGallery.roomAt(position)?.id}`).toBe(`${id} in ${room}`)
   }
@@ -70,7 +70,8 @@ test('the passages’ lamps hang under the lanterns the fixtures hang from their
       const {light} = mounts[index]
       expectNear(lamp(`fortress-lantern_${name}`).position, [light[0], light[1] - below[name], light[2]])
     }
-    const [north, middle, south] = lanterns(corridorPassage, [timber.shell, timber.ribs], [[0, -0.3], [4, -0.4], [8, -0.4]], corridorLightSpacing, timber.ribs)
+    const [doorway, north, middle, south] = lanterns(corridorPassage, [timber.shell, timber.ribs], [[0, -0.3], [3, -0.3], [6, -0.4], [10, -0.4]], corridorLightSpacing, timber.ribs)
+    expectNear(lamp('corridor-lantern_lodge').position, doorway)
     expectNear(lamp('corridor-lantern_north').position, north)
     expectNear(lamp('corridor-lantern_middle').position, middle)
     expectNear(lamp('corridor-lantern_south').position, south)

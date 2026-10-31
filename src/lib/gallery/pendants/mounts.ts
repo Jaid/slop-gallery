@@ -10,8 +10,8 @@ import CeilingProbe from './CeilingProbe.ts'
 export const passageLightDrop = 0.6
 /** At most this far between two passage lights along a span. */
 export const passageLightSpacing = 5
-/** The timber corridor’s spans are much longer, so its lanterns hang about 7 m apart instead, an odd count down its long run so one hangs at its center. */
-export const corridorLightSpacing = 7
+/** The timber corridor’s spans are much longer, so its lanterns hang about 7.5 m apart instead, an odd count down its long run so one hangs at its center. */
+export const corridorLightSpacing = 7.5
 /** how far a light may slide to reach a timber rib: half the most the ribs are apart, plus enough to cross from an elbow’s flat roof slab to the first rib past it */
 export const ribSearch = 0.8
 /** A rib is barely wider than a canopy, so the search for one goes in 1 cm steps not to skip over it. */
@@ -25,7 +25,7 @@ export function passagePendantMounts(passage: Passage, surfaces: ReadonlyArray<B
   const probe = new CeilingProbe(surfaces, [
     {
       y: passage.floorY + passage.height,
-      rectangles: passage.floors,
+      areas: passage.floors,
     },
   ])
   const ribProbe = ribs && new CeilingProbe([ribs])

@@ -1,28 +1,31 @@
-import type {FloorRectangle} from '#src/lib/gallery/floors.ts'
+import type {FloorPolygon} from '#src/lib/gallery/floorPolygons.ts'
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
 import type {Material} from 'three/webgpu'
 
-import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
+import {ConvexHullCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import FloorSlab from '#component/FloorSlab'
 import PendantLamps from '#component/PendantLamps'
 import TimberFrame from '#component/TimberFrame'
-import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
+import {slabCorners} from '#src/lib/gallery/floorPolygons.ts'
 import TimberGeometry from '#src/lib/gallery/passages/TimberGeometry.ts'
 import VaultGeometry from '#src/lib/gallery/passages/VaultGeometry.ts'
 import {corridorLightSpacing, passagePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
 
+/** how thick the slabs under a passage’s floor and over its ceiling are */
+const slabDepth = 0.24
 /**
- * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps, by the passage’s name; the rest are left out, and a passage left out keeps all of them. The corridor keeps three, at both ends and in the middle; the Fortress’ straight passages keep none, as its lanterns hang in its curve. Their lamps belong to the rooms, see their `lamps.ts`.
+ * Which of a passage’s evenly spaced lanterns, in mount order from the passage’s start, it keeps, by the passage’s name; the rest are left out, and a passage left out keeps all of them. The corridor keeps four: in the doorway passage from the Lodge’s bay, and at the north end, in the middle and at the south end of its long hall. The Fortress’ straight passages keep none, as its lanterns hang in its curve. Their lamps belong to the rooms, see their `lamps.ts`.
  */
 const passageLanterns: Partial<Record<string, ReadonlyArray<boolean>>> = {
-  corridor: [true, false, false, false, true, false, false, false, true],
+  corridor: [true, false, false, true, false, false, true, false, false, false, true],
   'fortress-mouth': [],
   'fortress-approach': [],
 }
@@ -30,7 +33,7 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   material: Material
   passage: Passage
   /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
-  paving?: ReadonlyArray<FloorRectangle>
+  paving?: ReadonlyArray<FloorPolygon>
   ribCutouts?: ReadonlyArray<PassageCutout>
   /** whether the passage’s lanterns are all that lights it, which spaces them out */
   sole?: boolean
@@ -46,14 +49,15 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
   const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
+  const crown = passage.floorY + passage.height
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
-      {passage.floors.map(({center: [x, z], size: [width, depth]}, i) => <group key={i}>
-        <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY - 0.12, z]} />
-        <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, passage.floorY + passage.height + 0.12, z]} />
+      {passage.floors.map((floor, i) => <group key={i}>
+        <ConvexHullCollider args={[slabCorners(floor, passage.floorY - slabDepth, passage.floorY)]} />
+        <ConvexHullCollider args={[slabCorners(floor, crown, crown + slabDepth)]} />
       </group>)}
-      {ceilings.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} material={material} position={[x, passage.floorY + passage.height + 0.12, z]} size={[width, 0.24, depth]} />)}
-      {paving.map(({center: [x, z], size: [width, depth]}, i) => <Box key={i} material={material} position={[x, passage.floorY - 0.12, z]} size={[width, 0.24, depth]} />)}
+      {ceilings.map((ceiling, i) => <FloorSlab key={i} bottom={crown} depth={slabDepth} material={material} polygon={ceiling} />)}
+      {paving.map((floor, i) => <FloorSlab key={i} bottom={passage.floorY - slabDepth} depth={slabDepth} material={material} polygon={floor} />)}
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>
       <Branch not={timber}>

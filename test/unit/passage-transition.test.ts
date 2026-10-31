@@ -3,7 +3,8 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import {corridorHallEastX, corridorPassage, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import {corridorEndZ, corridorPassage, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
+import {polygonArea, polygonBounds} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import lodge, {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
@@ -69,14 +70,15 @@ describe('the Fortress’ timber transition into the Lodge', () => {
     }
   })
   test('stone paving and timber floor tile the passage floor without overlaps or slivers', () => {
-    const total = fortressApproach.floors.reduce((sum, floor) => sum + area(floor), 0)
-    const paved = transition.stoneFloors.reduce((sum, floor) => sum + area(floor), 0)
+    const total = fortressApproach.floors.reduce((sum, floor) => sum + polygonArea(floor), 0)
+    const paved = transition.stoneFloors.reduce((sum, floor) => sum + polygonArea(floor), 0)
     expect(paved + area(transition.floor)).toBeCloseTo(total, 6)
     expect(area(transition.sill) + area(transition.planks)).toBeCloseTo(area(transition.floor), 6)
     for (const floor of transition.stoneFloors) {
-      expect(Math.min(...floor.size)).toBeGreaterThan(0.1)
-      const overlapX = Math.min(floor.center[0] + floor.size[0] / 2, transition.floor.center[0] + transition.floor.size[0] / 2) - Math.max(floor.center[0] - floor.size[0] / 2, transition.floor.center[0] - transition.floor.size[0] / 2)
-      const overlapZ = Math.min(floor.center[1] + floor.size[1] / 2, transition.floor.center[1] + transition.floor.size[1] / 2) - Math.max(floor.center[1] - floor.size[1] / 2, transition.floor.center[1] - transition.floor.size[1] / 2)
+      const bounds = polygonBounds(floor)
+      expect(Math.min(...bounds.size)).toBeGreaterThan(0.1)
+      const overlapX = Math.min(bounds.center[0] + bounds.size[0] / 2, transition.floor.center[0] + transition.floor.size[0] / 2) - Math.max(bounds.center[0] - bounds.size[0] / 2, transition.floor.center[0] - transition.floor.size[0] / 2)
+      const overlapZ = Math.min(bounds.center[1] + bounds.size[1] / 2, transition.floor.center[1] + transition.floor.size[1] / 2) - Math.max(bounds.center[1] - bounds.size[1] / 2, transition.floor.center[1] - transition.floor.size[1] / 2)
       expect(overlapX <= 1e-9 || overlapZ <= 1e-9).toBe(true)
     }
   })
@@ -132,9 +134,10 @@ describe('the Fortress’ timber transition into the Lodge', () => {
     }
   })
   test('the Corridor doorway’s saddle covers the joint of the Lodge’s planks and the Corridor’s boards, right under the rib above it', () => {
-    const {center: [x, z], size: [depth, width]} = lodgeThresholdSaddle
+    // The doorway passage runs north out of the Lodge’s bay.
+    const {center: [x, z], size: [width, depth]} = lodgeThresholdSaddle
     expect(width).toBe(corridorPassage.width)
-    expect(Math.abs(corridorHallEastX - x)).toBeLessThan(depth / 2 - 0.05)
+    expect(Math.abs(corridorEndZ - z)).toBeLessThan(depth / 2 - 0.05)
     const saddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
     const corridorTimber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
     try {
@@ -142,12 +145,13 @@ describe('the Fortress’ timber transition into the Lodge', () => {
       const doorwayRibs = new Mesh(corridorTimber.ribs, material)
       // Toward the rib’s post, a little above the saddle: just inside its ends the post stands on it, just outside there is none.
       const post = (along: number) => {
-        const ray = new Raycaster(new Vector3(along, corridorPassage.floorY + 0.1, z), new Vector3(0, 0, -1), 0, width)
+        // Across to the passage’s wall, short of the diagonal round the bay behind it.
+        const ray = new Raycaster(new Vector3(x, corridorPassage.floorY + 0.1, along), new Vector3(-1, 0, 0), 0, width / 2)
         return ray.intersectObject(doorwayRibs)[0]?.distance
       }
       for (const side of [-1, 1]) {
-        expect(post(x + side * (depth / 2 - 0.005))).toBeCloseTo(width / 2 - 0.25, 3)
-        expect(post(x + side * (depth / 2 + 0.005))).toBeUndefined()
+        expect(post(z + side * (depth / 2 - 0.005))).toBeCloseTo(width / 2 - 0.25, 3)
+        expect(post(z + side * (depth / 2 + 0.005))).toBeUndefined()
       }
     } finally {
       saddle.dispose()

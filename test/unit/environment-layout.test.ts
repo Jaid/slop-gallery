@@ -71,22 +71,27 @@ test('four matching slatted benches surround the fountain under the middle chand
 })
 test('timber entrances have a single exposed face across the ribs, lining and structural wall ends', () => {
   const material = new MeshBasicMaterial
+  // Each leaves its room straight out of a wall: the stair flight west out of the Sienna, the passage north out of the Lodge’s bay.
   const entrances = [
     {
       timber: TimberGeometry.stairs(corridorStairs),
       start: corridorStairs.start,
       width: corridorStairs.width,
+      into: new Vector3(1, 0, 0),
       wallIds: ['sienna-west', 'corridor-stairs_return_north', 'corridor-stairs_return_south'],
     },
     {
       timber: TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts),
       start: [corridorPassage.path[0][0], corridorPassage.floorY, corridorPassage.path[0][1]],
       width: corridorPassage.width,
-      wallIds: ['lodge-west', ...corridorPassage.walls.map(wall => wall.id)],
+      into: new Vector3(0, 0, 1),
+      wallIds: ['lodge-north', ...corridorPassage.walls.map(wall => wall.id)],
     },
   ]
   try {
-    for (const {timber, start, width, wallIds} of entrances) {
+    for (const {timber, start, width, into, wallIds} of entrances) {
+      const across = new Vector3(into.z, 0, into.x)
+      const doorway = new Vector3(start[0], start[1], start[2])
       const architecture = walls.filter(wall => wallIds.includes(wall.id)).map(wall => ({
         wall,
         geometry: createArchitectureGeometry(wall),
@@ -105,8 +110,8 @@ test('timber entrances have a single exposed face across the ribs, lining and st
         for (const side of [-1, 1]) {
           for (const cross of [1.06, 1.12, 1.19, 1.2, 1.215, 1.22, 1.24, 1.28, 1.31]) {
             for (const height of [0.1, 0.41, 0.83, 1.37, 1.9, 2.2, 2.9, 3.35]) {
-              const origin = new Vector3(start[0] + 0.8, start[1] + height, start[2] + side * (width / 2 - 1.3 + cross))
-              const exposedFaceRay = new Raycaster(origin, new Vector3(-1, 0, 0), 0, 2)
+              const origin = doorway.clone().setY(start[1] + height).addScaledVector(into, 0.8).addScaledVector(across, side * (width / 2 - 1.3 + cross))
+              const exposedFaceRay = new Raycaster(origin, into.clone().negate(), 0, 2)
               const hits = exposedFaceRay.intersectObjects(meshes)
               expect(hits.length).toBeGreaterThan(0)
               const front = hits.filter(hit => Math.abs(hit.distance - hits[0].distance) < 0.0001)
@@ -116,7 +121,7 @@ test('timber entrances have a single exposed face across the ribs, lining and st
           }
         }
         // The timber is a real projecting reveal, not a depth-biased material or an open ceiling seam.
-        const origin = new Vector3(start[0] + 0.015, start[1] + 1.6, start[2])
+        const origin = doorway.clone().setY(start[1] + 1.6).addScaledVector(into, 0.015)
         const ceilingRay = new Raycaster(origin, new Vector3(0, 1, 0), 0, 3)
         const ceiling = ceilingRay.intersectObjects(meshes)[0]
         expect(ceiling.distance).toBeGreaterThan(1.5)
@@ -135,7 +140,8 @@ test('timber entrances have a single exposed face across the ribs, lining and st
   }
 })
 test('corridor timber ribs never share their visible face with a wall baseboard', () => {
-  const wall = walls.find(value => value.id === 'corridor-wall_4')!
+  // the long hall’s west wall
+  const wall = walls.find(value => value.id === 'corridor-wall_8')!
   const architecture = createArchitectureGeometry(wall)
   const timber = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
   const material = new MeshBasicMaterial

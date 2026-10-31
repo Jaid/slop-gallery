@@ -1,5 +1,6 @@
 import type {RoomWall} from '../base/Room.ts'
 
+import {corridorPassage} from '#src/lib/gallery/corridor.ts'
 import {fortressApproach} from '#src/lib/gallery/fortress.ts'
 import lodge, {lodgeBay, lodgeWindow} from '#src/lib/gallery/lodge.ts'
 
@@ -18,19 +19,24 @@ const [northwest, north, northeast] = [0, 1, 2].map((index): RoomWall => {
     height,
   }
 })
+const [doorway] = corridorPassage.path
 
 export default {
   northwest,
-  north,
+  north: {
+    ...north,
+    holes: {
+      corridor: {
+        u: doorway[0] - lodge.center[0] - north.center[0],
+        width: corridorPassage.width,
+        height: corridorPassage.height,
+        profile: 'arch',
+      },
+    },
+  },
   northeast,
   west: planWall(lodge.size, 'west', height, {
     holes: {
-      corridor: {
-        u: lodge.center[1] - lodge.returnZ,
-        width: lodge.timberWidth,
-        height: 3.4,
-        profile: 'arch',
-      },
       window: {
         u: lodge.center[1] - lodgeWindow.z,
         width: lodgeWindow.width,

@@ -13,13 +13,6 @@ export default {
     position: [-5 + bayDepth / 2 + diagonalOffset, 2, -5 - bayDepth / 2 + diagonalOffset],
     rotation: Math.PI / 4,
   },
-  north_0: {
-    wallId: 'north',
-    ratio: '3:2',
-    area: 30_000,
-    position: [0, 2, -5 - bayDepth + 0.22],
-    rotation: 0,
-  },
   northeast_0: {
     wallId: 'northeast',
     ratio: '3:2',

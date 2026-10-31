@@ -52,7 +52,7 @@ const coffeeTable = {
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
  *
- * Seating gathers around the hearth and keeps clear of the walkway that links both doorways at z −2.6, beside the chandelier at the north bay’s mouth.
+ * Seating gathers around the hearth and keeps clear of the walkway from the tunnel’s doorway at z −2.7 round under the chandelier at the north bay’s mouth to the Corridor’s doorway in the bay’s back wall.
  */
 const lodgeInterior = {
   /** north edge of the furniture; the walkway between the doorways stays free north of it */

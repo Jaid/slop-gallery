@@ -92,11 +92,11 @@ export const openings: ReadonlyArray<Opening> = [
   },
   {
     rooms: ['lodge', 'corridor'],
-    holes: [['lodge-west', 'corridor']],
+    holes: [['lodge-north', 'corridor']],
   },
   {
     rooms: ['lodge', 'corridor'],
-    holes: [['lodge-west', 'window'], ['corridor-wall_5', 'lodge_window']],
+    holes: [['lodge-west', 'window'], ['corridor-wall_3', 'lodge_window']],
   },
   {
     // The glass wall between the Lobby extension and the Salon.
@@ -270,6 +270,7 @@ const relations = {
     rooms: ['fortress', 'corridor', 'oculus'],
     visibleLamps: {
       corridor: [
+        'lantern_lodge',
         'lantern_north',
         'lantern_middle',
         'lantern_south',
@@ -280,7 +281,7 @@ const relations = {
   fortress: {
     rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon'],
     visibleLamps: {
-      corridor: 'lantern_north',
+      corridor: 'lantern_lodge',
       lodge: [
         'fire',
         'chandelier',

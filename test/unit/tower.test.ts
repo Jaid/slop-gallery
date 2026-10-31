@@ -5,6 +5,7 @@ import EgoMotor from 'ego-player/motor'
 import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lowerGallery, {oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
@@ -390,8 +391,8 @@ describe('cylindrical Oculus platform', () => {
               world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...part.wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), part.wall.rotation)))
             }
           }
-          for (const {center: [x, z], size: [width, depth]} of fortressMouth.floors) {
-            world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, 0.12, depth / 2).setTranslation(x, fortressMouth.floorY - 0.12, z))
+          for (const floor of fortressMouth.floors) {
+            world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, fortressMouth.floorY - 0.24, fortressMouth.floorY))!)
           }
           world.timestep = 1 / fps
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(tower.x, ramp.endY + 0.04, tower.z))

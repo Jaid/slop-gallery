@@ -9,6 +9,7 @@ import {Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/web
 import {colliderGeometry, createArchitectureGeometry, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
+import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
@@ -388,8 +389,8 @@ describe('the Fortress’ route round the Oculus', () => {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
         }
         for (const passage of [fortressMouth, fortressApproach]) {
-          for (const {center: [x, z], size: [width, depth]} of passage.floors) {
-            world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, 0.12, depth / 2).setTranslation(x, passage.floorY - 0.12, z))
+          for (const floor of passage.floors) {
+            world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, passage.floorY - 0.24, passage.floorY))!)
           }
         }
         addOculusRailings(world)

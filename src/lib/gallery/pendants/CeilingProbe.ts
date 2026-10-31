@@ -1,9 +1,11 @@
-import type {FloorRectangle} from '../floors.ts'
+import type {FloorPolygon} from '../floorPolygons.ts'
 import type {Vec3} from '../types.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import {MeshBVH} from 'three-mesh-bvh'
 import {DoubleSide, Ray, Vector3} from 'three/webgpu'
+
+import {insidePolygon} from '../floorPolygons.ts'
 
 export type CeilingHit = {
   /** unit normal facing down into the room */
@@ -22,7 +24,7 @@ export type PendantMount = {
 }
 /** A horizontal ceiling plane, e.g. a passage’s flat roof slabs over its elbows. */
 export type FlatCeiling = {
-  rectangles: ReadonlyArray<FloorRectangle>
+  areas: ReadonlyArray<FloorPolygon>
   y: number
 }
 
@@ -61,9 +63,9 @@ export default class CeilingProbe {
         normal: normal.toArray(),
       }
     }
-    for (const {y, rectangles} of this.flat) {
+    for (const {y, areas} of this.flat) {
       const distance = y - origin[1]
-      const covered = rectangles.some(({center, size}) => Math.abs(origin[0] - center[0]) <= size[0] / 2 && Math.abs(origin[2] - center[1]) <= size[1] / 2)
+      const covered = areas.some(area => insidePolygon(area, origin[0], origin[2]))
       if (!(covered && distance > 0 && distance < bestDistance)) {
         continue
       }

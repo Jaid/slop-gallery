@@ -20,7 +20,7 @@ import walls from './walls.ts'
 export default class Lodge extends Room {
   override readonly air = [
     floorBox(lodge.size, 0, lodge.height),
-    // The Lodge’s half of the doorway passage from the Corridor’s hall.
+    // The Lodge’s half of the doorway passage from the Corridor, north of the bay.
     floorBox(lodgeThreshold.size, corridor.floorY - lodge.floorY, corridor.height, [lodgeThreshold.center[0] - lodge.center[0], lodgeThreshold.center[1] - lodge.center[1]]),
     // The box around the bay off the north wall.
     floorBox(lodgeBay.bounds.size, 0, lodge.height, [lodgeBay.bounds.center[0] - lodge.center[0], lodgeBay.bounds.center[1] - lodge.center[1]]),
@@ -28,8 +28,9 @@ export default class Lodge extends Room {
   override readonly color = '#936d47'
   override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
   override readonly fence = new Geofence([
-    // Its whole air, the doorway’s half by the Corridor and the north bay included, at every height, as nothing lies above or below it.
-    footprint(this.air),
+    // The room with its bay, and the doorway’s half by the Corridor, at every height, as nothing lies above or below them.
+    footprint([this.air[0], this.air[2]]),
+    footprint([this.air[1]]),
     // The window’s deep niche out to its glass in the Corridor’s lining; it comes before the Corridor, whose hall the niche reaches into.
     {
       x: lodgeWindow.tunnelX - lodge.center[0],

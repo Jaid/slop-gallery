@@ -67,7 +67,7 @@ export const portals: Array<Portal> = [
   })),
 ]
 
-/** the boxes of each room’s air, a room’s air can take several (like the Corridor’s hall and its stair flight up to the Sienna); they reach below the floor for its reflection */
+/** the boxes of each room’s air, a room’s air can take several (like the Corridor’s strips round the Lodge’s bay, its hall and its stair flight up to the Sienna); they reach below the floor for its reflection */
 export const roomBoxes: ReadonlyArray<{
   box: Box3
   floorY: number

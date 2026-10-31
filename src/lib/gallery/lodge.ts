@@ -15,8 +15,7 @@ const lodge = {
   // three meters over Moonfall’s floor
   floorY: lowerGallery.floorY + 3,
   height: 3.9,
-  // Keep both widened doorways inset from their neighboring room corners.
-  returnZ: northZ + 0.4 + timberWidth / 2,
+  // Keep the widened doorway inset from Sienna’s neighboring corner.
   siennaZ: 8.4 + timberWidth / 2,
   // Expand the long timber passage westward, keeping its east wall fixed.
   approachX: -31.7 - timberWidth / 2,
@@ -34,7 +33,7 @@ const southZ = lodge.center[1] + lodge.size[1] / 2
 /** how far the bay reaches north past the old north wall’s line */
 const bayDepth = 2.74
 /**
- * The bay that takes the place of the Lodge’s north wall, from the corner beside the Corridor’s doorway to the one beside the tunnel’s: half an octagon, with walls at 45° out of both corners and a back wall parallel to the old one.
+ * The bay that takes the place of the Lodge’s north wall, from the corner of its west wall to the one beside the tunnel’s doorway: half an octagon, with walls at 45° out of both corners and a back wall parallel to the old one, which the Corridor leaves through.
  *
  * Its corners are where the planes of its walls meet, from west to east, so each wall faces into the room from one corner to the next.
  */

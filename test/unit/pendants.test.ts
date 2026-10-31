@@ -2,7 +2,7 @@ import type {PendantBody, PendantMount} from '../../src/lib/gallery/pendants/ind
 
 import {afterAll, describe, expect, test} from 'bun:test'
 
-import {BoxGeometry, DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+import {DoubleSide, ExtrudeGeometry, Mesh, MeshBasicMaterial, Raycaster, Shape, Vector2, Vector3} from 'three/webgpu'
 
 import {corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
 import {fortressApproach, fortressCurve, fortressLanterns, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
@@ -26,9 +26,12 @@ const transition = new TransitionGeometry(fortressTransition)
 const lodgeWindow = new LodgeWindowGeometry
 const material = new MeshBasicMaterial({side: DoubleSide})
 // The flat roof slabs over passage elbows, as rendered by CoveredPassage.
-const slabs = [fortressMouth, fortressApproach, corridorPassage].flatMap(passage => passage.floors.map(({center: [x, z], size: [width, depth]}) => {
-  const slab = new BoxGeometry(width, 0.24, depth)
-  return slab.translate(x, passage.floorY + passage.height + 0.12, z)
+const slabs = [fortressMouth, fortressApproach, corridorPassage].flatMap(passage => passage.floors.map(floor => {
+  const slab = new ExtrudeGeometry(new Shape(floor.map(([x, z]) => new Vector2(x, -z))), {
+    depth: 0.24,
+    bevelEnabled: false,
+  })
+  return slab.rotateX(-Math.PI / 2).translate(0, passage.floorY + passage.height, 0)
 }))
 const meshes = [mouth.shell, mouth.ribs, curve.shell, curve.ribs, approach.shell, approach.ribs, corridor.shell, corridor.ribs, stairs.shell, stairs.ribs, transition.timber, transition.lining, lodgeWindow.frame, lodgeWindow.lining, ...slabs].map(geometry => {
   const mesh = new Mesh(geometry, material)
@@ -61,7 +64,7 @@ const groups: Array<{
   {
     label: 'timber corridor',
     body: lantern,
-    lights: Array.from({length: 9}, () => corridorPassage.floorY + corridorPassage.height - passageLightDrop),
+    lights: Array.from({length: 11}, () => corridorPassage.floorY + corridorPassage.height - passageLightDrop),
     mounts: passagePendantMounts(corridorPassage, [corridor.shell, corridor.ribs], corridorLightSpacing, corridor.ribs),
   },
 ]
@@ -78,7 +81,7 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs its drop under its passage’s crown', () => {
     expect(groups[0].mounts).toHaveLength(2)
-    expect(groups.at(-1)!.mounts).toHaveLength(9)
+    expect(groups.at(-1)!.mounts).toHaveLength(11)
     for (const {mounts, lights} of groups) {
       expect(mounts).toHaveLength(lights.length)
       for (const [i, mount] of mounts.entries()) {

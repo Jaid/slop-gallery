@@ -16,15 +16,15 @@ export const timberEntranceProjection = 0.03
 
 /** The timber spans lining a passage, one per span of its path. */
 export function passageTimberSpans(passage: Passage): Array<Required<TimberSpan>> {
-  return passage.spans.map(({start, end}, i) => ({
+  return passage.spans.map(({start, end, from, to}, i) => ({
     start: [start[0], passage.floorY, start[1]],
     end: [end[0], passage.floorY, end[1]],
     width: passage.width,
     height: passage.height,
     entryProjection: i === 0 ? timberEntranceProjection : 0,
     // Keep the entire elbow open; the passage's timber ceiling closes these junctions.
-    from: i > 0 ? passage.width / 2 : 0,
-    to: Math.hypot(end[0] - start[0], end[1] - start[1]) - (i < passage.spans.length - 1 ? passage.width / 2 : 0),
+    from,
+    to,
   }))
 }
 

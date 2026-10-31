@@ -1,4 +1,4 @@
-import {bumpMap, color, float, mix, mx_noise_float, positionWorld, vec3} from 'three/tsl'
+import {bumpMap, color, float, mix, mx_noise_float, normalWorldGeometry, positionWorld, select, vec3} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 /** Vertical cedar boards, with narrow dark seams and grain at physical scale. */
@@ -8,7 +8,11 @@ export default class LodgeWoodMaterial extends MeshStandardNodeMaterial {
       roughness: 0.78,
       envMapIntensity: 0.25,
     })
-    const across = positionWorld.x.add(positionWorld.z)
+    const normal = normalWorldGeometry
+    // Upright faces count their boards along themselves, whichever way they run; the rest, floors, ceilings and chamfers, along x and z at once.
+    const upright = normal.y.abs().lessThan(0.25)
+    const along = vec3(normal.z, 0, normal.x.negate()).normalize()
+    const across = select(upright, positionWorld.dot(along), positionWorld.x.add(positionWorld.z))
     const course = across.div(0.25)
     const board = course.fract()
     // Analytically filter fine seams and grain on long, grazing-angle stair walls.

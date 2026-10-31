@@ -32,15 +32,12 @@ export default class VaultGeometry {
     const ribs: Array<BufferGeometry> = []
     const radius = passage.width / 2
     const spring = passage.height - radius
-    for (const [i, {start, end}] of passage.spans.entries()) {
-      const dx = end[0] - start[0]
-      const dz = end[1] - start[1]
-      const length = Math.hypot(dx, dz)
-      const from = i > 0 ? radius : 0
-      const to = length - (i < passage.spans.length - 1 ? radius : 0)
+    for (const [i, {start, end, length, from, to}] of passage.spans.entries()) {
       if (to <= from) {
         continue
       }
+      const dx = end[0] - start[0]
+      const dz = end[1] - start[1]
       const shellFrom = from - (i > 0 ? junctionOverlap : 0)
       const shellTo = to + (i < passage.spans.length - 1 ? junctionOverlap : 0)
       const rotation = Math.atan2(dx, dz)

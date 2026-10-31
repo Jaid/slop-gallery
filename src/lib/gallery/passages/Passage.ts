@@ -1,45 +1,65 @@
 import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 import type {Wall} from '../../placement/wallGeometry.ts'
-import type {FloorRectangle} from '../floors.ts'
+import type {FloorChunk, FloorPolygon} from '../floorPolygons.ts'
 import type {Vec3} from '../types.ts'
 
+import {wallCoordinates} from '../../placement/wallGeometry.ts'
 import {wallFace} from '../architectureDimensions.ts'
-import passageOrientation from './orientation.ts'
+import {floorChunks, insidePolygon} from '../floorPolygons.ts'
 
 export type PassageCutout = {
   position: Vec3
   size: Vec3
 }
+/** a straight run of a passage’s path, from one of its points to the next */
+export type PassageSpan = {
+  end: Point
+  /** how far into the span its open elbow at the start reaches, where its lining starts: 0 at the passage’s start */
+  from: number
+  length: number
+  start: Point
+  /** how far into the span its open elbow at the end begins, where its lining stops: its length at the passage’s end */
+  to: number
+}
 
 type Point = readonly [number, number]
-type Rectangle = {
-  maxX: number
-  maxZ: number
-  minX: number
-  minZ: number
-}
-type Edge = {
-  axis: 0 | 2
-  cross: number
-  max: number
-  min: number
-  side: number
+
+const tolerance = 1e-9
+/** the direction to the right of a horizontal direction, seen from above with north up */
+const rightOf = ([dx, dz]: Point): Point => [-dz, dx]
+/** Where the segment crosses the rectangle from `min` to `max`, as shares of the way from its start to its end, or undefined if it misses it. */
+function clipSegment(start: Point, end: Point, min: Point, max: Point) {
+  let enter = 0
+  let leave = 1
+  for (const axis of [0, 1]) {
+    const delta = end[axis] - start[axis]
+    if (Math.abs(delta) < tolerance) {
+      if (start[axis] < min[axis] || start[axis] > max[axis]) {
+        return
+      }
+      continue
+    }
+    const [a, b] = [(min[axis] - start[axis]) / delta, (max[axis] - start[axis]) / delta]
+    enter = Math.max(enter, Math.min(a, b))
+    leave = Math.min(leave, Math.max(a, b))
+  }
+  return leave - enter > tolerance ? [enter, leave] as const : undefined
 }
 
 /**
- * An open-ended, level passage. One footprint drives its floors, walls and navigation.
+ * An open-ended, level passage along a path of straight spans, each turning off the one before by up to a right angle at the points between them. One footprint drives its floors, walls and navigation.
+ * Where two spans meet, an open elbow lies between the lines straight across them through the corner of the walls inside the turn, and the walls outside the turn meet in a corner of their own.
  * A room made of several passages tells them apart by their ids; one named like its room is the room’s only passage.
  */
 export default class Passage {
-  readonly floors: Array<FloorRectangle> = []
-  /** the floors at the elbows, where two spans overlap */
-  readonly junctions: Array<FloorRectangle> = []
+  /** the convex pieces its floor is cut into: the straight stretch of each span between its elbows, if it has one, and the elbow after it */
+  readonly floors: Array<FloorPolygon> = []
+  /** the floors of the elbows, between the straight stretches of the spans */
+  readonly junctions: Array<FloorPolygon> = []
   /** the room’s id, followed by the passage’s own unless it is the room’s only one, which its walls’ ids start with */
   readonly name: string
-  readonly spans: Array<{
-    end: Point
-    start: Point
-  }> = []
+  readonly spans: Array<PassageSpan> = []
+  /** the walls along its left side from its start to its end, then those along its right side */
   readonly walls: Array<Wall> = []
 
   constructor(readonly id: string, readonly room: RoomId, readonly path: ReadonlyArray<Point>, readonly floorY: number, readonly width = 2.6, readonly height = 3.4, readonly cutouts: ReadonlyArray<PassageCutout> = []) {
@@ -52,146 +72,125 @@ export default class Passage {
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = id === room ? id : `${room}-${id}`
     const half = width / 2
-    const rectangles: Array<Rectangle> = []
-    for (let i = 1; i < path.length; i++) {
-      const start = path[i - 1]
-      const end = path[i]
-      const fixedX = start[0] === end[0]
-      const fixedZ = start[1] === end[1]
-      if (fixedX === fixedZ) {
-        throw new RangeError('Passage segments must follow one horizontal axis.')
+    const directions = path.slice(1).map((end, i): Point => {
+      const start = path[i]
+      const length = Math.hypot(end[0] - start[0], end[1] - start[1])
+      if (!(length > tolerance)) {
+        throw new RangeError('A passage’s spans need a length.')
       }
-      this.spans.push({
+      return [(end[0] - start[0]) / length, (end[1] - start[1]) / length]
+    })
+    // The turn at each point between two spans: positive to the right, seen from above with north up.
+    const turns = directions.slice(1).map((after, i) => {
+      const before = directions[i]
+      return Math.atan2(before[0] * after[1] - before[1] * after[0], before[0] * after[0] + before[1] * after[1])
+    })
+    if (turns.some(turn => Math.abs(turn) < tolerance || Math.abs(turn) > Math.PI / 2 + tolerance)) {
+      throw new RangeError('A passage turns by up to a right angle at each point between its spans.')
+    }
+    /** how far the open elbow at each point between two spans reaches into both, from the point: where the line straight across either through the corner inside the turn crosses its centerline */
+    const elbows = turns.map(turn => half * Math.tan(Math.abs(turn) / 2))
+    /** Where the walls on a side meet at each point of the path, on their center lines, −1 the left side and 1 the right. */
+    const corners = (side: number) => path.map((point, i): Point => {
+      const before = rightOf(directions[Math.max(i - 1, 0)])
+      const after = rightOf(directions[Math.min(i, directions.length - 1)])
+      // Mitered: as far off the point as it takes to stay half the width off both spans.
+      const scale = side * half / (1 + before[0] * after[0] + before[1] * after[1])
+      return [point[0] + (before[0] + after[0]) * scale, point[1] + (before[1] + after[1]) * scale]
+    })
+    const [left, right] = [corners(-1), corners(1)]
+    for (const [i, direction] of directions.entries()) {
+      const start = path[i]
+      const end = path[i + 1]
+      const length = Math.hypot(end[0] - start[0], end[1] - start[1])
+      const span = {
         start,
         end,
-      })
-      const axis = fixedX ? 1 : 0
-      const direction = Math.sign(end[axis] - start[axis])
-      const from = start[axis] - (i > 1 ? direction * half : 0)
-      const to = end[axis] + (i < path.length - 1 ? direction * half : 0)
-      rectangles.push(axis === 0 ? {
-        minX: Math.min(from, to),
-        maxX: Math.max(from, to),
-        minZ: start[1] - half,
-        maxZ: start[1] + half,
-      } : {
-        minX: start[0] - half,
-        maxX: start[0] + half,
-        minZ: Math.min(from, to),
-        maxZ: Math.max(from, to),
-      })
-    }
-    // Partition the union, not overlapping slabs with internal collision walls at turns.
-    const xs = [...new Set(rectangles.flatMap(r => [r.minX, r.maxX]))].toSorted((a, b) => a - b)
-    const zs = [...new Set(rectangles.flatMap(r => [r.minZ, r.maxZ]))].toSorted((a, b) => a - b)
-    const covering = (x: number, z: number) => rectangles.filter(r => x > r.minX && x < r.maxX && z > r.minZ && z < r.maxZ).length
-    const occupied = (x: number, z: number) => covering(x, z) > 0
-    const edges: Array<Edge> = []
-    for (let x = 1; x < xs.length; x++) {
-      for (let z = 1; z < zs.length; z++) {
-        const minX = xs[x - 1]
-        const maxX = xs[x]
-        const minZ = zs[z - 1]
-        const maxZ = zs[z]
-        const cx = (minX + maxX) / 2
-        const cz = (minZ + maxZ) / 2
-        if (!occupied(cx, cz)) {
-          continue
-        }
-        const floor: FloorRectangle = {
-          center: [cx, cz],
-          size: [maxX - minX, maxZ - minZ],
-        }
-        this.floors.push(floor)
-        if (covering(cx, cz) > 1) {
-          this.junctions.push(floor)
-        }
-        for (const side of [-1, 1]) {
-          const zEdge = side < 0 ? minZ : maxZ
-          const xEdge = side < 0 ? minX : maxX
-          if (!occupied(cx, zEdge + side * 1e-6)) {
-            edges.push({
-              axis: 0,
-              cross: zEdge,
-              min: minX,
-              max: maxX,
-              side,
-            })
-          }
-          if (!occupied(xEdge + side * 1e-6, cz)) {
-            edges.push({
-              axis: 2,
-              cross: xEdge,
-              min: minZ,
-              max: maxZ,
-              side,
-            })
-          }
-        }
+        length,
+        from: i > 0 ? elbows[i - 1] : 0,
+        to: length - (i < elbows.length ? elbows[i] : 0),
       }
-    }
-    const ends = [[path[0], path[1]], [path.at(-1)!, path.at(-2)!]] as const
-    const closed = edges.filter(edge => !ends.some(([end, neighbor]) => {
-      const travel = end[0] === neighbor[0] ? 2 : 0
-      const cross = travel === 0 ? 2 : 0
-      return edge.axis === cross && Math.abs(edge.cross - end[travel / 2]) < 1e-6 && edge.min >= end[cross / 2] - half - 1e-6 && edge.max <= end[cross / 2] + half + 1e-6
-    }))
-    const merged: Array<Edge> = []
-    for (const edge of closed.toSorted((a, b) => a.axis - b.axis || a.cross - b.cross || a.side - b.side || a.min - b.min)) {
-      const previous = merged.at(-1)
-      if (previous?.axis === edge.axis && previous.cross === edge.cross && previous.side === edge.side && Math.abs(previous.max - edge.min) < 1e-6) {
-        previous.max = edge.max
-      } else {
-        merged.push({...edge})
+      if (span.to < span.from - tolerance) {
+        throw new RangeError('A passage’s spans need to be long enough for the elbows at their ends.')
       }
-    }
-    for (const edge of merged) {
-      // At the inner corner of an elbow, both walls end on their shared line and leave the square between their faces open, exposing
-      // their end caps in the planes where linings and vaults end too. Extending one of the two walls by its thickness closes it.
-      if (edge.axis !== 2) {
+      this.spans.push(span)
+      const across = rightOf(direction)
+      const at = (along: number, side: number): Point => [start[0] + direction[0] * along + across[0] * side * half, start[1] + direction[1] * along + across[1] * side * half]
+      if (span.to - span.from > tolerance) {
+        this.floors.push([at(span.from, -1), at(span.to, -1), at(span.to, 1), at(span.from, 1)])
+      }
+      if (i >= turns.length) {
         continue
       }
-      const outside = edge.cross + edge.side * 1e-6
-      if (occupied(outside, edge.min - 1e-6)) {
-        edge.min -= wallFace
-      }
-      if (occupied(outside, edge.max + 1e-6)) {
-        edge.max += wallFace
+      // From the corner inside the turn across the span’s end of the elbow, round the corner outside it, and back across the next span’s start.
+      const inside = Math.sign(turns[i])
+      const next = directions[i + 1]
+      const nextAcross = rightOf(next)
+      const outer = inside > 0 ? left : right
+      const inner = inside > 0 ? right : left
+      const elbow: FloorPolygon = [inner[i + 1], at(span.to, -inside), outer[i + 1], [end[0] + next[0] * elbows[i] - nextAcross[0] * inside * half, end[1] + next[1] * elbows[i] - nextAcross[1] * inside * half]]
+      this.floors.push(elbow)
+      this.junctions.push(elbow)
+    }
+    for (const [side, points] of [[-1, left], [1, right]] as const) {
+      for (const [i, [dx, dz]] of directions.entries()) {
+        let start = points[i]
+        let end = points[i + 1]
+        // At the corner inside a turn, both walls end on their faces’ lines and leave the wedge between their ends open, exposing their end caps where linings and vaults end too.
+        // Running each on by its thickness times the tangent of half the turn closes it; in a right angle, that’s the whole gap for one of them, which runs on alone instead of sharing its end face with the other’s face.
+        const reach = (turn: number | undefined, outgoing: boolean) => {
+          if (turn === undefined || Math.sign(turn) !== side) {
+            return 0
+          }
+          if (Math.abs(Math.abs(turn) - Math.PI / 2) < tolerance) {
+            return outgoing ? wallFace : 0
+          }
+          return wallFace * Math.tan(Math.abs(turn) / 2)
+        }
+        const before = reach(turns[i - 1], true)
+        const after = reach(turns[i], false)
+        start = [start[0] - dx * before, start[1] - dz * before]
+        end = [end[0] + dx * after, end[1] + dz * after]
+        const wall: Wall = {
+          id: `${this.name}${id === room ? '-' : '_'}wall_${this.walls.length}`,
+          room,
+          center: [(start[0] + end[0]) / 2, floorY, (start[1] + end[1]) / 2],
+          // It faces back across the passage, against the side it stands on.
+          rotation: Math.atan2(side * dz, -side * dx),
+          width: Math.hypot(end[0] - start[0], end[1] - start[1]),
+          height: height - 0.3,
+          sticky: false,
+          trimStyle: 'plain',
+        }
+        const holes = cutouts.flatMap(({position, size}) => {
+          const along = clipSegment(start, end, [position[0] - size[0] / 2, position[2] - size[2] / 2], [position[0] + size[0] / 2, position[2] + size[2] / 2])
+          if (!along) {
+            return []
+          }
+          const [from, to] = along.map((share): Vec3 => [start[0] + (end[0] - start[0]) * share, floorY, start[1] + (end[1] - start[1]) * share])
+          // The wall has to pass through the cutout, not only touch it.
+          if (Math.abs((from[0] + to[0]) / 2 - position[0]) >= size[0] / 2 || Math.abs((from[2] + to[2]) / 2 - position[2]) >= size[2] / 2) {
+            return []
+          }
+          return {
+            u: (wallCoordinates(wall, from) + wallCoordinates(wall, to)) / 2,
+            width: wall.width * (along[1] - along[0]),
+            bottom: position[1] - size[1] / 2 - floorY,
+            height: position[1] + size[1] / 2 - floorY,
+            profile: 'rectangle' as const,
+          }
+        })
+        this.walls.push(holes.length ? {
+          ...wall,
+          holes,
+        } : wall)
       }
     }
-    for (const [i, edge] of merged.entries()) {
-      const center = (edge.min + edge.max) / 2
-      const face = passageOrientation(edge.axis, edge.side)
-      const holes = cutouts.flatMap(cutout => {
-        const crossAxis = edge.axis === 0 ? 2 : 0
-        if (Math.abs(cutout.position[crossAxis] - edge.cross) >= cutout.size[crossAxis] / 2) {
-          return []
-        }
-        const min = Math.max(edge.min, cutout.position[edge.axis] - cutout.size[edge.axis] / 2)
-        const max = Math.min(edge.max, cutout.position[edge.axis] + cutout.size[edge.axis] / 2)
-        if (min >= max) {
-          return []
-        }
-        return {
-          u: ((min + max) / 2 - center) * (edge.axis === 0 ? Math.cos(face.rotation) : -Math.sin(face.rotation)),
-          width: max - min,
-          bottom: cutout.position[1] - cutout.size[1] / 2 - floorY,
-          height: cutout.position[1] + cutout.size[1] / 2 - floorY,
-          profile: 'rectangle' as const,
-        }
-      })
-      this.walls.push({
-        id: `${this.name}${id === room ? '-' : '_'}wall_${i}`,
-        room,
-        center: edge.axis === 0 ? [center, floorY, edge.cross] : [edge.cross, floorY, center],
-        rotation: face.rotation,
-        width: edge.max - edge.min,
-        height: height - 0.3,
-        sticky: false,
-        trimStyle: 'plain',
-        ...holes.length ? {holes} : {},
-      })
-    }
+  }
+
+  /** Boxes around the passage’s air, from its floor to its ceiling, around each piece of its floor, see {@link floorChunks}. */
+  chunks(slack: number): Array<FloorChunk> {
+    return floorChunks(this.floors, this.floorY, this.height, slack)
   }
 
   contains([x, y, z]: Vec3) {
@@ -199,6 +198,6 @@ export default class Passage {
   }
 
   floorAt(x: number, z: number) {
-    return this.floors.some(({center, size}) => Math.abs(x - center[0]) <= size[0] / 2 + 1e-6 && Math.abs(z - center[1]) <= size[1] / 2 + 1e-6) ? this.floorY : undefined
+    return this.floors.some(floor => insidePolygon(floor, x, z)) ? this.floorY : undefined
   }
 }

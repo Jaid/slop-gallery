@@ -1,7 +1,8 @@
+import type {FloorPolygon} from '../floorPolygons.ts'
 import type {FloorRectangle} from '../floors.ts'
 import type Passage from './Passage.ts'
 
-import {subtractFloorOpening} from '../floors.ts'
+import {cutFloorOpening} from '../floorPolygons.ts'
 
 /** Depth of each timber portal along the passage. */
 export const transitionFrameDepth = 0.22
@@ -28,14 +29,14 @@ export default class PassageTransition {
   /** Distance along the final span where the stone ends. */
   readonly start: number
   /** The passage’s paving without the transition; collision still uses the full passage floors. */
-  readonly stoneFloors: Array<FloorRectangle>
+  readonly stoneFloors: Array<FloorPolygon>
 
   constructor(readonly passage: Passage, readonly length = 1.11) {
     const span = passage.spans.at(-1)!
     const {start, end} = span
-    this.spanLength = Math.hypot(end[0] - start[0], end[1] - start[1])
+    this.spanLength = span.length
     // The final span starts with the open elbow when the passage turns.
-    const usable = this.spanLength - (passage.spans.length > 1 ? passage.width / 2 : 0)
+    const usable = this.spanLength - span.from
     if (!Number.isFinite(length) || length < transitionFrameDepth * 4 || length > usable) {
       throw new RangeError(`A passage transition needs between ${transitionFrameDepth * 4} m and the final span’s ${usable} m of straight run.`)
     }
@@ -54,7 +55,6 @@ export default class PassageTransition {
     this.floor = rectangle(this.start, this.spanLength)
     this.sill = rectangle(this.start, this.start + transitionFrameDepth)
     this.planks = rectangle(this.start + transitionFrameDepth, this.spanLength)
-    // Rounding in the passage partition can leave zero-width slivers next to the cut.
-    this.stoneFloors = passage.floors.flatMap(floor => subtractFloorOpening(floor, this.floor)).filter(({size}) => size.every(value => value > 1e-6))
+    this.stoneFloors = passage.floors.flatMap(floor => cutFloorOpening(floor, this.floor))
   }
 }
