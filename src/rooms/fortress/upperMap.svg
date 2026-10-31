@@ -1,3 +1,41 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="-26 6 9.4 27.5" fill="#fff">
-  <path transform="translate(-25.3 31.088)" d="M 0 1.7 A 4.7 4.7 0 0 0 4.7 -3 V -21.388 H 4.3 V -21.688 H 4 V -22.788 H 8.3 V -24.788 H 2 V -21.688 H 1.7 V -21.388 H 1.3 V -3 A 1.3 1.3 0 0 1 0 -1.7 Z"/>
+  <defs>
+    <linearGradient id="fortress-upper-0" gradientUnits="userSpaceOnUse" x1="-25.3" y1="31.088" x2="-24.931" y2="31.065"><stop offset="0" stop-color="#b8b8b8"/><stop offset="1" stop-color="#bcbcbc"/></linearGradient>
+    <linearGradient id="fortress-upper-1" gradientUnits="userSpaceOnUse" x1="-24.931" y1="31.065" x2="-24.561" y2="30.995"><stop offset="0" stop-color="#bcbcbc"/><stop offset="1" stop-color="#bfbfbf"/></linearGradient>
+    <linearGradient id="fortress-upper-2" gradientUnits="userSpaceOnUse" x1="-24.561" y1="30.995" x2="-24.216" y2="30.885"><stop offset="0" stop-color="#bfbfbf"/><stop offset="1" stop-color="#c2c2c2"/></linearGradient>
+    <linearGradient id="fortress-upper-3" gradientUnits="userSpaceOnUse" x1="-24.216" y1="30.885" x2="-23.867" y2="30.723"><stop offset="0" stop-color="#c2c2c2"/><stop offset="1" stop-color="#c6c6c6"/></linearGradient>
+    <linearGradient id="fortress-upper-4" gradientUnits="userSpaceOnUse" x1="-23.867" y1="30.723" x2="-23.567" y2="30.536"><stop offset="0" stop-color="#c6c6c6"/><stop offset="1" stop-color="#c9c9c9"/></linearGradient>
+    <linearGradient id="fortress-upper-5" gradientUnits="userSpaceOnUse" x1="-23.567" y1="30.536" x2="-23.262" y2="30.289"><stop offset="0" stop-color="#c9c9c9"/><stop offset="1" stop-color="#cccccc"/></linearGradient>
+    <linearGradient id="fortress-upper-6" gradientUnits="userSpaceOnUse" x1="-23.262" y1="30.289" x2="-23.022" y2="30.039"><stop offset="0" stop-color="#cccccc"/><stop offset="1" stop-color="#cfcfcf"/></linearGradient>
+    <linearGradient id="fortress-upper-7" gradientUnits="userSpaceOnUse" x1="-23.022" y1="30.039" x2="-22.799" y2="29.745"><stop offset="0" stop-color="#cfcfcf"/><stop offset="1" stop-color="#d3d3d3"/></linearGradient>
+    <linearGradient id="fortress-upper-8" gradientUnits="userSpaceOnUse" x1="-22.799" y1="29.745" x2="-22.615" y2="29.425"><stop offset="0" stop-color="#d3d3d3"/><stop offset="1" stop-color="#d6d6d6"/></linearGradient>
+    <linearGradient id="fortress-upper-9" gradientUnits="userSpaceOnUse" x1="-22.615" y1="29.425" x2="-22.471" y2="29.085"><stop offset="0" stop-color="#d6d6d6"/><stop offset="1" stop-color="#d9d9d9"/></linearGradient>
+    <linearGradient id="fortress-upper-10" gradientUnits="userSpaceOnUse" x1="-22.471" y1="29.085" x2="-22.369" y2="28.729"><stop offset="0" stop-color="#d9d9d9"/><stop offset="1" stop-color="#dcdcdc"/></linearGradient>
+    <linearGradient id="fortress-upper-11" gradientUnits="userSpaceOnUse" x1="-22.369" y1="28.729" x2="-22.313" y2="28.364"><stop offset="0" stop-color="#dcdcdc"/><stop offset="1" stop-color="#dfdfdf"/></linearGradient>
+    <linearGradient id="fortress-upper-12" gradientUnits="userSpaceOnUse" x1="-22.313" y1="28.364" x2="-22.3" y2="28.088"><stop offset="0" stop-color="#dfdfdf"/><stop offset="1" stop-color="#e1e1e1"/></linearGradient>
+    <linearGradient id="fortress-upper-13" gradientUnits="userSpaceOnUse" x1="-22.3" y1="28.088" x2="-22.3" y2="21.1"><stop offset="0" stop-color="#e1e1e1"/><stop offset="0.323" stop-color="#f0f0f0"/><stop offset="0.572" stop-color="#f9f9f9"/><stop offset="0.822" stop-color="#fefefe"/><stop offset="1" stop-color="#ffffff"/></linearGradient>
+    <mask id="fortress-upper-height">
+      <path d="M -24.3 21.1 L -24.3 9.4 L -20.3 9.4 L -20.3 21.1 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.1"/>
+      <path d="M -23.6 9.4 L -23.6 8.6 L -21 8.6 L -21 9.4 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.1"/>
+      <path d="M -21 8.6 L -23.6 8.6 L -23.6 6 L -21 6 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.1"/>
+      <path d="M -21 6 L -17 6 L -17 8.6 L -21 8.6 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.1"/>
+      <path d="M -25.3 29.038 L -25.134 29.024 L -24.63 33.093 L -24.989 33.128 L -25.3 33.138 Z" fill="url(#fortress-upper-0)"/>
+      <path d="M -25.183 29.03 L -25.017 28.996 L -24.007 32.97 L -24.525 33.078 L -24.679 33.099 Z" fill="url(#fortress-upper-1)"/>
+      <path d="M -25.066 29.008 L -24.91 28.955 L -23.429 32.779 L -23.769 32.9 L -24.056 32.982 Z" fill="url(#fortress-upper-2)"/>
+      <path d="M -24.957 28.973 L -24.802 28.898 L -22.844 32.501 L -23.332 32.738 L -23.476 32.797 Z" fill="url(#fortress-upper-3)"/>
+      <path d="M -24.846 28.922 L -24.71 28.834 L -22.341 32.181 L -22.775 32.461 L -22.888 32.525 Z" fill="url(#fortress-upper-4)"/>
+      <path d="M -24.751 28.863 L -24.618 28.751 L -21.833 31.76 L -22.257 32.118 L -22.382 32.209 Z" fill="url(#fortress-upper-5)"/>
+      <path d="M -24.655 28.785 L -24.546 28.668 L -21.432 31.335 L -21.675 31.603 L -21.87 31.794 Z" fill="url(#fortress-upper-6)"/>
+      <path d="M -24.579 28.706 L -24.48 28.571 L -21.063 30.835 L -21.366 31.254 L -21.465 31.373 Z" fill="url(#fortress-upper-7)"/>
+      <path d="M -24.508 28.612 L -24.427 28.466 L -20.757 30.294 L -20.927 30.613 L -21.09 30.877 Z" fill="url(#fortress-upper-8)"/>
+      <path d="M -24.45 28.511 L -24.387 28.356 L -20.52 29.719 L -20.712 30.198 L -20.779 30.339 Z" fill="url(#fortress-upper-9)"/>
+      <path d="M -24.404 28.403 L -24.361 28.242 L -20.356 29.119 L -20.443 29.47 L -20.537 29.766 Z" fill="url(#fortress-upper-10)"/>
+      <path d="M -24.372 28.291 L -24.349 28.125 L -20.267 28.504 L -20.336 29.016 L -20.367 29.168 Z" fill="url(#fortress-upper-11)"/>
+      <path d="M -24.354 28.175 L -24.35 28.038 L -20.25 28.038 L -20.272 28.554 Z" fill="url(#fortress-upper-12)"/>
+      <path d="M -24.35 28.088 L -24.35 21.1 L -20.25 21.1 L -20.25 28.088 Z" fill="url(#fortress-upper-13)"/>
+    </mask>
+  </defs>
+  <g mask="url(#fortress-upper-height)">
+    <path transform="translate(-25.3 31.088)" d="M 0 1.7 A 4.7 4.7 0 0 0 4.7 -3 V -21.388 H 4.3 V -21.688 H 4 V -22.788 H 8.3 V -24.788 H 2 V -21.688 H 1.7 V -21.388 H 1.3 V -3 A 1.3 1.3 0 0 1 0 -1.7 Z"/>
+  </g>
 </svg>
