@@ -2,10 +2,10 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 
 import {expect, test} from 'bun:test'
 
-import {Box3, Frustum, Matrix4, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
+import {Box3, Frustum, Group, Matrix4, Mesh, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
 
 import lobbyLayout from '../../src/lib/gallery/lobby.ts'
-import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
+import {ownerRooms, portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
 import relations from '../../src/worlds/gallery/relations.ts'
 import {rooms} from './fixtures/gallery.ts'
 
@@ -72,6 +72,25 @@ test('a room shows the rooms behind the openings in view', () => {
   expect(lobby.has('fortress')).toBe(false)
   expect(lobby.has('lodge')).toBe(false)
   expect(lobby.has('antechamber')).toBe(true)
+})
+test('a mesh belongs to the room that built it, not to the rooms its bounds spill into', () => {
+  const mesh = new Mesh
+  const vault = new Group
+  vault.name = 'lobby-vault'
+  const lobbyRoom = new Group
+  lobbyRoom.name = 'lobby-room'
+  lobbyRoom.add(vault)
+  vault.add(mesh)
+  // The Lobby’s vault over the Cinnabar is the Lobby’s, so the Cinnabar, which does not relate the Lobby, skips it.
+  expect(ownerRooms(mesh)).toEqual(['lobby'])
+  expect(relations.cinnabar.rooms).not.toContain('lobby' as never)
+  const wallMesh = new Mesh
+  const wall = new Group
+  wall.name = 'cinnabar-north'
+  wall.userData.room = 'cinnabar'
+  wall.add(wallMesh)
+  expect(ownerRooms(wallMesh)).toEqual(['cinnabar'])
+  expect(ownerRooms(new Mesh)).toEqual([])
 })
 test('objects reaching past one room belong to none', () => {
   expect(roomEnclosing(new Sphere(new Vector3(-14, 2, 0), 1))).toBe('vesper')

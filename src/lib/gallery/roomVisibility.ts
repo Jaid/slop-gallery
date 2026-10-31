@@ -1,6 +1,6 @@
 import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 import type {Vec3} from './types.ts'
-import type {Frustum, Matrix4, Sphere} from 'three/webgpu'
+import type {Frustum, Matrix4, Object3D, Sphere} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
@@ -157,6 +157,24 @@ export function roomsAt([x, y, z]: Vec3) {
     }
   }
   return [...result]
+}
+
+/**
+ * The rooms that own a mesh, by the nearest ancestor that carries a room: a room’s own group (`<room>-room`, `cinnabar`, `salon`, a Sienna group without a name) or a wall’s group, which names its wall and its room.
+ * Walls name their room in `userData`, and every room component below names its root for its room; a mesh under neither belongs to no room and never gets culled. An owner that is no room of the gallery, like Knottingham’s rooms in its own world, counts as no room here.
+ */
+export function ownerRooms(object: Object3D): ReadonlyArray<RoomId> {
+  for (let node: Object3D | null = object; node; node = node.parent) {
+    const room = (node.userData as {room?: string}).room
+    if (room && roomBoxes.some(box => box.id === room)) {
+      return [room as RoomId]
+    }
+    const match = /^(?<room>[a-z]+)(?:-room)?$/.exec(node.name)
+    if (match?.groups && roomBoxes.some(box => box.id === match.groups!.room)) {
+      return [match.groups.room as RoomId]
+    }
+  }
+  return []
 }
 
 /**

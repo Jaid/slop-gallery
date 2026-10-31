@@ -60,11 +60,11 @@ function BanquetLights() {
   const [temperature, setTemperature] = useState<Temperature>('white')
   const wall = walls.west
   const {power, temperature: temperatureSpot} = lightSwitchSpots
-  return <>
+  return <group name='banquet-room'>
     <CeilingLeds color={temperatures[temperature]} lamps={leds} name='banquet' powered={on} slots={banquetLedSlots} />
     <group position={[room.center[0] + wall.center[0], room.floorY + wall.center[1], room.center[1] + wall.center[2]]} rotation={[0, wall.rotation, 0]}>
       <LightSwitch id={room.room.globalId('light_switch')} name='banquet-light-switch' on={on} position={[power.u, power.y, wallFace]} onToggle={() => setOn(!on)} />
       <SelectorSwitch id={room.room.globalId('light_temperature')} name='banquet-light-temperature-switch' options={banquetLightTemperatures} position={[temperatureSpot.u, temperatureSpot.y, wallFace]} title='Light color' value={temperature} onChange={setTemperature} />
     </group>
-  </>
+  </group>
 }

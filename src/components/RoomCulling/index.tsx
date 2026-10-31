@@ -7,7 +7,7 @@ import {useLayoutEffect} from 'react'
 import {Box3, Frustum, Matrix4, Vector3} from 'three/webgpu'
 
 import {useGallery} from '#src/lib/gallery.ts'
-import {roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
+import {ownerRooms, roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
@@ -50,7 +50,8 @@ const placementOf = (drawable: Drawable, geometry: BufferGeometry) => {
   const placement = {
     bounds: bounds.clone(),
     matrix: drawable.matrixWorld.clone(),
-    rooms: roomsOverlapping(world),
+    // The owner decides, not the bounds: a mesh belongs to the room that built it, even where its box spills into a neighbour’s air, like the Lobby’s vault over the Cinnabar. Only meshes without an owner fall back to the rooms their bounds reach into.
+    rooms: ownerRooms(drawable).length ? ownerRooms(drawable) : roomsOverlapping(world),
     world,
   }
   placements.set(drawable, placement)
@@ -86,7 +87,7 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
   return regions
 }
 /**
- * Leaves out what the camera can’t see from the rooms it is in. An object belongs to every room its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to three openings deep.
+ * Leaves out what the camera can’t see from the rooms it is in. Every mesh is skipped unless its owner room is the camera’s room or one that room lists in `relations.ts`; a mesh without an owner belongs to the rooms its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to three openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
  * Culling and the shadow cache start behind the loading screen, where culling leaves out every room but the camera’s, in the sun’s shadow map too, so that only what the start view sees gets built there. Objects in the camera’s rooms and the rooms related to them stream in first afterward.

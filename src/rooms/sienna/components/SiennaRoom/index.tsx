@@ -40,7 +40,7 @@ export default function SiennaRoom({joinery}: {
   const reflection = floor.reflectionTarget
   const [vestibuleWidth, vestibuleDepth] = siennaVestibule.size
   return <>
-    <group position={[room.center[0], 0, room.center[1]]}>
+    <group name='sienna-room' position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, -0.15, 0]} />
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
