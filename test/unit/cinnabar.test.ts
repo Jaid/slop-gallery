@@ -1,17 +1,20 @@
 import {describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+import {DoubleSide, Matrix3, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import cinnabar, {cinnabarFresco, cinnabarRooflight, cinnabarTerrazzo, frescoLayout} from '../../src/lib/gallery/cinnabar.ts'
+import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {bastionApproach, bastionArch} from '../../src/lib/gallery/bastion.ts'
+import cinnabar, {cinnabarFresco, cinnabarRooflight, cinnabarTerrazzo, cinnabarVestibule, frescoLayout, isRing} from '../../src/lib/gallery/cinnabar.ts'
+import {cinnabarVestibuleFloor, vestibuleArches, vestibuleFloorShape} from '../../src/lib/gallery/cinnabarVestibule.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
+import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import salon, {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
 import CinnabarWallMaterial from '../../src/lib/materials/CinnabarWallMaterial.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '../../src/lib/materials/TerrazzoFloorMaterial.ts'
-import {insideOpening, wallCoordinates} from '../../src/lib/placement/wallGeometry.ts'
+import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import {openings} from '../../src/worlds/gallery/relations.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 
@@ -41,8 +44,8 @@ describe('the Cinnabar', () => {
       expect(floorHeight([x, 1.7, z])).toBe(0)
     }
     expect(roomAt([-14, 1.7, -12])).toBe('vesper')
-    // Behind its north wall lies the Bastion’s approach, in the middle; beside that, nothing.
-    expect(roomAt([-14, 1.7, -32.5])).toBe('fortress')
+    // Behind its north wall lies its round vestibule, in the middle; beside that, nothing.
+    expect(roomAt([-14, 1.7, -32.5])).toBe('cinnabar')
     expect(insideGallery([-18, 1.7, -32.5])).toBe(false)
     expect(roomAt(roomVisit(room).position)).toBe('cinnabar')
   })
@@ -137,6 +140,7 @@ describe('the Cinnabar', () => {
     }
     // One panel on either side of the arch on the north wall, three across the blank south wall and four down the east and west walls.
     expect(frescoLayout(wallById('cinnabar-north')).panels).toHaveLength(3)
+    expect(frescoLayout(wallById('cinnabar-north')).period).toBeUndefined()
     expect(frescoLayout(wallById('cinnabar-east')).panels).toHaveLength(4)
     expect(frescoLayout(wallById('cinnabar-south')).panels.map(panel => panel.pierced)).toEqual([false, false, false])
     expect(frescoLayout(wallById('cinnabar-west')).panels).toHaveLength(4)
@@ -196,5 +200,220 @@ describe('the Cinnabar', () => {
     })).toThrow(RangeError)
     // The border lies inside the brass inlays, which every stone floor lays 1.25 m from the walls.
     expect(cinnabarTerrazzo.border).toBe(1.25)
+  })
+})
+describe('the Cinnabar’s vestibule', () => {
+  const {center: [x, z], radius, rooflight} = cinnabarVestibule
+  const ring = wallById('cinnabar-vestibule')
+  const north = wallById('cinnabar-north')
+  const northZ = cinnabar.center[1] - cinnabar.size[1] / 2
+  const half = bastionArch.width / 2
+  const archOf = (name: string) => ring.holes!.find(hole => hole.name === name)!
+  test('is round, on the room’s axis, its wall touching the middle of the north wall back to back, where an arch opens through both', () => {
+    expect(x).toBe(cinnabar.center[0])
+    expect(z + radius).toBe(northZ)
+    expect(isRing(ring)).toBe(true)
+    expect(isRing(north)).toBe(false)
+    expect([ring.curveRadius, ring.height, ring.room, ring.sticky]).toEqual([radius, north.height, 'cinnabar', false])
+    // All round its center at its radius, facing it
+    for (let u = -ring.width / 2; u <= ring.width / 2; u += 0.5) {
+      const [px, , pz] = wallPosition(ring, u, 0, 0)
+      const [fx, , fz] = wallPosition(ring, u, 0, 1)
+      expect(Math.hypot(px - x, pz - z)).toBeCloseTo(radius, 9)
+      expect(Math.hypot(fx - x, fz - z)).toBeCloseTo(radius - 1, 9)
+    }
+    // Where they touch, one faces north into the vestibule and the other south into the room, each with the approach’s arch in it.
+    const inner = archOf('cinnabar')
+    const outer = north.holes!.find(hole => hole.name === 'vestibule')!
+    expect(outer).toMatchObject(bastionArch)
+    for (const [wall, hole, facing] of [[ring, inner, -1], [north, outer, 1]] as const) {
+      const [px, , pz] = wallPosition(wall, hole.u, 0, 0)
+      expect(px).toBeCloseTo(x, 9)
+      expect(pz).toBeCloseTo(northZ, 9)
+      expect(wallPosition(wall, hole.u, 0, 0.5)[2]).toBeCloseTo(northZ + facing * 0.5, 9)
+    }
+    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high.
+    expect(ring.holes!.map(hole => hole.name)).toEqual(vestibuleArches.map(arch => arch.name))
+    for (const hole of ring.holes!) {
+      const [left, right] = [-1, 1].map(side => wallPosition(ring, hole.u + side * hole.width / 2, 0, 0))
+      expect(Math.hypot(left[0] - right[0], left[2] - right[2])).toBeCloseTo(bastionArch.width, 9)
+      expect([hole.height, hole.profile, hole.bottom]).toEqual([bastionArch.height, bastionArch.profile, undefined])
+    }
+    // The west one where the approach ends, the arch between the room and the vestibule within the room.
+    const [wx, , wz] = wallPosition(ring, archOf('fortress').u, 0, 0)
+    expect(wx).toBeCloseTo(bastionApproach.path.at(-1)![0], 9)
+    expect(wz).toBeCloseTo(bastionApproach.path.at(-1)![1], 9)
+    expect(openings.filter(({rooms: pair}) => pair.includes('cinnabar'))).toEqual([{
+      rooms: ['fortress', 'cinnabar'],
+      holes: [['cinnabar-vestibule', 'fortress']],
+    }])
+  })
+  test('navigation holds its round floor and its thresholds out under its arches, and nothing else behind its wall', () => {
+    for (const [dx, dz] of [[0, 0], [2.6, 0], [-2.6, 0], [0, -2.9], [0, 2.9], [2, -2], [-2, 2]]) {
+      const position = [x + dx, 1.7, z + dz] as const
+      expect(roomAt([...position])).toBe('cinnabar')
+      expect(floorHeight([...position])).toBe(0)
+      expect(insideGallery([...position])).toBe(true)
+    }
+    // Under the west arch, outside the wall’s center line, out to where the approach ends, as wide as it
+    for (const along of [radius - 0.01, radius]) {
+      expect(cinnabarVestibuleFloor(x - along, z + half - 0.01)).toBe(0)
+      expect(cinnabarVestibuleFloor(x - along, z - half + 0.01)).toBe(0)
+      expect(cinnabarVestibuleFloor(x - along, z + half + 0.05)).toBeUndefined()
+    }
+    expect(cinnabarVestibuleFloor(x - radius - 0.05, z)).toBeUndefined()
+    expect(cinnabarVestibuleFloor(x + half - 0.01, northZ)).toBe(0)
+    // Behind the wall, in the corners of its box, lies nothing.
+    for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
+      expect(insideGallery([x + dx * (radius - 0.4), 1.7, z + dz * (radius - 0.4)])).toBe(false)
+    }
+    // Under its floor, the Fortress’ curve climbs west toward the Lodge.
+    expect(roomAt([x, -4.4, z - 2.7])).toBe('fortress')
+    expect(insideGallery([x, 6.2, z])).toBe(false)
+  })
+  test('its floor slab’s shape is what navigation holds: within the wall’s center line and out under each arch to the plane touching it', () => {
+    // In the shape’s plane, y runs north.
+    const outline = vestibuleFloorShape().getPoints(256)
+    const contains = (px: number, py: number) => {
+      let inside = false
+      for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
+        const [a, b] = [outline[i], outline[j]]
+        if (a.y > py !== b.y > py && px < (b.x - a.x) * (py - a.y) / (b.y - a.y) + a.x) {
+          inside = !inside
+        }
+      }
+      return inside
+    }
+    let compared = 0
+    for (let dx = -radius - 0.3; dx <= radius + 0.3; dx += 0.07) {
+      for (let dz = -radius - 0.3; dz <= radius + 0.3; dz += 0.07) {
+        // Right on the wall’s center line, the shape’s chords cut the corners.
+        if (Math.abs(Math.hypot(dx, dz) - radius) < 0.01) {
+          continue
+        }
+        expect(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${contains(dx, -dz)}`).toBe(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${cinnabarVestibuleFloor(x + dx, z + dz) !== undefined}`)
+        compared++
+      }
+    }
+    expect(compared).toBeGreaterThan(5000)
+  })
+  test('the reveals line its arches from its wall’s center line out to the plane touching it there, round the jambs and the head, but not the sill', () => {
+    const place = new Matrix4
+    place.makeRotationY(ring.rotation).setPosition(...ring.center)
+    const turn = new Matrix3
+    turn.setFromMatrix4(place)
+    for (const {name, angle} of vestibuleArches) {
+      const hole = archOf(name)
+      const reveal = roundRevealGeometry(ring, hole, bastionArch)
+      try {
+        const position = reveal.getAttribute('position')
+        const normal = reveal.getAttribute('normal')
+        const point = new Vector3
+        const facing = new Vector3
+        const out = [Math.cos(angle), Math.sin(angle)] as const
+        let widest = 0
+        let highest = 0
+        for (let i = 0; i < position.count; i++) {
+          point.fromBufferAttribute(position, i).applyMatrix4(place)
+          facing.fromBufferAttribute(normal, i).applyMatrix3(turn)
+          const [dx, dz] = [point.x - x, point.z - z]
+          const along = dx * out[0] + dz * out[1]
+          const across = dz * out[0] - dx * out[1]
+          // Never in front of the wall’s center line or past the plane, nor wider or higher than the approach’s arch
+          expect(Math.hypot(dx, dz)).toBeGreaterThan(radius - 1e-6)
+          expect(along).toBeLessThan(radius + 1e-6)
+          expect(Math.abs(across)).toBeLessThan(half + 1e-6)
+          expect(point.y).toBeGreaterThanOrEqual(-1e-9)
+          expect(point.y).toBeLessThan(bastionArch.height + 1e-6)
+          // Facing into the opening: straight across it below where the head springs, toward the middle of the head above, and never along it
+          const sideways = facing.z * out[0] - facing.x * out[1]
+          const springY = bastionArch.height - half
+          expect(sideways * -across + facing.y * (Math.min(point.y, springY) - point.y)).toBeGreaterThan(0)
+          expect(Math.abs(facing.x * out[0] + facing.z * out[1])).toBeLessThan(1e-6)
+          if (Math.abs(along - radius) >= 1e-6) {
+            continue
+          }
+          widest = Math.max(widest, Math.abs(across))
+          highest = Math.max(highest, point.y)
+        }
+        // Out at the plane, it opens as wide and as high as the approach’s arch.
+        expect(widest).toBeCloseTo(half, 6)
+        expect(highest).toBeCloseTo(bastionArch.height, 6)
+        const [, indices] = colliderGeometry(reveal)
+        expect(indices.length).toBeGreaterThan(0)
+      } finally {
+        reveal.dispose()
+      }
+    }
+  })
+  test('its wall is frescoed all round without a corner, its panels running on through the seam where its ends meet', () => {
+    const {band, openingMargin, panelLength} = cinnabarFresco
+    const {bands, panels, period} = frescoLayout(ring)
+    expect(period).toBeCloseTo(ring.width, 9)
+    for (const at of [...bands, ...panels.map(panel => panel.u[0])]) {
+      expect(Math.abs(at)).toBeLessThanOrEqual(period! / 2 + 1e-9)
+    }
+    // Round the ring, panels and bands take turns, as many of each.
+    expect(bands).toHaveLength(panels.length)
+    const wrap = (u: number) => u - period! * Math.floor(u / period!)
+    const starts = panels.toSorted((a, b) => wrap(a.u[0]) - wrap(b.u[0]))
+    for (const [index, panel] of starts.entries()) {
+      const next = starts[(index + 1) % starts.length]
+      const gap = wrap(next.u[0] - panel.u[1])
+      expect(gap).toBeCloseTo(band, 9)
+      expect(bands.some(at => Math.abs(wrap(at - panel.u[1] - band / 2 + period! / 2) - period! / 2) < 1e-9)).toBe(true)
+    }
+    // A bay round each arch, as wide as in the room; one narrow panel between both arches, and round the far side three of about a panel’s length.
+    for (const hole of ring.holes!) {
+      const bay = panels.find(panel => panel.pierced && Math.abs(wrap((panel.u[0] + panel.u[1]) / 2 - hole.u + period! / 2) - period! / 2) < 1e-9)!
+      expect(bay.u[1] - bay.u[0]).toBeCloseTo(hole.width + (wallOpeningTrim + openingMargin) * 2, 9)
+    }
+    const plain = panels.filter(panel => !panel.pierced).map(panel => panel.u[1] - panel.u[0]).toSorted((a, b) => a - b)
+    expect(plain).toHaveLength(4)
+    expect(plain[0]).toBeLessThan(panelLength / 2)
+    for (const length of plain.slice(1)) {
+      expect(length).toBeCloseTo(plain[1], 9)
+      expect(length).toBeGreaterThan(panelLength * 0.6)
+      expect(length).toBeLessThan(panelLength * 1.5)
+    }
+    const material = new CinnabarWallMaterial({
+      ...frescoLayout(ring),
+      curveRadius: ring.curveRadius,
+    })
+    try {
+      for (const node of [material.colorNode, material.roughnessNode, material.normalNode]) {
+        expect(node?.isNode).toBe(true)
+      }
+    } finally {
+      material.dispose()
+    }
+  })
+  test('its ceiling’s rooflight is a round opening in whole panes, well inside its wall, under its slab, and its terrazzo borders the round wall', () => {
+    const {bead, depth, frame, glassY, pane} = rooflight
+    expect(rooflight.radius * 2 / pane % 1).toBeCloseTo(0, 9)
+    expect(rooflight.radius + frame).toBeLessThan(radius - 1)
+    expect(glassY).toBeLessThan(salonCeiling.underside)
+    expect(salonCeiling.underside - depth - bead).toBeGreaterThan(5)
+    const floor = new TerrazzoFloorMaterial({
+      center: cinnabarVestibule.center,
+      radius,
+      field: venetianTerrazzo,
+      border: blackTerrazzo,
+      inset: cinnabarTerrazzo.border,
+      reflections: true,
+    })
+    try {
+      for (const node of [floor.colorNode, floor.roughnessNode, floor.normalNode]) {
+        expect(node?.isNode).toBe(true)
+      }
+      expect(floor.reflectionTarget).not.toBeNull()
+    } finally {
+      floor.dispose()
+    }
+    expect(() => new TerrazzoFloorMaterial({
+      center: [0, 0],
+      radius: 0,
+      field: venetianTerrazzo,
+    })).toThrow(RangeError)
   })
 })

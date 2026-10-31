@@ -60,7 +60,7 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
   },
   cinnabar: async () => {
     const {default: Room} = await import('#src/rooms/cinnabar/components/CinnabarRoom/index.tsx')
-    return ({glass, stone, wood}) => <Room glass={glass.lobby} stone={stone} wood={wood} />
+    return ({castleStone, glass, stone, wood}) => <Room glass={glass.lobby} masonry={castleStone} stone={stone} wood={wood} />
   },
   lodge: async () => {
     const [{default: Room}, {default: LodgeWindow}, {default: LodgeThreshold}] = await Promise.all([import('#src/rooms/lodge/components/LodgeRoom/index.tsx'), import('#component/LodgeWindow'), import('#src/rooms/lodge/components/LodgeThreshold/index.tsx')])

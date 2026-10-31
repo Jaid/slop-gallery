@@ -3,9 +3,10 @@ import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import {BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Matrix4, ShapeUtils, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {openingArc, openingTop} from '../placement/wallGeometry.ts'
+import {openingTop} from '../placement/wallGeometry.ts'
 import {wallFace} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
+import openingOutline from './openingOutline.ts'
 
 export type BarredOpeningOptions = {
   /** where the opening comes out at the back of the gap, in the wall’s own coordinates: wider than the opening, it splays through the gap like an embrasure; the opening itself if left out */
@@ -29,23 +30,6 @@ const bandThickness = 0.014
 const embed = 0.06
 /** how far the reveal’s stone reaches past the opening, into the walls on both sides of the gap */
 const margin = 0.25
-/** the arches of the openings’ outlines are cut into as many chords as the walls’ cutters take */
-const headDivisions = 128
-/** The outline of an opening in the wall’s plane: along its bottom, then over its head from the right jamb to the left one, which closes it down to the bottom again. Openings of the same profile have outlines of as many points. */
-function outline(hole: WallOpening) {
-  const bottom = hole.bottom ?? 0
-  const half = hole.width / 2
-  const {radius, center} = openingArc(hole)
-  const spring = Math.atan2(Math.sqrt(Math.max(0, radius ** 2 - half ** 2)), half)
-  const head = Array.from({length: headDivisions + 1}, (_, i) => {
-    if (hole.profile !== 'arch') {
-      return new Vector2(hole.u + half - hole.width * i / headDivisions, hole.height)
-    }
-    const angle = spring + (Math.PI - spring * 2) * i / headDivisions
-    return new Vector2(hole.u + Math.cos(angle) * radius, center + Math.sin(angle) * radius)
-  })
-  return [new Vector2(hole.u - half, bottom), new Vector2(hole.u + half, bottom), ...head]
-}
 /** where the points lie on average */
 const centroid = (points: ReadonlyArray<Vector2>) => points.reduce((sum, point) => sum.add(point), new Vector2).multiplyScalar(1 / points.length)
 
@@ -62,8 +46,8 @@ export default class BarredOpeningGeometry {
   constructor(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation' | 'width'>, hole: WallOpening, {bands, depth, back = hole}: BarredOpeningOptions) {
     const bottom = hole.bottom ?? 0
     const halfWidth = hole.width / 2
-    const front = outline(hole)
-    const rear = outline(back)
+    const front = openingOutline(hole)
+    const rear = openingOutline(back)
     if (hole.profile !== back.profile) {
       throw new RangeError('An opening and the back it splays out to need the same profile.')
     }

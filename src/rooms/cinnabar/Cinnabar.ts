@@ -1,6 +1,6 @@
 import {Geofence} from 'geofency'
 
-import cinnabar from '#src/lib/gallery/cinnabar.ts'
+import cinnabar, {cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
 import Room from '../base/Room.ts'
@@ -11,16 +11,22 @@ import map from './map.svg?raw'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
 
-/** Lit through its round rooflight, without lamps of its own. */
+const {center: [vestibuleX, vestibuleZ], radius} = cinnabarVestibule
+
+/** Lit through its round rooflight and its vestibule’s, without lamps of its own. */
 export default class Cinnabar extends Room {
-  override readonly air = floorBox(cinnabar.size, 0, 5.8)
+  override readonly air = [
+    floorBox(cinnabar.size, 0, 5.8),
+    // The round vestibule north of its arch, as high, where the Fortress arrives.
+    floorBox([radius * 2, radius * 2], 0, 5.8, [vestibuleX - cinnabar.center[0], vestibuleZ - cinnabar.center[1]]),
+  ]
   override readonly color = '#8e2f24'
   override readonly description = 'Pompeian red, polished terrazzo and a round eye on the sky.'
-  // Everything over its floor plan from the slab up, the rooflight included; the Bastion’s mouth passes underneath, below the slab.
-  override readonly fence = new Geofence([{
-    ...footprint([this.air]),
+  // Everything over its floor plan and its vestibule’s from the slab up, the rooflights included; the Fortress’ western mouth passes underneath, below the slab, and its curve under the vestibule. It comes before the Fortress, so the vestibule’s wall with the arch onto the approach is the Cinnabar’s.
+  override readonly fence = new Geofence(this.air.map(box => ({
+    ...footprint([box]),
     floor: groundFenceY,
-  }])
+  })))
   override readonly height = 5.8
   override readonly id = 'cinnabar'
   override readonly size = cinnabar.size

@@ -1,8 +1,8 @@
 import type {Wall} from '../placement/wallGeometry.ts'
 
-import cinnabar from './cinnabar.ts'
+import cinnabar, {cinnabarVestibule} from './cinnabar.ts'
 import {easedRampGradient} from './easedRamp.ts'
-import {fortressApproach, fortressClearance, fortressDoorway} from './fortress.ts'
+import {fortressClearance, fortressDoorway} from './fortress.ts'
 import lowerGallery from './lowerGallery.ts'
 import Passage from './passages/Passage.ts'
 import PassageRoute from './passages/PassageRoute.ts'
@@ -21,7 +21,8 @@ const mouthHeight = fortressDoorway.height
 const levelHeight = 3.1
 const westWallX = oculus.center[0] - oculus.size[0] / 2
 const cinnabarWestX = cinnabar.center[0] - cinnabar.size[0] / 2
-const cinnabarNorthZ = cinnabar.center[1] - cinnabar.size[1] / 2
+/** where the approach ends at the west arch of the Cinnabar’s round vestibule: on the plane touching the vestibule’s wall at the arch’s middle */
+const vestibuleWestX = cinnabarVestibule.center[0] - cinnabarVestibule.radius
 /** the Cinnabar’s floor, on the upper floor */
 const cinnabarFloorY = 0
 /** how steep the hairpin gets halfway, where its eased profile is steepest: like the Fortress’ ramps */
@@ -40,11 +41,10 @@ const westLegX = eastLegX - turnRadius * 2
 const turnZ = doorwayZ + elbowRun(width)
 /** Both legs climb as much, so the whole hairpin eases up by the bridge’s height to the Cinnabar’s floor without getting steeper than 1 in 4. */
 const legLength = (rampLength(cinnabarFloorY - doorwayY) - Math.PI * turnRadius) / 2
-/**
- * North of the Cinnabar, between its north wall and the Fortress’ run west to the Lodge, lies a strip too narrow for the passage’s full width: the approach into the Cinnabar runs along its middle, this wide, as wide as the Lodge’s doorway from the Fortress is high.
- */
+/** The approach into the Cinnabar’s vestibule is narrower than the passage, as wide as the Lodge’s doorway from the Fortress is high. */
 const stripWidth = 2.6
-const stripZ = (cinnabarNorthZ + fortressApproach.path[0][1] + fortressApproach.width / 2) / 2
+/** where it runs east, straight at the vestibule’s middle */
+const stripZ = cinnabarVestibule.center[1]
 /** where the broad run north ends in the screen wall, as far south of the strip as an elbow and a stretch of vault reach */
 const screenZ = stripZ + elbowRun(stripWidth)
 
@@ -78,9 +78,9 @@ if (Math.hypot(route.end.point[0] - eastLegX, route.end.point[1] - turnZ) > 1e-6
 }
 /** From the hairpin’s top on north at the Cinnabar’s floor’s level, over the mouth and then over the Lodge’s roof, to the screen wall. */
 export const bastionRun = new Passage('climb_run', 'fortress', [[eastLegX, turnZ], [eastLegX, screenZ]], cinnabarFloorY, width, levelHeight, [], false)
-/** From the arch in the screen wall north to the strip, east along it behind the Cinnabar’s north wall and round a last elbow south through the doorway in the middle of that wall. */
-export const bastionApproach = new Passage('climb_approach', 'fortress', [[eastLegX, screenZ], [eastLegX, stripZ], [cinnabar.center[0], stripZ], [cinnabar.center[0], cinnabarNorthZ]], cinnabarFloorY, stripWidth, levelHeight, [], false)
-/** The arch through the screen wall and through the Cinnabar’s north wall, as wide and as high as the approach’s vault. */
+/** From the arch in the screen wall north and round an elbow east, straight on to the west arch of the Cinnabar’s vestibule. */
+export const bastionApproach = new Passage('climb_approach', 'fortress', [[eastLegX, screenZ], [eastLegX, stripZ], [vestibuleWestX, stripZ]], cinnabarFloorY, stripWidth, levelHeight, [], false)
+/** The arch through the screen wall, as wide and as high as the approach’s vault, and so are the arches of the Cinnabar’s vestibule. */
 export const bastionArch = {
   width: stripWidth,
   height: levelHeight,
@@ -113,12 +113,12 @@ export const bastionPassages = [bastionMouth, bastionHairpin, bastionRun, bastio
 const apex = legLength + Math.PI * turnRadius / 2
 /**
  * Which of the straight passages’ evenly spaced lanterns they keep, in mount order from their starts, see CoveredPassage: the mouth the second and the fourth of the four along its run west, which hang under the Cinnabar and before the elbow, and none in its elbow’s span;
- * the run north the middle one of its three; the approach the first of the two along the strip, the one past the elbow at the screen wall.
+ * the run north the middle one of its three; the approach the second of the two along its run east, before the vestibule’s arch.
  */
 export const bastionPassageLanterns = {
   mouth: [false, true, false, true, false],
   run: [false, true, false],
-  approach: [false, true, false, false],
+  approach: [false, false, true],
 } as const satisfies Record<string, ReadonlyArray<boolean>>
 /** How far along the hairpin its lanterns hang, each between two ribs: halfway up the west leg, round the apex of the turn and halfway up the east leg. */
 export const bastionLanterns = {

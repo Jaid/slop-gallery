@@ -11,10 +11,16 @@ export type TerrazzoMix = {
   /** the chips’ colors, drawn evenly at random, so a color listed twice shows twice as often */
   chips: ReadonlyArray<string>
 }
-export type TerrazzoFloorOptions = {
+/** the room’s floor plan, which the border is measured from: the size of a rectangular one between its walls’ center lines, or the radius of a round one’s wall’s center line */
+export type TerrazzoPlan = {
+  radius: number
+} | {
+  size: readonly [number, number]
+}
+export type TerrazzoFloorOptions = TerrazzoPlan & {
   /** the mix of the border along the walls, if any; see `inset` */
   border?: TerrazzoMix
-  /** the room’s middle in world x/z and its size between its walls’ center lines, which the border is measured from */
+  /** the middle of the room’s floor plan in world x/z */
   center: readonly [number, number]
   field: TerrazzoMix
   /** extra share of the mirror at grazing angles */
@@ -28,7 +34,6 @@ export type TerrazzoFloorOptions = {
   /** roughness of the polished floor in heavy mode */
   roughness?: number
   seed?: number
-  size: readonly [number, number]
   /** share of the mirror when looking straight down */
   strength?: number
 }
@@ -98,14 +103,15 @@ function chipColor({chips}: TerrazzoMix, pick: Float) {
 }
 
 /**
- * Polished terrazzo, mapped by world position so the pattern stays put however the floor is split into slabs: marble chips of two sizes ground flush in a cement binder, a field of one mix within a border of another along the walls.
+ * Polished terrazzo, mapped by world position so the pattern stays put however the floor is split into slabs: marble chips of two sizes ground flush in a cement binder, a field of one mix within a border of another along the walls, straight or round.
  *
  * Every chip is an irregular shard with a color of its own. In heavy mode the polish mirrors the room softly, bent a little by the waviness of a ground floor. Chips smaller than a pixel fade to their average before they could shimmer.
  */
 export default class TerrazzoFloorMaterial extends FloorMaterial {
-  constructor({border, center, field, grazingStrength = 0.3, inset = 0, loss = 2.5, reflections = true, roughness, seed = 0, size, strength = 0.06}: TerrazzoFloorOptions) {
-    if (!(size[0] > 0 && size[1] > 0) || inset < 0) {
-      throw new RangeError('A terrazzo floor needs a positive size and a border inset of at least zero.')
+  constructor(options: TerrazzoFloorOptions) {
+    const {border, center, field, grazingStrength = 0.3, inset = 0, loss = 2.5, reflections = true, roughness, seed = 0, strength = 0.06} = options
+    if (!('radius' in options ? options.radius > 0 : options.size[0] > 0 && options.size[1] > 0) || inset < 0) {
+      throw new RangeError('A terrazzo floor needs a positive size or radius and a border inset of at least zero.')
     }
     const point = positionWorld.xz.toVar('terrazzoPoint')
     const footprint = max(positionWorld.x.fwidth(), positionWorld.z.fwidth()).toVar('terrazzoFootprint')
@@ -116,7 +122,7 @@ export default class TerrazzoFloorMaterial extends FloorMaterial {
     const coarseCoverage = coverage(coarse, chipCells.coarse).toVar('terrazzoCoarseCoverage')
     const fineCoverage = coverage(fine, chipCells.fine).toVar('terrazzoFineCoverage')
     // The border runs along the walls, as far in as the inset; the field fills the rest.
-    const toWall = min(float(size[0] / 2).sub(point.x.sub(center[0]).abs()), float(size[1] / 2).sub(point.y.sub(center[1]).abs()))
+    const toWall = 'radius' in options ? float(options.radius).sub(point.sub(vec2(...center)).length()) : min(float(options.size[0] / 2).sub(point.x.sub(center[0]).abs()), float(options.size[1] / 2).sub(point.y.sub(center[1]).abs()))
     const inBorder = border ? inside(toWall.sub(inset)).toVar('terrazzoBorder') : float(0)
     const mottle = mx_noise_float(vec3(point.mul(1.3), seed + 3)).mul(0.04).add(1)
     const shade = (blend: TerrazzoMix) => {

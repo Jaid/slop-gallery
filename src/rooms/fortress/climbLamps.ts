@@ -31,7 +31,7 @@ export default {
   lantern_west: lantern(routeLight(bastionHairpin, bastionLanterns.west)),
   lantern_turn: lantern(routeLight(bastionHairpin, bastionLanterns.turn)),
   lantern_climb: lantern(routeLight(bastionHairpin, bastionLanterns.east)),
-  // Halfway along the run north, over the Lodge’s roof, and along the strip past the screen wall’s arch.
+  // Halfway along the run north, over the Lodge’s roof, and along the approach east, right before the arch of the Cinnabar’s vestibule.
   lantern_run: lantern(run),
   lantern_strip: lantern(approach),
 } satisfies Record<string, Lamp>

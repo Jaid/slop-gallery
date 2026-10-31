@@ -1,6 +1,8 @@
+import type {Rooflight as RooflightLayout} from '#src/lib/gallery/cinnabar.ts'
 import type {Material, Texture} from 'three/webgpu'
 
-import {CuboidCollider, RigidBody} from '@react-three/rapier'
+import {CuboidCollider, CylinderCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {CircleGeometry, ExtrudeGeometry, MeshStandardNodeMaterial, Path, Shape} from 'three/webgpu'
@@ -9,8 +11,14 @@ import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
-import {cinnabarRooflight, cinnabarTerrazzo} from '#src/lib/gallery/cinnabar.ts'
+import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
+import {bastionArch} from '#src/lib/gallery/bastion.ts'
+import {cinnabarRooflight, cinnabarTerrazzo, cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
+import {vestibuleArches, vestibuleFloorShape} from '#src/lib/gallery/cinnabarVestibule.ts'
+import {floorThickness} from '#src/lib/gallery/floors.ts'
+import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {salonCeiling} from '#src/lib/gallery/salon.ts'
+import CinnabarWallMaterial from '#src/lib/materials/CinnabarWallMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '#src/lib/materials/TerrazzoFloorMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
@@ -18,10 +26,20 @@ import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('cinnabar')
+const vestibuleWall = slopGallery.walls.find(wall => wall.id === 'cinnabar-vestibule')!
 const circleSegments = 96
-/** The Cinnabar: a Pompeian red sculpture hall with a black socle, polished terrazzo underfoot and a plaster ceiling pierced by a round rooflight. */
-export default function CinnabarRoom({glass, stone, wood}: {
+/** Polished hard like the Banquet’s marble, so the red walls and the rooflights mirror clearly in it. */
+const polish = {
+  strength: 0.4,
+  grazingStrength: 0.2,
+  loss: 0,
+  roughness: 0.1,
+} as const
+/** The Cinnabar: a Pompeian red sculpture hall with a black socle, polished terrazzo underfoot and a plaster ceiling pierced by a round rooflight, and its round vestibule north of it, alike on a smaller scale. */
+export default function CinnabarRoom({glass, masonry, stone, wood}: {
   glass: Material
+  /** the Fortress’ stone, which lines the vestibule’s arch onto its approach */
+  masonry: Material
   stone: Texture
   wood: Texture
 }) {
@@ -37,25 +55,32 @@ export default function CinnabarRoom({glass, stone, wood}: {
     border: blackTerrazzo,
     inset: cinnabarTerrazzo.border,
     reflections: floorReflections,
-    // Polished hard like the Banquet’s marble, so the red walls and the rooflight mirror clearly in it.
-    strength: 0.4,
-    grazingStrength: 0.2,
-    loss: 0,
-    roughness: 0.1,
+    ...polish,
   }), [floorReflections]))
   const floor = useMemo(() => ({
     slab: terrazzo,
     reflection: terrazzo.reflectionTarget ?? undefined,
   }), [terrazzo])
+  const ceiling = useDisposable(useMemo(() => {
+    const [width, depth] = room.size
+    const outline = new Shape
+    outline.moveTo(-width / 2, -depth / 2)
+    outline.lineTo(width / 2, -depth / 2)
+    outline.lineTo(width / 2, depth / 2)
+    outline.lineTo(-width / 2, depth / 2)
+    outline.closePath()
+    return pierced(outline, cinnabarRooflight.radius)
+  }, []))
   return <group name='cinnabar'>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
       <RoomFloor glass={glass} materials={floor} room={room} stone={stone} wood={wood} />
-      <Ceiling plaster={plaster} />
-      <Rooflight gilt={gold} plaster={plaster} />
+      <mesh castShadow geometry={ceiling} material={plaster} name='cinnabar-ceiling' receiveShadow />
+      <Rooflight gilt={gold} layout={cinnabarRooflight} name='cinnabar-rooflight' plaster={plaster} />
     </group>
+    <Vestibule floorReflections={floorReflections} masonry={masonry} plaster={plaster} />
   </group>
 }
 
@@ -73,34 +98,26 @@ function ring(inner: number, outer: number, depth: number) {
   })
   return geometry.rotateX(-Math.PI / 2)
 }
-/** The slab, cut round the rooflight’s opening. */
-function Ceiling({plaster}: {plaster: Material}) {
-  const geometry = useDisposable(useMemo(() => {
-    const [width, depth] = room.size
-    const shape = new Shape
-    shape.moveTo(-width / 2, -depth / 2)
-    shape.lineTo(width / 2, -depth / 2)
-    shape.lineTo(width / 2, depth / 2)
-    shape.lineTo(-width / 2, depth / 2)
-    shape.closePath()
-    const hole = new Path
-    hole.absarc(0, 0, cinnabarRooflight.radius, 0, Math.PI * 2, true)
-    shape.holes.push(hole)
-    const slab = new ExtrudeGeometry(shape, {
-      depth: salonCeiling.thickness,
-      bevelEnabled: false,
-      curveSegments: circleSegments,
-    })
-    return slab.rotateX(-Math.PI / 2).translate(0, salonCeiling.y - salonCeiling.thickness / 2, 0)
-  }, []))
-  return <mesh castShadow geometry={geometry} material={plaster} name='cinnabar-ceiling' receiveShadow />
+/** The ceiling slab over a floor plan, given as a shape in x and −z, cut round the opening of a rooflight in its middle. */
+function pierced(outline: Shape, radius: number) {
+  const hole = new Path
+  hole.absarc(0, 0, radius, 0, Math.PI * 2, true)
+  outline.holes.push(hole)
+  const slab = new ExtrudeGeometry(outline, {
+    depth: salonCeiling.thickness,
+    bevelEnabled: false,
+    curveSegments: circleSegments,
+  })
+  return slab.rotateX(-Math.PI / 2).translate(0, salonCeiling.y - salonCeiling.thickness / 2, 0)
 }
-/** The ring of plaster round the opening, hanging below the slab with a gilt bead along its lower inner edge, the glazing bars in a square grid and the disc of cast glass over them. */
-function Rooflight({gilt, plaster}: {
+/** The ring of plaster round a rooflight’s opening, hanging below the slab with a gilt bead along its lower inner edge, the glazing bars in a square grid and the disc of cast glass over them. */
+function Rooflight({gilt, layout, name, plaster}: {
   gilt: Material
+  layout: RooflightLayout
+  name: string
   plaster: Material
 }) {
-  const {barDepth, barWidth, bead, depth, frame, glassY, pane, radius} = cinnabarRooflight
+  const {barDepth, barWidth, bead, depth, frame, glassY, pane, radius} = layout
   const isHeavy = useGraphicsMode()
   // Painted cast iron, as old rooflight glazing bars are.
   const ironwork = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
@@ -130,11 +147,95 @@ function Rooflight({gilt, plaster}: {
     offset,
     length: 2 * Math.sqrt(radius ** 2 - offset ** 2),
   }))
-  return <StaticBatch name='cinnabar-rooflight'>
-    <mesh castShadow geometry={frameGeometry} material={plaster} name='cinnabar-rooflight-frame' position={[0, salonCeiling.underside - depth, 0]} receiveShadow />
-    <mesh castShadow geometry={beadGeometry} material={gilt} name='cinnabar-rooflight-bead' position={[0, salonCeiling.underside - depth - bead, 0]} receiveShadow />
+  return <StaticBatch name={name}>
+    <mesh castShadow geometry={frameGeometry} material={plaster} name={`${name}-frame`} position={[0, salonCeiling.underside - depth, 0]} receiveShadow />
+    <mesh castShadow geometry={beadGeometry} material={gilt} name={`${name}-bead`} position={[0, salonCeiling.underside - depth - bead, 0]} receiveShadow />
     {bars.map(({offset, length}) => <Box key={`x${offset}`} material={ironwork} position={[offset, barY, 0]} size={[barWidth, barDepth, length]} />)}
     {bars.map(({offset, length}) => <Box key={`z${offset}`} material={ironwork} position={[0, barY, offset]} size={[length, barDepth, barWidth]} />)}
-    <mesh geometry={glassGeometry} material={glass} name='cinnabar-rooflight-glass' position={[0, glassY, 0]} rotation={[Math.PI / 2, 0, 0]} />
+    <mesh geometry={glassGeometry} material={glass} name={`${name}-glass`} position={[0, glassY, 0]} rotation={[Math.PI / 2, 0, 0]} />
   </StaticBatch>
+}
+/**
+ * The round vestibule north of the room: its terrazzo floor, bordered along its wall and out under its arches, with a brass ring on the border’s line like the room’s inlays, its ceiling and rooflight like the room’s, and the reveals that line its arches out to the planes touching its wall there:
+ * red plaster through to the room’s north wall, and the Fortress’ stone on from the end of its approach.
+ */
+function Vestibule({floorReflections, masonry, plaster}: {
+  floorReflections: boolean
+  masonry: Material
+  plaster: Material
+}) {
+  const {center, radius, rooflight} = cinnabarVestibule
+  const terrazzo = useDisposable(useMemo(() => new TerrazzoFloorMaterial({
+    center,
+    radius,
+    field: venetianTerrazzo,
+    border: blackTerrazzo,
+    inset: cinnabarTerrazzo.border,
+    reflections: floorReflections,
+    ...polish,
+  }), [center, floorReflections, radius]))
+  const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
+    color: '#9d8354',
+    metalness: 0.45,
+    envMapIntensity: floorReflections ? 1 : 0,
+  }), [floorReflections]))
+  // The walls’ plain red, which their own reveals show too.
+  const red = useDisposable(useMemo(() => new CinnabarWallMaterial({
+    bands: [],
+    panels: [],
+    curveRadius: radius,
+  }), [radius]))
+  const linings = {
+    cinnabar: red,
+    fortress: masonry,
+  }
+  const parts = useDisposable(useMemo(() => {
+    const slab = new ExtrudeGeometry(vestibuleFloorShape(), {
+      depth: floorThickness,
+      bevelEnabled: false,
+      curveSegments: circleSegments,
+    })
+    slab.rotateX(-Math.PI / 2).translate(0, -floorThickness, 0)
+    const inlay = ring(radius - cinnabarTerrazzo.border - 0.013, radius - cinnabarTerrazzo.border + 0.013, 0.012).translate(0, 0.009, 0)
+    const reveals = vestibuleArches.map(({name}) => ({
+      name,
+      geometry: roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, bastionArch),
+    }))
+    const outline = new Shape
+    outline.absarc(0, 0, radius, 0, Math.PI * 2, false)
+    const ceiling = pierced(outline, rooflight.radius)
+    return {
+      slab,
+      inlay,
+      reveals,
+      ceiling,
+      floorCollision: colliderGeometry(slab),
+      revealCollision: reveals.map(({geometry}) => colliderGeometry(geometry)),
+      dispose() {
+        for (const geometry of [slab, inlay, ceiling, ...reveals.map(reveal => reveal.geometry)]) {
+          geometry.dispose()
+        }
+      },
+    }
+  }, [radius, rooflight]))
+  return <>
+    <group name='cinnabar-vestibule' position={[center[0], 0, center[1]]}>
+      <RigidBody colliders={false} type='fixed'>
+        <TrimeshCollider args={parts.floorCollision} />
+        <CylinderCollider args={[0.15, radius]} position={[0, 5.9, 0]} />
+        <mesh geometry={parts.slab} material={terrazzo} name='cinnabar-vestibule-floor' receiveShadow />
+        <mesh geometry={parts.inlay} material={brass} name='cinnabar-vestibule-inlay' receiveShadow />
+      </RigidBody>
+      <Branch if={terrazzo.reflectionTarget}><group rotation={[-Math.PI / 2, 0, 0]}><primitive object={terrazzo.reflectionTarget!} /></group></Branch>
+      <mesh castShadow geometry={parts.ceiling} material={plaster} name='cinnabar-vestibule-ceiling' receiveShadow />
+      <Rooflight gilt={gold} layout={rooflight} name='cinnabar-vestibule-rooflight' plaster={plaster} />
+    </group>
+    {/* In the round wall’s own frame, as the reveals are built, where its paint knows which way its face looks. */}
+    <group name='cinnabar-vestibule-reveals' position={vestibuleWall.center} rotation={[0, vestibuleWall.rotation, 0]}>
+      <RigidBody colliders={false} type='fixed'>
+        {parts.revealCollision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
+        {parts.reveals.map(({name, geometry}) => <mesh key={name} castShadow geometry={geometry} material={linings[name]} name={`cinnabar-vestibule-reveal_${name}`} receiveShadow />)}
+      </RigidBody>
+    </group>
+  </>
 }

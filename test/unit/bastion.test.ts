@@ -4,19 +4,22 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
-import {Quaternion, Vector3} from 'three/webgpu'
+import {Box2, ExtrudeGeometry, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {vaultShellThickness} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionApproach, bastionArch, bastionDoorway, bastionHairpin, bastionLanterns, bastionMouth, bastionRun, bastionScreen} from '../../src/lib/gallery/bastion.ts'
-import cinnabar from '../../src/lib/gallery/cinnabar.ts'
+import cinnabar, {cinnabarVestibule} from '../../src/lib/gallery/cinnabar.ts'
+import {vestibuleArches, vestibuleFloorShape} from '../../src/lib/gallery/cinnabarVestibule.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressApproach, fortressDoorway} from '../../src/lib/gallery/fortress.ts'
+import {fortressDoorway} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
 import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculusTower.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
+import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
 import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -29,10 +32,28 @@ const straight = [bastionMouth, bastionRun, bastionApproach] as const
 const hairpin = new RouteVaultGeometry(bastionHairpin)
 const vaults = straight.map(passage => new VaultGeometry(passage))
 const ground = new OculusGroundGeometry
-const architecture = walls.filter(wall => wall.room === 'fortress' || wall.id === 'oculus-west' || wall.id === 'cinnabar-north').map(wall => ({
+const wallById = (id: string) => walls.find(wall => wall.id === id)!
+const architecture = walls.filter(wall => wall.room === 'fortress' || ['cinnabar-north', 'cinnabar-vestibule', 'oculus-west'].includes(wall.id)).map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
+const vestibuleWall = wallById('cinnabar-vestibule')
+const vestibuleFloor = new ExtrudeGeometry(vestibuleFloorShape(), {
+  depth: 0.24,
+  bevelEnabled: false,
+  curveSegments: 96,
+})
+vestibuleFloor.rotateX(-Math.PI / 2).translate(cinnabarVestibule.center[0], -0.24, cinnabarVestibule.center[1])
+const vestibulePlacement = new Matrix4
+vestibulePlacement.makeRotationY(vestibuleWall.rotation).setPosition(...vestibuleWall.center)
+/** the vestibule’s floor slab and the reveals of its arches, in world meters */
+const vestibuleParts = [
+  vestibuleFloor,
+  ...vestibuleArches.map(({name}) => {
+    const reveal = roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, bastionArch)
+    return reveal.applyMatrix4(vestibulePlacement)
+  }),
+]
 afterAll(() => {
   hairpin.dispose()
   for (const vault of vaults) {
@@ -42,21 +63,28 @@ afterAll(() => {
   for (const {geometry} of architecture) {
     geometry.dispose()
   }
+  for (const geometry of vestibuleParts) {
+    geometry.dispose()
+  }
 })
-const wallById = (id: string) => walls.find(wall => wall.id === id)!
 /** how steeply the hairpin’s floor climbs `along` meters down it, over 2 cm */
 const slope = (along: number) => (route.at(along + 0.01).y - route.at(along - 0.01).y) / 0.02
 /** stations every half meter along the hairpin’s center line */
 const stations = Array.from({length: Math.floor(route.length / 0.5) + 1}, (_, i) => route.at(i * 0.5))
 /** the corners of a straight passage’s path after its start, which a player walks round carefully */
 const elbows = (passage: typeof straight[number]) => passage.path.slice(1).map(([x, z]): readonly [number, number, boolean] => [x, z, true])
+/** the rectangle on the floor plan round the points, in x and z */
+const area = (points: ReadonlyArray<readonly [number, number]>) => {
+  const box = new Box2
+  return box.setFromPoints(points.map(([x, z]) => new Vector2(x, z)))
+}
 /** points every half meter along a straight passage’s center line, with its floor height */
 const along = (passage: typeof straight[number]) => passage.spans.flatMap(({start, end, length}) => Array.from({length: Math.floor(length / 0.5) + 1}, (_, i) => {
   const t = i * 0.5 / length
   return [start[0] + (end[0] - start[0]) * t, passage.floorY, start[1] + (end[1] - start[1]) * t] as const
 }))
 describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
-  test('its passages join end to end, from the doorway at the west bridge to the middle of the Cinnabar’s north wall', () => {
+  test('its passages join end to end, from the doorway at the west bridge to the west arch of the Cinnabar’s vestibule', () => {
     expect(bastionDoorway).toEqual({
       ...fortressDoorway,
       x: -fortressDoorway.x,
@@ -67,7 +95,9 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
     expect(route.end.point[1]).toBeCloseTo(bastionRun.path[0][1], 9)
     expect(route.end.heading).toBeCloseTo(-Math.PI / 2, 9)
     expect(bastionRun.path.at(-1)).toEqual(bastionApproach.path[0])
-    expect(bastionApproach.path.at(-1)).toEqual([cinnabar.center[0], cinnabar.center[1] - cinnabar.size[1] / 2])
+    // Straight at the vestibule’s middle, up to where the plane touching its wall there crosses the line
+    expect(bastionApproach.path.at(-1)).toEqual([cinnabarVestibule.center[0] - cinnabarVestibule.radius, cinnabarVestibule.center[1]])
+    expect(bastionApproach.path.at(-2)![1]).toBe(cinnabarVestibule.center[1])
     // From the west bridge’s end up to the Cinnabar’s floor
     expect(bastionMouth.floorY).toBeCloseTo(tower.floorY + tower.height + towerBridge.rise, 9)
     expect(route.y).toBe(bastionMouth.floorY)
@@ -75,7 +105,7 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
     expect(route.end.y).toBe(0)
     expect([bastionRun.floorY, bastionApproach.floorY]).toEqual([0, 0])
     expect([bastionRun.height, bastionApproach.height]).toEqual([3.1, 3.1])
-    // As wide as the Fortress up to the screen wall, and narrower along the strip behind the Cinnabar
+    // As wide as the Fortress up to the screen wall, and narrower on to the vestibule
     expect([bastionMouth.width, bastionHairpin.width, bastionRun.width]).toEqual([4, 4, 4])
     expect(bastionApproach.width).toBe(2.6)
   })
@@ -130,13 +160,17 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
     expect(roomAt([crossingX, lodge.floorY + 1.6, lodge.center[1]])).toBe('lodge')
     expect(floorHeight(overLodge)).toBe(0)
   })
-  test('the run north clears the Lodge’s roof and the approach keeps off the Cinnabar’s and the Fortress’ walls along the strip', () => {
+  test('the run north clears the Lodge’s roof, and the approach and the Cinnabar’s vestibule the Fortress’ vaults, the approach keeping off the Cinnabar’s north wall', () => {
     // The Lodge’s ceiling slab tops out 24 cm over its height; the run’s floor slab hangs 24 cm under its floor.
     expect(bastionRun.floorY - 0.24).toBeGreaterThan(lodge.floorY + lodge.height + 0.24 + 0.3)
-    const [, , [, stripZ]] = bastionApproach.path
+    // The Fortress’ air under the approach and the vestibule reaches up to the crowns of its vaults, whose shells stand 22 cm higher and whose slabs over them 24 cm.
+    const {center: [vestibuleX, vestibuleZ], radius} = cinnabarVestibule
+    const above = [...bastionApproach.floors.map(area), area([[vestibuleX - radius, vestibuleZ - radius], [vestibuleX + radius, vestibuleZ + radius]])]
+    const below = slopGallery.room('fortress').air.filter(box => box.max.y < bastionApproach.floorY && above.some(region => region.intersectsBox(area([[box.min.x, box.min.z], [box.max.x, box.max.z]]))))
+    expect(below.length).toBeGreaterThan(0)
+    expect(Math.max(...below.map(box => box.max.y)) + Math.max(vaultShellThickness, 0.24) + 0.3).toBeLessThan(bastionApproach.floorY - 0.24)
+    const [, [, stripZ]] = bastionApproach.path
     const cinnabarNorthZ = cinnabar.center[1] - cinnabar.size[1] / 2
-    const fortressSouthZ = fortressApproach.path[0][1] + fortressApproach.width / 2
-    expect(stripZ - bastionApproach.width / 2 - wallFace).toBeGreaterThan(fortressSouthZ + wallFace + 0.3)
     expect(cinnabarNorthZ - wallFace - (stripZ + bastionApproach.width / 2 + wallFace)).toBeGreaterThan(0.3)
     // Behind the Cinnabar’s west wall, the hairpin’s east leg keeps the Fortress’ clearance, and the turn stays off the Vesper’s.
     const cinnabarWestX = cinnabar.center[0] - cinnabar.size[0] / 2
@@ -217,14 +251,18 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
       u: -bastion.u,
     }).toEqual(fortress)
     expect(wallPosition(oculusWest, bastion.u, 0, 0)[2]).toBeCloseTo(bastionDoorway.z, 9)
-    const north = wallById('cinnabar-north')
-    const arch = north.holes!.find(hole => hole.name === 'fortress')!
-    expect(arch).toMatchObject(bastionArch)
-    const [x, , z] = wallPosition(north, arch.u, 0, 0)
-    expect([x, z]).toEqual([cinnabar.center[0], cinnabar.center[1] - cinnabar.size[1] / 2])
-    expect(insideOpening(arch, wallCoordinates(north, [cinnabar.center[0], 0, z]), 1.7)).toBe(true)
-    expect(roomAt([cinnabar.center[0], 1.7, z + 0.1])).toBe('cinnabar')
-    expect(roomAt([cinnabar.center[0], 1.7, z - 0.1])).toBe('fortress')
+    // The vestibule’s west arch, where the approach ends, spans as much straight across between its jambs as the approach’s arch, and is as high.
+    const arch = vestibuleWall.holes!.find(hole => hole.name === 'fortress')!
+    const [endX, endZ] = bastionApproach.path.at(-1)!
+    const [x, , z] = wallPosition(vestibuleWall, arch.u, 0, 0)
+    expect(x).toBeCloseTo(endX, 9)
+    expect(z).toBeCloseTo(endZ, 9)
+    const jambs = [-1, 1].map(side => wallPosition(vestibuleWall, arch.u + side * arch.width / 2, 0, 0))
+    expect(Math.abs(jambs[0][2] - jambs[1][2])).toBeCloseTo(bastionArch.width, 9)
+    expect([arch.height, arch.profile]).toEqual([bastionArch.height, bastionArch.profile])
+    expect(insideOpening(arch, wallCoordinates(vestibuleWall, [endX + 0.1, 0, endZ]), 1.7)).toBe(true)
+    expect(roomAt([endX + 0.05, 1.7, endZ])).toBe('cinnabar')
+    expect(roomAt([endX - 0.05, 1.7, endZ])).toBe('fortress')
   })
   test('its lanterns hang between the hairpin’s ribs and its lamps under them', () => {
     for (const hung of Object.values(bastionLanterns)) {
@@ -242,7 +280,7 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
   })
   for (const sprint of [false, true]) {
     for (const returning of [false, true]) {
-      test(`a player walks from the west bridge through the doorway up the hairpin and round into the Cinnabar, sprint ${sprint}, returning ${returning}`, () => {
+      test(`a player walks from the west bridge through the doorway up the hairpin, round into the Cinnabar’s vestibule and on into the Cinnabar, sprint ${sprint}, returning ${returning}`, () => {
         const world = new RAPIER.World({
           x: 0,
           y: -9.81,
@@ -256,7 +294,7 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
             world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
           }
         }
-        for (const geometry of [ground, hairpin.paving, hairpin.shell, hairpin.ribs, ...vaults.flatMap(vault => [vault.shell, vault.ribs])]) {
+        for (const geometry of [ground, hairpin.paving, hairpin.shell, hairpin.ribs, ...vaults.flatMap(vault => [vault.shell, vault.ribs]), ...vestibuleParts]) {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
         }
         for (const passage of straight) {
@@ -276,6 +314,8 @@ describe('the Fortress’ way from the Oculus up to the Cinnabar', () => {
           ...stations.filter((_, i) => i % 2 === 0).map(({point}) => point),
           ...elbows(bastionRun),
           ...elbows(bastionApproach),
+          // Through the vestibule’s middle and out through the arch in the Cinnabar’s north wall
+          [cinnabarVestibule.center[0], cinnabarVestibule.center[1], true],
           [cinnabar.center[0], cinnabar.center[1] - 3],
         ]
         if (returning) {

@@ -11,4 +11,14 @@ export default {
     fov: 80,
     ratio: 16 / 9,
   },
+  // Before the north wall’s arch, looking up through it into the round vestibule, at its rooflight and its arch onto the Fortress’ approach.
+  vestibule: {
+    position: [0, 1.6, -6.6],
+    aim: {
+      yaw: 0,
+      pitch: 0.21,
+    },
+    fov: 90,
+    ratio: 16 / 9,
+  },
 } satisfies Record<string, RoomCamera>

@@ -96,8 +96,9 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['oculus-west', 'fortress']],
   },
   {
+    // The arch out of the Cinnabar’s vestibule onto the Fortress’ approach; the arch between the Cinnabar and its vestibule lies within the Cinnabar.
     rooms: ['fortress', 'cinnabar'],
-    holes: [['cinnabar-north', 'fortress']],
+    holes: [['cinnabar-vestibule', 'fortress']],
   },
   {
     rooms: ['lodge', 'corridor'],
@@ -212,6 +213,10 @@ const relations = {
   cinnabar: {
     rooms: ['fortress'],
     floorMirror: 'base',
+    // The last lantern along the approach hangs right before the vestibule’s arch.
+    visibleLamps: {
+      fortress: 'lantern_strip',
+    },
   },
   moonfall: {
     rooms: ['antechamber', 'exhibition', 'oculus'],
