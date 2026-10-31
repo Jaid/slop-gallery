@@ -4,7 +4,7 @@ import type {KnotDump} from '#src/lib/webmcp/tools.ts'
 import {knotExhibition, knotFloatHeight, knotLayout} from 'knot-materials/exhibition.ts'
 import {lazy} from 'react'
 
-import {insideKnotGallery, knotGalleryBounds, knotGalleryWallDistance} from '#src/lib/gallery/knotGallery.ts'
+import {insideKnotGallery, knotGalleryBounds} from '#src/lib/gallery/knotGallery.ts'
 import {HallPlacementSpace} from '#src/lib/placement/HallPlacementSpace.ts'
 import Arena from '#src/rooms/arena/Arena.ts'
 
@@ -54,6 +54,6 @@ export default class Knottingham extends World<Arena> {
   }
 
   override wallDistance(origin: Vec3, direction: Vec3) {
-    return knotGalleryWallDistance(this.walls, origin, direction)
+    return this.placement.wallDistance(origin, direction)
   }
 }

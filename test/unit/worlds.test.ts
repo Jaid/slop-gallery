@@ -7,11 +7,14 @@ import {dirname, resolve} from 'node:path'
 
 import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
+import {asPortrait} from '../../src/lib/placement/portraitSlots.ts'
+import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import world from '../../src/worlds/current.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import galleryWalls from '../../src/worlds/gallery/walls.ts'
 import {defaultWorld, knottinghamParameters, readWorld, selectWorld, worldIds, worlds} from '../../src/worlds/index.ts'
 import knottingham from '../../src/worlds/knottingham/index.ts'
+import sandbox from '../../src/worlds/sandbox/index.ts'
 
 const root = resolve(import.meta.dir, '../..')
 const farKnotPosition: Vec3 = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
@@ -26,12 +29,19 @@ describe('world selection', () => {
     expect(selectWorld('?world=knottingham')).toBe('knottingham')
     expect(selectWorld('?world=gallery')).toBe('gallery')
     expect(selectWorld('?world=gallery&candidate=grok')).toBe('gallery')
+    expect(selectWorld('?world=sandbox')).toBe('sandbox')
+    expect(selectWorld('?world=sandbox&candidate=grok')).toBe('sandbox')
     expect(readWorld('https://slop.gallery/?world=knottingham')).toBe('knottingham')
   })
   test('opens Knottingham for any of its own parameters, also bare ones', () => {
     for (const parameter of knottinghamParameters) {
       expect(selectWorld(`?${parameter}=1`)).toBe('knottingham')
       expect(selectWorld(`?seed=3&${parameter}`)).toBe('knottingham')
+    }
+  })
+  test('opens every world by its id', () => {
+    for (const id of worldIds) {
+      expect(selectWorld(`?world=${id}`)).toBe(id)
     }
   })
   test('ignores an unknown ?world', () => {
@@ -43,9 +53,10 @@ describe('world selection', () => {
     const inlined = source()
     expect(inlined('?shots=2', knottinghamParameters)).toBe('knottingham')
     expect(inlined('?world=gallery&shots=2', knottinghamParameters)).toBe('gallery')
+    expect(inlined('?world=sandbox', knottinghamParameters)).toBe('sandbox')
   })
   test('every world has a title and storage key of its own', () => {
-    expect(worldIds).toEqual(['gallery', 'knottingham'])
+    expect(worldIds).toEqual(['gallery', 'knottingham', 'sandbox'])
     const storageKeys = new Set(worldIds.map(id => worlds[id].storageKey))
     const titles = new Set(worldIds.map(id => worlds[id].title))
     expect(storageKeys.size).toBe(worldIds.length)
@@ -58,7 +69,7 @@ describe('world selection', () => {
 })
 describe('worlds', () => {
   test('match their catalog entries', () => {
-    for (const instance of [slopGallery, knottingham]) {
+    for (const instance of [slopGallery, knottingham, sandbox]) {
       expect(instance).toMatchObject(worlds[instance.id])
     }
   })
@@ -82,6 +93,45 @@ describe('worlds', () => {
     expect(knottingham.roomAt([0, 0, knotGalleryBounds.northZ - 5])).toBeUndefined()
     expect(knottingham.placement.contains(knottingham.placement.recoveryPosition)).toBe(true)
   })
+  test('the Sandbox is a single empty room, the Cell, which holds its spawn and is sealed by the Arena’s four walls', () => {
+    expect(sandbox.rooms.map(room => room.id)).toEqual(['cell'])
+    const cell = sandbox.room('cell')
+    expect(cell.title).toBe('Cell')
+    expect(sandbox.artworks).toEqual([])
+    expect(sandbox.lamps()).toEqual([])
+    expect(sandbox.roomAt(sandbox.spawn.position)).toBe(cell)
+    expect(sandbox.contains(sandbox.spawn.position)).toBe(true)
+    expect(sandbox.contains([0, 1, cell.size[1]])).toBe(false)
+    expect(sandbox.floorHeight(sandbox.spawn.position)).toBe(0)
+    expect(sandbox.placement.contains(sandbox.placement.recoveryPosition)).toBe(true)
+    expect(sandbox.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-west'])
+    for (const wall of sandbox.walls) {
+      expect(wall.holes).toBeUndefined()
+      expect(wall.height).toBe(cell.height)
+    }
+    const [x, , z] = sandbox.spawn.position
+    expect(sandbox.wallDistance([x, 1, z], [0, 0, -1])).toBeCloseTo(z + cell.size[1] / 2)
+    expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeCloseTo(cell.size[0] / 2 - x)
+    expect(sandbox.wallDistance([x, cell.height + 1, z], [1, 0, 0])).toBe(Infinity)
+  })
+  test('the Sandbox’s walls have portrait slots, every one a valid hanging spot with all the others filled', () => {
+    const slots = sandbox.portraitSlots()
+    const occupied = slots.map(asPortrait)
+    const ids = new Set(slots.map(slot => slot.id))
+    expect(ids.size).toBe(slots.length)
+    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(sandbox.walls.map(wall => wall.id)))
+    for (const slot of slots) {
+      const wall = sandbox.placement.wall(slot.wallId)!
+      expect(slot.rotation).toBe(wall.rotation)
+      // Where works hang in front of the wall, not inside it.
+      const hanging = wallPosition(wall, wallCoordinates(wall, slot.position), slot.position[1])
+      for (const [axis, value] of slot.position.entries()) {
+        expect(value).toBeCloseTo(hanging[axis], 6)
+      }
+      expect(placementIssue(wall, slot.position, slot.width, slot.height, occupied, slot.id, slot.labelAbove)).toBe('')
+      expect(sandbox.placement.contains(slot.position)).toBe(true)
+    }
+  })
   test('the gallery starts in the Lobby, between its north wall and the glass floor', () => {
     expect(slopGallery.defaultRoom).toBe('lobby')
     expect(slopGallery.spawn.position).toEqual([-3, 0.04, -30.3])
@@ -90,7 +140,7 @@ describe('worlds', () => {
   })
   test('every spawn stands just above its floor, never inside it', () => {
     const misplaced: Array<string> = []
-    for (const instance of [slopGallery, knottingham]) {
+    for (const instance of [slopGallery, knottingham, sandbox]) {
       for (const room of instance.rooms) {
         for (const [id, {position}] of [[room.id, room.spawn] as const, ...room.spawns().map(bookmark => [bookmark.id, bookmark] as const)]) {
           const clearance = position[1] - instance.floorHeight(position)
@@ -168,7 +218,7 @@ const staticImports = (files: ReadonlyArray<string>) => {
   }
   return seen
 }
-const worldModules = ['src/worlds/gallery/index.ts', 'src/worlds/knottingham/index.ts']
+const worldModules = ['src/worlds/gallery/index.ts', 'src/worlds/knottingham/index.ts', 'src/worlds/sandbox/index.ts']
 test('world modules never import the current world, which waits for them to load', () => {
   const imported = staticImports(worldModules)
   expect(imported.has(resolve(root, 'src/worlds/current.ts'))).toBe(false)

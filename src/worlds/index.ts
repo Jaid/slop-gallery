@@ -1,5 +1,5 @@
 /** the ids of every world, which also name their telemetry service */
-export const worldIds = ['gallery', 'knottingham'] as const
+export const worldIds = ['gallery', 'knottingham', 'sandbox'] as const
 export type WorldId = typeof worldIds[number]
 /** what the loading screen and the menu show of a world before it has loaded */
 export type WorldInfo = {
@@ -26,6 +26,12 @@ export const worlds = {
     tagline: 'Light, motion and impossible materials.',
     enterLabel: 'Enter Knottingham',
   },
+  sandbox: {
+    title: 'Sandbox',
+    storageKey: 'sandbox',
+    tagline: 'One empty room to try things in.',
+    enterLabel: 'Enter sandbox',
+  },
 } as const satisfies Record<WorldId, WorldInfo>
 
 /** the world a URL without a `?world` and without Knottingham’s parameters opens */
@@ -41,8 +47,10 @@ export const knottinghamParameters = ['candidate', 'knot_id', 'model', 'shots', 
  */
 export function selectWorld(search: string, parameters: ReadonlyArray<string> = knottinghamParameters): WorldId {
   const query = new URLSearchParams(search)
-  const requested = query.get('world')
-  if (requested === 'gallery' || requested === 'knottingham') {
+  // The world ids once more, as the loading screen runs this function without the module around it.
+  const known: ReadonlyArray<WorldId> = ['gallery', 'knottingham', 'sandbox']
+  const requested = known.find(id => id === query.get('world'))
+  if (requested) {
     return requested
   }
   return parameters.some(parameter => query.has(parameter)) ? 'knottingham' : 'gallery'
