@@ -227,8 +227,8 @@ describe('boolean architecture', () => {
     const hole = wall.holes![0]
     expect(openingTop(hole, hole.u)).toBeCloseTo(3.8)
     expect(openingTop(hole, hole.u + 1.2)).toBeLessThan(3.2)
-    expect(galleryPlacement.findPlacement([5, 3.5, 4.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
-    expect(galleryPlacement.findPlacement([5, 3.5, 3], [1, 0, 0], 0, 0, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([5, 3.5, wall.center[2] + hole.u + 1.2], [1, 0, 0], 0, 0, [])?.wallId).toBe(wall.id)
+    expect(galleryPlacement.findPlacement([5, 3.5, wall.center[2] + hole.u], [1, 0, 0], 0, 0, [])).toMatchObject({
       wallId: 'banquet-east',
       inReach: false,
       valid: false,

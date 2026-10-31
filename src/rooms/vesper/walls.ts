@@ -1,5 +1,7 @@
 import type {FloorSize, RoomWall} from '../base/Room.ts'
 
+import lobby from '#src/lib/gallery/lobby.ts'
+
 import {planWall} from '../lib/walls.ts'
 
 const size: FloorSize = [12, 16]
@@ -21,7 +23,7 @@ export default {
   }),
   east: planWall(size, 'east', height, {
     holes: {
-      lobby: doorway(3),
+      lobby: doorway(lobby.sideDoorZ),
     },
   }),
 } satisfies Record<string, RoomWall>

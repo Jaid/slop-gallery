@@ -15,8 +15,8 @@ const height = banquet.height - 0.3
 const [originX, , originZ] = roomOrigins.banquet
 const west = planWall(size, 'west', height)
 const lobbyArch = {
-  u: wallCoordinates(west, [lobby.width / 2 - originX, 0, 3 - originZ]),
-  width: 2.8,
+  u: wallCoordinates(west, [lobby.width / 2 - originX, 0, lobby.sideDoorZ - originZ]),
+  width: lobby.sideDoorWidth,
   height: 3.8,
   profile: 'arch',
 } as const

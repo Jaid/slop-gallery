@@ -1,5 +1,6 @@
 import type {FloorSize, RoomWall} from '../base/Room.ts'
 
+import lobby from '#src/lib/gallery/lobby.ts'
 import staircase from '#src/lib/gallery/staircase.ts'
 
 import {planWall} from '../lib/walls.ts'
@@ -13,7 +14,7 @@ export default {
     holes: {
       lobby: {
         u: 0,
-        width: 2.6,
+        width: lobby.antechamberDoorWidth,
         height: 3.6,
         profile: 'rectangle',
       },

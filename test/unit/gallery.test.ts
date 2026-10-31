@@ -46,13 +46,13 @@ describe('wall geometry', () => {
     })
   })
   test('doorways are not hanging surfaces', () => {
-    expect(galleryPlacement.findPlacement([0, 2, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
       wallId: 'vesper-west',
       inReach: false,
       valid: false,
     })
     const wall = walls.find(w => w.id === 'lobby-west')!
-    expect(placementIssue(wall, wallPosition(wall, -4.6, 2.5), 2, 2, [])).toContain('doorway')
+    expect(placementIssue(wall, wallPosition(wall, 0, 2.5), 2, 2, [])).toContain('doorway')
   })
   test('rejects edges, low labels, ceilings and overlaps', () => {
     const wall = walls[0]
@@ -95,7 +95,7 @@ describe('wall geometry', () => {
   test('only wall hits produce previews and closer walls still occlude farther walls', () => {
     expect(galleryPlacement.findPlacement([0, 2.5, 0], [0, 1, 0], 2, 2, [])).toBeNull()
     expect(galleryPlacement.findPlacement([0, 2.5, 0], [0, 0, 0], 2, 2, [])).toBeNull()
-    expect(galleryPlacement.findPlacement([0, 2.5, 0], [-1, 0, 0], 2, 2, [])).toMatchObject({
+    expect(galleryPlacement.findPlacement([0, 2.5, 3], [-1, 0, 0], 2, 2, [])).toMatchObject({
       wallId: 'lobby-west',
       inReach: true,
     })

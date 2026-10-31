@@ -17,7 +17,7 @@ const wall = (x: number, z: number, rotation: number, width: number, holes?: Roo
 })
 const doorway = (u: number) => ({
   u,
-  width: 2.8,
+  width: lobby.sideDoorWidth,
   height: 3.8,
   profile: 'arch',
 }) as const
@@ -40,15 +40,15 @@ export default {
     },
   },
   west: wall(-lobby.width / 2, 0, Math.PI / 2, 16, {
-    vesper: doorway(-3),
+    vesper: doorway(-lobby.sideDoorZ),
   }),
   east: wall(lobby.width / 2, 0, -Math.PI / 2, 16, {
-    banquet: doorway(3),
+    banquet: doorway(lobby.sideDoorZ),
   }),
   south: wall(0, 8, Math.PI, 16, {
     antechamber: {
       u: 0,
-      width: 2.6,
+      width: lobby.antechamberDoorWidth,
       height: 3.6,
       profile: 'rectangle',
     },

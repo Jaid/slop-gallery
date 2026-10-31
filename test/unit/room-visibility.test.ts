@@ -4,6 +4,7 @@ import {expect, test} from 'bun:test'
 
 import {Box3, Frustum, Matrix4, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
 
+import lobbyLayout from '../../src/lib/gallery/lobby.ts'
 import {portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
 import {rooms} from './fixtures/gallery.ts'
 
@@ -66,8 +67,8 @@ test('a camera stands in the rooms around it', () => {
   expect(roomsAt([500, 1.6, 500])).toEqual([])
 })
 test('rooms behind openings only show through them', () => {
-  const position: Vec3 = [-14, 1.6, 3]
-  const target: Vec3 = [14, 1.6, 3]
+  const position: Vec3 = [-14, 1.6, lobbyLayout.sideDoorZ]
+  const target: Vec3 = [14, 1.6, lobbyLayout.sideDoorZ]
   const regions = visibleRegions(roomsAt(position), viewProjection(position, target))
   // Through the Lobby’s side doors into the Banquet, but not to the Salon and Antechamber, whose openings lie outside the door the Vesper looks through.
   const coarse = visibleRooms('vesper', view(position, target))
