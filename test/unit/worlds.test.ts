@@ -19,6 +19,8 @@ import knottingham from '../../src/worlds/knottingham/index.ts'
 import sandbox from '../../src/worlds/sandbox/index.ts'
 
 const root = resolve(import.meta.dir, '../..')
+/** how many of the items come in each ratio */
+const ratios = (items: ReadonlyArray<{ratio: string}>) => Object.fromEntries(Object.entries(Object.groupBy(items, item => item.ratio)).map(([ratio, group]) => [ratio, group!.length]))
 const farKnotPosition: Vec3 = [knotGalleryBounds.maxX - 2, 0.04, knotGalleryBounds.northZ + 2]
 describe('world selection', () => {
   test('opens the gallery without parameters', () => {
@@ -99,7 +101,7 @@ describe('worlds', () => {
     expect(sandbox.rooms.map(room => room.id)).toEqual(['cell'])
     const cell = sandbox.room('cell')
     expect(cell.title).toBe('Cell')
-    expect(sandbox.artworks).toEqual([])
+    expect(sandbox.artworks).toBe(slopGallery.artworks)
     expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule_chandelier'])
     expect(sandbox.roomAt(sandbox.spawn.position)).toBe(cell)
     expect(sandbox.contains(sandbox.spawn.position)).toBe(true)
@@ -136,12 +138,17 @@ describe('worlds', () => {
     expect(sandbox.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
     expect(sandbox.placement.contains([vestibuleX, 1, vestibuleZ - cellVestibule.radius - 0.1])).toBe(false)
   })
-  test('the Sandbox’s walls have portrait slots, every one a valid hanging spot with all the others filled', () => {
+  test('the Sandbox’s side walls have portrait slots, at most one for every default work of each ratio, every one a valid hanging spot with all the others filled', () => {
     const slots = sandbox.portraitSlots()
+    const available = ratios(sandbox.artworks)
+    expect(Object.keys(ratios(slots)).toSorted()).toEqual(Object.keys(available).toSorted())
+    for (const [ratio, count] of Object.entries(ratios(slots))) {
+      expect(count).toBeLessThanOrEqual(available[ratio])
+    }
     const occupied = slots.map(asPortrait)
     const ids = new Set(slots.map(slot => slot.id))
     expect(ids.size).toBe(slots.length)
-    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(['cell-north', 'cell-east', 'cell-south', 'cell-west']))
+    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(['cell-east', 'cell-west']))
     for (const slot of slots) {
       const wall = sandbox.placement.wall(slot.wallId)!
       expect(slot.rotation).toBe(wall.rotation)

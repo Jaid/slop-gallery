@@ -1,9 +1,10 @@
-import type {Artwork, Vec3} from '#src/lib/gallery/types.ts'
+import type {Vec3} from '#src/lib/gallery/types.ts'
 
 import {lazy} from 'react'
 
 import {FloorPlanPlacementSpace} from '#src/lib/placement/FloorPlanPlacementSpace.ts'
 import Cell from '#src/rooms/cell/Cell.ts'
+import artworks from '#src/worlds/gallery/artworks.ts'
 
 import World from '../base/World.ts'
 import {worlds} from '../index.ts'
@@ -13,9 +14,10 @@ const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx')
 /** how far the player’s body keeps its middle from the walls */
 const bodyRadius = 0.6
 
-/** A world to try things in: a single room, the Cell, with nothing in it but an orb and no works on its walls, only free portrait slots. */
+/** A world to try things in: a single room, the Cell, with nothing in it but an orb and a few of the gallery’s default works on its side walls. */
 export default class Sandbox extends World<Cell> {
-  override readonly artworks: ReadonlyArray<Artwork> = []
+  // The gallery’s default works, of which the Cell’s six slots take as many as fit, drawn by the seed.
+  override readonly artworks = artworks
   override readonly defaultRoom = 'cell'
   override readonly id = 'sandbox'
   override readonly Minimap = minimap
