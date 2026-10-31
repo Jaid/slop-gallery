@@ -93,6 +93,9 @@ export const salonBench = {
 /** Ottoman leg centers relative to its position, inset from the corners. */
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
+/** where a sculpture pedestal stands on the floor, on the room’s axis in its north half, between the ottoman and the north wall */
+export const salonPedestal: Vec3 = [salon.center[0], 0, salon.center[1] - 5]
+
 /**
  * Wall-local u ranges a horizontal band of wall dressing can run along without crossing a walk-through opening or its trim.
  * The ends are pulled in by `inset`, so bands of neighboring walls meet at the corners instead of reaching through them.

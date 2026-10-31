@@ -2,7 +2,7 @@ import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {salonBench, salonCeiling, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
+import {salonBench, salonCeiling, salonPedestal, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import salonWindow from '../../src/lib/gallery/salonWindow.ts'
 import {createDocument, restoreDocument, useGallery} from '../../src/lib/gallery/store.ts'
 import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
@@ -88,6 +88,16 @@ describe('the Salon', () => {
     expect(room.center[1] + room.size[1] / 2 - (position[2] + depth / 2)).toBeGreaterThan(4)
     expect(Math.abs(position[0] - room.center[0]) + width / 2).toBeLessThan(room.size[0] / 2 - 3)
     expect(salonBench.seatHeight).toBeCloseTo(0.49, 5)
+  })
+  test('the pedestal stands on the room’s axis in its north half, clear of the ottoman and the north wall', () => {
+    const [x, y, z] = salonPedestal
+    // the pedestal’s footprint, 1.16 m square
+    const half = 0.58
+    expect(salonPedestal).toEqual([14, 0, -29])
+    expect(roomAt([x, 1.7, z])).toBe('salon')
+    expect(y).toBe(floorHeight([x, 1.7, z]))
+    expect(salonBench.position[2] - salonBench.depth / 2 - (z + half)).toBeGreaterThan(4)
+    expect(z - half - (room.center[1] - room.size[1] / 2)).toBeGreaterThan(2)
   })
   test('the skylight sits inside the room, under its slab, along the glass wall, in whole panes', () => {
     const {depth, frame, glassY, opening, pane} = salonSkylight
