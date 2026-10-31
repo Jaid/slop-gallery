@@ -100,7 +100,7 @@ describe('worlds', () => {
     const cell = sandbox.room('cell')
     expect(cell.title).toBe('Cell')
     expect(sandbox.artworks).toEqual([])
-    expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule'])
+    expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule_chandelier'])
     expect(sandbox.roomAt(sandbox.spawn.position)).toBe(cell)
     expect(sandbox.contains(sandbox.spawn.position)).toBe(true)
     expect(sandbox.contains([0, 1, cell.size[1]])).toBe(false)

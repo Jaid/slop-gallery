@@ -39,7 +39,7 @@ export const cellVestibule = {
 } as const satisfies RoundVestibule
 const [vestibuleX, vestibuleZ] = cellVestibule.center
 
-/** The Sandbox’s one room: a sealed square in the Arena’s marble and velvet under the Sienna’s chandelier, with a round vestibule north of it, laid out around the middle of its floor. Nothing in it but the Halloween Orb on a pedestal in the vestibule. */
+/** The Sandbox’s one room: a sealed square in the Arena’s marble and velvet under the Sienna’s chandelier, with a round vestibule north of it under another one, laid out around the middle of its floor. Nothing in it but the Halloween Orb on a pedestal in the vestibule. */
 export default class Cell extends Room {
   override readonly air = [
     floorBox(size, 0, height),
@@ -76,15 +76,11 @@ export default class Cell extends Room {
           decay: 1.75,
           shadow: true,
         },
-        // Let into the vestibule’s ceiling over the Orb on its pedestal, its cone wide enough to wash the floor and the lower walls round it.
-        vestibule: {
-          kind: 'spot',
-          position: [vestibuleX, height - 0.2, vestibuleZ],
-          target: [vestibuleX, 0, vestibuleZ],
-          angle: 0.8,
-          penumbra: 0.6,
-          strength: 160,
-          tint: '#ffe2b0',
+        // The vestibule’s own chandelier over the Orb on its pedestal, the same fixture as the room’s, dimmer for the smaller room, where its walls and the pedestal’s cap stand much closer.
+        vestibule_chandelier: {
+          position: [vestibuleX, chandelierLampY, vestibuleZ],
+          strength: 40,
+          tint: '#ffd36c',
           range: 10,
           decay: 1.75,
           shadow: true,

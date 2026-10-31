@@ -37,7 +37,7 @@ const polish: ArenaPolish = {
 const slabThickness = 0.24
 const circleSegments = 96
 
-/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the Halloween Orb on a pedestal, lit besides by the Arena’s studio fill from no visible source. */
+/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the Halloween Orb on a pedestal under a second one, lit besides by the Arena’s studio fill from no visible source. */
 export default function CellRoom() {
   const resetEpoch = useGallery(s => s.resetEpoch)
   const surfaces = useArenaSurfaces()
@@ -45,13 +45,16 @@ export default function CellRoom() {
   return <group name='cell'>
     <ambientLight intensity={0.45} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={1.3} />
-    {/* The chandelier’s lamp borrows one of its slots for its shadow. */}
+    {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
     <ShadowPool />
     <ArenaShell center={cell.center} floorOrigin={floorOrigin} height={cell.height} polish={polish} size={cell.size} surfaces={surfaces} tile={floorTile} walls={walls} />
     <group position={[x, 0, z]}>
       <Chandelier key={resetEpoch} lamp={cell.room.globalId('chandelier')} />
     </group>
     <Vestibule surfaces={surfaces} />
+    <group position={[vestibuleX, 0, vestibuleZ]}>
+      <Chandelier key={resetEpoch} lamp={cell.room.globalId('vestibule_chandelier')} />
+    </group>
     <Pedestal {...pedestal} position={[vestibuleX, 0, vestibuleZ]} />
     <Orb key={resetEpoch} orb={halloweenOrb} position={[vestibuleX, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />
   </group>
