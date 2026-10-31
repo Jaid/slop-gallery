@@ -20,6 +20,6 @@ export const halloweenOrb: OrbKind = {
   color: '#6a1fd0',
   prompt: seed => {
     const adjectives = environmentSample(seed, 'halloween-orb', halloweenAdjectives, 5)
-    return `This picture is hanging on a wall in a horror game where all artworks suddenly turn into a corrupted version.\n\nPlease edit this image and provide traits that make it ${adjectives.slice(0, -1).join(', ')} or ${adjectives.at(-1)}.`
+    return `This picture is in a horror game – suddenly turned into a corrupted version.\n\nPlease edit this image and provide traits that make it ${adjectives.slice(0, -1).join(', ')} or ${adjectives.at(-1)}.`
   },
 }
