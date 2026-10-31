@@ -28,7 +28,7 @@ const tolerance = 1e-6
  *
  * Both walls of a corner run their trim to the corner, where the bands would otherwise overlap and share their tops, bottoms and
  * fronts. Mitered along the corner’s bisector, 45° in a right angle, the two bands only touch along the miter.
- * Where the other wall is opened down to the floor right at the corner, it has no baseboard there, and this one’s runs on square instead.
+ * Where either wall is opened down to the floor right at the corner, the baseboards run on square instead: the opened wall’s is all but cut away there, and the other’s runs on into whatever continues past the opening.
  */
 export default function miterCorners(walls: ReadonlyArray<Wall>): Array<Wall> {
   // Marks from an earlier pass are recomputed, not kept.
@@ -64,7 +64,7 @@ export default function miterCorners(walls: ReadonlyArray<Wall>): Array<Wall> {
           const sin = Math.abs(toward[0] * otherToward[1] - toward[1] * otherToward[0])
           // Rounded, so a right angle comes out as exactly 1 and equal walls share one cut.
           const slant = Math.round((1 + cos) / sin * 1e9) / 1e9
-          return [slant, openedAt(other, shared === 0 ? -1 : 1) ? 0 : slant]
+          return [slant, openedAt(other, shared === 0 ? -1 : 1) || openedAt(wall, index === 0 ? -1 : 1) ? 0 : slant]
         }
       }
       return [0, 0]

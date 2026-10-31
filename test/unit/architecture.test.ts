@@ -145,13 +145,19 @@ describe('boolean architecture', () => {
               for (const z of [0.051, 0.092, 0.121, 0.183, 0.231, 0.259, 0.301]) {
                 const classicDepth = y < 0.4 ? 0.325 : 0.27
                 let depth = wall.trimStyle === 'plain' ? 0.25 : classicDepth
-                if (wall.trimStyle === 'none') {
+                // An opening that reaches the wall’s end has no reveal there.
+                if (wall.width / 2 - side * jamb < 1e-3) {
+                  depth = 0
+                } else if (wall.trimStyle === 'none') {
                   depth = wallFace
                 } else if (hole.casing === false) {
-                  // Without a casing, only the baseboard stands out of the reveal, unless the jamb opens the wall’s corner, where the other wall’s baseboard runs on instead.
+                  // Without a casing, only the baseboard stands out of the reveal; at a corner, it runs on square.
                   const baseboard = wall.baseboardHeight ?? 0.44
-                  const opensCorner = wall.width / 2 - side * jamb <= wallFace + 1e-6
-                  depth = y >= baseboard || opensCorner ? wallFace : (y < baseboard - 0.06 ? 0.2 : 0.25)
+                  if (y >= baseboard) {
+                    depth = wallFace
+                  } else {
+                    depth = y < baseboard - 0.06 ? 0.2 : 0.25
+                  }
                 }
                 const direction = new Vector3(side, side * (wall.slope ?? 0), 0)
                 direction.normalize()

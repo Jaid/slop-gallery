@@ -27,10 +27,15 @@ export type RouteOutline = {
   side: -1 | 1
 }
 export type RoutedPassageOptions = {
-  /** whether its walls carry a cornice along their tops, true by default; a narrow passage’s vault leaves it showing */
-  cornice?: boolean
   openings?: ReadonlyArray<RouteOpening>
-  outline?: RouteOutline
+  /** at most one for each side */
+  outlines?: ReadonlyArray<RouteOutline>
+}
+/** an outline with the stretch along the route it stands in for its side’s walls on, and where straight across from the route its walls turn their inner corners */
+type PlacedOutline = RouteOutline & {
+  creases: ReadonlyArray<number>
+  from: number
+  to: number
 }
 type Point = readonly [x: number, z: number]
 /** where the line straight across from a station of the route toward a side meets that side’s walls: how far from the centerline and at which point, and for an outline, at which of its walls, counted from its first corner */
@@ -66,42 +71,48 @@ const clamp = (value: number, low: number, high: number) => Math.min(Math.max(va
 
 /**
  * An open-ended passage along a {@link PassageRoute} that winds through turns, may climb or fall and grow taller or lower along its ramps, and may have openings in its walls: the same footprint drives its walls, floor and air.
- * Its runs take straight walls and its turns curved ones, unless an {@link RouteOutline} stands in for those on one side along a stretch. Along a ramp, they stand level, from their lowest floor up to their highest ceiling, with their baseboards following the floor through the ramp’s knots.
+ * Its runs take straight walls and its turns curved ones, unless a {@link RouteOutline} stands in for those on a side along a stretch. Along a ramp, they stand level, from their lowest floor up to their highest ceiling, with their baseboards following the floor through the ramp’s knots.
  */
 export default class RoutedPassage {
-  /** whether its walls carry a cornice along their tops */
-  readonly cornice: boolean
-  /** where straight across from the route the walls of the outline turn their inner corners, in meters along it */
+  /** where straight across from the route the walls of the outlines turn their inner corners, in meters along it */
   readonly creases: ReadonlyArray<number>
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
   readonly name: string
-  /** the outline, if any, with the stretch along the route it stands in for its side’s walls on */
-  readonly outline?: RouteOutline & {
-    from: number
-    to: number
-  }
+  /** the outlines, each with the stretch along the route it stands in for its side’s walls on */
+  readonly outlines: ReadonlyArray<PlacedOutline>
   /** where the vault’s ribs stand, in meters along the route */
   readonly ribs: ReadonlyArray<number>
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, openings = [], outline}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {openings = [], outlines = []}: RoutedPassageOptions = {}) {
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
-    this.cornice = cornice
     const count = Math.max(1, Math.ceil(route.length / routeRibSpacing))
     this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count)
-    this.creases = []
-    if (outline) {
-      this.outline = this.stretch(outline)
-      this.creases = this.outline.corners.slice(1, -1).map(corner => this.acrossFrom(corner))
-      this.checkOutline()
+    const sides = new Set(outlines.map(({side}) => side))
+    if (sides.size !== outlines.length) {
+      throw new RangeError(`${this.name} takes at most one outline on each side.`)
+    }
+    // Their creases come once all stretches are known, since finding them asks where each side’s walls stand.
+    this.outlines = outlines.map(outline => ({
+      ...this.stretch(outline),
+      creases: [],
+    }))
+    this.outlines = this.outlines.map(outline => ({
+      ...outline,
+      creases: outline.corners.slice(1, -1).map(corner => this.acrossFrom(outline, corner)),
+    }))
+    this.creases = this.outlines.flatMap(({creases}) => creases).toSorted((a, b) => a - b)
+    for (const outline of this.outlines) {
+      this.checkOutline(outline)
     }
     const placed: Array<PlacedWall> = route.pieces.flatMap((piece, index) => [-1, 1].flatMap((side): Array<PlacedWall> => {
-      if (!this.outlined(piece.from + piece.length / 2, side)) {
+      const outline = this.outlineAt(piece.from + piece.length / 2, side)
+      if (!outline) {
         return [{
           piece: index,
           side,
@@ -109,7 +120,7 @@ export default class RoutedPassage {
         }]
       }
       // The outline’s walls come once, where its stretch starts.
-      return Math.abs(piece.from - this.outline!.from) < tolerance ? this.outlineWalls().map((wall, segment) => ({
+      return Math.abs(piece.from - outline.from) < tolerance ? this.outlineWalls(outline).map((wall, segment) => ({
         piece: index,
         segment,
         side,
@@ -220,8 +231,7 @@ export default class RoutedPassage {
   }
 
   /** How far along the route the outline’s corner lies straight across from it, on the outline’s side. */
-  private acrossFrom([x, z]: Point) {
-    const {side, from, to} = this.outline!
+  private acrossFrom({side, from, to}: PlacedOutline, [x, z]: Point) {
     const projection = this.route.projections(x, z).find(({along, right}) => along >= from && along <= to && Math.sign(right) === side && Math.abs(this.reach(this.route.at(along), side) - Math.abs(right)) < tolerance)
     if (!projection) {
       throw new RangeError(`No place along ${this.name} lies straight across from the corner of its outline at ${x}, ${z}.`)
@@ -230,8 +240,7 @@ export default class RoutedPassage {
   }
 
   /** Throws unless the outline keeps at least as far from the centerline as its side’s own walls, behind the center of every turn toward its side, and runs on along with the route. */
-  private checkOutline() {
-    const {side, from, to} = this.outline!
+  private checkOutline({side, from, to}: PlacedOutline) {
     let traveled = 0
     for (let along = from; along <= to + 1e-9; along += outlineCheckStep) {
       const station = this.route.at(Math.min(along, to))
@@ -287,8 +296,11 @@ export default class RoutedPassage {
       }
     }
     const middle = piece.from + (from + to) / 2
-    if (this.outline && this.outlined(middle, this.outline.side)) {
-      points.push(...this.outline.corners.slice(1, -1).filter((_, index) => this.creases[index] > piece.from + from && this.creases[index] < piece.from + to))
+    for (const side of [-1, 1]) {
+      const outline = this.outlineAt(middle, side)
+      if (outline) {
+        points.push(...outline.corners.slice(1, -1).filter((_, index) => outline.creases[index] > piece.from + from && outline.creases[index] < piece.from + to))
+      }
     }
     // A clockwise turn’s center lies on its right.
     if (piece.kind === 'arc' && !this.outlined(middle, -Math.sign(piece.sweep))) {
@@ -308,14 +320,15 @@ export default class RoutedPassage {
     const [rx, rz] = rightOf(station.heading)
     const [dx, dz] = [rx * side, rz * side]
     const [px, pz] = station.point
-    if (!this.outlined(station.along, side)) {
+    const outline = this.outlineAt(station.along, side)
+    if (!outline) {
       const half = this.width / 2
       return {
         distance: half,
         point: [px + dx * half, pz + dz * half],
       }
     }
-    const {corners} = this.outline!
+    const {corners} = outline
     let best: SideHit | undefined
     let traveled = 0
     for (const [segment, [ax, az]] of corners.slice(0, -1).entries()) {
@@ -344,15 +357,18 @@ export default class RoutedPassage {
     return best
   }
 
-  /** Whether the outline stands in for the walls on `side` `along` meters down the route. */
+  /** The outline that stands in for the walls on `side` `along` meters down the route, if any. */
+  private outlineAt(along: number, side: number) {
+    return this.outlines.find(outline => outline.side === side && along >= outline.from - tolerance && along <= outline.to + tolerance)
+  }
+
+  /** Whether an outline stands in for the walls on `side` `along` meters down the route. */
   private outlined(along: number, side: number) {
-    const {outline} = this
-    return outline?.side === side && along >= outline.from - tolerance && along <= outline.to + tolerance
+    return this.outlineAt(along, side) !== undefined
   }
 
   /** The straight walls through the outline’s corners, standing level from their lowest floor, their baseboards following the floor wherever it changes along them. */
-  private outlineWalls(): Array<Omit<Wall, 'id'>> {
-    const {corners, side, from, to} = this.outline!
+  private outlineWalls({corners, side, from, to}: PlacedOutline): Array<Omit<Wall, 'id'>> {
     // Where the floor meets the walls, straight across from every station along the stretch
     const contacts = this.stations(from, to).map(station => ({
       station,
@@ -376,7 +392,6 @@ export default class RoutedPassage {
         height: Math.max(...touching.map(({station}) => station.y + station.height)) - foot - 0.3,
         sticky: false,
         trimStyle: 'plain',
-        ...this.cornice ? {} : {cornice: false},
       }
       if (touching.every(({station}) => station.y === foot)) {
         return wall
@@ -400,7 +415,6 @@ export default class RoutedPassage {
       height: Math.max(piece.startY + piece.startHeight, piece.endY + piece.endHeight) - foot - 0.3,
       sticky: false,
       trimStyle: 'plain',
-      ...this.cornice ? {} : {cornice: false},
     } as const
     if (piece.kind === 'line') {
       const middle = PassageRoute.station(piece, piece.length / 2)

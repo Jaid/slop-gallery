@@ -1,7 +1,6 @@
 import type Passage from './Passage.ts'
-import type {BufferGeometry} from 'three/webgpu'
 
-import {ExtrudeGeometry, Shape} from 'three/webgpu'
+import {BufferGeometry, ExtrudeGeometry, Shape} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 import {vaultShellThickness, wallFace} from '../architectureDimensions.ts'
@@ -102,7 +101,8 @@ export default class VaultGeometry {
       }
     }
     this.shell = mergeParts(shells)
-    this.ribs = mergeParts(ribs)
+    // A run too short for a rib, like one that is all but timber, has none.
+    this.ribs = ribs.length ? mergeParts(ribs) : new BufferGeometry
   }
 
   dispose() {

@@ -70,7 +70,10 @@ function createWorld(fps: number) {
   }
   for (const vault of vaults) {
     for (const geometry of [vault.shell, vault.ribs]) {
-      world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
+      // The Fortress’ approach, all timber transition, has no stone ribs.
+      if (geometry.hasAttribute('position')) {
+        world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
+      }
     }
   }
   for (const geometry of [windowGeometry.lining, windowGeometry.glass, windowGeometry.frame, transition.timber, transition.lining]) {
@@ -241,7 +244,7 @@ describe('Lodge and Corridor route', () => {
     for (const returning of [false, true]) {
       test(`the widened stone doorway is walkable at offset ${offset}, returning ${returning}`, () => {
         const world = createWorld(60)
-        const path = [[-18.5, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
+        const path = [[fortressApproach.path[0][0] - 0.4, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
         if (returning) {
           path.reverse()
         }

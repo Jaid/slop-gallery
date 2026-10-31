@@ -51,8 +51,9 @@ const floorAt = (x: number, z: number, mesh: Mesh) => {
   return ray.intersectObject(mesh)[0]?.point.y
 }
 describe('the Fortress’ timber transition into the Lodge', () => {
-  test('occupies the approach’s last meter, ending at the Lodge doorway', () => {
-    expect(transition.length).toBeCloseTo(1.11)
+  test('occupies all of the approach, about its last meter, ending at the Lodge doorway', () => {
+    expect(transition.length).toBeCloseTo(transition.spanLength, 9)
+    expect(transition.length).toBeGreaterThan(transitionFrameDepth * 4)
     expect(alongX(transition.spanLength)).toBeCloseTo(doorwayX)
     expect(walls.find(wall => wall.id === 'lodge-east')!.center[0]).toBeCloseTo(doorwayX)
     expect(transition.frames[0]).toBeCloseTo(transition.spanLength - transition.length)

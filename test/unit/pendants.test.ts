@@ -69,15 +69,16 @@ const groups: Array<{
     lights: Object.values(fortressLanterns).map(along => fortressCurve.route.at(along).y + fortressCurve.route.at(along).height - passageLightDrop),
     mounts: routePendantMounts(fortressCurve, [curve.shell, curve.ribs], Object.values(fortressLanterns)),
   },
-  ...[fortressMouth, fortressApproach].map(passage => {
-    const mounts = passagePendantMounts(passage, passage === fortressMouth ? [mouth.shell, mouth.ribs] : [approach.shell, approach.ribs, transition.timber, transition.lining])
+  // The approach to the Lodge is all timber transition, with no room for a lantern.
+  (() => {
+    const mounts = passagePendantMounts(fortressMouth, [mouth.shell, mouth.ribs])
     return {
-      label: `castle ${passage.id}`,
+      label: 'castle mouth',
       body: lantern,
-      lights: mounts.map(() => passage.floorY + passage.height - passageLightDrop),
+      lights: mounts.map(() => fortressMouth.floorY + fortressMouth.height - passageLightDrop),
       mounts,
     }
-  }),
+  })(),
   {
     label: 'timber corridor',
     body: lantern,
@@ -110,8 +111,8 @@ const firstHit = (origin: Vector3, direction: Vector3, far = Infinity) => {
 describe('ceiling-hung pendants', () => {
   test('every light hangs its drop under its passage’s crown', () => {
     expect(groups[0].mounts).toHaveLength(2)
-    expect(groups[3].mounts).toHaveLength(9)
-    expect(groups[4].mounts).toHaveLength(2)
+    expect(groups[2].mounts).toHaveLength(9)
+    expect(groups[3].mounts).toHaveLength(2)
     for (const {mounts, lights} of groups) {
       expect(mounts).toHaveLength(lights.length)
       for (const [i, mount] of mounts.entries()) {

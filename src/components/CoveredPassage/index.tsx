@@ -53,7 +53,8 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   const paving = pavingOverride ?? transition?.stoneFloors ?? passage.floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
-  const collision = timber ? [] : [geometry.shell, geometry.ribs].map(colliderGeometry)
+  // A run too short for a rib has none to collide with.
+  const collision = timber ? [] : [geometry.shell, geometry.ribs].filter(part => part.hasAttribute('position')).map(colliderGeometry)
   const crown = passage.floorY + passage.height
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
