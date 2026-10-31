@@ -24,7 +24,7 @@ export default function ApseGrilles({stone}: {stone: Material}) {
     roughness: 0.5,
     envMapIntensity: 0.3,
   }), []))
-  return <RigidBody colliders={false} name='oculus-room' type='fixed'>
+  return <RigidBody colliders={false} name='oculus-apse-grilles' type='fixed'>
     {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
     <mesh castShadow geometry={reveal} material={stone} name='oculus-apse-reveals' receiveShadow />
     <mesh castShadow geometry={bars} material={iron} name='oculus-apse-bars' receiveShadow />

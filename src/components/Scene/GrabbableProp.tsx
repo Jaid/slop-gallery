@@ -157,6 +157,7 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
   return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
     <group
       name={id} userData={{
+        pickup: true,
         propId: id,
         title,
       }} ref={group}

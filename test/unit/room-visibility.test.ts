@@ -1,11 +1,13 @@
 import type {Vec3} from '../../src/lib/gallery/types.ts'
+import type {GalleryRoomId} from '../../src/worlds/gallery/index.ts'
+import type {Object3D} from 'three/webgpu'
 
 import {expect, test} from 'bun:test'
 
-import {Box3, Frustum, Group, Matrix4, Mesh, PerspectiveCamera, Sphere, Vector3} from 'three/webgpu'
+import {Box3, Frustum, Group, Matrix4, Mesh, PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import lobbyLayout from '../../src/lib/gallery/lobby.ts'
-import {ownerRooms, portals, roomContaining, roomEnclosing, roomsAt, roomsOverlapping, screenRect, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
+import {ownerRoom, portals, roomContaining, roomsAt, screenRect, updatePickupRoom, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
 import relations from '../../src/worlds/gallery/relations.ts'
 import {rooms} from './fixtures/gallery.ts'
 
@@ -73,42 +75,61 @@ test('a room shows the rooms behind the openings in view', () => {
   expect(lobby.has('lodge')).toBe(false)
   expect(lobby.has('antechamber')).toBe(true)
 })
-test('a mesh belongs to the room that built it, not to the rooms its bounds spill into', () => {
-  const mesh = new Mesh
-  const vault = new Group
-  vault.name = 'lobby-vault'
-  const lobbyRoom = new Group
-  lobbyRoom.name = 'lobby-room'
-  lobbyRoom.add(vault)
-  vault.add(mesh)
-  // The Lobby’s vault over the Cinnabar is the Lobby’s, so the Cinnabar, which does not relate the Lobby, skips it.
-  expect(ownerRooms(mesh)).toEqual(['lobby'])
+/** the owner room of the object, by its ancestors like RoomCulling’s traversal */
+const ownerOf = (object: Object3D): GalleryRoomId | undefined => ownerRoom(object, object.parent ? ownerOf(object.parent) : undefined)
+test('a mesh belongs to the room that names itself its owner nearest above it, wherever its bounds reach', () => {
+  const lobby = new Group
+  lobby.userData.room = 'lobby'
+  const vault = new Mesh
+  lobby.add(vault)
+  // The Lobby’s vault reaches over the Cinnabar, which does not relate the Lobby and so skips it.
+  expect(ownerOf(vault)).toBe('lobby')
   expect(relations.cinnabar.rooms).not.toContain('lobby' as never)
-  const wallMesh = new Mesh
   const wall = new Group
-  wall.name = 'cinnabar-north'
   wall.userData.room = 'cinnabar'
+  const wallMesh = new Mesh
+  lobby.add(wall)
   wall.add(wallMesh)
-  expect(ownerRooms(wallMesh)).toEqual(['cinnabar'])
-  expect(ownerRooms(new Mesh)).toEqual([])
+  expect(ownerOf(wallMesh)).toBe('cinnabar')
+  expect(ownerOf(new Mesh)).toBeUndefined()
+  // Knottingham’s rooms are no rooms of the gallery.
+  const arena = new Group
+  arena.userData.room = 'arena'
+  lobby.add(arena)
+  expect(ownerOf(arena)).toBeUndefined()
 })
-test('objects reaching past one room belong to none', () => {
-  expect(roomEnclosing(new Sphere(new Vector3(-14, 2, 0), 1))).toBe('vesper')
-  // The wall between the Lobby and the Vesper.
-  expect(roomEnclosing(new Sphere(new Vector3(-8, 2, 0), 0.5))).toBeUndefined()
-})
-test('objects belong to every room they reach into', () => {
-  // The wall between the Lobby and the Vesper.
-  expect(roomsOverlapping(new Box3(new Vector3(-8.2, 1, -1), new Vector3(-7.8, 3, 1))).toSorted()).toEqual(['lobby', 'vesper'])
-  expect(roomsOverlapping(new Box3(new Vector3(-15, 1, -1), new Vector3(-13, 3, 1)))).toEqual(['vesper'])
-  expect(roomsOverlapping(new Box3(new Vector3(500, 1, 500), new Vector3(501, 2, 501)))).toEqual([])
+test('a pickup belongs to the room it is in and keeps it in passages', () => {
+  const lobby = new Group
+  lobby.userData.room = 'lobby'
+  const pickup = new Group
+  pickup.userData.pickup = true
+  const mesh = new Mesh
+  lobby.add(pickup)
+  pickup.add(mesh)
+  const carry = (position: Vec3) => {
+    pickup.position.set(...position)
+    lobby.updateMatrixWorld()
+    updatePickupRoom(pickup)
+    return ownerOf(mesh)
+  }
+  expect(carry([-14, 1.6, 0])).toBe('vesper')
+  // In the doorway between the Vesper and the Lobby, which neither room’s air takes in alone.
+  expect(roomContaining([-8, 1.6, lobbyLayout.sideDoorZ])).toBeUndefined()
+  expect(carry([-8, 1.6, lobbyLayout.sideDoorZ])).toBe('vesper')
+  expect(carry([0, 1.6, -6])).toBe('lobby')
+  expect(carry([-8, 1.6, lobbyLayout.sideDoorZ])).toBe('lobby')
+  // Outside of every room, a pickup that never had one stays without.
+  const lost = new Group
+  lost.userData.pickup = true
+  lost.position.set(500, 1.6, 500)
+  lost.updateMatrixWorld()
+  updatePickupRoom(lost)
+  expect(ownerOf(lost)).toBeUndefined()
 })
 test('the Corridor’s stair flight and landing belong to the Corridor, and the vestibule beyond to the Sienna', () => {
   expect(roomContaining([-29.8, -0.9, 6.5])).toBe('corridor')
   expect(roomContaining([-26.1, 1.6, 10.2])).toBe('corridor')
   expect(roomContaining([-22.4, 1.6, 10.4])).toBe('sienna')
-  expect(roomsOverlapping(new Box3(new Vector3(-30.5, -2.5, 5.8), new Vector3(-29.1, -0.5, 7.2)))).toEqual(['corridor'])
-  expect(roomsOverlapping(new Box3(new Vector3(-25.3, 0.5, 9.8), new Vector3(-24.3, 2.5, 11))).toSorted()).toEqual(['corridor', 'sienna'])
   // Flying at the hall’s south end, where the flight turns off onto the diagonal, with the vestibule’s arch out of view.
   expect(roomsAt([-33.7, -3.4, 2.6])).toEqual(['corridor'])
 })

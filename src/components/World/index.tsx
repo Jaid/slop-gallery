@@ -6,7 +6,7 @@ import type {ReactNode} from 'react'
 import type {NodeMaterial, Texture} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
-import {Fragment, startTransition, useEffect, useLayoutEffect, useRef, useState} from 'react'
+import {startTransition, useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {Vector3} from 'three/webgpu'
 
 import {useGallery} from '#src/lib/gallery.ts'
@@ -163,8 +163,11 @@ export default function World(materials: WorldMaterials) {
       setParts(previous => [...previous, [room, part]])
     })
   })
+  // Each room owns everything its part builds, see ownerRoom.
   return <group name='world'>
-    <LobbyRoom cladding={lobbyWall} glass={glass.lobby} stone={stone} wood={wood} />
-    {parts.map(([room, part]) => <Fragment key={room}>{part(materials)}</Fragment>)}
+    <group userData={{room: 'lobby'}}>
+      <LobbyRoom cladding={lobbyWall} glass={glass.lobby} stone={stone} wood={wood} />
+    </group>
+    {parts.map(([room, part]) => <group key={room} userData={{room}}>{part(materials)}</group>)}
   </group>
 }

@@ -43,7 +43,8 @@ export default function GalleryStairs() {
     }
   }, []))
   const {parts: turn} = turnResource
-  return <StaticBatch name='moonfall-stairway'>
+  // Moonfall’s fence and walls take in the stairway, so Moonfall owns its steps too.
+  return <StaticBatch name='moonfall-stairway' userData={{room: 'moonfall'}}>
     <RigidBody colliders={false} type='fixed'>
       {stairBlocks.map(({position, size}, i) => <group key={i}>
         <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />

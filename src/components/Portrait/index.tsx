@@ -126,7 +126,12 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
     }}
   >
     <CuboidCollider args={[(w + 0.18) / 2, (h + 0.18) / 2, 0.085]} mass={2} />
-    <group userData={{portraitId: p.id}} visible={!p.reserved} ref={group}>
+    <group
+      userData={{
+        pickup: true,
+        portraitId: p.id,
+      }} visible={!p.reserved} ref={group}
+    >
       {/* Only a held work fades; hung ones stay opaque so the floor glass, which refracts opaque surfaces only, shows them in the room below. */}
       <mesh castShadow name='portrait-frame' receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]} /><meshStandardNodeMaterial key={String(held)} color='#a5804b' metalness={0.75} opacity={held ? 0.3 : 1} roughness={0.32} transparent={held} /></mesh>
       <mesh name='portrait-mat' position={[0, 0, 0.087]}><planeGeometry args={[w + 0.045, h + 0.045]} /><meshStandardNodeMaterial color='#29261d' /></mesh>

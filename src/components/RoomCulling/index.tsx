@@ -7,7 +7,7 @@ import {useLayoutEffect} from 'react'
 import {Box3, Frustum, Matrix4, Vector3} from 'three/webgpu'
 
 import {useGallery} from '#src/lib/gallery.ts'
-import {ownerRooms, roomBoxes, roomContaining, roomsAt, roomsOverlapping, screenRect, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
+import {ownerRoom, roomBoxes, roomContaining, roomsAt, screenRect, updatePickupRoom, visibleRegions} from '#src/lib/gallery/roomVisibility.ts'
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
@@ -22,7 +22,6 @@ type Drawable = Object3D & {
 type Placement = {
   bounds: Box3
   matrix: Matrix4
-  rooms: ReadonlyArray<RoomId>
   world: Box3
 }
 
@@ -32,8 +31,8 @@ const position = new Vector3
 const mirrored = new Box3
 const lightHolders = new WeakMap<Object3D, boolean>
 const placements = new WeakMap<Object3D, Placement>
-/** the drawable’s world bounds and the rooms they reach into, kept until it moves or its bounds change */
-const placementOf = (drawable: Drawable, geometry: BufferGeometry) => {
+/** the drawable’s world bounds, kept until it moves or its bounds change */
+const boundsOf = (drawable: Drawable, geometry: BufferGeometry) => {
   // Instanced and batched meshes bound all of their instances themselves.
   if (drawable.computeBoundingBox && drawable.boundingBox === null) {
     drawable.computeBoundingBox()
@@ -44,19 +43,17 @@ const placementOf = (drawable: Drawable, geometry: BufferGeometry) => {
   const bounds = drawable.boundingBox ?? geometry.boundingBox!
   const cached = placements.get(drawable)
   if (cached?.matrix.equals(drawable.matrixWorld) && cached.bounds.equals(bounds)) {
-    return cached
+    return cached.world
   }
-  const world = bounds.clone().applyMatrix4(drawable.matrixWorld)
   const placement = {
     bounds: bounds.clone(),
     matrix: drawable.matrixWorld.clone(),
-    // The owner decides, not the bounds: a mesh belongs to the room that built it, even where its box spills into a neighbour’s air, like the Lobby’s vault over the Cinnabar. Only meshes without an owner fall back to the rooms their bounds reach into.
-    rooms: ownerRooms(drawable).length ? ownerRooms(drawable) : roomsOverlapping(world),
-    world,
+    world: bounds.clone().applyMatrix4(drawable.matrixWorld),
   }
   placements.set(drawable, placement)
-  return placement
+  return placement.world
 }
+const ownerOf = (object: Object3D): RoomId | undefined => ownerRoom(object, object.parent ? ownerOf(object.parent) : undefined)
 const holdsLight = (object: Object3D) => {
   let result = lightHolders.get(object)
   if (result === undefined) {
@@ -87,7 +84,7 @@ const relatedRegions = (from: ReadonlyArray<RoomId>) => {
   return regions
 }
 /**
- * Leaves out what the camera can’t see from the rooms it is in. Every mesh is skipped unless its owner room is the camera’s room or one that room lists in `relations.ts`; a mesh without an owner belongs to the rooms its bounds reach into, and a room behind an opening only shows through the part of the screen the opening covers, up to three openings deep.
+ * Leaves out what the camera can’t see from the rooms it is in. Every mesh has one owner room (see `ownerRoom`), and a room only shows when the camera stands in it or when it is one of the rooms those list in `relations.ts` seen through an opening, and then only through the part of the screen the opening covers, up to three openings deep.
  * Rooms out of sight drop out of every pass of the frame: the camera, its reflection and the lamps’ shadow maps. Objects in a room in sight that miss its openings on screen only drop out of the camera and its reflection, so the shadows they cast stay.
  * The sun shines from outside every room, through openings and skylights that rooms out of sight may frame, so its shadow map keeps them all; otherwise the patches of sunlight would change shape whenever a room leaves the view.
  * Culling and the shadow cache start behind the loading screen, where culling leaves out every room but the camera’s, in the sun’s shadow map too, so that only what the start view sees gets built there. Objects in the camera’s rooms and the rooms related to them stream in first afterward.
@@ -130,7 +127,9 @@ export default function RoomCulling() {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)
       }
-      scene.traverse(object => {
+      const visit = (object: Object3D, parentRoom: RoomId | undefined) => {
+        updatePickupRoom(object)
+        const room = ownerRoom(object, parentRoom)
         const drawable = object as Drawable
         const light = object as Light & {shadow?: LightShadow}
         if (light.isLight && light.shadow) {
@@ -146,25 +145,23 @@ export default function RoomCulling() {
             refreshing = true
           }
         }
-        if (!regions || !drawable.geometry || !drawable.frustumCulled || holdsLight(object)) {
-          return
+        if (regions && room && !from.includes(room) && drawable.geometry && drawable.frustumCulled && !holdsLight(object)) {
+          // Behind the loading screen, only the camera’s rooms get built; the rooms seen through their openings stream in first afterward.
+          const rects = ready ? regions.get(room) : undefined
+          if (!rects) {
+            hidden.add(object)
+          } else {
+            const world = boundsOf(drawable, drawable.geometry)
+            if (!inSight(rects, world) && !inSight(rects, mirror(world, floorY))) {
+              hiddenFromView.add(object)
+            }
+          }
         }
-        const {rooms, world} = placementOf(drawable, drawable.geometry)
-        if (!rooms.length || rooms.some(room => from.includes(room))) {
-          return
+        for (const child of object.children) {
+          visit(child, room)
         }
-        // Behind the loading screen, only the camera’s rooms get built; the rooms seen through their openings stream in first afterward.
-        if (!ready) {
-          hidden.add(object)
-          return
-        }
-        const rects = rooms.flatMap(room => regions.get(room) ?? [])
-        if (!rects.length) {
-          hidden.add(object)
-        } else if (!inSight(rects, world) && !inSight(rects, mirror(world, floorY))) {
-          hiddenFromView.add(object)
-        }
-      })
+      }
+      visit(scene, undefined)
       // Every missing shadow map had its turn, so the next round starts.
       if (!refreshing) {
         refreshed.clear()
@@ -182,12 +179,8 @@ export default function RoomCulling() {
     galleryRenderer.setCuller(cull)
     // Objects of no room never get culled, so they count as nearby.
     galleryRenderer.setStreamPriority(object => {
-      const drawable = object as Drawable
-      if (!related.size || !drawable.geometry) {
-        return true
-      }
-      const {rooms} = placementOf(drawable, drawable.geometry)
-      return !rooms.length || rooms.some(room => related.has(room))
+      const room = ownerOf(object)
+      return !related.size || !room || related.has(room)
     })
     return () => {
       galleryRenderer.setCuller(null)

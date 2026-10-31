@@ -1,12 +1,12 @@
 import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 import type {Vec3} from './types.ts'
-import type {Frustum, Matrix4, Object3D, Sphere} from 'three/webgpu'
+import type {Frustum, Matrix4, Object3D} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
 import {openingTop, wallPosition} from '#src/lib/placement/wallGeometry.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
-import {openings} from '#src/worlds/gallery/relations.ts'
+import relations, {openings} from '#src/worlds/gallery/relations.ts'
 
 import lobby from './lobby.ts'
 import {vesperLanternHalf, vesperLanternRidgeY, vesperLanternSillY} from './vesperCeiling.ts'
@@ -22,7 +22,6 @@ type Portal = {
 const sightDepth = 3
 // Doorframes, trims and the reveal of thick walls stay inside the portal.
 const portalDepth = 0.8
-const containmentMargin = 0.05
 const holeBox = (wallId: string, name: string) => {
   const wall = slopGallery.walls.find(value => value.id === wallId)
   const hole = wall?.holes?.find(value => value.name === name)
@@ -80,29 +79,19 @@ export const roomBoxes: ReadonlyArray<{
 
 const point = new Vector3
 
+type Owned = {
+  /** an object the player can carry from room to room, which the room it is in owns, see {@link updatePickupRoom} */
+  pickup?: boolean
+  /** the room that owns the object and everything below it */
+  room?: string
+}
+
 /** the room whose box contains the position; undefined in passages between rooms and where boxes overlap */
 export function roomContaining([x, y, z]: Vec3) {
   point.set(x, y, z)
   let result: RoomId | undefined
   for (const {id, box} of roomBoxes) {
     if (!box.containsPoint(point)) {
-      continue
-    }
-    if (result && result !== id) {
-      return
-    }
-    result = id
-  }
-  return result
-}
-
-/** the room whose box holds the whole sphere; undefined for anything that reaches past one room, like shared walls */
-export function roomEnclosing(sphere: Sphere) {
-  let result: RoomId | undefined
-  for (const {id, box} of roomBoxes) {
-    const {center, radius} = sphere
-    const r = radius + containmentMargin
-    if (center.x - r < box.min.x || center.x + r > box.max.x || center.y - r < box.min.y || center.y + r > box.max.y || center.z - r < box.min.z || center.z + r > box.max.z) {
       continue
     }
     if (result && result !== id) {
@@ -160,38 +149,25 @@ export function roomsAt([x, y, z]: Vec3) {
 }
 
 /**
- * The rooms that own a mesh, by the nearest ancestor that carries a room: a room’s own group (`<room>-room`, `cinnabar`, `salon`, a Sienna group without a name) or a wall’s group, which names its wall and its room.
- * Walls name their room in `userData`, and every room component below names its root for its room; a mesh under neither belongs to no room and never gets culled. An owner that is no room of the gallery, like Knottingham’s rooms in its own world, counts as no room here.
+ * The room that owns the object, given the room that owns its parent: the room the object names in `userData.room`, which then owns everything below it too, or else its parent’s.
+ * World names the room on the root of everything a room builds, walls name their own, the few objects mounted outside of the rooms name theirs, and pickups name the room they are in. Objects of no room, like the lamps’ lights and the player, have none, and neither has a room of another world.
  */
-export function ownerRooms(object: Object3D): ReadonlyArray<RoomId> {
-  for (let node: Object3D | null = object; node; node = node.parent) {
-    const room = (node.userData as {room?: string}).room
-    if (room && roomBoxes.some(box => box.id === room)) {
-      return [room as RoomId]
-    }
-    const match = /^(?<room>[a-z]+)(?:-room)?$/.exec(node.name)
-    if (match?.groups && roomBoxes.some(box => box.id === match.groups!.room)) {
-      return [match.groups.room as RoomId]
-    }
+export function ownerRoom(object: Object3D, parentRoom?: RoomId): RoomId | undefined {
+  const {room} = object.userData as Owned
+  if (room === undefined) {
+    return parentRoom
   }
-  return []
+  return Object.hasOwn(relations, room) ? room as RoomId : undefined
 }
 
-/**
- * The rooms an object with these world bounds can show up in: every room whose box it overlaps, so that a wall between two rooms belongs to both. Outside of every room box, a passage or doorframe belongs to the rooms of the openings it overlaps.
- * Empty for anything outside the gallery’s rooms and openings, which never gets culled.
- */
-export function roomsOverlapping(box: Box3) {
-  const result = new Set<RoomId>
-  for (const {id, box: roomBox} of roomBoxes) {
-    if (roomBox.intersectsBox(box)) {
-      result.add(id)
-    }
+/** Hands a pickup over to the room it is in now, by its origin. Where that is ambiguous, in a passage or where rooms’ air overlaps, it stays with the room it had, and one that never had a room takes the first one around it. */
+export function updatePickupRoom(object: Object3D) {
+  const data = object.userData as Owned
+  if (!data.pickup) {
+    return
   }
-  if (result.size) {
-    return [...result]
-  }
-  return [...new Set(portals.filter(portal => portal.box.intersectsBox(box)).flatMap(portal => portal.rooms))]
+  const position = point.setFromMatrixPosition(object.matrixWorld).toArray()
+  data.room = roomContaining(position) ?? data.room ?? roomsAt(position)[0]
 }
 
 const fullScreen: ScreenRect = [-1, -1, 1, 1]
