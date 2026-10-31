@@ -14,9 +14,10 @@ import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {bastionArch} from '#src/lib/gallery/bastion.ts'
 import {cinnabarRooflight, cinnabarTerrazzo, cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
-import {vestibuleArches, vestibuleFloorShape} from '#src/lib/gallery/cinnabarVestibule.ts'
+import {cinnabarRoundVestibule, vestibuleArches} from '#src/lib/gallery/cinnabarVestibule.ts'
 import {floorThickness} from '#src/lib/gallery/floors.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
+import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
 import {salonCeiling} from '#src/lib/gallery/salon.ts'
 import CinnabarWallMaterial from '#src/lib/materials/CinnabarWallMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
@@ -190,7 +191,7 @@ function Vestibule({floorReflections, masonry, plaster}: {
     fortress: masonry,
   }
   const parts = useDisposable(useMemo(() => {
-    const slab = new ExtrudeGeometry(vestibuleFloorShape(), {
+    const slab = new ExtrudeGeometry(roundVestibuleFloorShape(cinnabarRoundVestibule), {
       depth: floorThickness,
       bevelEnabled: false,
       curveSegments: circleSegments,

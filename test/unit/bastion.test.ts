@@ -10,7 +10,7 @@ import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/
 import {vaultShellThickness} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionApproach, bastionArch, bastionDoorway, bastionHairpin, bastionLanterns, bastionMouth, bastionRun, bastionScreen} from '../../src/lib/gallery/bastion.ts'
 import cinnabar, {cinnabarVestibule} from '../../src/lib/gallery/cinnabar.ts'
-import {vestibuleArches, vestibuleFloorShape} from '../../src/lib/gallery/cinnabarVestibule.ts'
+import {cinnabarRoundVestibule, vestibuleArches} from '../../src/lib/gallery/cinnabarVestibule.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressDoorway} from '../../src/lib/gallery/fortress.ts'
@@ -20,6 +20,7 @@ import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculus
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
+import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
 import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -38,7 +39,7 @@ const architecture = walls.filter(wall => wall.room === 'fortress' || ['cinnabar
   geometry: createArchitectureGeometry(wall),
 }))
 const vestibuleWall = wallById('cinnabar-vestibule')
-const vestibuleFloor = new ExtrudeGeometry(vestibuleFloorShape(), {
+const vestibuleFloor = new ExtrudeGeometry(roundVestibuleFloorShape(cinnabarRoundVestibule), {
   depth: 0.24,
   bevelEnabled: false,
   curveSegments: 96,

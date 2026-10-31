@@ -3,7 +3,7 @@ import type {RoundVestibule, VestibuleArch} from './roundVestibule.ts'
 import {bastionArch} from './bastion.ts'
 import {cinnabarVestibule} from './cinnabar.ts'
 import roomOrigins from './layout.ts'
-import {insideRoundVestibule, roundVestibuleFloorShape, roundVestibuleHole} from './roundVestibule.ts'
+import {insideRoundVestibule} from './roundVestibule.ts'
 
 const floorY = roomOrigins.cinnabar[1]
 
@@ -27,15 +27,7 @@ export const cinnabarRoundVestibule = {
   arches: vestibuleArches,
 } satisfies RoundVestibule
 
-/** An arch’s opening through the vestibule’s round wall, as wide as the approach’s vault spans between its walls’ center lines, straight across, and as high, see {@link roundVestibuleHole}. */
-export const vestibuleArchHole = roundVestibuleHole(cinnabarRoundVestibule)
-
 /** The Cinnabar’s floor height under the point in its vestibule, which lies outside its rectangular floor plan: within the round wall’s center line, and on under every arch to the plane touching the wall there. */
 export function cinnabarVestibuleFloor(x: number, z: number) {
   return insideRoundVestibule(cinnabarRoundVestibule, x, z) ? floorY : undefined
-}
-
-/** The vestibule’s floor plan relative to its center, see {@link roundVestibuleFloorShape}. */
-export function vestibuleFloorShape() {
-  return roundVestibuleFloorShape(cinnabarRoundVestibule)
 }

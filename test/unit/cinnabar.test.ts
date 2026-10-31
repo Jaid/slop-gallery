@@ -6,10 +6,11 @@ import {DoubleSide, Matrix3, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector
 import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {bastionApproach, bastionArch} from '../../src/lib/gallery/bastion.ts'
 import cinnabar, {cinnabarFresco, cinnabarRooflight, cinnabarTerrazzo, cinnabarVestibule, frescoLayout, isRing} from '../../src/lib/gallery/cinnabar.ts'
-import {cinnabarVestibuleFloor, vestibuleArches, vestibuleFloorShape} from '../../src/lib/gallery/cinnabarVestibule.ts'
+import {cinnabarRoundVestibule, cinnabarVestibuleFloor, vestibuleArches} from '../../src/lib/gallery/cinnabarVestibule.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
+import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import salon, {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
 import CinnabarWallMaterial from '../../src/lib/materials/CinnabarWallMaterial.ts'
@@ -273,7 +274,7 @@ describe('the Cinnabar’s vestibule', () => {
   })
   test('its floor slab’s shape is what navigation holds: within the wall’s center line and out under each arch to the plane touching it', () => {
     // In the shape’s plane, y runs north.
-    const outline = vestibuleFloorShape().getPoints(256)
+    const outline = roundVestibuleFloorShape(cinnabarRoundVestibule).getPoints(256)
     const contains = (px: number, py: number) => {
       let inside = false
       for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
