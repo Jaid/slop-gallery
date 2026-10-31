@@ -24,9 +24,10 @@ test('the seed decides the assignment, and the same seed repeats it', () => {
   const layouts = new Set([1, 2, 3, 4, 5].map(seed => JSON.stringify(defaultPortraits(seed).map(portrait => portrait.position))))
   expect(layouts.size).toBeGreaterThan(1)
 })
-test('with fewer slots than works, as in the Sandbox, the seed draws which works hang, every slot taking one of its ratio', () => {
-  const sandboxSlots = sandbox.portraitSlots()
-  const hang = (seed: number) => hangDefaultWorks(sandboxSlots, sandbox.artworks, seed)
+test('with fewer slots than works, as in the Sandbox, the seed draws which works hang, every slot of a ratio with works taking one', () => {
+  const ratios = new Set(sandbox.artworks.map(artwork => artwork.ratio))
+  const sandboxSlots = sandbox.portraitSlots().filter(slot => ratios.has(slot.ratio))
+  const hang = (seed: number) => hangDefaultWorks(sandbox.portraitSlots(), sandbox.artworks, seed)
   for (const seed of [1, 2, 3, 4, 5]) {
     const portraits = hang(seed)
     expect(portraits).toHaveLength(sandboxSlots.length)

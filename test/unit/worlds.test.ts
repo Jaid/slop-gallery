@@ -138,17 +138,18 @@ describe('worlds', () => {
     expect(sandbox.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
     expect(sandbox.placement.contains([vestibuleX, 1, vestibuleZ - cellVestibule.radius - 0.1])).toBe(false)
   })
-  test('the Sandbox’s side walls have portrait slots, at most one for every default work of each ratio, every one a valid hanging spot with all the others filled', () => {
+  test('the Sandbox’s walls have portrait slots, at most one for every default work of each ratio, every one a valid hanging spot with all the others filled', () => {
     const slots = sandbox.portraitSlots()
-    const available = ratios(sandbox.artworks)
-    expect(Object.keys(ratios(slots)).toSorted()).toEqual(Object.keys(available).toSorted())
-    for (const [ratio, count] of Object.entries(ratios(slots))) {
-      expect(count).toBeLessThanOrEqual(available[ratio])
+    // Every default work’s ratio has a slot, and no ratio has more slots than works; slots of other ratios wait for works of their own.
+    const available = ratios(slots)
+    for (const [ratio, count] of Object.entries(ratios(sandbox.artworks))) {
+      expect(available[ratio]).toBeGreaterThan(0)
+      expect(available[ratio]).toBeLessThanOrEqual(count)
     }
     const occupied = slots.map(asPortrait)
     const ids = new Set(slots.map(slot => slot.id))
     expect(ids.size).toBe(slots.length)
-    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(['cell-east', 'cell-west']))
+    expect(new Set(slots.map(slot => slot.wallId))).toEqual(new Set(['cell-north', 'cell-east', 'cell-south', 'cell-west']))
     for (const slot of slots) {
       const wall = sandbox.placement.wall(slot.wallId)!
       expect(slot.rotation).toBe(wall.rotation)
