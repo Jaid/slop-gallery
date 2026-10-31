@@ -56,7 +56,7 @@ export default function SiennaRoom({joinery}: {
       <mesh material={rug} name='sienna-carpet' position={[0, siennaRugThickness / 2, 0]} receiveShadow>
         <boxGeometry args={[siennaRugSize[0], siennaRugThickness, siennaRugSize[1]]} />
       </mesh>
-      <Chandelier key={resetEpoch} />
+      <Chandelier key={resetEpoch} lamp='sienna-chandelier' />
     </group>
     <group name='sienna-vestibule' position={[siennaVestibule.center[0], 0, siennaVestibule.center[1]]}>
       <RigidBody colliders={false} type='fixed'>

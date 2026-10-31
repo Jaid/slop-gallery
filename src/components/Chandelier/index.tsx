@@ -11,8 +11,11 @@ import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import {chandelierLampY, chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 
-/** The Sienna’s swinging chandelier, which carries the room’s lamp along. */
-export default function Chandelier() {
+/** The Sienna’s swinging chandelier, hanging from the ceiling over its parent’s origin, which carries the lamp with the global id `lamp` along. */
+export default function Chandelier({lamp: lampId}: {
+  /** the global id of the room’s lamp the fixture carries, which hangs below its metalwork at rest, see `chandelierLampY` */
+  lamp: string
+}) {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
@@ -23,7 +26,7 @@ export default function Chandelier() {
   }), []))
   const geometry = useDisposable(useMemo(() => new ChandelierGeometry, []))
   const source = useRef<Object3D>(null)
-  const lamp = useLamp('sienna-chandelier')
+  const lamp = useLamp(lampId)
   useFrame(() => {
     const light = lamp()
     if (light && source.current) {
@@ -31,7 +34,7 @@ export default function Chandelier() {
       source.current.getWorldPosition(light.position)
     }
   })
-  return <group name='sienna-chandelier' position={[0, chandelierPhysics.height, 0]}>
+  return <group name={lampId} position={[0, chandelierPhysics.height, 0]}>
     <RigidBody colliders={false} position={chandelierPhysics.anchor} type='fixed' ref={anchor} />
     <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
     <RigidBody additionalSolverIterations={8} angularDamping={chandelierPhysics.angularDamping} canSleep={false} ccd colliders={false} linearDamping={chandelierPhysics.linearDamping} ref={fixture}>
