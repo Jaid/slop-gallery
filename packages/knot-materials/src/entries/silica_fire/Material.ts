@@ -10,7 +10,7 @@ import {viewerFrame} from '../../lib/viewerFrame.ts'
 import knotData from './data.ts'
 
 /** Saturated single-wavelength color, the way a diffraction grating answers the eye. */
-const spectral = (hue: Node<'float'>, saturation: number) => mx_hsvtorgb(vec3(hue, saturation, 1)) as unknown as Node<'vec3'>
+const spectral = (hue: Node<'float'>, saturation: number) => mx_hsvtorgb(vec3(hue, saturation, 1))
 /** Noble opal. A milky silica gel hides a three-dimensional diffraction grating built from packed microspheres. Every domain has its own sphere size and lattice orientation, so it answers a different wavelength at a different angle: turn the knot and whole fields of the stone trade their green for blue, their blue for fire. The pinfire specks are the smallest domains, which only resolve when the viewer comes close. */
 export default class extends KnotMaterial {
   constructor(environment: Texture) {

@@ -21,7 +21,7 @@ export default class extends KnotMaterial {
     const alignment = view.dot(axis).abs()
     const domainHue = mx_noise_float(q.mul(10).add(vec3(31.7, 11.3, 7.9))).mul(0.5).add(0.5)
     const hue = alignment.mul(1.7).add(domainHue).fract()
-    const spectral = mx_hsvtorgb(vec3(hue, 0.95, 1)) as unknown as Node<'vec3'>
+    const spectral = mx_hsvtorgb(vec3(hue, 0.95, 1))
     const window = alignment.smoothstep(0.8, 0.97)
     const order = mx_noise_float(q.mul(14).add(vec3(5.5, 2.2, 8.8))).mul(0.5).add(0.5).smoothstep(0.28, 0.68)
     const flash = window.mul(order)

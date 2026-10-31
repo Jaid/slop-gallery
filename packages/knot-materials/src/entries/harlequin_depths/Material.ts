@@ -14,7 +14,7 @@ import knotData from './data.ts'
 /** Red through violet and back: a ping-pong sweep so no hue ever jumps. */
 const spectrum = (phase: Node<'float'>) => {
   const t = phase.div(TAU).fract().mul(2).sub(1).abs()
-  const rgb = mx_hsvtorgb(vec3(t.mul(0.76).add(0.005), 0.94, 1)) as Node<'vec3'>
+  const rgb = mx_hsvtorgb(vec3(t.mul(0.76).add(0.005), 0.94, 1))
 // Blues and violets are dark in raw HSV; lift them so every band reads as luminous.
   return rgb.mul(t.smoothstep(0.55, 1).mul(0.55).add(1))
 }

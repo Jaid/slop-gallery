@@ -96,7 +96,7 @@ export default class extends KnotMaterial {
 // Expand the emerald-green spectral bracket around hue 0.35 so true saturated emerald stands out clearly
     const emeraldLock = rawHue.sub(0.35).abs().smoothstep(0.14, 0).mul(rawHue.sub(0.35).mul(0.45))
     const gratingHue = rawHue.sub(emeraldLock).fract()
-    const ciliaRainbow = (mx_hsvtorgb(vec3(gratingHue, 0.94, 1)) as Node<'vec3'>).pow(1.65)
+    const ciliaRainbow = mx_hsvtorgb(vec3(gratingHue, 0.94, 1)).pow(1.65)
 // Deep parallax volumetric interior: soft volumetric Tyndall scatter + radial canal branches emerging from the 8 meridional canals
     let internalGlow: Node<'vec3'> = vec3(0)
     const depths = [0.034, 0.078, 0.128]

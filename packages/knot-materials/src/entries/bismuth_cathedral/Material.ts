@@ -35,7 +35,7 @@ export default class extends KnotMaterial {
     const riser = coarseRiser.max(fineRiser.mul(0.5))
     const cos = view.dot(normalLocal.normalize()).abs()
     const hue = terrace.mul(2.6).add(cos.mul(0.8)).fract()
-    const spectral = mx_hsvtorgb(vec3(hue, 0.85, 1)) as unknown as Node<'vec3'>
+    const spectral = mx_hsvtorgb(vec3(hue, 0.85, 1))
     const metal = mix(color('#7d757d'), color('#b8adb6'), mx_noise_float(p.mul(7)).mul(0.5).add(0.5))
     this.colorNode = mix(metal, spectral, float(0.55).sub(riser.mul(0.2)))
     this.metalness = 1
