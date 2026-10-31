@@ -158,7 +158,8 @@ test('corridor timber ribs never share their visible face with a wall baseboard'
     expect(hits[0].point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
     expect(hits[1].distance - hits[0].distance).toBeGreaterThan(0.01)
     expect(walls.filter(value => value.room === 'corridor').every(value => value.trimStyle === 'none')).toBe(true)
-    expect(walls.filter(value => value.room === 'fortress').every(value => value.trimStyle === 'plain')).toBe(true)
+    // all but the screen across the start of the broad link, into which the baseboards of its walls run on
+    expect(walls.filter(value => value.room === 'fortress' && value.trimStyle !== 'plain').map(value => value.id)).toEqual(['fortress-link_screen'])
   } finally {
     material.dispose()
     architecture.dispose()

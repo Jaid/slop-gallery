@@ -93,6 +93,10 @@ const westTurn = west.to - bendAngle
 const bendTurn = (crown.to - crown.from) / 2 + westTurn
 /** The west bend stays level for the link’s doorway; the straight run after it climbs to the Lodge’s floor. */
 const climbLength = rampLength(lodge.floorY - platformY)
+/** how wide the doorway from the west bend into the connecting tunnel is, along the bend’s outer wall */
+const linkDoorwayWidth = 2.24
+/** where the middle of that doorway lies, as the polar angle round the bend’s center: as far toward the run west as its casing fits on the bend’s outer wall, so the tunnel behind it keeps clear of the Oculus */
+const linkAngle = Math.PI / 2 - (linkDoorwayWidth / 2 + wallOpeningTrim) / (bendRadius + width / 2)
 /** a window’s width along the apse’s wall, a little narrower than the gate */
 const windowWidth = 2.4
 /** how far along the crown from the gate the windows’ middles lie: as far out as they fit, 30 cm of the crown’s wall left beside their casings toward the shoulders */
@@ -265,9 +269,9 @@ const outline: RouteOutline = {
 export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, {
   openings: [...curveOpenings, {
     name: 'link',
-    along: route.project(bendCenterX + Math.cos(1.25) * bendRadius, bendCenterZ + Math.sin(1.25) * bendRadius)!.along,
+    along: route.project(bendCenterX + Math.cos(linkAngle) * bendRadius, bendCenterZ + Math.sin(linkAngle) * bendRadius)!.along,
     side: -1,
-    width: 2.24,
+    width: linkDoorwayWidth,
     height: mouthHeight,
     profile: 'arch',
   }],
@@ -300,9 +304,9 @@ export const fortressLanterns = {
 /** The Fortress’ passages from the Oculus to the Lodge, each continuing where the one before it ends. */
 export const fortressPassages = [fortressMouth, fortressCurve, fortressApproach] as const
 
-/** The level landing in the west bend, opening south toward the connecting tunnel. */
+/** The level landing in the west bend, opening south toward the connecting tunnel: the middle of its doorway on the center line of the bend’s outer wall, facing straight out of it. */
 export const fortressLinkStart = {
-  point: [bendCenterX + Math.cos(1.25) * (bendRadius + width / 2), bendCenterZ + Math.sin(1.25) * (bendRadius + width / 2)] as const,
-  heading: 1.25,
+  point: [bendCenterX + Math.cos(linkAngle) * (bendRadius + width / 2), bendCenterZ + Math.sin(linkAngle) * (bendRadius + width / 2)] as const,
+  heading: linkAngle,
   y: platformY,
 }

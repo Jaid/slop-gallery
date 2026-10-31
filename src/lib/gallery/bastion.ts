@@ -55,14 +55,6 @@ export const bastionDoorway = {
 }
 /** From the doorway west under the Cinnabar and on past its west wall, round an elbow to the south, level with the bridge’s end. */
 export const bastionMouth = new Passage('climb_mouth', 'fortress', [[westWallX, doorwayZ], [westLegX, doorwayZ], [westLegX, turnZ]], doorwayY, width, mouthHeight)
-// The connecting tunnel meets the north wall just before the elbow.
-bastionMouth.walls[2].holes = [{
-  name: 'link',
-  u: westLegX - bastionMouth.walls[2].center[0],
-  width: 2.2,
-  height: mouthHeight,
-  profile: 'arch',
-}]
 /**
  * South along the west leg, round a hairpin turn toward the east and back north along the east leg behind the Cinnabar’s west wall, easing up all the way from the bridge’s height to the Cinnabar’s floor as its vault rises.
  */

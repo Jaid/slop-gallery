@@ -11,7 +11,7 @@ import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressApproach, fortressCurve, fortressDoorway, fortressMouth, fortressOrigin, fortressPassages, fortressTransition} from '../../src/lib/gallery/fortress.ts'
-import {fortressLink} from '../../src/lib/gallery/fortressNetwork.ts'
+import {fortressLinkPassages} from '../../src/lib/gallery/fortressNetwork.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse, {apseArcs, insideApse} from '../../src/lib/gallery/oculusApse.ts'
@@ -155,7 +155,7 @@ describe('the Fortress’ route round the Oculus', () => {
         const out = fortressCurve.reach(station, side) + 0.2
         const beside: Vec3 = [x - Math.sin(heading) * side * out, y + 1.6, z + Math.cos(heading) * side * out]
         expect(fortressCurve.floorAt(beside[0], beside[2])).toBeUndefined()
-        if (!fortressLink.contains(beside)) {
+        if (!fortressLinkPassages.some(passage => passage.contains(beside))) {
           expect(insideGallery(beside)).toBe(false)
         }
       }
