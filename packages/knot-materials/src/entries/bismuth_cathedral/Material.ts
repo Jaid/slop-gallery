@@ -1,4 +1,4 @@
-import type {Node, Texture} from 'three/webgpu'
+import type {Texture} from 'three/webgpu'
 
 import {color, float, mix, mod, mx_fractal_noise_float, mx_hsvtorgb, mx_noise_float, normalLocal, normalViewGeometry, uv, vec3} from 'three/tsl'
 
