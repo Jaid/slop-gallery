@@ -41,13 +41,11 @@ const virtualParts = (source: string): VirtualParts | undefined => {
   }
 }
 const binaryModule = (bytes: Uint8Array, nodeLike: boolean) => {
-  // Buffer encoding runs in the Vite host, where Node-compatible Buffer is available.
-  // eslint-disable-next-line unicorn/prefer-uint8array-base64
-  const base64 = Buffer.from(bytes).toString('base64')
+  const base64 = bytes.toBase64()
   if (nodeLike) {
     return `import {Buffer} from 'node:buffer'; export default Buffer.from(${JSON.stringify(base64)}, 'base64')`
   }
-  return `const binary=atob(${JSON.stringify(base64)});const bytes=new Uint8Array(binary.length);for(let index=0;index<binary.length;index++)bytes[index]=binary.charCodeAt(index);export default bytes`
+  return `export default Uint8Array.fromBase64(${JSON.stringify(base64)})`
 }
 
 /**

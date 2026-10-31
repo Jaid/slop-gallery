@@ -188,8 +188,7 @@ describe('vite-plugin-import-voice-sample', () => {
     })
     expect(calls).toHaveLength(1)
     const code = outputCode(result)
-    expect(code).toContain('new Uint8Array')
-    expect(code).toContain('atob(')
+    expect(code).toContain('Uint8Array.fromBase64(')
     expect(code).not.toContain('node:buffer')
     expect(code).toMatch(/char:\s*"H"/u)
     const directory = join(root, 'temp/vite-plugin-import-voice-sample')
@@ -241,7 +240,7 @@ describe('vite-plugin-import-voice-sample', () => {
     const code = outputCode(result)
     expect(code).toContain('node:buffer')
     expect(code).toContain('Buffer.from(')
-    expect(code).not.toContain('atob(')
+    expect(code).not.toContain('fromBase64(')
   })
   test('format timings defaults to contents and shares the raw store', async () => {
     const root = await temporaryDirectory()
