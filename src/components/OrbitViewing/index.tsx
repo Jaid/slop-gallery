@@ -10,7 +10,7 @@ import {PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import inspectionPointerSensitivity from '#src/lib/camera/inspectionPointerSensitivity.ts'
 import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
-import {cameraPose, galleryEvents, isTextInput, markControlled, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, galleryEvents, isTextInput, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import portraitOrbit from '#src/lib/gallery/portraitOrbit.ts'
@@ -98,7 +98,6 @@ export default function OrbitViewing() {
         if (event.code === 'KeyW' || event.code === 'KeyS') {
           event.preventDefault()
           if (!event.repeat) {
-            markControlled()
             distanceKeys.current.add(event.code)
           }
           return
@@ -106,7 +105,6 @@ export default function OrbitViewing() {
         if (event.code === 'KeyA' || event.code === 'KeyD') {
           event.preventDefault()
           if (!event.repeat) {
-            markControlled()
             orbitKeys.current.add(event.code)
           }
           return
@@ -125,7 +123,6 @@ export default function OrbitViewing() {
         return
       }
       event.preventDefault()
-      markControlled()
       if (session.current) {
         if (session.current.id === state.active && session.current.orbit.returning) {
           session.current.orbit.returning = false

@@ -9,17 +9,17 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import KnotLabels from '#component/KnotLabels'
 import KnotShowcase from '#component/KnotShowcase'
 import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
-import {narrate, useEnvironmentSeed} from '#src/lib/gallery.ts'
+import {narrate} from '#src/lib/gallery.ts'
 import DisplayPedestalGeometry from '#src/lib/gallery/DisplayPedestalGeometry.ts'
 import {tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
+import {environmentSeed} from '#src/lib/gameSeed.ts'
 import exhibitionKnots, {exhibitionPedestal, exhibitionPedestalLobes, exhibitionSlots} from '#src/rooms/exhibition/knots.ts'
 
 type PedestalMaterials = Record<'cap' | 'reveal' | 'stone', Material>
 
 /** The Exhibition’s six Knots, which the environment’s seed picks, each floating over a half-round pedestal against its display’s back wall, with its nameplate on the lower sidecar merged into the pedestal’s north flank. */
 export default function ExhibitionKnots({material}: {material: Material}) {
-  const seed = useEnvironmentSeed()
-  const knots = useMemo(() => exhibitionKnots(seed), [seed])
+  const knots = useMemo(() => exhibitionKnots(environmentSeed), [])
   const signs = useMemo(() => knots.map((knot, index) => ({
     entry: {
       ...knot.entry,

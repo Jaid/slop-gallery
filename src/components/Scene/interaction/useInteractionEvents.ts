@@ -5,7 +5,7 @@ import type {RootState} from '@react-three/fiber'
 import {useEffect} from 'react'
 import {Raycaster, Vector2} from 'three/webgpu'
 
-import {enterGallery, galleryEvents, isTextInput, markControlled, useGallery} from '#src/lib/gallery.ts'
+import {enterGallery, galleryEvents, isTextInput, useGallery} from '#src/lib/gallery.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 
 import createGrabController from './grabController.ts'
@@ -55,9 +55,6 @@ export default function useInteractionEvents({
         }
         return
       }
-      if (event.button === 0 || event.button === 2) {
-        markControlled()
-      }
       if (event.button === 0) {
         grabbing.grab()
       }
@@ -84,16 +81,8 @@ export default function useInteractionEvents({
       if (!state.locked) {
         return
       }
-      if (['KeyQ', 'KeyV'].includes(event.code)) {
-        markControlled()
-      }
       if (event.code === 'KeyQ' && state.held) {
         grabbing.release(true)
-      }
-    }
-    const mousemove = (event: MouseEvent) => {
-      if (document.pointerLockElement === renderer.domElement && (event.movementX || event.movementY)) {
-        markControlled()
       }
     }
     const onView = (event: Event) => teleportToPortrait(camera, (event as CustomEvent<string>).detail)
@@ -116,7 +105,6 @@ export default function useInteractionEvents({
     globalThis.addEventListener('mousedown', down)
     globalThis.addEventListener('mouseup', mouseup)
     globalThis.addEventListener('keydown', keydown)
-    document.addEventListener('mousemove', mousemove)
     window.addEventListener('blur', blur)
     renderer.domElement.addEventListener('contextmenu', context)
     galleryEvents.addEventListener('view', onView)
@@ -128,7 +116,6 @@ export default function useInteractionEvents({
       globalThis.removeEventListener('mousedown', down)
       globalThis.removeEventListener('mouseup', mouseup)
       globalThis.removeEventListener('keydown', keydown)
-      document.removeEventListener('mousemove', mousemove)
       window.removeEventListener('blur', blur)
       renderer.domElement.removeEventListener('contextmenu', context)
       galleryEvents.removeEventListener('view', onView)

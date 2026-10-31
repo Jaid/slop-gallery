@@ -1,5 +1,5 @@
 import {readStored, writeStored} from './browserStorage.ts'
-import {parseSeed, rollSeed} from './environmentSeed.ts'
+import {effectiveSeed, parseSeed, rollSeed} from './environmentSeed.ts'
 
 const storedSeed = parseSeed(readStored('seed'))
 
@@ -12,6 +12,9 @@ export const gameSeed = storedSeed ?? rollSeed()
 if (!isContinuing) {
   writeStored('seed', String(gameSeed))
 }
+
+/** the seed this page’s environment is built from: the game’s, unless `?seed` overrides it */
+export const environmentSeed = effectiveSeed(gameSeed)
 
 /** Forgets the seed and reloads the page, which starts a new game in a new environment. */
 export function startNewGame() {

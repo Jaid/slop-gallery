@@ -11,7 +11,7 @@ import Menu from '#component/Menu'
 
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import {setApiKey, toggleSound} from '../../src/lib/gallery/actions.ts'
-import {markControlled, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 import {startNewGame} from '../../src/lib/gameSeed.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -24,28 +24,17 @@ beforeAll(async () => {
 })
 const storageDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
 let values: Map<string, string>
-let writes: number
 beforeEach(() => {
   values = new Map
-  writes = 0
   Object.defineProperty(globalThis, 'localStorage', {
     configurable: true,
     value: {
       getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => {
-        writes++
-        values.set(key, value)
-      },
-      removeItem: (key: string) => {
-        writes++
-        values.delete(key)
-      },
+      setItem: (key: string, value: string) => values.set(key, value),
+      removeItem: (key: string) => values.delete(key),
     },
   })
-  useGallery.setState({
-    ...useGallery.getInitialState(),
-    hasControlled: false,
-  }, true)
+  useGallery.setState(useGallery.getInitialState(), true)
 })
 afterEach(() => {
   useGallery.setState(state, true)
@@ -56,9 +45,8 @@ afterEach(() => {
   }
 })
 describe('minimal menu', () => {
-  test('starts unlocked, with no reset and an expanded OpenRouter section', () => {
+  test('starts unlocked, with an expanded OpenRouter section', () => {
     expect(useGallery.getState().locked).toBe(false)
-    expect(useGallery.getState().hasControlled).toBe(false)
     const params: AiSettings = readAiSettings()
     const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
       isHeavy: true,
@@ -82,29 +70,6 @@ describe('minimal menu', () => {
     expect(html).toContain('OpenRouter')
     expect(html).toContain('aria-labelledby="openrouter-title"')
     expect(html).not.toContain('<summary>OpenRouter')
-    expect(html).not.toContain('Model preferences')
-    expect(html).not.toContain('Prepare custom narration')
-    expect(html).not.toContain('Open collection')
-    expect(html).not.toContain('Preferences &amp; backups')
-    expect(html).not.toContain('Controls')
-    expect(html).not.toContain('WASD to move')
-    expect(html).not.toContain('Reset gallery')
-    expect(html).not.toContain('<header')
-    expect(html).not.toContain('<footer')
-  })
-  test('menu actions and acquiring pointer lock alone do not enable reset', () => {
-    markControlled()
-    expect(useGallery.getState().hasControlled).toBe(false)
-    useGallery.setState({locked: true})
-    expect(useGallery.getState().hasControlled).toBe(false)
-    expect(writes).toBe(0)
-  })
-  test('the first in-game control is noticed without touching storage', () => {
-    useGallery.setState({locked: true})
-    markControlled()
-    expect(useGallery.getState().hasControlled).toBe(true)
-    markControlled()
-    expect(writes).toBe(0)
   })
   test('only the OpenRouter key and switched audio reach storage from the store', () => {
     toggleSound()
@@ -137,10 +102,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     stage,
     locked: false,
   })
-  Object.assign(useGallery.getInitialState(), {
-    ready: true,
-    hasControlled: true,
-  })
+  Object.assign(useGallery.getInitialState(), {ready: true})
   try {
     const params: AiSettings = readAiSettings()
     const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
@@ -165,12 +127,9 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     expect(html.includes('OpenRouter')).toBe(stage !== 'unfocus')
     expect(html.includes('Mute audio')).toBe(stage !== 'unfocus')
     expect(html.includes('Good taste.')).toBe(['first', 'reset', 'return'].includes(stage))
-    expect(html).not.toContain('Reset gallery')
-    expect(html).not.toContain('Confirm reset')
     if (stage === 'unfocus') {
       expect(html.match(/<button\b/gu)).toHaveLength(1)
       expect(html).not.toContain('<input')
-      expect(html).not.toContain('Reset gallery')
     }
   } finally {
     snapshot.mockRestore()

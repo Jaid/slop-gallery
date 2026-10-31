@@ -3,8 +3,6 @@ import {expect, test} from 'bun:test'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
-import {useGallery} from '../../src/lib/gallery/store.ts'
-import samplePortraits from './fixtures/portraits.ts'
 
 test('?seed accepts unsigned 32-bit integers and ignores anything else', () => {
   expect(readSeedOverride('?seed=1')).toBe(1)
@@ -98,13 +96,4 @@ test('every pot placement can grow every plant, and seed 1 stays put', () => {
   }
   // Captures from snap.ts and film.ts default to seed 1; a change here changes every one of them.
   expect(potPlacements.map(placement => pottedPlantKind(1, placement.id))).toEqual(['jade', 'palm'])
-})
-test('collection edits keep the seed', () => {
-  const {seed} = useGallery.getState()
-  useGallery.getState().add({
-    ...samplePortraits[0],
-    id: 'seed-test',
-  })
-  expect(useGallery.getState().seed).toBe(seed)
-  useGallery.getState().remove('seed-test')
 })

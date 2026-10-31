@@ -1,3 +1,5 @@
+import type {PlayerPose} from '../../src/lib/gallery/types.ts'
+
 import {describe, expect, test} from 'bun:test'
 
 import {corridorStairs} from '../../src/lib/gallery/corridor.ts'
@@ -7,10 +9,8 @@ import {useGallery} from '../../src/lib/gallery/store.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
 describe('player session', () => {
-  test('pitch is required and malformed pitches are rejected', () => {
-    const {pitch: _, ...withoutPitch} = slopGallery.spawn
-    expect(validatePlayerPose(withoutPitch)).toBeNull()
-    for (const pitch of [Number.NaN, Infinity, '0', null, Math.PI]) {
+  test('pitches that are not finite or look beyond straight up or down are rejected', () => {
+    for (const pitch of [Number.NaN, Infinity, Math.PI]) {
       expect(validatePlayerPose({
         ...slopGallery.spawn,
         pitch,
@@ -35,8 +35,6 @@ describe('player session', () => {
   test('invalid player poses are rejected and restore the spawn', () => {
     const session = new PlayerSession(slopGallery)
     for (const player of [
-      null,
-      {},
       {
         position: [0, 0, -9],
         yaw: Number.NaN,
@@ -44,16 +42,6 @@ describe('player session', () => {
       },
       {
         position: [0, Infinity, 0],
-        yaw: 0,
-        pitch: 0,
-      },
-      {
-        position: ['0', 0, -9],
-        yaw: 0,
-        pitch: 0,
-      },
-      {
-        position: [0, 0],
         yaw: 0,
         pitch: 0,
       },
@@ -67,7 +55,7 @@ describe('player session', () => {
         yaw: 0,
         pitch: 0,
       },
-    ]) {
+    ] satisfies Array<PlayerPose>) {
       expect(validatePlayerPose(player)).toBeNull()
       session.restore(player)
       expect(session.snapshot()).toEqual(slopGallery.spawn)
@@ -92,7 +80,7 @@ describe('player session', () => {
       expect(session.snapshot().position).toEqual([...position])
     }
   })
-  test('movement stays out of React updates and collection edits', () => {
+  test('movement stays out of React updates', () => {
     const session = new PlayerSession(slopGallery)
     const pose = {
       position: [-25, -4.98, -35] as [number, number, number],
@@ -104,7 +92,6 @@ describe('player session', () => {
     session.capture(pose)
     expect(updates).toBe(0)
     unsubscribe()
-    useGallery.getState().commit([...useGallery.getState().portraits])
     expect(session.snapshot().position).toEqual(pose.position)
   })
   test('equivalent yaw wraps and captures outside the world are ignored', () => {

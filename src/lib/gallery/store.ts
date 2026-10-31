@@ -1,4 +1,4 @@
-import type {GallerySettings, GallerySnapshot, NarrationState, Placement, Portrait, Vec3} from './types.ts'
+import type {NarrationState, Placement, Portrait, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
@@ -6,13 +6,11 @@ import world from '#src/worlds/current.ts'
 
 import {audioOverride} from '../audio/audioParameter.ts'
 import {readStored} from '../browserStorage.ts'
-import {effectiveSeed} from '../environmentSeed.ts'
-import {gameSeed} from '../gameSeed.ts'
+import {environmentSeed} from '../gameSeed.ts'
 import defaultPortraits from './defaultPortraits.ts'
 import {validateCollectionImages} from './imagePolicy.ts'
 
-export {maximumPortraits} from './imagePolicy.ts'
-type State = GallerySettings & GallerySnapshot & {
+type State = {
   active: string | null
   activeLabel: string | null
   add: (portrait: Portrait) => void
@@ -21,7 +19,6 @@ type State = GallerySettings & GallerySnapshot & {
   /** replaces the collection */
   commit: (portraits: Array<Portrait>) => void
   dragging: boolean
-  hasControlled: boolean
   held: string | null
   importFiles: ((files: Array<File>, target?: {
     direction: Vec3
@@ -37,22 +34,22 @@ type State = GallerySettings & GallerySnapshot & {
   narration: NarrationState | null
   notice: string
   placement: Placement | null
+  portraits: Array<Portrait>
   ready: boolean
   remove: (id: string) => void
   revision: number
   /** the id of the room of the current world the player is in, or was in last when in a passage */
   room: string
+  sound: boolean
   update: (id: string, patch: Partial<Portrait>) => void
 }
 
 export const useGallery = create<State>((set, get) => ({
-  portraits: defaultPortraits(effectiveSeed(gameSeed)),
-  seed: gameSeed,
+  portraits: defaultPortraits(environmentSeed),
   active: null,
   activeLabel: null,
   held: null,
   locked: false,
-  hasControlled: false,
   ready: false,
   dragging: false,
   inspecting: null,
@@ -92,17 +89,3 @@ export const useGallery = create<State>((set, get) => ({
   },
   remove: id => get().commit(get().portraits.filter(p => p.id !== id)),
 }))
-
-// Entering the menu or acquiring pointer lock is not an in-game control.
-export function markControlled() {
-  const s = useGallery.getState()
-  if (s.hasControlled || !s.locked) {
-    return
-  }
-  useGallery.setState({hasControlled: true})
-}
-
-/** The seed the environment of the current game state is built from, honoring the `?seed` override. */
-export function useEnvironmentSeed() {
-  return effectiveSeed(useGallery(s => s.seed))
-}

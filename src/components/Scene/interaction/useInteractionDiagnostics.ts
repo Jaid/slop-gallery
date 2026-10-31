@@ -5,9 +5,9 @@ import type {RootState} from '@react-three/fiber'
 import {useEffect} from 'react'
 import {Euler, PerspectiveCamera, Vector3} from 'three/webgpu'
 
-import {effectiveSeed} from '#src/lib/environmentSeed.ts'
 import {galleryEvents, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
+import {environmentSeed} from '#src/lib/gameSeed.ts'
 import {loadingItems} from '#src/lib/loadingItems.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 
@@ -28,11 +28,10 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
       placement: placement.current,
       locked: useGallery.getState().locked,
       menuStage: pauseMenu.getSnapshot().stage,
-      hasControlled: useGallery.getState().hasControlled,
       held: useGallery.getState().held,
       active: useGallery.getState().active,
       activeLabel: useGallery.getState().activeLabel,
-      seed: effectiveSeed(useGallery.getState().seed),
+      seed: environmentSeed,
       props: [...propObjects].map(([id, {body, group}]) => ({
         id,
         position: body.translation(),

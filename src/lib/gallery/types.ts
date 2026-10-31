@@ -76,14 +76,6 @@ export type Placement = {
   wallId: string
 }
 export type {NarrationState} from 'use-narrator/core'
-export type GallerySettings = {
-  sound: boolean
-}
-export type GallerySnapshot = {
-  portraits: Array<Portrait>
-  /** rolled once per game state and mixed with fixed IDs for environment randomization like the potted plants */
-  seed: number
-}
 export type PlayerPose = {
   pitch: number
   /** World-space feet position, independent of head bob and inspection cameras. */

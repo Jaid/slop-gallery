@@ -15,7 +15,6 @@ export type GalleryDiagnostics = {
   active: string | null
   activeLabel: string | null
   camera: Vec3
-  hasControlled: boolean
   held: string | null
   /** the IDs of everything still loading that would leave something out of the next frame; a fresh pose can bring more */
   loadingItems: Array<string>

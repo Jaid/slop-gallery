@@ -11,21 +11,16 @@ const copy = (pose: PlayerPose): PlayerPose => ({
   pitch: pose.pitch,
 })
 
-/** The pose if it is well-formed and inside the world, or null. */
-export function validatePlayerPose(value: unknown, within: Pick<World, 'contains'> = currentWorld): PlayerPose | null {
-  if (!value || typeof value !== 'object' || !('position' in value) || !('yaw' in value) || !('pitch' in value)) {
+/** A copy of the pose with its yaw wrapped, if its numbers are finite, it looks no further than straight up or down and it stands inside the world, or else null. */
+export function validatePlayerPose({position, yaw, pitch}: PlayerPose, within: Pick<World, 'contains'> = currentWorld): PlayerPose | null {
+  if (![...position, yaw, pitch].every(Number.isFinite) || Math.abs(pitch) > Math.PI / 2 || !within.contains(position)) {
     return null
   }
-  const {position, yaw, pitch} = value
-  if (!Array.isArray(position) || position.length !== 3 || !position.every(n => typeof n === 'number' && Number.isFinite(n)) || typeof yaw !== 'number' || !Number.isFinite(yaw) || typeof pitch !== 'number' || !Number.isFinite(pitch) || Math.abs(pitch) > Math.PI / 2) {
-    return null
-  }
-  const pose: PlayerPose = {
-    position: [...position as PlayerPose['position']],
+  return {
+    position: [...position],
     yaw: wrapAngle(yaw),
     pitch,
   }
-  return within.contains(pose.position) ? pose : null
 }
 
 /** Live movement stays outside React. */
@@ -44,7 +39,7 @@ export default class PlayerSession {
     }
   }
 
-  restore(value: unknown) {
+  restore(value: PlayerPose) {
     const pose = validatePlayerPose(value, this.world)
     this.pose = pose ? this.onFloor(pose) : copy(this.world.spawn)
   }
