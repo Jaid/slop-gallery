@@ -482,7 +482,7 @@ describe('Lodge and Corridor route', () => {
       }
     }
   }
-  test('the new room accepts hanging artwork, on the bay’s 45° walls too', () => {
+  test('the Lodge accepts hanging artwork, on the bay’s 45° walls too', () => {
     const wall = walls.find(candidate => candidate.id === 'lodge-northwest')!
     const portrait = {
       ...samplePortraits[0],

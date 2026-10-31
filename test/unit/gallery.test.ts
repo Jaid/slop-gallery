@@ -2,8 +2,9 @@ import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {dropPortrait} from '../../src/lib/gallery/actions.ts'
 import {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import {maximumPortraits} from '../../src/lib/gallery/imagePolicy.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {maximumPortraits, useGallery} from '../../src/lib/gallery/store.ts'
+import {useGallery} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
@@ -147,7 +148,7 @@ describe('wall geometry', () => {
       valid: true,
     })
   })
-  test('gallery bounds include the new room but not the empty space beside it', () => {
+  test('gallery bounds include the Sienna but not the empty space beside it', () => {
     for (const position of [[-14, 2, 14], [-14, 2, 19.8], [0, 2, 14], [-20, 0, 20]] as const) {
       expect(insideGallery([...position])).toBe(true)
     }

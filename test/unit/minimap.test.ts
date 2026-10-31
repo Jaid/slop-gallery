@@ -112,7 +112,7 @@ test('the Fortress shows on the lower floor up to the apex of its western hairpi
   }
   expect(isLowerPosition('fortress', eye(slopGallery.room('fortress').spawn.position))).toBe(true)
 })
-test('portrait dots follow rigid bodies instead of stale saved positions', () => {
+test('portrait dots follow rigid bodies instead of the positions in the store', () => {
   const portrait = {
     ...samplePortraits[0],
     id: 'minimap-test',
