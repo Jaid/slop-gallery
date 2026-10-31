@@ -1,7 +1,8 @@
+import type {SnapshotSubject} from '#src/components/Scene/GrabbableProp.tsx'
 import type {KnotLabel} from './drawLabel.ts'
 import type {Rarity} from 'knot-materials'
 import type {Vec3} from 'math'
-import type {Texture} from 'three/webgpu'
+import type {Material, Node, Texture} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, CylinderCollider} from '@react-three/rapier'
@@ -11,7 +12,7 @@ import loadCandidateIcons from 'knot-materials/loadCandidateIcons.ts'
 import {knotSign, knotSignId, knotSignParts, knotSignRoundParts} from 'knot-materials/signs.ts'
 import {useEffect, useMemo} from 'react'
 import {attribute, texture, uv, vec2} from 'three/tsl'
-import {InstancedBufferAttribute, InstancedMesh, Matrix4, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
+import {Group, InstancedBufferAttribute, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
@@ -57,13 +58,21 @@ export default function KnotLabels({signs, ratings, action = 'Listen', onActivat
     // Separate the only face from its metal backing, not from other face layers.
     geometry.translate(0, 0, 0.0005)
     geometry.rotateX(knotSign.tilt)
+    // The face of a single nameplate, for studio snapshots, without the batch’s per-instance atlas offsets.
+    const plate = geometry.clone()
     geometry.setAttribute('labelOffset', new InstancedBufferAttribute(offsets, 2))
-    const material = new MeshBasicNodeMaterial({color: labelBackground})
-    material.name = 'Knot nameplate material'
-    material.toneMapped = false
-    material.polygonOffset = true
-    material.polygonOffsetFactor = -1
-    material.polygonOffsetUnits = -1
+    const faceMaterial = () => {
+      const face = new MeshBasicNodeMaterial({color: labelBackground})
+      face.name = 'Knot nameplate material'
+      face.toneMapped = false
+      face.polygonOffset = true
+      face.polygonOffsetFactor = -1
+      face.polygonOffsetUnits = -1
+      return face
+    }
+    /** the face color sampled from `atlas`, with each face’s tile at `offset` */
+    const atlasColor = (atlas: Texture, offset: Node<'vec2'>) => texture(atlas, uv().mul(vec2(1 / labelAtlasColumns, 1 / atlasRows)).add(offset))
+    const material = faceMaterial()
     const faces = new InstancedMesh(geometry, material, signs.length)
     faces.name = 'knot-nameplates'
     const supports = new InstancedMesh(createSupportGeometry(), [], signs.length)
@@ -88,8 +97,21 @@ export default function KnotLabels({signs, ratings, action = 'Listen', onActivat
       faces,
       supports,
       setAtlas(atlas: Texture | null) {
-        material.colorNode = atlas ? texture(atlas, uv().mul(vec2(1 / labelAtlasColumns, 1 / atlasRows)).add(attribute('labelOffset', 'vec2'))) : null
+        material.colorNode = atlas ? atlasColor(atlas, attribute('labelOffset', 'vec2')) : null
         material.needsUpdate = true
+      },
+      /** the nameplate of the sign at `index` alone, plaque and stand, as the instanced batches draw it with `atlas` and `stand` */
+      snapshotSubject(index: number, atlas: Texture | null, stand: Material): SnapshotSubject {
+        const face = faceMaterial()
+        if (atlas) {
+          face.colorNode = atlasColor(atlas, vec2(offsets[index * 2], offsets[index * 2 + 1]))
+        }
+        const object = new Group
+        object.add(new Mesh(plate, face), new Mesh(supports.geometry, stand))
+        return {
+          object,
+          dispose: () => face.dispose(),
+        }
       },
       visuals: new InstancedPropVisuals(meshes, signs.map(sign => knotSignId(sign.entry.id))),
       dispose() {
@@ -97,6 +119,7 @@ export default function KnotLabels({signs, ratings, action = 'Listen', onActivat
           mesh.dispose()
           mesh.geometry.dispose()
         }
+        plate.dispose()
         material.dispose()
       },
     }
@@ -151,7 +174,7 @@ export default function KnotLabels({signs, ratings, action = 'Listen', onActivat
   return <>
     <primitive object={resources.faces} />
     <primitive object={resources.supports}><primitive attach='material' object={supportMaterial} /></primitive>
-    {signs.map(({entry, position, rotation}) => <GrabbableProp key={entry.id} id={knotSignId(entry.id)} angularDamping={0.15} colliders={false} friction={0.9} linearDamping={0.1} position={position} restitution={0.1} rotation={[0, rotation, 0]} title={`${entry.title} · nameplate`} type='dynamic'>
+    {signs.map(({entry, position, rotation}, signIndex) => <GrabbableProp key={entry.id} id={knotSignId(entry.id)} angularDamping={0.15} colliders={false} friction={0.9} linearDamping={0.1} position={position} restitution={0.1} rotation={[0, rotation, 0]} snapshotSubject={() => resources.snapshotSubject(signIndex, atlas, supportMaterial)} title={`${entry.title} · nameplate`} type='dynamic'>
       {/* Raycast-only copy; visible geometry remains instanced. */}
       <InteractiveObject id={knotSignId(entry.id)} action={action} title={`${entry.title} nameplate`} onActivate={() => onActivate(entry)}>
         <mesh dispose={null} geometry={resources.supports.geometry} material={supportMaterial} visible={false} />

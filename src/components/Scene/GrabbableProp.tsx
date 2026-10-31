@@ -3,7 +3,7 @@ import type {Vec3} from '#src/lib/gallery.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
-import type {Group} from 'three/webgpu'
+import type {Group, Object3D} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {RigidBody, useRapier} from '@react-three/rapier'
@@ -24,9 +24,16 @@ export type PropHandle = {
   group: Group
   move: (origin: Vec3, position: Vec3, delta: number) => void
   release: (throwing: boolean) => void
+  /** Photographs the prop as it is now in the studio, as a WebP for a merge. */
+  snapshot: () => Promise<Blob>
   title: string
 }
 export const propObjects = new Map<string, PropHandle>
+/** a stand-in to photograph instead of the prop’s own children, built in the prop’s own frame, and how to release what was made for it */
+export type SnapshotSubject = {
+  dispose: () => void
+  object: Object3D
+}
 type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
   blockedMessage?: () => string
   children: ReactNode
@@ -34,10 +41,12 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3
+  /** For props drawn elsewhere, e.g. by an instanced batch, whose children are only invisible stand-ins: builds what the studio photographs when the prop is thrown into a work. */
+  snapshotSubject?: () => SnapshotSubject
   title: string
 }
 
-export default function GrabbableProp({id, title, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
@@ -47,6 +56,7 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
     onAttachmentChange,
     recoverAsDynamic,
     attachmentBody,
+    snapshotSubject,
   })
   // Only effects, frame callbacks and input handlers read these, so committing them before paint is early enough.
   useLayoutEffect(() => {
@@ -56,8 +66,9 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
       onAttachmentChange,
       recoverAsDynamic,
       attachmentBody,
+      snapshotSubject,
     }
-  }, [canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody])
+  }, [canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject])
   // Settings are read once per registration, so inline objects don’t re-register every render.
   const orbitSettings = useRef(orbit)
   const {world} = useRapier()
@@ -73,10 +84,24 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
       recoverAsDynamic: () => callbacks.current.recoverAsDynamic?.() ?? false,
     })
     controller.current = carried
+    const prop = group.current
     const handle: PropHandle = {
       body: body.current,
-      group: group.current,
+      group: prop,
       title,
+      snapshot: async () => {
+        const subject = callbacks.current.snapshotSubject?.()
+        if (!subject) {
+          const {image} = await snapshotObject(prop)
+          return image
+        }
+        try {
+          const {image} = await snapshotObject(subject.object)
+          return image
+        } finally {
+          subject.dispose()
+        }
+      },
       canGrab: () => !carried.active && (callbacks.current.canGrab?.() ?? true),
       grab: () => {
         if (!carried.grab()) {
@@ -143,15 +168,15 @@ export default function GrabbableProp({id, title, orbit, children, canGrab, bloc
     if (!target?.hung || target.merging || target.reserved) {
       return
     }
+    const handle = propObjects.get(id)
+    if (!handle) {
+      return
+    }
     clearBodyThrow(current)
-    const subject = group.current
     requestItemMerge(target.id, {
       id,
       title,
-      snapshot: async () => {
-        const {image} = await snapshotObject(subject)
-        return image
-      },
+      snapshot: handle.snapshot,
     })
   }
   return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>

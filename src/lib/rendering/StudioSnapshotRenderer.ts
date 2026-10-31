@@ -19,15 +19,15 @@ type OfflineRenderer = WebgpuRenderer & {
 
 const animationKey = '_animation' as const
 const nodesKey = '_nodes' as const
-/** the direction from the object to the camera: a little to the right of and above the front */
-const viewDirection = new Vector3(Math.sin(0.35) * Math.cos(0.28), Math.sin(0.28), Math.cos(0.35) * Math.cos(0.28))
+/** the direction from the object to the camera in its own frame: a three-quarter view from the front (+z), 32° to the right and 17° from above, so boxy objects show three faces */
+const viewDirection = new Vector3(Math.sin(0.56) * Math.cos(0.3), Math.sin(0.3), Math.cos(0.56) * Math.cos(0.3))
 /** the time in ms the lightness scan may take before the backdrop is chosen from what was sampled so far */
 const lightnessBudgetMs = 10
 
 /**
  * One detached WebGPU renderer that photographs objects of the scene in a neutral studio: the object alone against a gray that contrasts with its average lightness, lit like the Knot billboards, framed to fill the middle 960 px of a 1024² WebP.
  *
- * The object is cloned, so it keeps its pose in the scene and only its geometries and materials are shared; three keeps per-renderer caches for them, so the gallery’s pipelines are not touched. Snapshots are serialized, as there is one scene and one target.
+ * The object is cloned and photographed upright in its own frame, like a product shot, not in whatever pose it tumbles through the room; its geometries and materials are shared, and three keeps per-renderer caches for them, so the gallery’s pipelines are not touched. Snapshots are serialized, as there is one scene and one target.
  */
 export default class StudioSnapshotRenderer {
   private readonly camera = new PerspectiveCamera(snapshotFov, 1, 0.01, 100)
@@ -73,7 +73,7 @@ export default class StudioSnapshotRenderer {
     await this.disposal
   }
 
-  /** Photographs `object` as it is now, keeping its world rotation. Rejects when the renderer is disposed, the object has no visible extent or the GPU reported an error. */
+  /** Photographs `object` in its own frame, front (+z) toward the camera. Rejects when the renderer is disposed, the object has no visible extent or the GPU reported an error. */
   async snapshot(object: Object3D): Promise<StudioSnapshot> {
     if (this.disposed) {
       throw new Error('The studio snapshot renderer has been disposed.')
@@ -94,7 +94,7 @@ export default class StudioSnapshotRenderer {
     const subject = object.clone(true)
     subject.position.set(0, 0, 0)
     subject.scale.setScalar(1)
-    object.getWorldQuaternion(subject.quaternion)
+    subject.quaternion.identity()
     subject.updateMatrixWorld(true)
     const box = new Box3
     box.setFromObject(subject, true)
