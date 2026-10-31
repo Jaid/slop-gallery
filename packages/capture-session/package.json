@@ -24,7 +24,7 @@
   },
   "peerDependencies": {
     "puppeteer-core": "^25.16.0",
-    "three": "^0.186.1"
+    "three": "^0.187.0"
   },
   "peerDependenciesMeta": {
     "puppeteer-core": {

@@ -28,7 +28,7 @@
     "three-mesh-bvh": "0.9.17"
   },
   "peerDependencies": {
-    "three": "^0.186.1"
+    "three": "^0.187.0"
   },
   "devDependencies": {
     "fs-extra": "11.4.1",
@@ -37,7 +37,7 @@
     "typescript": "npm:typescript-classic@6.0.4",
     "vite": "8.3.5",
     "@types/fs-extra": "11.0.4",
-    "@types/three": "0.186.0"
+    "@types/three": "0.187.0"
   },
   "files": [
     "src",
