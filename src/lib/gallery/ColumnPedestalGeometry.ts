@@ -22,7 +22,8 @@ export const columnShaft = {
 /** how far the column reaches out from its axis: its plinth at the foot and its abacus at the cap */
 export const columnPedestalRadius = {
   foot: 0.235,
-  cap: 0.205,
+  /** as wide as the plinth, for the orb holder’s feet */
+  cap: 0.235,
 }
 /** sides of the turned base and capital, enough to read round */
 const sides = 72
@@ -79,7 +80,7 @@ export default class ColumnPedestalGeometry {
       [columnPedestalRadius.cap, columnPedestalHeight - 0.005],
       [columnPedestalRadius.cap, 1.06],
       [columnPedestalRadius.cap - 0.005, 1.055],
-      ...arc([0.15, 1.055], [0.035, 0.05], 0, -Math.PI / 2, 12),
+      ...arc([0.15, 1.055], [0.06, 0.05], 0, -Math.PI / 2, 12),
       ...arc([0.15, 0.97], [0.016, 0.015], Math.PI / 2, -Math.PI / 2, 12),
       [0.14, 0.955],
       [0.14, 0.94],
