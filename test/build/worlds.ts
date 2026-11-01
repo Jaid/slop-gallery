@@ -1,6 +1,6 @@
 import type {WorldInfo} from '../../src/worlds/index.ts'
 
-import {join} from 'node:path'
+import {join, parse} from 'node:path'
 
 import {knots} from 'knot-materials'
 
@@ -36,7 +36,9 @@ for (const id of worldIds) {
   if (!html.includes(JSON.stringify(title)) || !html.includes(JSON.stringify(tagline))) {
     fail(`The loading screen does not know ${title}.`)
   }
-  if (wallpaper && !files.includes(wallpaper)) {
+  // Bun imports the wallpaper as its file, which the build emits under its name, encoded as JXL.
+  const wallpaperFile = wallpaper && `${parse(wallpaper).name}.jxl`
+  if (wallpaperFile && (!files.includes(wallpaperFile) || !html.includes(JSON.stringify(`/${wallpaperFile}`)))) {
     fail(`The loading screen’s wallpaper of ${title} is missing.`)
   }
 }

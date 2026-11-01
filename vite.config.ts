@@ -14,6 +14,7 @@ import {mergeConfig} from 'vite'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
+import jxlPlugin from 'vite-plugin-jxl'
 import jxlHeadersPlugin from 'vite-plugin-jxl-headers'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
@@ -85,6 +86,7 @@ const getProductionConfig = () => {
   const worldChunks = worldChunksPlugin(Object.fromEntries(worldIds.map(id => [id, `src/worlds/${id}/index.ts`])))
   const config: UserConfig = {
     plugins: [
+      jxlPlugin(),
       jxlHeadersPlugin(),
       rapierWasmPlugin(),
       // Only recipes that take longer to generate than their snapshots take to download; the rest load sooner without them.

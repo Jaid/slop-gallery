@@ -79,13 +79,14 @@ describe('world selection', () => {
     expect(inlined('?room=arena', parameters, rooms)).toBe('knottingham')
     expect(inlined('?room=lobby', parameters, rooms)).toBe('gallery')
   })
-  test('every world has a title and storage key of its own', () => {
+  test('every world has a title and storage key of its own', async () => {
     expect(worldIds).toEqual(['gallery', 'knottingham', 'sandbox'])
     const storageKeys = new Set(worldIds.map(id => worlds[id].storageKey))
     const titles = new Set(worldIds.map(id => worlds[id].title))
     expect(storageKeys.size).toBe(worldIds.length)
     expect(titles.size).toBe(worldIds.length)
-    expect(worlds.gallery.wallpaper).toBe('assets/wallpaper.jxl')
+    // Bun imports the wallpaper as its file.
+    expect(await Bun.file(worlds.gallery.wallpaper).exists()).toBe(true)
   })
   test('outside a page, the current world is the gallery', () => {
     expect(world).toBe(slopGallery)

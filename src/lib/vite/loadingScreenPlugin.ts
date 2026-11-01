@@ -1,9 +1,13 @@
-import type {HtmlTagDescriptor, Plugin} from 'vite'
+import type {HtmlTagDescriptor, Plugin, Rolldown} from 'vite'
+
+import {isAbsolute, relative} from 'node:path'
+
+import {normalizePath} from 'vite'
 
 type LoadingScreen = {
   tagline: string
   title: string
-  /** image behind the title, relative to the public directory */
+  /** the file of the image behind the title, which a module of the page has to import as well, so that the build holds it */
   wallpaper?: string
 }
 type LoadingScreenOptions<Id extends string> = {
@@ -64,17 +68,31 @@ const escapeHtml = (text: string) => text.replaceAll('&', '&amp;').replaceAll('<
  */
 const loadingScreenPlugin = <Id extends string>({defaultWorld, select, selectorArguments = [], worlds}: LoadingScreenOptions<Id>): Plugin => {
   let base: string
+  let root: string
+  /** the wallpaper’s URL: the file itself during development, otherwise what the build made of the page’s import of it, which other plugins may have converted */
+  const wallpaperUrl = (file: string, bundle?: Rolldown.OutputBundle) => {
+    const originalFileName = normalizePath(relative(root, file))
+    if (!bundle) {
+      return originalFileName.startsWith('../') || isAbsolute(originalFileName) ? `${base}@fs/${normalizePath(file)}` : `${base}${originalFileName}`
+    }
+    const asset = Object.values(bundle).find(output => output.type === 'asset' && output.originalFileNames.includes(originalFileName))
+    if (!asset) {
+      throw new Error(`The build holds no ${originalFileName}, so the loading screen cannot show it. A module of the page has to import it.`)
+    }
+    return `${base}${asset.fileName}`
+  }
   return {
     name: 'loading-screen',
     configResolved(config) {
       base = config.base
+      root = config.root
     },
-    transformIndexHtml() {
+    transformIndexHtml(_html, {bundle}) {
       const {title, tagline} = worlds[defaultWorld]
       const screens = Object.fromEntries(Object.entries<LoadingScreen>(worlds).map(([id, world]) => [id, {
         title: world.title,
         tagline: world.tagline,
-        ...world.wallpaper ? {wallpaper: `${base}${world.wallpaper}`} : {},
+        ...world.wallpaper ? {wallpaper: wallpaperUrl(world.wallpaper, bundle)} : {},
       }]))
       // The preload scanner does not look into style attributes, so without the hint a wallpaper would only start downloading once the loading screen is styled.
       const script = `{
