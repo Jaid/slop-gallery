@@ -1,7 +1,7 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {dropPortrait} from '../../src/lib/gallery/actions.ts'
-import {containedRect, imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import {imageSize} from '../../src/lib/gallery/ImageImporter.ts'
 import {maximumPortraits} from '../../src/lib/gallery/imagePolicy.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
@@ -181,16 +181,17 @@ describe('wall geometry', () => {
   })
 })
 describe('image dimensions', () => {
-  test('fits generated images without distortion or cropping', () => {
-    expect(containedRect(400, 100, 600, 300)).toEqual([0, 75, 600, 150])
-    expect(containedRect(100, 400, 600, 300)).toEqual([262.5, 0, 75, 300])
-  })
   test('keeps landscape, portrait and square aspect ratios at a frame area of 30 000 cm²', () => {
     for (const [width, height] of [[400, 200], [200, 400], [400, 400]]) {
       const size = imageSize(width, height)
       expect(size.width / size.height).toBeCloseTo(width / height, 9)
       expect(size.width * size.height).toBeCloseTo(3, 9)
     }
+  })
+  test('frames an image at a given area', () => {
+    const size = imageSize(1600, 900, 60_000)
+    expect(size.width / size.height).toBeCloseTo(16 / 9, 9)
+    expect(size.width * size.height).toBeCloseTo(6, 9)
   })
   for (const dimensions of [[0, 100], [-1, 100], [Number.NaN, 100], [Infinity, 100], [9000, 9000], [1300, 100], [100, 1300]]) {
     test(`rejects ${dimensions.join('×')}`, () => {

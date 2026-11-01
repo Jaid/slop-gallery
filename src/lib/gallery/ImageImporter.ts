@@ -6,7 +6,14 @@ import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
 import {maximumPortraits, validateImage} from './imagePolicy.ts'
 import {useGallery} from './store.ts'
 
-/** The frame of an imported image in meters: its own aspect at an area of `area` cm². */
+/** an image with its size in pixels */
+export type SizedImage = {
+  height: number
+  image: Blob
+  width: number
+}
+
+/** The frame of an image in meters: its own aspect at an area of `area` cm². */
 export function imageSize(width: number, height: number, area = 30_000) {
   if (!(width > 0 && height > 0) || !Number.isFinite(width + height) || width * height > 64_000_000) {
     throw new Error('Choose an image with at most 64 million pixels.')
@@ -29,26 +36,18 @@ export function centeredCrop(width: number, height: number, limit = 2) {
   return [(width - cropWidth) / 2, (height - cropHeight) / 2, cropWidth, cropHeight] as const
 }
 
-export function containedRect(width: number, height: number, targetWidth: number, targetHeight: number) {
-  const scale = Math.min(targetWidth / width, targetHeight / height)
-  return [(targetWidth - width * scale) / 2, (targetHeight - height * scale) / 2, width * scale, height * scale] as const
-}
-
-/** Preserve the existing physical frame without stretching a provider’s differently shaped output. */
-export async function fitGeneratedImage(source: Blob, aspect: number) {
+/** A provider’s output as a work keeps it: in whatever shape it came, at most 3072 px on its longer edge, on an opaque ground. */
+export async function encodeGeneratedImage(source: Blob) {
   const bitmap = await createImageBitmap(source)
   try {
     imageSize(bitmap.width, bitmap.height)
-    const longest = Math.min(3072, Math.max(bitmap.width, bitmap.height))
-    const canvas = new OffscreenCanvas(Math.max(1, Math.round(longest * Math.min(1, aspect))), Math.max(1, Math.round(longest * Math.min(1, 1 / aspect))))
+    const scale = Math.min(1, 3072 / Math.max(bitmap.width, bitmap.height))
+    const canvas = new OffscreenCanvas(Math.max(1, Math.round(bitmap.width * scale)), Math.max(1, Math.round(bitmap.height * scale)))
     const context = canvas.getContext('2d')!
     context.fillStyle = '#eee8d7'
     context.fillRect(0, 0, canvas.width, canvas.height)
-    context.drawImage(bitmap, ...containedRect(bitmap.width, bitmap.height, canvas.width, canvas.height))
-    return await canvas.convertToBlob({
-      type: 'image/webp',
-      quality: 0.94,
-    })
+    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    return await canvasImage(canvas)
   } finally {
     bitmap.close()
   }
@@ -83,10 +82,7 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
     context.moveTo(w * 0.48, 0)
     context.bezierCurveTo(w * 0.95, h * 0.3, w * 0.05, h * 0.7, w * 0.52, h)
     context.stroke()
-    return await canvas.convertToBlob({
-      type: 'image/webp',
-      quality: 0.94,
-    })
+    return await canvasImage(canvas)
   } finally {
     for (const bitmap of bitmaps) {
       bitmap.close()
@@ -114,12 +110,20 @@ export async function tintImage(source: Blob | string, color: string) {
     vignette.addColorStop(1, color)
     context.fillStyle = vignette
     context.fillRect(0, 0, w, h)
-    return await canvas.convertToBlob({
-      type: 'image/webp',
-      quality: 0.94,
-    })
+    return await canvasImage(canvas)
   } finally {
     bitmap.close()
+  }
+}
+
+async function canvasImage(canvas: OffscreenCanvas): Promise<SizedImage> {
+  return {
+    image: await canvas.convertToBlob({
+      type: 'image/webp',
+      quality: 0.94,
+    }),
+    width: canvas.width,
+    height: canvas.height,
   }
 }
 

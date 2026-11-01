@@ -41,11 +41,15 @@ const instant: FusionTiming = {
   fizzle: 0,
 }
 class TestDirector extends GalleryDirector {
+  /** the shape the image model was asked for */
+  aspect: number | undefined
   flavorResult = Promise.withResolvers<Partial<Portrait>>()
   opened: Array<Fusion> = []
   partial: ((partial: Partial<Portrait>) => void) | undefined
   received: Array<Portrait['source']> = []
   result = Promise.withResolvers<Blob>()
+  /** the pixel size of the result */
+  resultSize = [1024, 1024]
   constructor(settings: AiSettings, key: string, private timing = instant) {
     super(settings, key)
   }
@@ -53,13 +57,15 @@ class TestDirector extends GalleryDirector {
     this.partial = partial
     return this.flavorResult.promise
   }
-  protected override generateMerge(first: Portrait['source'], second: Portrait['source']) {
+  protected override generateMerge(first: Portrait['source'], second: Portrait['source'], _signal: AbortSignal, aspect: number) {
     this.received = [first, second]
-    return this.result.promise
+    this.aspect = aspect
+    return this.sized()
   }
-  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb) {
+  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, _signal: AbortSignal, aspect: number) {
     this.received = [work, orb.prompt]
-    return this.result.promise
+    this.aspect = aspect
+    return this.sized()
   }
   protected override openFusion(spec: FusionSpec) {
     const fusion = new Fusion(spec, {
@@ -72,6 +78,15 @@ class TestDirector extends GalleryDirector {
     })
     this.opened.push(fusion)
     return fusion
+  }
+  private async sized() {
+    const image = await this.result.promise
+    const [width, height] = this.resultSize
+    return {
+      image,
+      width,
+      height,
+    }
   }
 }
 test('fusion keeps both originals until success and commits one change', async () => {
@@ -89,6 +104,37 @@ test('fusion keeps both originals until success and commits one change', async (
   expect(useGallery.getState().portraits[0].source).toBe(merged)
   director.dispose()
 })
+for (const partner of ['work', 'orb']) {
+  test(`a merge with a thrown ${partner} frames the result in its own shape at the area of the hung work’s frame`, async () => {
+    useGallery.getState().update('a', {
+      width: 3,
+      height: 2,
+    })
+    const director = new TestDirector({
+      ...defaults,
+      ai: false,
+    }, '')
+    try {
+      // Asked for 3:2, the model still made something squarer.
+      director.resultSize = [1200, 1000]
+      const job = partner === 'orb' ? director.mergeItem('a', {
+        id: 'prop-orb-test',
+        title: 'Test Orb',
+        color: '#8a3cff',
+        prompt: 'Make it spooky.',
+        snapshot: () => Promise.resolve(new Blob(['orb'], {type: 'image/webp'})),
+      }) : director.merge('a', 'b')
+      director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+      await job
+      expect(director.aspect).toBe(1.5)
+      const portrait = useGallery.getState().portraits.find(p => p.id === 'a')!
+      expect(portrait.width / portrait.height).toBeCloseTo(1.2, 9)
+      expect(portrait.width * portrait.height).toBeCloseTo(6, 9)
+    } finally {
+      director.dispose()
+    }
+  })
+}
 test('failed fusion releases both originals', async () => {
   const director = new TestDirector(defaults, 'test')
   const job = director.merge('a', 'b')

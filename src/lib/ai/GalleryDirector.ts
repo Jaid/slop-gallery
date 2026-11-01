@@ -1,12 +1,14 @@
 import type Fusion from '../gallery/fusion/Fusion.ts'
 import type {FusionSpec} from '../gallery/fusion/Fusion.ts'
+import type {SizedImage} from '../gallery/ImageImporter.ts'
 import type {Portrait, ThrownItem, ThrownOrb} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
+import type {Span} from 'victoria-browser-client'
 
 import PortraitNarration from '../audio/PortraitNarration.ts'
 import {loadBlob, notify} from '../gallery/actions.ts'
 import {openFusion} from '../gallery/fusion/fusions.ts'
-import {compositeImages, fitGeneratedImage, tintImage} from '../gallery/ImageImporter.ts'
+import {compositeImages, encodeGeneratedImage, imageSize, tintImage} from '../gallery/ImageImporter.ts'
 import {validateImage} from '../gallery/imagePolicy.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
@@ -110,24 +112,32 @@ export default class GalleryDirector {
     const flavorGenerator = new FlavorGenerator(this.key, tieredModel(this.settings.text_model, this.settings.ai_tier), effort as 'low')
     return flavorGenerator.generate(image, onPartial, signal)
   }
-  protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
+  /** Merges the hung work `first` with `second` into a new image, asking the image model for the shape `aspect` (width divided by height) of the hung work. */
+  protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number): Promise<SizedImage> {
     if (!this.settings.ai || !this.key) {
       return compositeImages(first, second)
     }
     const {default: MergeGenerator} = await import('./MergeGenerator.ts')
     const [hanging, thrown] = await Promise.all([loadBlob(first), loadBlob(second)])
     const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
-    const result = await mergeGenerator.generate(hanging, thrown, signal)
-    return fitGeneratedImage(result, aspect)
+    const result = await mergeGenerator.generate(hanging, thrown, {
+      aspect,
+      signal,
+    })
+    return encodeGeneratedImage(result)
   }
-  protected async generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number) {
+  /** Reworks the hung work `work` by the orb’s prompt into a new image, asking the image model for the shape `aspect` (width divided by height) of the hung work. */
+  protected async generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number): Promise<SizedImage> {
     if (!this.settings.ai || !this.key) {
       return tintImage(work, orb.color)
     }
     const {default: MergeGenerator} = await import('./MergeGenerator.ts')
     const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
-    const result = await mergeGenerator.generateFromOrb(await loadBlob(work), orb.prompt, signal)
-    return fitGeneratedImage(result, aspect)
+    const result = await mergeGenerator.generateFromOrb(await loadBlob(work), orb.prompt, {
+      aspect,
+      signal,
+    })
+    return encodeGeneratedImage(result)
   }
 
   async merge(first: string, second: string) {
@@ -248,23 +258,34 @@ export default class GalleryDirector {
   /**
    * Generates the new image of the hung work `a` with `make` while `fusion` shows it and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove`.
    * The result flips out of the portal as a loose work once the fusion’s climax is over; a failure shows once the fusion fizzled out.
+   * Its frame takes the shape of the image, whatever the model made of the shape it was asked for, at the area of `a`’s frame.
    */
-  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<Blob>, current: () => boolean, {description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
+  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
     description: string
     failure: string
     /** how the description tells a merge made without AI */
     locally?: string
     remove?: string
   }) {
-    let merged: Blob
+    let merged: Pick<Portrait, 'height' | 'width'> & {image: Blob}
     try {
       // Image models take 15–40 s for most merges, but now and then over 100 s.
-      const generate = async () => {
-        const image = await make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(180_000)]), a.width / a.height)
+      const generate = async (span?: Span) => {
+        const {image, width, height} = await make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(180_000)]), a.width / a.height)
+        span?.setAttributes({
+          width,
+          height,
+        })
         validateImage(image)
-        return image
+        return {
+          image,
+          ...imageSize(width, height, a.width * a.height * 10_000),
+        }
       }
-      merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {mode: this.settings.ai && this.key ? 'ai' : 'local'}}) : generate())
+      merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {
+        mode: this.settings.ai && this.key ? 'ai' : 'local',
+        aspect: a.width / a.height,
+      }}) : generate())
     } catch {
       if (current()) {
         await fusion.fail()
@@ -277,7 +298,7 @@ export default class GalleryDirector {
     if (!current()) {
       return
     }
-    await fusion.succeed(merged)
+    await fusion.succeed(merged.image)
     if (!current()) {
       return
     }
@@ -285,7 +306,9 @@ export default class GalleryDirector {
     const result: Portrait = {
       ...a,
       ...fusion.launch(),
-      source: merged,
+      source: merged.image,
+      width: merged.width,
+      height: merged.height,
       narration: undefined,
       merging: false,
       mergeJob: undefined,
