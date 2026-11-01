@@ -58,7 +58,7 @@ describe('botanical mesh efficiency', () => {
   })
 })
 describe('botanical geometry assembly', () => {
-  test.each([false, true])('merging preserves rendered attributes and disposes inputs once, mixed indexing: %s', mixed => {
+  test.each([false, true])('merging preserves rendered attributes and disposes inputs once, mixed indexing: %p', mixed => {
     const first = new BoxGeometry
     const second = new BoxGeometry
     const firstFlat = first.toNonIndexed()

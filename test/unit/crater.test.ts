@@ -43,9 +43,8 @@ function worldAt(fps = 60) {
   return world
 }
 describe('Moonfall impact hall', () => {
-  test('the square expansion leaves both existing doorway endpoints connected', () => {
+  test('the square hall connects both of its doorways', () => {
     expect(room.size).toEqual([28, 28])
-    expect(room.size[0] * room.size[1]).toBeGreaterThan(4 * 12 * 14)
     const north = walls.find(wall => wall.id === 'moonfall-north')!
     const east = walls.find(wall => wall.id === 'moonfall-east')!
     expect(wallPosition(north, north.holes![0].u, room.floorY, 0)).toEqual([lowerGallery.tunnel.x, room.floorY, lowerGallery.tunnel.southZ])

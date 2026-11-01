@@ -313,7 +313,7 @@ describe('cylindrical Oculus platform', () => {
   for (const fps of [30, 60, 120]) {
     for (const offset of [-towerArch.width / 2 + 0.4, -0.4, 0, 0.4, towerArch.width / 2 - 0.4]) {
       for (const returning of [false, true]) {
-        test(`walks through the arch at ${fps} Hz, offset ${offset}, returning ${returning}`, () => {
+        test(`walks through the arch at ${fps} Hz, offset ${offset.toFixed(2)}, returning ${returning}`, () => {
           const world = createWorld()
           world.timestep = 1 / fps
           const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(returning ? 2 : -2, tower.floorY + 0.04, towerArch.z + offset))

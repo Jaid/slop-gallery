@@ -38,7 +38,7 @@ describe('RGBA8 readback', () => {
       expect(() => unpackRgba(new Uint8Array, 1, dimension)).toThrow('Invalid capture size')
     }
   })
-  test('keeps the original diagnostic threshold and byte-based luminance semantics', () => {
+  test('analyzes with the diagnostic threshold and byte-based luminance semantics', () => {
     const frame = unpackRgba(new Uint8Array([
       8,
       8,

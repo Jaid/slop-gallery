@@ -34,7 +34,7 @@ test.each([
   [[0, 0, 1], 180],
   [[-1, 0, 0], -90],
   [[0.5, 0.8, -0.5], 45],
-] as const)('the red cone projects direction %j to %s degrees', (direction, degrees) => {
+] as const)('the red cone projects direction %j to %d degrees', (direction, degrees) => {
   expect(minimapHeading([...direction])).toBeCloseTo(degrees)
 })
 test('both layers share a scale and frame every room’s drawing', () => {

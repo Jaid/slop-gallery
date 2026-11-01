@@ -494,7 +494,7 @@ describe('vite-plugin-import-voice-sample', () => {
     }
     expect(String(error)).toContain('Unsupported voice sample emotion')
   })
-  test('rejects removed or invalid import attributes', async () => {
+  test('rejects unknown or invalid import attributes', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:grok' with {text: 'Grok', voice: 'ara'}

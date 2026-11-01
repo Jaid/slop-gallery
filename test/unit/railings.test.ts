@@ -59,7 +59,7 @@ describe('connected Oculus railings', () => {
       }
     }
   })
-  test.each(oculusRailings.map(railing => [railing.run, railing] as const))('%s: junctions never reverse direction or fold the rendered tube inside out', (_, railing) => {
+  test.each(oculusRailings)('$run: junctions never reverse direction or fold the rendered tube inside out', railing => {
     const points = railing.anchors.map(({ground, height}) => new Vector3(ground[0], ground[1] + height, ground[2]))
     for (let i = 1; i < points.length - 1; i++) {
       const incoming = points[i].clone().sub(points[i - 1])
@@ -88,14 +88,14 @@ describe('connected Oculus railings', () => {
       tube.dispose()
     }
   })
-  test.each(oculusRailings.map(railing => [railing.run, railing] as const))('%s: the handrail has one mitered ring per rail vertex and wraps the capsule colliders exactly', (_, railing) => {
+  test.each(oculusRailings)('$run: the handrail has one mitered ring per rail vertex and wraps the capsule colliders exactly', railing => {
     const tube = new PolylineTubeGeometry(railing.points, railing.radius, 12)
     const resampled = new TubeGeometry(railing, Math.ceil(railing.length / 0.04), railing.radius, 12, false)
     try {
       const rings = railing.points.length
       expect(tube.getAttribute('position').count).toBe(rings * 13)
       expect(triangleCount(tube)).toBe((rings - 1) * 24)
-      // The former 4 cm resampling used more than three times as many triangles.
+      // A tube resampled every 4 cm would take more than three times as many triangles.
       expect(triangleCount(tube) * 3).toBeLessThan(triangleCount(resampled))
       const positions = tube.getAttribute('position')
       const segments = railing.points.slice(1).map((point, i) => new Line3(railing.points[i], point))

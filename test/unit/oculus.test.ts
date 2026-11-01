@@ -22,7 +22,7 @@ const {oculus, tunnel, moonfall} = lowerGallery
 const {floorY} = oculus
 const upper = rooms.find(room => room.id === 'lobby')!
 describe('oculus and connecting tunnel', () => {
-  test('both side walls expand three meters while the centered glass and entrance stay fixed', () => {
+  test('the side walls stand 9 m either side of the glass and the entrance, which are centered between them', () => {
     expect(walls.find(value => value.id === 'oculus-west')!.center[0]).toBe(-9)
     expect(walls.find(value => value.id === 'oculus-east')!.center[0]).toBe(9)
     expect(insideGallery([-8.9, -6.4, -24])).toBe(true)

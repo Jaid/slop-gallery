@@ -18,7 +18,7 @@ const ground = new OculusGroundGeometry
 const collision = colliderGeometry(ground)
 afterAll(() => ground.dispose())
 const {oculus, tunnel} = lowerGallery
-test('Oculus is three meters deeper and four meters longer, without moving Moonfall or the upper viewing deck', () => {
+test('the Oculus lies 3 m below Moonfall, which its tunnel ramps up to, and under the upper viewing deck', () => {
   expect(lowerGallery.floorY).toBe(-8)
   expect(oculus.floorY).toBe(-11)
   expect(oculus.size).toEqual([18, 20])

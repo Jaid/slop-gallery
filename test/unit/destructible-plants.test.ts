@@ -84,7 +84,7 @@ function pluckAll(leaves: Array<GrabbableBody>) {
     leaf.release([10 + i, 2, -1], [10 + i, 2, 0], false)
   }
 }
-describe('new destructible botanical models', () => {
+describe('destructible botanical models', () => {
   test('collider initialization respects an existing body’s attachment state', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed())
     const collider = world.createCollider(RAPIER.ColliderDesc.ball(0.1), body)

@@ -43,7 +43,7 @@ test('the complete fireplace faces inward from the south wall without moving the
     const hearth = toWorld(parts.find(child => child.props.name === 'lodge-hearth')!.props.position!)
     expect(hearth.x).toBeCloseTo(lodge.center[0])
     expect(hearth.z).toBeCloseTo(-30.65)
-    // The fire sits where the old embers and firelight were.
+    // The fire sits where its crackling sounds from.
     const origin = toWorld(fire.position)
     for (const [axis, value] of origin.toArray().entries()) {
       expect(value).toBeCloseTo(fireWorldOrigin[axis])

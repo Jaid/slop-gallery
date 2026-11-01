@@ -128,7 +128,7 @@ describe('Lodge through-window', () => {
       world.free()
     }
   })
-  test('no reveal, glass or frame projects past the existing tunnel lining profile', () => {
+  test('no reveal, glass or frame projects past the tunnel lining profile', () => {
     const profile = timberProfile(corridorPassage.width / 2 - 0.09, corridorPassage.height, 0).filter(point => point.x > 0).toSorted((a, b) => a.y - b.y)
     for (const geometry of [recess.lining, recess.glass, recess.frame]) {
       const positions = geometry.getAttribute('position')

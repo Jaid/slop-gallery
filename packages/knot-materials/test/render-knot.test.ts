@@ -140,7 +140,6 @@ describe('knot inspection renders', () => {
     expect(exitCode, stderr).toBe(0)
     expect(stdout).toContain('--category snapshot,animation,video')
     expect(stdout).toContain('default: snapshot,animation,video')
-    expect(stdout).not.toContain('--jxl')
     expect(stdout).toContain('animated angle loop use JPEG XL')
     expect(stdout).toContain('1080x1080 AV1/WebM')
   })

@@ -72,7 +72,7 @@ describe('the Salon', () => {
       expect(p.position[1] + portraitLabelLayout(p.width, p.height).bottom).toBeGreaterThan(salonWainscot.railBottom + salonWainscot.railHeight + 0.02)
     }
   })
-  test('The Banquet’s works keep clear of the new arch', () => {
+  test('the Banquet’s works keep clear of the arch into the Salon', () => {
     const banquetNorth = walls.find(wall => wall.id === 'banquet-north')!
     for (const p of samplePortraits) {
       if (p.wallId !== 'banquet-north') {

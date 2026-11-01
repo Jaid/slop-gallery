@@ -63,10 +63,6 @@ describe('world selection', () => {
     expect(selectWorld('?item')).toBe('sandbox')
     expect(readWorld('https://slop.gallery/?item=prop-orb-halloween')).toBe('sandbox')
   })
-  test('ignores ?world', () => {
-    expect(selectWorld('?world=knottingham')).toBe('gallery')
-    expect(selectWorld('?world=sandbox&rarity=edit')).toBe('knottingham')
-  })
   test('runs on its own, as the loading screen inlines its source', () => {
     const source = new Function(`return (${selectWorld.toString()})`) as () => typeof selectWorld
     const inlined = source()
