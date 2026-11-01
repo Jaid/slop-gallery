@@ -13,13 +13,11 @@
   position: absolute
   inset: 0
 
-// The largest rectangle of the ratio that fits the stage, centered between black bars
+// The screen, sized by the component, centered between black bars
 .letterbox
   container-type: size
   background: #000
   > .screen
-    width: min(100cqw, 100cqh * var(--ratio))
-    height: min(100cqh, 100cqw / var(--ratio))
     margin: auto
     overflow: hidden
 

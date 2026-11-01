@@ -29,6 +29,12 @@ import World from './World.tsx'
 
 import css from './style.module.sass'
 
+/** the largest rectangle of the `?ratio` that fits the stage, if any */
+const letterboxSize: CSSProperties | undefined = screenRatio === undefined ? undefined : {
+  width: `min(100cqw, ${screenRatio * 100}cqh)`,
+  height: `min(100cqh, ${100 / screenRatio}cqw)`,
+}
+
 export default function App() {
   useSlopGalleryTelemetry(telemetry, useGallery, galleryEvents)
   const settings = useGalleryAI()
@@ -53,8 +59,8 @@ export default function App() {
     {/* A column of its own left of the canvas and HUD, so the panel never covers the scene it tunes */}
     <Branch if={tuning.open} then={GraphicsTuning} />
     {/* ?ratio letterboxes the screen, so the canvas keeps that shape and the menu and HUD stay on it. */}
-    <div className={clsx(css.stage, screenRatio !== undefined && css.letterbox)} style={screenRatio === undefined ? undefined : {'--ratio': screenRatio} as CSSProperties}>
-      <div className={css.screen}>
+    <div className={clsx(css.stage, letterboxSize && css.letterbox)}>
+      <div className={css.screen} style={letterboxSize}>
         <main className={css.viewport} aria-label='Interactive 3D gallery'>
           <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
           <Branch if={tuning.open} then={TuningBuffer} />
