@@ -4,6 +4,7 @@ import {mergeParts} from '../geometry.ts'
 import {colliderGeometry} from './architecture.ts'
 import ArcSlabGeometry from './ArcSlabGeometry.ts'
 import lobbyVault, {glazingStart, lobbyChandeliers, vaultBays, vaultCoffers, vaultRibs} from './lobbyVault.ts'
+import rosette from './rosette.ts'
 
 /** Height of the rose window’s center above the floor. */
 export const roseCenterY = lobbyVault.springY + lobbyVault.rose.rise
@@ -113,19 +114,6 @@ const soffitRing = (size: number, z: number, sides?: number) => {
   geometry.computeVertexNormals()
   return geometry
 }
-/** A gilt rosette facing +y: a domed boss inside a beaded ring with eight petals. */
-const rosette = (size: number) => {
-  const boss = new SphereGeometry(size * 0.38, 8, 3, 0, Math.PI * 2, 0, Math.PI / 2)
-  const ring = new TorusGeometry(size * 0.62, size * 0.09, 4, 16)
-  const parts: Array<BufferGeometry> = [boss.scale(1, 0.7, 1), ring.rotateX(Math.PI / 2)]
-  for (let i = 0; i < 8; i++) {
-    const petal = new SphereGeometry(size * 0.2, 6, 2, 0, Math.PI * 2, 0, Math.PI / 2)
-    const angle = i * Math.PI / 4 + Math.PI / 8
-    parts.push(petal.scale(1.5, 0.45, 0.8).translate(size * 0.62, 0, 0).rotateY(angle))
-  }
-  return mergeParts(parts)
-}
-
 /**
  * A smooth half-cylinder along the vault’s inner face, so thrown things bounce off the coffer frames and the glass instead of
  * disappearing into the vault. Returned as vertices and indices for a triangle mesh collider.
