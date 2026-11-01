@@ -1,5 +1,6 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {ThrownOrb, Vec3} from '#src/lib/gallery.ts'
+import type {Mood} from '#src/lib/moods/index.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
 import type {ReactNode} from 'react'
@@ -23,6 +24,8 @@ export type PropHandle = {
   canGrab: () => boolean
   grab: () => boolean
   group: Group
+  /** the mood that comes over the world while the player holds the prop */
+  mood?: Mood
   move: (origin: Vec3, position: Vec3, delta: number) => void
   release: (throwing: boolean) => void
   /** Takes the prop out of the physics for a fusion, which flies it around by its `group` until it calls `unleash`; false while the player carries it. */
@@ -45,6 +48,8 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   blockedMessage?: () => string
   children: ReactNode
   id: string
+  /** what comes over the world while the player holds the prop */
+  mood?: Mood
   /** For orbs: what a work struck by the prop is reworked by, instead of merging it with a studio photograph of the prop. */
   orb?: Pick<ThrownOrb, 'color' | 'prompt'>
   /** lets holding V orbit around the prop */
@@ -55,7 +60,7 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   title: string
 }
 
-export default function GrabbableProp({id, title, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject, ...props}: GrabbablePropProps) {
+export default function GrabbableProp({id, title, mood, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, attachmentBody, snapshotSubject, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
@@ -99,6 +104,7 @@ export default function GrabbableProp({id, title, orb, orbit, children, canGrab,
     const handle: PropHandle = {
       body: rigidBody,
       group: prop,
+      mood,
       title,
       seize: () => {
         if (seized || carried.active) {
@@ -165,7 +171,7 @@ export default function GrabbableProp({id, title, orb, orbit, children, canGrab,
         controller.current = null
       }
     }
-  }, [id, title, world])
+  }, [id, mood, title, world])
   useEffect(() => {
     if (!held) {
       controller.current?.cancel()

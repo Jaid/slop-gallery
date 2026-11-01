@@ -14,6 +14,7 @@ import {readFlying} from './gallery/flyMode.ts'
 import {readWeather} from './gallery/lighting.ts'
 import {readPortraitSlotEditing, readShowPortraitSlots} from './gallery/portraitSlotStore.ts'
 import {readRoom, readSpawn} from './gallery/spawn.ts'
+import {readMood} from './moods/forcedMood.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
 import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
@@ -52,6 +53,7 @@ const readers: Record<string, Reader> = {
   // A list, which compares by its ids, joined as the query gives them.
   item: input => readItems(input).join(','),
   knot_rotation: readKnotRotation,
+  mood: readMood,
   near: readNear,
   pmrem: readPmrem,
   portrait_set: readPortraitSet,

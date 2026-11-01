@@ -1,6 +1,7 @@
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 
 import EyeOrbMaterial from '#src/lib/materials/orb/EyeOrbMaterial.ts'
+import {horrorMood} from '#src/lib/moods/index.ts'
 
 import Orb from './base/Orb.ts'
 
@@ -33,6 +34,7 @@ export default class HorrorOrb extends Orb {
   readonly change = 'provide traits that make it'
   readonly color = '#a8060f'
   readonly id = 'horror'
+  readonly mood = horrorMood
   readonly premise = 'This picture is in a horror game – suddenly turned into a corrupted version.'
   readonly title = 'Horror Orb'
 

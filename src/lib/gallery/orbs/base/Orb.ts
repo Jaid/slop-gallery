@@ -1,5 +1,6 @@
 import type OrbGlassMaterial from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
+import type {Mood} from '#src/lib/moods/index.ts'
 
 import {environmentPick, environmentSample} from '../../../environmentSeed.ts'
 
@@ -20,6 +21,8 @@ export default abstract class Orb {
   /** the orb’s glow, which tints the work instead when the merge is made locally, without AI, and the portal of the merge */
   abstract readonly color: string
   abstract readonly id: string
+  /** what comes over the world while the player holds the orb */
+  abstract readonly mood: Mood
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
   abstract readonly title: string

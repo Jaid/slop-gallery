@@ -8,7 +8,7 @@ import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import {orbRadius} from '#src/lib/gallery/orbs/index.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
 
-/** A glass ball filled with its orb’s scene, which rolls when knocked and reworks a work it is thrown into by the orb’s prompt. */
+/** A glass ball filled with its orb’s scene, which rolls when knocked, casts its mood over the world while held and reworks a work it is thrown into by the orb’s prompt. */
 export default function Orb({orb, position}: {
   orb: OrbKind
   position: Vec3
@@ -18,7 +18,7 @@ export default function Orb({orb, position}: {
     color: orb.color,
     prompt: orb.prompt(environmentSeed),
   }), [orb])
-  return <GrabbableProp id={orb.propId} colliders='ball' orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
+  return <GrabbableProp id={orb.propId} colliders='ball' mood={orb.mood} orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
     <mesh castShadow material={material}><sphereGeometry args={[orbRadius, 96, 64]} /></mesh>
   </GrabbableProp>
 }

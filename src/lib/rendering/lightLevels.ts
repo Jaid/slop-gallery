@@ -2,7 +2,7 @@ import type {Light, LightShadow, Object3D} from 'three/webgpu'
 
 import optis from 'optis'
 import readPermalink from 'read-permalink'
-import {Vector3} from 'three/webgpu'
+import {Color, Vector3} from 'three/webgpu'
 import {create} from 'zustand'
 
 import {lampOf} from './lamps.ts'
@@ -263,6 +263,35 @@ export const lightActive = {current: (_light: Light) => true}
  */
 export const lightShadow = {current: (_light: Light) => 1}
 
+/** the color that leaves every light as its owner made it */
+export const noTint = new Color(1, 1, 1)
+
+/**
+ * What each light’s color is multiplied by, on top of what its owner sets, such as the mood of a held orb; a hemisphere light’s ground color too. Moods replace it while mounted.
+ */
+export const lightTint = {current: (_light: Light): Color => noTint}
+
+/** each light color as its owner set it, and as {@link applyLightLevels} last wrote it, by the color object itself, so a hemisphere light keeps its sky and ground apart */
+const colors = new WeakMap<Color, {
+  base: Color
+  written: Color
+}>
+/** Multiplies a light color by `tint`. A color that differs from what this wrote last frame is a new one from the light’s owner. */
+function tintColor(color: Color, tint: Color) {
+  let entry = colors.get(color)
+  if (!entry || !color.equals(entry.written)) {
+    if (!entry && tint.equals(noTint)) {
+      return
+    }
+    entry = {
+      base: color.clone(),
+      written: new Color,
+    }
+    colors.set(color, entry)
+  }
+  color.copy(entry.base).multiply(tint)
+  entry.written.copy(color)
+}
 /** whether each light’s owner made it cast shadows, and whether this made it last frame */
 const casters = new WeakMap<Light, {
   base: boolean
@@ -304,7 +333,7 @@ export function toggleLightShadow(light: Light & {isPointLight?: boolean}) {
 }
 
 /**
- * Scales every light by {@link lightGain}, switches off the ones toggled off and weakens or drops shadows by {@link lightShadow} and {@link toggleLightShadow}. Call it once per frame after everything else
+ * Scales every light by {@link lightGain}, tints it by {@link lightTint}, switches off the ones toggled off and weakens or drops shadows by {@link lightShadow} and {@link toggleLightShadow}. Call it once per frame after everything else
  * set its lights, so lights that flicker or dim are scaled after their owner set them for this frame. An intensity that differs
  * from what this wrote last frame is a new one from the light’s owner.
  */
@@ -326,6 +355,12 @@ export function applyLightLevels(scene: Object3D) {
     }
     light.intensity = off.has(light) || !lightActive.current(light) ? 0 : level.base * lightGain.current(light) * (strengths.get(light) ?? 1)
     level.written = light.intensity
+    const tint = lightTint.current(light)
+    tintColor(light.color, tint)
+    const {groundColor} = light as Light & {groundColor?: Color}
+    if (groundColor) {
+      tintColor(groundColor, tint)
+    }
     let caster = casters.get(light)
     if (light.castShadow !== caster?.written) {
       caster = {

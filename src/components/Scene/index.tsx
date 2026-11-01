@@ -8,6 +8,7 @@ import Fusions from '#component/Fusions'
 import Lamps from '#component/Lamps'
 import LightLevels from '#component/LightLevels'
 import LightMarkers from '#component/LightMarkers'
+import Moods from '#component/Moods'
 import Player from '#component/Player'
 import Portraits from '#component/Portraits'
 import PortraitSlotEditor from '#component/PortraitSlotEditor'
@@ -48,6 +49,7 @@ export default function Scene() {
       <Branch if={isShowingLamps} then={LightMarkers} />
       <Branch if={isShowingAmbienceEmitters} then={AmbienceEmitterMarkers} />
     </group>
+    <Moods />
     <LightLevels />
     <AmbienceListener />
     <Player />

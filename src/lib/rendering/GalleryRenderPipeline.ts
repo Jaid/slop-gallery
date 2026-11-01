@@ -23,6 +23,7 @@ import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import MaterialOutputsNode from './MaterialOutputsNode.ts'
+import {gradeMood} from './moodGrade.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
 
@@ -377,10 +378,11 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       current = current.mul(vec4(vec3(float(1).sub(edge.mul(vignette))), 1))
     }
     current = flood.compose(current)
+    // The mood’s gradient map and the dither work on the image as it is shown, so the output transform comes before them.
+    this.outputColorTransform = false
+    current = gradeMood(renderOutput(current))
     if (heavy && settings.dither) {
       // Dithers by half an 8-bit step in display space, so the smooth, dark gradients of the sun shafts don’t band.
-      this.outputColorTransform = false
-      current = renderOutput(current)
       current = vec4(current.rgb.add(interleavedGradientNoise(screenCoordinate.xy).sub(0.5).div(255)), current.a)
     }
     this.outputNode = current

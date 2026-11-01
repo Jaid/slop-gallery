@@ -1,6 +1,7 @@
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 
 import BatsOrbMaterial from '#src/lib/materials/orb/BatsOrbMaterial.ts'
+import {halloweenMood} from '#src/lib/moods/index.ts'
 
 import Orb from './base/Orb.ts'
 
@@ -32,6 +33,7 @@ export default class HalloweenOrb extends Orb {
   readonly change = 'add casual Halloween decoration that makes it'
   readonly color = '#ff7b1c'
   readonly id = 'halloween'
+  readonly mood = halloweenMood
   readonly premise = 'This picture is in a game – and tonight is Halloween, so it gets dressed up for the holiday.'
   readonly title = 'Halloween Orb'
 
