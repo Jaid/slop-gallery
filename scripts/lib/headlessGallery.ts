@@ -21,7 +21,7 @@ export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          u
   --graphics <mode>       mirrors ?graphics (fast, heavy, cinematic, which is heavy with larger maps and more samples for non-realtime renders, or auto, which picks fast or heavy for the GPU). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
-                          mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8
+                          mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8; 100 in cinematic graphics, whose first frame of everything at once loses the GPU device at 2160p
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
   --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
@@ -130,8 +130,8 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   search.set('seed', String(seed))
   search.set('graphics', values.graphics)
-  // ?test=true implies it already; it is explicit so captures keep it without the test hooks.
-  const streamBudget = values.stream_budget ?? 'false'
+  // ?test=true implies it already; it is explicit so captures keep it without the test hooks. Cinematic draws every room in every pass at once in that first frame, which outlasts the GPU’s timeout at 2160p (VK_ERROR_DEVICE_LOST on hive’s RX 9060 XT).
+  const streamBudget = values.stream_budget ?? (values.graphics === 'cinematic' ? '100' : 'false')
   if (parseStreamBudget(streamBudget) === undefined) {
     throw new Error(`--stream_budget must be milliseconds from 0 up or false, got “${streamBudget}”.`)
   }
