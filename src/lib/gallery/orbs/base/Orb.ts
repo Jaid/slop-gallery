@@ -23,7 +23,7 @@ export default abstract class Orb {
   abstract readonly id: string
   /** what comes over the world while the player holds the orb */
   abstract readonly mood: Mood
-  /** the URL of a photograph of it, taken in the studio a thrown prop is photographed in, which the portal of its merge shows; made in advance, as its glass takes seconds to compile for the studio */
+  /** the URL of an image of it, which the portal of its merge shows; made in advance, as its glass takes seconds to compile for the studio a thrown prop is photographed in */
   abstract readonly photo: string
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
