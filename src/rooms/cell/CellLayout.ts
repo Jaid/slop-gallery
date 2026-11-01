@@ -1,6 +1,9 @@
 import type {RoundVestibule} from '#src/lib/gallery/roundVestibule.ts'
+import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {FloorSize} from '../base/Room.ts'
 
+import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
+import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import {chandelierCeiling} from '#src/lib/physics/chandelier.ts'
 
 /** a round space of the Cell beyond its north wall */
@@ -14,6 +17,13 @@ export type CellPedestal = {
   position: readonly [x: number, z: number]
   /** its turn about y, which faces one of its sides toward the middle of the space it stands in, or toward the arch where it stands in the middle itself */
   rotation: number
+}
+/** a spotlight thrower hanging from the ceiling, aimed at an item */
+export type CellThrower = {
+  /** the point on the ceiling it hangs from, relative to the room’s origin */
+  ceiling: Vec3
+  /** the middle of the item it lights, relative to the room’s origin */
+  target: Vec3
 }
 /** how the space beyond the north wall is laid out, by the number of items */
 export type CellPlan = 'alcoves' | 'closed' | 'rotunda' | 'single'
@@ -41,15 +51,19 @@ const alcoveAngles: Partial<Record<number, ReadonlyArray<number>>> = {
 }
 /** how far apart neighboring pedestals of a rotunda stand at least, middle to middle */
 const ringSpacing = 2.6
-/** the rotunda’s pedestals stand no nearer to its middle, which keeps room to walk under the chandelier */
+/** the rotunda’s pedestals stand no nearer to its middle, which keeps room to walk under its throwers */
 const ringMinimum = 2.4
 /** from the rotunda’s ring of pedestals out to its wall, room enough to walk round them */
 const ringClearance = 2.4
-/** the vestibule chandelier’s lamp in a vestibule of the default radius, which a larger rotunda scales up */
-const vestibuleLamp = {
-  strength: 40,
-  range: 10,
-}
+/** where the throwers aim: the middle of an orb resting in its holder on a pedestal’s cap */
+const itemHeight = pedestalHeight + orbSeat
+/** how far across the floor plan a thrower hangs from the pedestal it lights, so it lights the item from above at a slant, and how near the middle of a rotunda at most */
+const throwerReach = 2.2
+const throwerMiddle = 0.5
+/** how far round from the arch to either side of the lone pedestal its two throwers hang, so they light it from the front, from the left and the right */
+const pairAngle = 0.9
+/** how far an alcove’s thrower hangs from its wall, inside the arch */
+const throwerWallClearance = 0.5
 /** The turn about y that faces a pedestal at `from` toward `to`. */
 const facing = ([x, z]: readonly [number, number], [toX, toZ]: readonly [number, number]) => Math.atan2(toX - x, toZ - z) + 0
 const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
@@ -62,19 +76,19 @@ function planFor(itemCount: number): CellPlan {
 }
 
 /**
- * The Cell’s floor plan, its size fixed, and what lies beyond its north wall, which follows the number of items it holds, each on a pedestal of its own:
+ * The Cell’s floor plan, its size fixed, and what lies beyond its north wall, which follows the number of items it holds, each on a pedestal of its own and lit by a spotlight thrower hanging from the ceiling:
  *
  * - none: the arch through the north wall stays shut by a door
- * - one: a round vestibule with the pedestal in its middle
- * - two or three: the vestibule as a hub with an arch into a small round alcove for each, fanned out across from the arch
- * - four and more: the vestibule as a rotunda, as large as a ring of their pedestals round its chandelier takes, the ring open toward the arch
+ * - one: a round vestibule with the pedestal in its middle, lit by two throwers from the front, from the left and the right
+ * - two or three: the vestibule as a hub with an arch into a small round alcove for each, fanned out across from the arch, its thrower hanging inside the arch
+ * - four and more: the vestibule as a rotunda, as large as a ring of their pedestals round its middle takes, the ring open toward the arch, the throwers hanging round the middle and aimed out at them
  */
 export default class CellLayout {
   /** the small round rooms off the vestibule, one for each item, when there are two or three */
   readonly alcoves: ReadonlyArray<CellSpace>
   /** the arch through the north wall and every arch beyond it, as it opens straight across */
   readonly arch = arch
-  /** how much higher the chandeliers hang than from the ceiling they are made for, so they hang right under the Cell’s */
+  /** how much higher the Cell’s chandelier hangs than from the ceiling it is made for, so it hangs right under the Cell’s */
   readonly chandelierLift = round(height - chandelierCeiling)
   /** edge length of the floor’s marble tiles, which run whole from wall to wall */
   readonly floorTile = tile
@@ -86,21 +100,21 @@ export default class CellLayout {
   readonly pedestals: ReadonlyArray<CellPedestal>
   readonly plan: CellPlan
   readonly size = size
+  /** the spotlight throwers lighting the items: one for each, or two for a lone one */
+  readonly throwers: ReadonlyArray<CellThrower>
   /** the round room beyond the north wall’s arch, or undefined while a door closes it */
   readonly vestibule: CellSpace | undefined
-  /** how brightly the vestibule’s chandelier shines and how far: further in a larger rotunda, a little brighter for its larger walls */
-  readonly vestibuleLamp: typeof vestibuleLamp
 
   constructor(readonly itemCount: number) {
     if (!Number.isSafeInteger(itemCount) || itemCount < 0) {
       throw new RangeError(`The Cell holds a whole number of items, not ${itemCount}.`)
     }
     this.plan = planFor(itemCount)
-    this.vestibuleLamp = vestibuleLamp
     if (this.plan === 'closed') {
       this.vestibule = undefined
       this.alcoves = []
       this.pedestals = []
+      this.throwers = []
       return
     }
     if (this.plan === 'rotunda') {
@@ -119,11 +133,9 @@ export default class CellLayout {
           rotation: facing(position, center),
         }
       })
-      const scale = radius / vestibuleRadius
-      this.vestibuleLamp = {
-        strength: round(vestibuleLamp.strength * scale ** 2),
-        range: round(vestibuleLamp.range * scale),
-      }
+      // Round the middle, each toward its pedestal, aiming out at it.
+      const middle = Math.max(throwerMiddle, ring - throwerReach)
+      this.throwers = this.pedestals.map(({position}) => this.thrower(position, [center[0] + (position[0] - center[0]) / ring * middle, center[1] + (position[1] - center[1]) / ring * middle]))
       return
     }
     const center = [0, northZ - vestibuleRadius] as const
@@ -134,6 +146,7 @@ export default class CellLayout {
         position: center,
         rotation: 0,
       }]
+      this.throwers = [-1, 1].map(side => this.thrower(center, [center[0] + Math.sin(side * pairAngle) * throwerReach, center[1] + Math.cos(side * pairAngle) * throwerReach]))
       return
     }
     const angles = alcoveAngles[itemCount]!
@@ -149,6 +162,12 @@ export default class CellLayout {
       position: alcove.center,
       rotation: facing(alcove.center, center),
     }))
+    // Inside its arch, toward the vestibule.
+    this.throwers = this.alcoves.map((alcove, index) => {
+      const toward = angles[index] + Math.PI
+      const reach = alcove.radius - throwerWallClearance
+      return this.thrower(alcove.center, [alcove.center[0] + Math.cos(toward) * reach, alcove.center[1] + Math.sin(toward) * reach])
+    })
   }
 
   /** the vestibule and its alcoves: every round space beyond the north wall, none while it is closed */
@@ -166,6 +185,14 @@ export default class CellLayout {
         name: archName,
         angle,
       })),
+    }
+  }
+
+  /** A thrower hanging from the ceiling over `[x, z]`, aimed at the item on the pedestal standing at `pedestal`. */
+  private thrower(pedestal: readonly [number, number], [x, z]: readonly [number, number]): CellThrower {
+    return {
+      ceiling: [round(x), height, round(z)],
+      target: [pedestal[0], itemHeight, pedestal[1]],
     }
   }
 }

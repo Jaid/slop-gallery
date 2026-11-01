@@ -12,12 +12,14 @@ import Orb from '#component/Orb'
 import OrbHolder, {useOrbHolder} from '#component/OrbHolder'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
+import SpotlightThrower, {useSpotlightThrower} from '#component/SpotlightThrower'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
+import {throwerSpot} from '#src/rooms/cell/Cell.ts'
 import CellDoor from '#src/rooms/cell/components/CellDoor/index.tsx'
 import sandbox from '#src/worlds/sandbox/index.ts'
 
@@ -44,12 +46,12 @@ const polish: ArenaPolish = {
 const slabThickness = 0.24
 const circleSegments = 96
 
-/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, lit besides by the Arena’s studio fill from no visible source, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
+/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, dim enough that the items’ throwers stand out, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
   return <group name='cell'>
-    <ambientLight intensity={0.45} />
-    <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={1.3} />
+    <ambientLight intensity={0.15} />
+    <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={0.45} />
     {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
     <ShadowPool />
     <ArenaShell center={cell.center} floorOrigin={floorOrigin} height={cell.height} polish={polish} size={cell.size} surfaces={surfaces} tile={floorTile} walls={walls} />
@@ -60,11 +62,12 @@ export default function CellRoom() {
   </group>
 }
 
-/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, the vestibule’s chandelier and the items on their pedestals, every orb resting in a holder on its pedestal’s cap. */
+/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap under the spotlight throwers aimed at it. */
 function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
   const marble = useArenaMarble(floorOrigin, floorTile, polish)
   const pedestal = usePedestal()
   const holder = useOrbHolder()
+  const thrower = useSpotlightThrower()
   const parts = useDisposable(useMemo(() => {
     const slab = mergeParts(layout.spaces.map(space => {
       const geometry = new ExtrudeGeometry(roundVestibuleFloorShape(space), {
@@ -113,9 +116,7 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
     <Branch if={marble.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={marble.reflectionTarget!} /></group></Branch>
     <mesh castShadow geometry={parts.ceiling} material={surfaces.ceiling} name='cell-vestibule-ceiling' receiveShadow />
     <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
-    <group position={[vestibuleX, chandelierLift, vestibuleZ]}>
-      <Chandelier lamp={cell.room.globalId('vestibule_chandelier')} />
-    </group>
+    {layout.throwers.map(({ceiling, target}) => <SpotlightThrower key={ceiling.join()} {...thrower} ceiling={cell.toWorld(ceiling)} target={cell.toWorld(target)} tint={throwerSpot.tint} />)}
     {sandbox.items.map((orb, index) => {
       const {position, rotation} = layout.pedestals[index]
       const [pedestalX, pedestalZ] = worldPoint(position)

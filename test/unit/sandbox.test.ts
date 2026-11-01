@@ -5,8 +5,10 @@ import {describe, expect, test} from 'bun:test'
 import {architectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
+import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
+import {aimThrower} from '../../src/lib/gallery/SpotlightThrowerGeometry.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
 import CellLayout from '../../src/rooms/cell/CellLayout.ts'
@@ -19,6 +21,28 @@ const ids = orbs.map(orb => orb.propId)
 /** the footprint of a pedestal, which no other may come closer to, middle to middle, than its diagonal */
 const pedestalDiagonal = 1.16 * Math.SQRT2
 const distance = ([ax, az]: readonly [number, number], [bx, bz]: readonly [number, number]) => Math.hypot(ax - bx, az - bz)
+/** Checks that every thrower of the layout hangs from its ceiling inside a space of it, clear of its wall, and aims at the middle of an orb in its holder on a pedestal, from above at a slant, its light shining from in front of it toward that orb. */
+function expectThrowersOver(layout: CellLayout) {
+  for (const {ceiling, target} of layout.throwers) {
+    const [x, y, z] = ceiling
+    expect(y).toBe(layout.height)
+    expect(layout.spaces.some(space => distance([x, z], space.center) <= space.radius - 0.45)).toBe(true)
+    expect(layout.pedestals.some(({position}) => distance(position, [target[0], target[2]]) < 1e-9)).toBe(true)
+    expect(target[1]).toBeCloseTo(pedestalHeight + orbSeat, 9)
+    const reach = distance([x, z], [target[0], target[2]])
+    expect(reach).toBeGreaterThan(1.5)
+    expect(reach).toBeLessThan(3)
+    const {pivot, source, tilt} = aimThrower(ceiling, target)
+    expect(tilt).toBeGreaterThan(Math.PI / 4)
+    expect(tilt).toBeLessThan(Math.PI * 0.4)
+    const along = (point: Vec3) => point.map((value, index) => value - pivot[index])
+    const [sx, sy, sz] = along(source)
+    const [tx, ty, tz] = along(target)
+    // On the line from the pivot to the target, a little way along it.
+    expect(Math.hypot(sy * tz - sz * ty, sz * tx - sx * tz, sx * ty - sy * tx)).toBeLessThan(1e-9)
+    expect(sx * tx + sy * ty + sz * tz).toBeGreaterThan(0)
+  }
+}
 describe('?item', () => {
   test('names the Sandbox’s items by their object ids, comma-separated, trimmed and in their order, each once', () => {
     expect(readItems('http://localhost/')).toEqual([])
@@ -59,7 +83,7 @@ describe('the Cell’s layout', () => {
     expect(closed.spaces).toEqual([])
     expect(closed.pedestals).toEqual([])
   })
-  test('lays its floor in whole tiles of 50 cm from wall to wall, under a ceiling the chandeliers are lifted to', () => {
+  test('lays its floor in whole tiles of 50 cm from wall to wall, under a ceiling the chandelier is lifted to', () => {
     const layout = new CellLayout(0)
     expect(layout.floorTile).toBe(0.5)
     for (const side of layout.size) {
@@ -77,6 +101,20 @@ describe('the Cell’s layout', () => {
       rotation: 0,
     }])
   })
+  test('lights a lone item with two throwers, from the front, mirrored to the left and the right of the arch, and none while the door is shut', () => {
+    const closed = new CellLayout(0)
+    expect(closed.throwers).toEqual([])
+    const layout = new CellLayout(1)
+    expect(layout.throwers).toHaveLength(2)
+    expectThrowersOver(layout)
+    const [left, right] = layout.throwers.map(thrower => thrower.ceiling)
+    const [x, z] = layout.vestibule!.center
+    expect(left[0] - x).toBeCloseTo(x - right[0], 9)
+    expect(left[0]).toBeLessThan(x)
+    expect(left[2]).toBeCloseTo(right[2], 9)
+    // Toward the arch, in front of the item.
+    expect(left[2]).toBeGreaterThan(z)
+  })
   for (const count of [2, 3]) {
     test(`gives each of ${count} items a round alcove of its own, off the vestibule across from the arch, from the left to the right`, () => {
       const layout = new CellLayout(count)
@@ -85,7 +123,15 @@ describe('the Cell’s layout', () => {
       expect(vestibule.arches.map(arch => arch.name)).toEqual(['cell', ...layout.alcoves.map(alcove => alcove.name)])
       const sandbox = new Sandbox(ids.slice(0, count))
       const cell = sandbox.room('cell')
-      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule_chandelier', ...layout.alcoves.map(alcove => `cell-${alcove.name}_spot`)])
+      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', ...layout.alcoves.map((_, index) => `cell-thrower_${index}`)])
+      expectThrowersOver(layout)
+      // Each inside its alcove’s arch, aimed at the alcove’s own item.
+      for (const [index, {ceiling, target}] of layout.throwers.entries()) {
+        const alcove = layout.alcoves[index]
+        expect([target[0], target[2]]).toEqual([...alcove.center])
+        expect(distance([ceiling[0], ceiling[2]], alcove.center)).toBeLessThan(alcove.radius)
+        expect(distance([ceiling[0], ceiling[2]], vestibule.center)).toBeLessThan(distance(alcove.center, vestibule.center))
+      }
       const xs = layout.alcoves.map(alcove => alcove.center[0])
       expect(xs).toEqual(xs.toSorted((a, b) => a - b))
       for (const [index, alcove] of layout.alcoves.entries()) {
@@ -115,13 +161,17 @@ describe('the Cell’s layout', () => {
     })
   }
   for (const count of [4, 5, 6, 8, 12]) {
-    test(`rings ${count} items round the rotunda’s chandelier, wide enough to walk between, round and behind them, the ring open toward the arch`, () => {
+    test(`rings ${count} items round the rotunda’s middle, wide enough to walk between, round and behind them, the ring open toward the arch, each lit by a thrower hanging toward the middle`, () => {
       const layout = new CellLayout(count)
       const vestibule = layout.vestibule!
       expect(layout.alcoves).toEqual([])
       expect(vestibule.center[1] + vestibule.radius).toBeCloseTo(layout.northZ, 9)
       expect(vestibule.radius).toBeGreaterThan(4)
-      expect(layout.vestibuleLamp.range).toBeGreaterThan(10)
+      expectThrowersOver(layout)
+      expect(layout.throwers.map(({target}) => [target[0], target[2]])).toEqual(layout.pedestals.map(({position}) => [...position]))
+      for (const [index, {ceiling}] of layout.throwers.entries()) {
+        expect(distance([ceiling[0], ceiling[2]], vestibule.center)).toBeLessThan(distance(layout.pedestals[index].position, vestibule.center))
+      }
       const ring = distance(layout.pedestals[0].position, vestibule.center)
       expect(ring).toBeGreaterThanOrEqual(2.4 - 1e-9)
       expect(vestibule.radius - ring).toBeCloseTo(2.4, 6)
@@ -155,7 +205,7 @@ describe('the Cell’s layout', () => {
       expect(svg.match(/<polygon /gu) ?? []).toHaveLength(layout.alcoves.length)
     }
   })
-  test('carries the items’ pedestals as high as every other, their caps clear of the chandeliers', () => {
+  test('carries the items’ pedestals as high as every other, their caps far under the ceiling', () => {
     const layout = new CellLayout(0)
     expect(pedestalHeight).toBeLessThan(layout.height / 2)
   })
