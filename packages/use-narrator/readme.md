@@ -126,6 +126,26 @@ Without a synthesizer, text uses native browser speech. Native speech has a glob
 
 See the [Web Speech specification](https://webaudio.github.io/web-speech-api/) for the native queue and boundary event contracts. Recorded and provider-generated audio resume on the same HTMLAudioElement at its preserved playback position.
 
+## Timing and subtitles
+
+A narration can know when each word of its `text` is spoken. Recordings take a `timing`, and a synthesizer can return `{audio, timing}` instead of bare audio. Either way the narration state carries it while that audio plays; a fallback to native speech drops it, since it belongs to the audio it was measured on.
+
+```ts
+narrator.push({audio: '/goose.opus', text, timing: timingFromCharacters(text, spans)})
+const cache = new SpeechCache(async (speech, signal) => {
+  const audio = await generate(speech.text, signal)
+  return {audio, timing: timingFromWords(speech.text, await transcribe(audio, signal))}
+})
+```
+
+A `NarrationTiming` holds every whitespace-separated word of the text (`narrationWords(text)`) as `{from, to, start, end}`, character range and seconds, plus optional per-character spans for letter-exact highlighting:
+
+- `timingFromWords(text, recognized)` maps speech-to-text words with timestamps onto the text through a character-level edit alignment, so misheard, split, merged or missing words only cost their own letters. It gives no character spans, since letters interpolated within a recognized word would only pretend to be exact.
+- `timingFromCharacters(text, spans)` takes one span (or `null`) per character, as forced aligners report them.
+- `estimateTiming(text, duration)` spreads the duration over the letters with pauses at punctuation, for audio without a timing. Good enough to pace sentences, not to follow words.
+
+`narrator.progress(instanceId)` reads where a narration’s playback stands (`{seconds, duration}`, or `{character}` for native speech, which only reports the word it reached), and `narrationCursor(words, progress, timing)` turns that into the current word and how far into it speech is. Both are cheap enough for every animation frame.
+
 ## Slop Gallery integration
 
 `src/lib/audio/narration.ts` owns the one application narrator, its 0.15-second gap, 0.12-second leading silence and 0.5-second trailing silence. It wires mute, stop, teleport, page-hide, the real audio meter and a read-only gallery-state projection for existing telemetry.

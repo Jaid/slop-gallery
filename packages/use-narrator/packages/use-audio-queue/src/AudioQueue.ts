@@ -1,4 +1,4 @@
-import type {AudioClock, AudioEntry, AudioHandle, AudioPhase, AudioPlayback, AudioPriority, AudioPushOptions, AudioQueueOptions, AudioQueueSnapshot, AudioResult, AudioTask} from './types.ts'
+import type {AudioClock, AudioEntry, AudioHandle, AudioPhase, AudioPlayback, AudioPriority, AudioProgress, AudioPushOptions, AudioQueueOptions, AudioQueueSnapshot, AudioResult, AudioTask} from './types.ts'
 
 type Job<T> = {
   after: number
@@ -128,6 +128,11 @@ export default class AudioQueue<T extends object = Record<string, never>> implem
 
   has(id: string) {
     return this.jobs.has(id)
+  }
+
+  /** Where an entry’s playback stands, if its playback reports it. Not part of the snapshot, so polling it never notifies subscribers. */
+  progress(id: string): AudioProgress | undefined {
+    return this.jobs.get(id)?.playback?.progress?.()
   }
 
   push(task: AudioTask<T>, options: AudioPushOptions<T> = {}): AudioHandle {

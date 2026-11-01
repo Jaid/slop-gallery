@@ -91,5 +91,6 @@ export default function fallbackPlayback(primary: AudioPlayback, fallback: (erro
       current.dispose()
       completion.resolve()
     },
+    progress: () => current.progress?.(),
   }
 }

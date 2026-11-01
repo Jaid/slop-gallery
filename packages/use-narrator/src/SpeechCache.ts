@@ -1,14 +1,15 @@
-import type {AudioReference, SpeechReference, SpeechSynthesizer} from './types.ts'
+import type {AudioReference, SpeechReference, SpeechSynthesizer, SynthesizedSpeech} from './types.ts'
 
+type Synthesis = AudioReference | SynthesizedSpeech
 type Job = {
   controller: AbortController
-  promise: Promise<AudioReference>
+  promise: Promise<Synthesis>
   users: number
 }
 
 /** Bounded completed-audio cache, with independently cancellable consumers of shared generation. */
 export default class SpeechCache implements Disposable {
-  synthesize = async (speech: SpeechReference, signal: AbortSignal): Promise<AudioReference> => {
+  synthesize = async (speech: SpeechReference, signal: AbortSignal): Promise<Synthesis> => {
     signal.throwIfAborted()
     if (this.disposed) {
       throw new Error('Speech cache was disposed.')
@@ -51,7 +52,7 @@ export default class SpeechCache implements Disposable {
     }
     const shared = job
     shared.users++
-    return new Promise<AudioReference>((resolve, reject) => {
+    return new Promise<Synthesis>((resolve, reject) => {
       let settled = false
       const release = () => {
         if (settled) {
@@ -93,7 +94,7 @@ export default class SpeechCache implements Disposable {
       })
     })
   }
-  private cache = new Map<string, AudioReference>
+  private cache = new Map<string, Synthesis>
   private disposed = false
 
   private jobs = new Map<string, Job>

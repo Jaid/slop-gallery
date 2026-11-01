@@ -203,3 +203,21 @@ test('failure while connecting audio releases a generated URL', async () => {
     revoke.mockRestore()
   }
 })
+test('local audio reports its playback position and, once known, its duration through the queue', async () => {
+  const handle = queue.push(audioFile('/voice.opus'))
+  await flush()
+  const audio = Media.instances[0]
+  audio.currentTime = 1.25
+  expect(queue.progress(handle.id)).toEqual({
+    seconds: 1.25,
+    duration: undefined,
+  })
+  Object.assign(audio, {duration: 4})
+  expect(queue.progress(handle.id)).toEqual({
+    seconds: 1.25,
+    duration: 4,
+  })
+  audio.end()
+  await handle.finished
+  expect(queue.progress(handle.id)).toBeUndefined()
+})

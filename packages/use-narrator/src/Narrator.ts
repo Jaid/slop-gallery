@@ -1,5 +1,5 @@
-import type {NarrationInput, NarrationMetadata, NarrationPushOptions, NarrationReference, NarratorOptions, RecordingReference, SpeechReference} from './types.ts'
-import type {AudioHandle, AudioPlayback, AudioQueueSnapshot} from 'use-audio-queue/core'
+import type {NarrationInput, NarrationMetadata, NarrationPushOptions, NarrationReference, NarratorOptions, RecordingReference, SpeechReference, SpeechSynthesizer, SynthesizedSpeech} from './types.ts'
+import type {AudioHandle, AudioPlayback, AudioProgress, AudioQueueSnapshot} from 'use-audio-queue/core'
 
 import composeId from 'compose-id'
 import {audioFile} from 'use-audio-queue/browser'
@@ -17,6 +17,7 @@ function normalize(reference: NarrationReference): RecordingReference | SpeechRe
   }
   return reference
 }
+const synthesized = (result: Awaited<ReturnType<SpeechSynthesizer>>): SynthesizedSpeech => (typeof result === 'string' || result instanceof Blob || result instanceof URL ? {audio: result} : result)
 
 /** Application-owned narrator; components only enqueue and subscribe, never own shared playback. */
 export default class Narrator implements Disposable {
@@ -25,6 +26,8 @@ export default class Narrator implements Disposable {
   subscribe = (listener: () => void) => this.queue.subscribe(listener)
   private disposed = false
   private enabledValue: boolean
+  /** queue entry IDs of unfinished narrations by instance ID */
+  private instances = new Map<string, string>
 
   private observed = new WeakSet<AudioHandle>
 
@@ -72,6 +75,7 @@ export default class Narrator implements Disposable {
     this.disposed = true
     this.queue.dispose()
     this.spoken.clear()
+    this.instances.clear()
   }
   forget(key: string) {
     this.spoken.delete(key)
@@ -79,6 +83,12 @@ export default class Narrator implements Disposable {
 
   hasSpoken(key: string) {
     return this.spoken.has(key)
+  }
+
+  /** Where a narration’s playback stands, by its `instanceId`, for visuals that follow the speech, like subtitles. Cheap enough to read every frame. */
+  progress(instanceId: string): AudioProgress | undefined {
+    const id = this.instances.get(instanceId)
+    return id === undefined ? undefined : this.queue.progress(id)
   }
 
   push(input: NarrationInput, options: NarrationPushOptions = {}): AudioHandle {
@@ -148,7 +158,11 @@ export default class Narrator implements Disposable {
           this.options.onFallback?.(error)
         }
         const playback = await (this.options.createSpeech ?? browserSpeech)(speech, signal)
-        update({source: 'browser'})
+        // A timing belongs to the audio it was measured on, not to native speech of the same text.
+        update({
+          source: 'browser',
+          timing: undefined,
+        })
         return playback
       }
       const synthesize = speech?.synthesize === 'browser' ? undefined : speech?.synthesize ?? this.options.synthesize
@@ -157,7 +171,7 @@ export default class Narrator implements Disposable {
       }
       let playback: AudioPlayback
       try {
-        const audio = 'audio' in reference ? reference.audio : await synthesize!(reference, signal)
+        const {audio, timing} = 'audio' in reference ? reference : synthesized(await synthesize!(reference, signal))
         signal.throwIfAborted()
         const narrationAudio = this.options.audio
         const fileOptions = narrationAudio && {
@@ -170,7 +184,10 @@ export default class Narrator implements Disposable {
           playback.dispose()
           signal.throwIfAborted()
         }
-        update({source: 'audio'})
+        update({
+          source: 'audio',
+          timing,
+        })
       } catch (error) {
         signal.throwIfAborted()
         return native(error)
@@ -183,7 +200,10 @@ export default class Narrator implements Disposable {
     })
     if (!this.observed.has(handle)) {
       this.observed.add(handle)
+      const {instanceId} = metadata
+      this.instances.set(instanceId, handle.id)
       void handle.finished.then(result => {
+        this.instances.delete(instanceId)
         if (!this.disposed && result.status === 'completed' && options.once !== undefined) {
           this.spoken.add(options.once)
         }

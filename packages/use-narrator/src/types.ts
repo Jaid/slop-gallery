@@ -2,7 +2,30 @@ import type {AudioFileOptions, AudioReference} from 'use-audio-queue/browser'
 import type {AudioPlayback, AudioPushOptions, AudioQueueOptions} from 'use-audio-queue/core'
 
 export type {AudioReference} from 'use-audio-queue/browser'
-export type {AudioHandle, AudioPriority, AudioResult} from 'use-audio-queue/core'
+export type {AudioHandle, AudioPriority, AudioProgress, AudioResult} from 'use-audio-queue/core'
+/** a word of a narration’s text: its character range in the text and when it is spoken, in seconds of the audio */
+export type NarrationWord = {
+  end: number
+  /** index of the word’s first character */
+  from: number
+  start: number
+  /** index after the word’s last character */
+  to: number
+}
+/**
+ * When the words of a narration’s text are spoken. `words` holds every whitespace-separated word of the text, in order (see `narrationWords`).
+ * `characters`, when known, holds one span per character of the text, `null` for characters without their own, like spaces and punctuation.
+ */
+export type NarrationTiming = {
+  characters?: ReadonlyArray<readonly [start: number, end: number] | null>
+  words: ReadonlyArray<NarrationWord>
+}
+/** a word as speech-to-text recognized it, in its own spelling */
+export type RecognizedWord = {
+  end: number
+  start: number
+  word: string
+}
 export type SpeechReference = {
   lang?: string
   pitch?: number
@@ -17,18 +40,27 @@ export type RecordingReference = {
   audio: AudioReference
   /** Used for readable UI metadata and as browser speech on recording failure. */
   text?: string
+  /** when the words of `text` are spoken in `audio` */
+  timing?: NarrationTiming
   title?: string
 }
 /** A bare string is spoken text. Use {audio: '/voice.opus'} for a string URL. */
 export type NarrationReference = Blob | RecordingReference | SpeechReference | URL | string
 export type NarrationInput = ((signal: AbortSignal) => NarrationReference | Promise<NarrationReference>) | NarrationReference
-export type SpeechSynthesizer = (speech: SpeechReference, signal: AbortSignal) => AudioReference | Promise<AudioReference>
+/** generated audio along with when the speech’s words are spoken in it */
+export type SynthesizedSpeech = {
+  audio: AudioReference
+  timing?: NarrationTiming
+}
+export type SpeechSynthesizer = (speech: SpeechReference, signal: AbortSignal) => AudioReference | Promise<AudioReference | SynthesizedSpeech> | SynthesizedSpeech
 export type NarrationMetadata = {
   id: string
   /** Unique per accepted narration instance; suitable for UI keys and per-playback instrumentation. */
   instanceId: string
   source: 'audio' | 'browser' | null
   text?: string
+  /** when the words of `text` are spoken, while the narration plays audio that has a timing */
+  timing?: NarrationTiming
   title: string
 }
 export type NarrationPushOptions = Omit<AudioPushOptions<NarrationMetadata>, 'metadata'> & {

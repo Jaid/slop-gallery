@@ -1,12 +1,21 @@
 export type AudioPriority = 'async' | 'destructive' | 'high' | 'inject' | 'normal' | 'shy' | 'volatile'
 export type AudioPhase = 'after' | 'before' | 'playing' | 'preparing' | 'queued' | 'starting'
 
+/**
+ * Where playback stands, for visuals that follow it: seconds into a media timeline (with its duration once known), or a character offset into spoken text for transports without a timeline, like native speech.
+ */
+export type AudioProgress = {character: number} | {
+  duration?: number
+  seconds: number
+}
 /** play resolves when playback starts; finished resolves only at the end. pause preserves position. */
 export type AudioPlayback = {
   dispose: () => void
   finished: Promise<void>
   pause: () => void
   play: () => Promise<void> | void
+  /** optional; read on demand, for example once per animation frame */
+  progress?: () => AudioProgress | undefined
 }
 export type AudioTask<T> = (context: {
   signal: AbortSignal

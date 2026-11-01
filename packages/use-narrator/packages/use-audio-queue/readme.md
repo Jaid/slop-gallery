@@ -48,8 +48,11 @@ type AudioPlayback = {
   pause: () => void               // immediately pauses, preserving position
   dispose: () => void             // idempotent resource release
   finished: Promise<void>         // resolves at natural end, rejects on failure
+  progress?: () => AudioProgress | undefined // optional: {seconds, duration?} on a media timeline, {character} for native speech
 }
 ```
+
+`queue.progress(id)` reads an entry’s `progress()` for visuals that follow playback, like subtitles or karaoke highlighting. It is not part of the snapshot, so polling it every animation frame never notifies subscribers. `audioFile()` reports the element’s `currentTime` and, once known, its duration.
 
 `pause()` must stop output synchronously. `play()` may be called again after a pause. Neither pause nor play-start completion means the sound has finished. The adapter must prevent a late play resolution from restarting disposed or paused output. Factories should observe the provided AbortSignal; a factory that returns a resource after cancellation still has that resource disposed by the queue.
 

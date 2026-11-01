@@ -113,5 +113,7 @@ export function browserSpeech(speech: SpeechReference, signal: AbortSignal): Aud
     },
     pause,
     dispose,
+    // Native speech has no timeline, only the start of the word it last reached.
+    progress: () => ({character: offset}),
   }
 }

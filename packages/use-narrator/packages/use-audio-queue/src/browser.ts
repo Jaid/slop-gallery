@@ -84,6 +84,10 @@ export function audioFile<T extends object = Record<string, never>>(reference: A
           audio!.pause()
         },
         dispose,
+        progress: () => ({
+          seconds: audio!.currentTime,
+          duration: Number.isFinite(audio!.duration) ? audio!.duration : undefined,
+        }),
       }
       return playback
     } catch (error) {

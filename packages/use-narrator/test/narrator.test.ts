@@ -323,3 +323,54 @@ test('the React subscription can render on the server without creating browser a
   expect(narrator.getSnapshot().idle).toBe(false)
   narrator.dispose()
 })
+class TimedPlayback extends FakePlayback {
+  progress = () => ({seconds: this.seconds})
+  seconds = 0
+}
+const timing = {words: [{
+  from: 0,
+  to: 5,
+  start: 0.1,
+  end: 0.5,
+}]}
+test('a recording’s timing reaches the narration state, and its playback progress is readable by instance', async () => {
+  const clock = new FakeClock
+  const players: Array<TimedPlayback> = []
+  const narrator = new Narrator({clock, createAudio: () => {
+    const player = new TimedPlayback('audio')
+    players.push(player)
+    return player
+  }})
+  const handle = narrator.push({
+    audio: '/voice.opus',
+    text: 'Hello',
+    timing,
+  })
+  await flush()
+  const state = narrationState(narrator.getSnapshot())!
+  expect(state.timing).toBe(timing)
+  players[0].seconds = 0.3
+  expect(narrator.progress(state.instanceId)).toEqual({seconds: 0.3})
+  players[0].end()
+  await handle.finished
+  expect(narrator.progress(state.instanceId)).toBeUndefined()
+  narrator.dispose()
+})
+test('a synthesizer can return a timing with its audio, which native fallback speech drops again', async () => {
+  const {narrator, players} = setup({synthesize: () => ({
+    audio: new Blob(['voice']),
+    timing,
+  })})
+  narrator.push('Hello')
+  await flush()
+  expect(narrationState(narrator.getSnapshot())).toMatchObject({
+    source: 'audio',
+    timing,
+  })
+  players[0].completion.reject(new Error('decode failed'))
+  await flush()
+  const state = narrationState(narrator.getSnapshot())!
+  expect(state.source).toBe('browser')
+  expect(state.timing).toBeUndefined()
+  narrator.dispose()
+})
