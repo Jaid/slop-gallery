@@ -1,4 +1,4 @@
-import type {BufferGeometry, Frustum, Light, LightShadow, Matrix4, Object3D, PerspectiveCamera} from 'three/webgpu'
+import type {BufferGeometry, Camera, Frustum, Light, LightShadow, Matrix4, Object3D, PerspectiveCamera} from 'three/webgpu'
 
 import {Sphere, Vector3} from 'three/webgpu'
 
@@ -59,6 +59,34 @@ export function reachesFrustum(light: Light, frustum: Frustum) {
   lightReach.center.setFromMatrixPosition(matrixWorld)
   lightReach.radius = distance || shadow.camera.far
   return frustum.intersectsSphere(lightReach)
+}
+
+/**
+ * Lets shadow maps that left out objects still streaming in render again despite the cache, one map per frame, each in turn, since rendering them all every frame costs more than building their objects.
+ * Visit every shadow-casting light of a frame, then call `endFrame`.
+ */
+export class ShadowRefresher {
+  private readonly refreshed = new Set<Camera>
+  private refreshing = false
+
+  /** Ends the frame: once every incomplete map had its turn, the next round starts. */
+  endFrame() {
+    if (!this.refreshing) {
+      this.refreshed.clear()
+    }
+    this.refreshing = false
+  }
+
+  /** Lets the light’s map render this frame if `incomplete` says it missed objects and no other map took this frame’s turn. */
+  visit(light: Light & {shadow: LightShadow}, incomplete: (camera: Camera) => boolean) {
+    const {camera} = light.shadow
+    if (this.refreshing || this.refreshed.has(camera) || !incomplete(camera)) {
+      return
+    }
+    light.shadow.needsUpdate = true
+    this.refreshed.add(camera)
+    this.refreshing = true
+  }
 }
 
 /**

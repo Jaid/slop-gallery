@@ -11,7 +11,7 @@ import {ownerRoom, roomBoxes, roomContaining, roomsAt, screenRect, updatePickupR
 import {getFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {lightActive} from '#src/lib/rendering/lightLevels.ts'
-import ShadowCache, {reachesFrustum} from '#src/lib/rendering/ShadowCache.ts'
+import ShadowCache, {reachesFrustum, ShadowRefresher} from '#src/lib/rendering/ShadowCache.ts'
 import relations from '#src/worlds/gallery/relations.ts'
 
 type Drawable = Object3D & {
@@ -102,9 +102,8 @@ export default function RoomCulling() {
     }
     const {hidden, hiddenFromView, shadowCameras, unculledCameras} = galleryRenderer
     const shadows = new ShadowCache
+    const refresher = new ShadowRefresher
     const related = new Set<RoomId>
-    /** shadow cameras refreshed for streaming since every incomplete one last had its turn */
-    const refreshed = new Set<Camera>
     const cull = (camera: Camera) => {
       hidden.clear()
       hiddenFromView.clear()
@@ -121,8 +120,6 @@ export default function RoomCulling() {
           related.add(other)
         }
       }
-      // Set inside the traversal, which TypeScript can’t follow.
-      let refreshing = false as boolean
       const inSight = (rects: ReadonlyArray<ScreenRect>, box: Box3) => {
         const rect = screenRect(box, viewProjection)
         return rect !== undefined && rects.some(([left, bottom, right, top]) => rect[0] <= right && rect[2] >= left && rect[1] <= top && rect[3] >= bottom)
@@ -138,12 +135,7 @@ export default function RoomCulling() {
           if ((light as DirectionalLight).isDirectionalLight && ready) {
             unculledCameras.add(light.shadow.camera)
           }
-          // One shadow map missing objects renders again per frame, each in turn, since rendering them all every frame costs more than building their objects.
-          if (!refreshing && galleryRenderer.shadowIncomplete(light.shadow.camera) && !refreshed.has(light.shadow.camera)) {
-            light.shadow.needsUpdate = true
-            refreshed.add(light.shadow.camera)
-            refreshing = true
-          }
+          refresher.visit(light as Light & {shadow: LightShadow}, shadowCamera => galleryRenderer.shadowIncomplete(shadowCamera))
         }
         if (regions && room && !from.includes(room) && drawable.geometry && drawable.frustumCulled && !holdsLight(object)) {
           // Behind the loading screen, only the camera’s rooms get built; the rooms seen through their openings stream in first afterward.
@@ -162,10 +154,7 @@ export default function RoomCulling() {
         }
       }
       visit(scene, undefined)
-      // Every missing shadow map had its turn, so the next round starts.
-      if (!refreshing) {
-        refreshed.clear()
-      }
+      refresher.endFrame()
       frustum.setFromProjectionMatrix(viewProjection, camera.coordinateSystem, camera.reversedDepth)
       shadows.update(scene, hidden, (light: Light) => {
         if (!lightActive.current(light)) {

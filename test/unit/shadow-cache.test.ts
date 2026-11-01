@@ -1,8 +1,10 @@
+import type {Camera} from 'three/webgpu'
+
 import {expect, test} from 'bun:test'
 
 import {BoxGeometry, DirectionalLight, Frustum, Matrix4, Mesh, PerspectiveCamera, PointLight, Scene, SpotLight} from 'three/webgpu'
 
-import ShadowCache, {reachesFrustum} from '../../src/lib/rendering/ShadowCache.ts'
+import ShadowCache, {reachesFrustum, ShadowRefresher} from '../../src/lib/rendering/ShadowCache.ts'
 
 const setup = () => {
   const scene = new Scene
@@ -198,4 +200,26 @@ test('dispose restores updates every frame', () => {
   step()
   cache.dispose()
   expect(lamp.shadow.autoUpdate).toBe(true)
+})
+test('incomplete shadow maps render again one per frame, each in turn, and start over once all had theirs', () => {
+  const lamps = [0, 1, 2].map(() => new PointLight('#fff', 1, 5))
+  const incomplete = new Set<Camera>([lamps[0].shadow.camera, lamps[2].shadow.camera])
+  const refresher = new ShadowRefresher
+  /** which lamps the refresher lets render this frame */
+  const frame = () => {
+    for (const lamp of lamps) {
+      lamp.shadow.needsUpdate = false
+      refresher.visit(lamp, camera => incomplete.has(camera))
+    }
+    refresher.endFrame()
+    return lamps.entries().filter(([, lamp]) => lamp.shadow.needsUpdate).map(([index]) => index).toArray()
+  }
+  expect(frame()).toEqual([0])
+  expect(frame()).toEqual([2])
+  // Every incomplete map had its turn, so this frame renders none and the next round begins.
+  expect(frame()).toEqual([])
+  expect(frame()).toEqual([0])
+  incomplete.clear()
+  expect(frame()).toEqual([])
+  expect(frame()).toEqual([])
 })
