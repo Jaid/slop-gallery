@@ -86,6 +86,31 @@ test('the real image adapter sends an orb’s prompt with the work as the only i
   expect(request.input_references.map(r => r.image_url.url.split(',')[1])).toEqual([data.toBase64()])
   expect(request.prompt).toBe('Make it spooky.')
 })
+test('the real image adapter asks a known model for the supported ratio closest to the hung work and an unknown one for none', async () => {
+  const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
+  fetchSpy = spyOn(globalThis, 'fetch')
+  const work = new Blob([data], {type: 'image/png'})
+  const request = async (model: string, aspect?: number) => {
+    fetchSpy!.mockResolvedValueOnce(Response.json({
+      created: 1,
+      data: [{b64_json: data.toBase64()}],
+    }))
+    const mergeGenerator = new MergeGenerator('test-key', model)
+    await mergeGenerator.generate(work, work, {aspect})
+    return JSON.parse(fetchSpy!.mock.calls.at(-1)![1]!.body as string) as {
+      aspect_ratio?: string
+      model: string
+    }
+  }
+  expect(await request('google/gemini-nano-banana-2.1', 1.5)).toMatchObject({
+    model: 'google/gemini-nano-banana-2.1',
+    aspect_ratio: '3:2',
+  })
+  expect(await request('openai/gpt-image-2.5-sunburst', 0.5)).toHaveProperty('aspect_ratio', '9:16')
+  expect(await request('x-ai/grok-imagine-image-2.0', 0.5)).toHaveProperty('aspect_ratio', '1:2')
+  expect(await request('test-image-model', 1.5)).not.toHaveProperty('aspect_ratio')
+  expect(await request('google/gemini-nano-banana-2.1')).not.toHaveProperty('aspect_ratio')
+})
 test('the real image adapter re-encodes an image of a format image models reject, like a JXL work, to WebP', async () => {
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(Response.json({
