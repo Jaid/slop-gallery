@@ -21,9 +21,10 @@ describe('animation encoding', () => {
       const info = await Bun.$`jxlinfo -v ${output}`.text()
       expect(output).toEndWith('.jxl')
       expect(info).toContain('RGB+Alpha')
-      expect(info).toContain('Num loops: 0')
+      // jxlinfo’s wording differs between libjxl builds, like “Num loops” and “num_loops”.
+      expect(info).toMatch(/^num[ _]loops: 0$/imu)
       expect(info).toContain('Animation length: 2.000 seconds')
-      const durations = Array.from(info.matchAll(/^Frame:.*duration: ([\d.]+) ms/gm), match => Number(match[1]))
+      const durations = Array.from(info.matchAll(/^frame:.*duration: ([\d.]+) ms/gimu), match => Number(match[1]))
       expect(durations).toHaveLength(120)
       expect(durations.reduce((sum, value) => sum + value, 0)).toBe(2000)
       expect(new Set(durations)).toEqual(new Set([16, 17]))
