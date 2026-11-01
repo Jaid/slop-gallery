@@ -10,7 +10,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Cornelius van Honk',
     description: 'A ruler of impeccable breeding and absolutely no qualifications. His foreign policy consists primarily of hissing.',
     source: '/art/goose.jxl',
-    narration: '/audio/goose.opus',
+    narration: {audio: '/audio/goose.opus'},
     position: [
       -3.6,
       2.5,
@@ -28,7 +28,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'The Department of Lobbys',
     description: 'The village had asked for a little more sunshine. The universe, as usual, misunderstood the brief.',
     source: '/art/orange.jxl',
-    narration: '/audio/orange.opus',
+    narration: {audio: '/audio/orange.opus'},
     position: [
       7.78,
       2.65,
@@ -46,7 +46,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'The Department of Good Dogs',
     description: 'A peaceful velvet pup with no appointments, no responsibilities and a deeply held belief that the entire sofa belongs to him.',
     source: '/art/dog.jxl',
-    narration: '/audio/dog.opus',
+    narration: {audio: '/audio/dog.opus'},
     position: [
       3.6,
       2.5,
@@ -64,7 +64,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'The Department of Good Dogs',
     description: 'A galactic predator of pure neon fury. His cosmic authority is absolute, provided nobody mentions the vacuum cleaner.',
     source: '/art/wolf.jxl',
-    narration: '/audio/wolf.opus',
+    narration: {audio: '/audio/wolf.opus'},
     position: [
       -4.5,
       2.5,
@@ -82,7 +82,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Sylvia Nimbus',
     description: 'A tree with excellent aspirations and a rather relaxed relationship with the ground. The gardener has requested a ladder.',
     source: '/art/tree.jxl',
-    narration: '/audio/tree.opus',
+    narration: {audio: '/audio/tree.opus'},
     position: [
       -7.78,
       2.5,
@@ -100,7 +100,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Leonardo da Birb',
     description: 'Her enigmatic smile hides the fact she just stole your sandwich. A masterpiece of urban elegance and mild menace.',
     source: '/art/pigeon.jxl',
-    narration: '/audio/pigeon.opus',
+    narration: {audio: '/audio/pigeon.opus'},
     position: [
       7.78,
       2.6,
@@ -118,7 +118,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Imperial Court of Toast',
     description: 'The sovereign ruler of breakfast, anointed in salted butter and reigning over four slots of unyielding thermal perfection.',
     source: '/art/toast.jxl',
-    narration: '/audio/toast.opus',
+    narration: {audio: '/audio/toast.opus'},
     position: [
       19.78,
       2.6,
@@ -136,7 +136,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Meow-ghelangelo',
     description: 'Proof that given infinite cosmic authority, a feline will still push entire clusters of stars off the counter simply to see them explode into supernovas.',
     source: '/art/cat.jxl',
-    narration: '/audio/cat.opus',
+    narration: {audio: '/audio/cat.opus'},
     position: [
       -17,
       2.65,
@@ -154,7 +154,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Generative Orchard No. 6',
     description: 'Synthetic produce contemplates whether humans can distinguish hunger from engagement. The banana has already accepted cookies.',
     source: '/art/fruit.jxl',
-    narration: '/audio/fruit.opus',
+    narration: {audio: '/audio/fruit.opus'},
     position: [
       -10.5,
       2.65,
@@ -172,7 +172,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Ectoplasmic Catering Collective',
     description: 'Dinner ran long. By approximately four centuries. No guest will admit who ordered the bottomless spectral linguine.',
     source: '/art/ghosts.jxl',
-    narration: '/audio/ghosts.opus',
+    narration: {audio: '/audio/ghosts.opus'},
     position: [
       -19.78,
       2.6,
@@ -190,7 +190,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Michelangelo di Slop',
     description: 'The sacred bath toy ascends to the celestial heavens, forever untethered from bathtubs, soapsuds, and mortality.',
     source: '/art/duck.jxl',
-    narration: '/audio/duck.opus',
+    narration: {audio: '/audio/duck.opus'},
     position: [
       0,
       2.4,
@@ -208,7 +208,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Jan van der Crumb',
     description: 'Born of wild yeast and existential dread, this loaf contemplated the fleeting cruelty of butter before meeting the serrated knife.',
     source: '/art/bread.jxl',
-    narration: '/audio/bread.opus',
+    narration: {audio: '/audio/bread.opus'},
     position: [
       17,
       2.6,
@@ -226,7 +226,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Leonardo da Pond',
     description: 'She smiles because she knows something you don’t – mostly where the flies are and why your pond is inferior.',
     source: '/art/frog.jxl',
-    narration: '/audio/frog.opus',
+    narration: {audio: '/audio/frog.opus'},
     position: [
       -14,
       2.5,
@@ -244,7 +244,7 @@ const samplePortraits: Array<Portrait> = [
     creator: 'Salvador Deli',
     description: 'The tea is cold. The guest is shellfish. Nobody is having the afternoon they had imagined.',
     source: '/art/lobster.jxl',
-    narration: '/audio/lobster.opus',
+    narration: {audio: '/audio/lobster.opus'},
     position: [
       4.5,
       2.5,

@@ -244,8 +244,8 @@ describe('default artworks', () => {
       if (!narration) {
         continue
       }
-      expect(narration).toEndWith(`${sep}${id}.opus`)
-      expect(await Bun.file(narration).exists()).toBe(true)
+      expect(narration.audio).toEndWith(`${sep}${id}.opus`)
+      expect(await Bun.file(narration.audio).exists()).toBe(true)
     }
   })
   test('the furnished gallery of the tests hangs the default artworks', () => {

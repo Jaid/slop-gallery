@@ -13,6 +13,7 @@ import {environmentSeed} from '../gameSeed.ts'
 import {intro} from './intro.ts'
 import {narrator} from './narration.ts'
 import {narratorCharacter, narratorVoice} from './narratorCharacter.ts'
+import transcriptFor from './transcript.ts'
 
 type Story = Pick<Portrait, 'description' | 'id' | 'title'> & Partial<Pick<Portrait, 'merging' | 'narration' | 'pending' | 'source'>>
 type Request = {
@@ -23,7 +24,6 @@ type Request = {
 function storyFor(id: string): Story | undefined {
   return id === intro.id ? intro : useGallery.getState().portraits.find(p => p.id === id)
 }
-const transcriptFor = (story: Story) => `${story.title.replace(/[!.?]$/, '')}. ${story.description.trim()}${/[!.?]$/.test(story.description.trim()) ? '' : '.'}`
 function waitForStory(id: string, signal: AbortSignal): Promise<Story> {
   signal.throwIfAborted()
   return new Promise((resolve, reject) => {
@@ -104,7 +104,7 @@ export default class PortraitNarration {
       request.story = ready
       const text = transcriptFor(ready)
       return ready.narration ? {
-        audio: ready.narration,
+        ...ready.narration,
         title: ready.title,
         text,
       } : {

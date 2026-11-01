@@ -1,6 +1,12 @@
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
+import type {NarrationTiming} from 'use-narrator/core'
 
 export type {Quat, Vec3} from 'math'
+/** a recording of a work’s title and description, as `PortraitNarration` reads them, with when its words are spoken */
+export type Narration = {
+  audio: string
+  timing?: NarrationTiming
+}
 export type Portrait = {
   creator: string
   description: string
@@ -13,7 +19,7 @@ export type Portrait = {
   labelAbove?: boolean
   mergeJob?: symbol
   merging?: boolean
-  narration?: string
+  narration?: Narration
   orientation?: MathQuat
   pending?: boolean
   position: MathVec3
