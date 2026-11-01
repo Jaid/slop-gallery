@@ -1,4 +1,7 @@
+import type {CSSProperties} from 'react'
+
 import Branch from 'branch-component'
+import clsx from 'clsx'
 import {useEffect, useState} from 'react'
 
 import Dropzone from '#component/Dropzone'
@@ -14,6 +17,7 @@ import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
 import {hideLoadingScreen, useLoadingScreen} from '#src/lib/loadingScreen.ts'
 import {useGraphicsTuning} from '#src/lib/rendering/customGraphics.ts'
+import {screenRatio} from '#src/lib/rendering/ratio.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import useSlopGalleryTelemetry from '#src/lib/telemetry/useSlopGalleryTelemetry.ts'
 import useGalleryAI from '#src/lib/useGalleryAI.ts'
@@ -48,17 +52,20 @@ export default function App() {
   return <GraphicsMode><Dropzone><div className={css.layout}>
     {/* A column of its own left of the canvas and HUD, so the panel never covers the scene it tunes */}
     <Branch if={tuning.open} then={GraphicsTuning} />
-    <div className={css.stage}>
-      <main className={css.viewport} aria-label='Interactive 3D gallery'>
-        <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
-        <Branch if={tuning.open} then={TuningBuffer} />
-      </main>
-      {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. The loading screen stands in for it until the scene is ready. */}
-      <Branch none={[loading, s.locked, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
-      <Branch not={uiHidden} then={Hud} />
-      {/* Counts what is still loading, over the loading screen as well as after it, while the rest streams in. */}
-      <Branch not={uiHidden} then={LoadingIndicator} />
-      <Branch if={s.notice} not={uiHidden}><Toast>{s.notice}</Toast></Branch>
+    {/* ?ratio letterboxes the screen, so the canvas keeps that shape and the menu and HUD stay on it. */}
+    <div className={clsx(css.stage, screenRatio !== undefined && css.letterbox)} style={screenRatio === undefined ? undefined : {'--ratio': screenRatio} as CSSProperties}>
+      <div className={css.screen}>
+        <main className={css.viewport} aria-label='Interactive 3D gallery'>
+          <RenderBoundary onFailure={() => setRenderFailed(true)}><World /></RenderBoundary>
+          <Branch if={tuning.open} then={TuningBuffer} />
+        </main>
+        {/* Hidden with O, the paused scene stays in full view, e.g. while tweaking values in an editor; O brings the menu back. Hovering the tuning panel hides it too. The loading screen stands in for it until the scene is ready. */}
+        <Branch none={[loading, s.locked, s.dragging, renderFailed, uiHidden, tuning.hovered]}><Menu {...settings} /></Branch>
+        <Branch not={uiHidden} then={Hud} />
+        {/* Counts what is still loading, over the loading screen as well as after it, while the rest streams in. */}
+        <Branch not={uiHidden} then={LoadingIndicator} />
+        <Branch if={s.notice} not={uiHidden}><Toast>{s.notice}</Toast></Branch>
+      </div>
     </div>
   </div></Dropzone></GraphicsMode>
 }

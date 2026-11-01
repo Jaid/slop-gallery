@@ -7,6 +7,7 @@ import {readFlying} from '../../src/lib/gallery/flyMode.ts'
 import {readAlbedo} from '../../src/lib/rendering/albedo.ts'
 import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
+import {readRatio} from '../../src/lib/rendering/ratio.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
 import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
@@ -45,6 +46,14 @@ describe('URL options', () => {
     for (const value of ['', '0', '-0.1', 'auto', 'NaN', 'Infinity']) {
       expect(readNear(`?near=${value}`)).toBeUndefined()
       expect(readScale(`?scale=${value}`)).toBeUndefined()
+    }
+  })
+  test('?ratio accepts a positive width-to-height ratio as x:x, x/x or a number', () => {
+    for (const [value, expected] of [['16:9', 16 / 9], ['16/9', 16 / 9], ['9:16', 9 / 16], ['19.5:9', 19.5 / 9], ['2.39', 2.39], ['1', 1], ['1e1', 10], ['4%2F3', 4 / 3]] as const) {
+      expect(readRatio(`?ratio=${value}`)).toBe(expected)
+    }
+    for (const search of ['', '?ratio', '?ratio=', '?ratio=0', '?ratio=-1.5', '?ratio=16:0', '?ratio=-16:-9', '?ratio=16:', '?ratio=:9', '?ratio=16:9:1', '?ratio=16x9', '?ratio=wide', '?ratio=Infinity', '?ratio=1e308:1e-308']) {
+      expect(readRatio(search)).toBeUndefined()
     }
   })
   test('?wireframe_highlight keeps a slash-separated mesh path', () => {

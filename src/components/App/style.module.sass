@@ -3,11 +3,25 @@
   inset: 0
   display: flex
 
-// The canvas, menu and HUD position themselves within the stage.
 .stage
   position: relative
   flex: 1
   min-width: 0
+
+// The canvas, menu and HUD position themselves within the screen.
+.screen
+  position: absolute
+  inset: 0
+
+// The largest rectangle of the ratio that fits the stage, centered between black bars
+.letterbox
+  container-type: size
+  background: #000
+  > .screen
+    width: min(100cqw, 100cqh * var(--ratio))
+    height: min(100cqh, 100cqw / var(--ratio))
+    margin: auto
+    overflow: hidden
 
 .viewport
   position: absolute

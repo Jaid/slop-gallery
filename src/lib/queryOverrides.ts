@@ -22,6 +22,7 @@ import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLamps, readShowLamps} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
+import {readRatio} from './rendering/ratio.ts'
 import {readScale} from './rendering/scale.ts'
 import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readStreamBudget} from './rendering/streamBudget.ts'
@@ -58,6 +59,7 @@ const readers: Record<string, Reader> = {
   near: readNear,
   pmrem: readPmrem,
   portrait_set: readPortraitSet,
+  ratio: readRatio,
   room: readRoom,
   room_announcements: readRoomAnnouncements,
   scale: readScale,
