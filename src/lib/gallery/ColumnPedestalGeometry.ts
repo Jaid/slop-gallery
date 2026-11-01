@@ -6,7 +6,7 @@ import LobedProfileGeometry from './LobedProfileGeometry.ts'
 import RevolvedProfileGeometry from './RevolvedProfileGeometry.ts'
 
 /** how much larger the column is built than its parts are measured below */
-const scale = 1.5
+const scale = 1.25
 /** how high the cap stands over the foot, as measured */
 const height = 1.1
 /** the fluted shaft between the base and the capital, its ends hidden in both, as measured */
@@ -66,7 +66,7 @@ export function fluteLobe(fillet: number) {
 
 /**
  * A slender column of stone to carry small things like orbs: a round plinth under a large and a small torus, a fluted shaft and a capital of an astragal, an ovolo and a round abacus, its cap {@link columnPedestalHeight} over its foot.
- * Every part is measured at two thirds of its size, then built {@link scale} times larger.
+ * Every part is measured smaller than it is, then built {@link scale} times larger.
  */
 export default class ColumnPedestalGeometry {
   readonly stone = mergeParts([
