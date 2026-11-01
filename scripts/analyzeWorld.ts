@@ -8,7 +8,7 @@ import {galleryHelp, galleryOptions, openHeadlessGallery, resolveGallerySetup} f
 
 const help = `Usage: bun scripts/analyzeWorld.ts [options]
 
-Opens the level in a private headless browser, calls the app’s analyze_world WebMCP tool and prints its result as JSON: per room its floor footprint polygon, floor level, clear height, triangles, meshes and lights.
+Opens the world in a private headless browser, calls the app’s analyze_world WebMCP tool and prints its result as JSON: per room its title, fence, meshes with their triangles and lights, plus what lies elsewhere and the global lights.
 Starts a private Vite dev server (or serves --target); never touches the visible browser. Progress goes to stderr, so stdout can be redirected to a file.
 
 Options:

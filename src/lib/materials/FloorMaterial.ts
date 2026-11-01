@@ -53,7 +53,7 @@ let mirroredHeight: number | null = null
 export function setFloorReflectionHeight(height: number | null) {
   mirroredHeight = height
 }
-/** the height of the floors the shared reflection mirrors, if the level picked one */
+/** the height of the floors the shared reflection mirrors, if the world picked one */
 export function getFloorReflectionHeight() {
   return mirroredHeight
 }
