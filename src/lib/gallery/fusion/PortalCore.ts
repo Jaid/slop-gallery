@@ -24,7 +24,7 @@ export type PortalPalette = {
 
 /**
  * The glowing heart of a fusion: a disc of swirling energy that always faces the camera, so it reads as a ball from every side, with a hot, wobbling rim, a corona of rays, the shockwaves it sends out and the view around it bent toward it like light around a star.
- * In its middle, the image of an ingredient surfaces from the vortex and sinks back into it, shimmering, wavy and split into its colors while it is half there.
+ * Filling it, the image of an ingredient surfaces from the vortex and sinks back into it, bulging like the inside of a ball, shimmering, wavy and split into its colors while it is half there.
  *
  * It is two quads at the group’s origin: the disc and the lens blend over the scene, the glow adds onto it. Everything the frame changes is a uniform; the group itself only moves.
  */
@@ -83,18 +83,20 @@ export default class PortalCore extends Group {
     // Dark and deep in the middle, where the images surface; the swirl burns brightest toward the rim.
     const bright = vortex.pow(1.6).mul(smoothstep(0, 1, rho).mul(0.75).add(0.25))
     const swirlColor = mix(core, swirl, bright).mul(energy.mul(0.9).add(0.25)).add(swirl.mul(bright.pow(3)).mul(energy).mul(1.2))
-    // The image: fitted into the disc with its corners in the rim, twisted into the vortex while it is half there, rippling and split into its colors.
+    // The image: covering the disc, its shorter side spanning it and the rest cut off, and twisted into the vortex while it is half there. It bulges like the inside of a ball, ever more squeezed, dragged along by the vortex, rippling and split into its colors toward the rim.
     const unclear = float(1).sub(clarity)
-    const diagonal = aspect.mul(aspect).add(1).sqrt()
-    const half = vec2(aspect, 1).div(diagonal).mul(1.04)
-    const bend = unclear.mul(unclear).mul(4).mul(float(1).sub(rho).max(0).pow(1.5)).add(sin(clock.mul(1.7).add(rho.mul(5))).mul(0.06))
-    const turned = rotate(p, bend) as unknown as Node<'vec2'>
-    const ripple = vec2(sin(turned.y.mul(8).add(clock.mul(3.1))), sin(turned.x.mul(7).sub(clock.mul(2.7)))).mul(0.032)
+    const half = vec2(aspect, 1).div(aspect.min(1)).mul(1.04)
+    const outward = rho.min(1).toVar('portalOutward')
+    const rimward = outward.pow(3)
+    const bulged = p.mul(rimward.mul(0.2).add(0.8))
+    const bend = unclear.mul(unclear).mul(4).mul(float(1).sub(rho).max(0).pow(1.5)).add(sin(clock.mul(1.7).add(rho.mul(5))).mul(0.06)).sub(rimward.mul(sin(clock.mul(1.3)).mul(0.08).add(0.3)))
+    const turned = rotate(bulged, bend) as unknown as Node<'vec2'>
+    const ripple = vec2(sin(turned.y.mul(8).add(clock.mul(3.1))), sin(turned.x.mul(7).sub(clock.mul(2.7)))).mul(outward.mul(outward).mul(0.04).add(0.018))
     const imageUV = turned.add(ripple).div(half.mul(2)).add(0.5).toVar('portalImageUV')
-    const split = p.div(max(rho, 0.001)).mul(unclear.mul(0.02).add(0.007))
+    const split = p.div(max(rho, 0.001)).mul(unclear.mul(0.02).add(0.007)).mul(outward.mul(outward).mul(1.6).add(0.4))
     const picture = vec3(this.image.sample(imageUV.add(split)).r, this.image.sample(imageUV).g, this.image.sample(imageUV.sub(split)).b)
     const shimmer = sin(p.x.mul(7.2).add(p.y.mul(5.4)).sub(clock.mul(5))).mul(0.2).add(sin(rho.mul(14).sub(clock.mul(7))).mul(0.08)).add(1.12)
-    const framed = smoothstep(0, 0.05, imageUV.x).mul(smoothstep(1, 0.95, imageUV.x)).mul(smoothstep(0, 0.05, imageUV.y)).mul(smoothstep(1, 0.95, imageUV.y))
+    const framed = smoothstep(0, 0.02, imageUV.x).mul(smoothstep(1, 0.98, imageUV.x)).mul(smoothstep(0, 0.02, imageUV.y)).mul(smoothstep(1, 0.98, imageUV.y))
     // It surfaces through the noise and sinks back the same way, with a glowing seam along the edge of what is there.
     const grain = mx_noise_float(vec3(p.mul(3.5), clock.mul(0.6))).mul(0.5).add(0.5)
     const surfaced = smoothstep(grain.sub(0.12), grain.add(0.02), clarity.mul(1.15).sub(0.05))
