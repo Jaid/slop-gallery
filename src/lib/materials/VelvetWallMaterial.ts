@@ -1,7 +1,8 @@
-import type {Node} from 'three/webgpu'
+import type {Wall} from '../placement/wallGeometry.ts'
+import type {Node, Object3D} from 'three/webgpu'
 
-import {color, float, max, mix, mx_noise_float, normalViewGeometry, normalWorldGeometry, positionViewDirection, positionWorld, select, vec3} from 'three/tsl'
-import {MeshPhysicalNodeMaterial} from 'three/webgpu'
+import {atan, color, float, fract, max, mix, mx_noise_float, normalViewGeometry, normalWorldGeometry, positionViewDirection, positionWorld, select, uniform, vec3} from 'three/tsl'
+import {MeshPhysicalNodeMaterial, Vector4} from 'three/webgpu'
 
 import {heightNormal, visibleDetail} from './filters.ts'
 
@@ -27,6 +28,31 @@ export const oxbloodVelvet: VelvetStyle = {
   sheen: '#d01a34',
 }
 
+/** what a mesh not covering a round wall gets for its ring: none, a radius of 0 */
+const noRing = new Vector4
+const rings = new WeakMap<Wall, Vector4>
+/**
+ * The ring of the round wall the mesh covers, which `WallSurface` hands its surface as `userData.wall`: its middle in world x and z, its radius and the angle round it, from world x toward world z, where the pattern starts over.
+ * That angle lies in the middle of the wall’s first opening, where there is no wall to show the jump, or where the wall’s ends meet if it has none.
+ */
+function ringOf(object: Object3D | null) {
+  const wall = object?.userData.wall as Wall | undefined
+  if (!wall?.curveRadius) {
+    return noRing
+  }
+  let ring = rings.get(wall)
+  if (!ring) {
+    const radius = wall.curveRadius
+    const [x, , z] = wall.center
+    // The wall faces its ring’s middle along its own z, and runs round it toward greater angles along its own x.
+    const middleX = x + Math.sin(wall.rotation) * radius
+    const middleZ = z + Math.cos(wall.rotation) * radius
+    const start = wall.holes?.[0]?.u ?? Math.PI * radius
+    ring = new Vector4(middleX, middleZ, radius, Math.atan2(z - middleZ, x - middleX) + start / radius)
+    rings.set(wall, ring)
+  }
+  return ring
+}
 const unit = (node: Float) => node.mul(0.5).add(0.5)
 const noise = (x: Float, y: Float, seed: Float) => mx_noise_float(vec3(x, y, seed))
 
@@ -35,7 +61,7 @@ const noise = (x: Float, y: Float, seed: Float) => mx_noise_float(vec3(x, y, see
  *
  * The pile was pressed flat in drifting, folded patches, which read lighter and shinier than the upright pile around them. Within them it lies in small clumps of short strokes that lean one way in one patch and another way in the next, so the fabric shimmers patch by patch. Over that runs the nap, brushed downward in long strokes that bend gently, and a fine grain of tufts and fibers. The fibers scatter a soft sheen at grazing angles instead of a mirror highlight, so the fabric glows where light washes across it.
  *
- * The pattern is mapped along whichever wall it covers, by world position, so a single material serves every wall and the pattern only changes where two walls meet in a corner. Every feature fades to its average while its period still spans a few pixels, so the grain never sparkles.
+ * The pattern is mapped along whichever wall it covers, by world position, so a single material serves every wall and the pattern only changes where two walls meet in a corner. Round walls get it laid out along their arc instead, so it runs on unbroken however they turn. Every feature fades to its average while its period still spans a few pixels, so the grain never sparkles.
  */
 export default class VelvetWallMaterial extends MeshPhysicalNodeMaterial {
   constructor({seed = 0, style = oxbloodVelvet}: {
@@ -50,8 +76,11 @@ export default class VelvetWallMaterial extends MeshPhysicalNodeMaterial {
       specularIntensity: 0.6,
     })
     const normal = normalWorldGeometry
-    // Along the wall, whichever axis it runs on, and up.
-    const u = select(normal.x.abs().greaterThan(normal.z.abs()), positionWorld.z, positionWorld.x).toVar('velvetU')
+    // Along the wall, whichever axis it runs on, or round a round wall’s arc, and up.
+    const ring = uniform(new Vector4).onObjectUpdate(({object}) => ringOf(object))
+    const turn = atan(positionWorld.z.sub(ring.y), positionWorld.x.sub(ring.x)).sub(ring.w).div(Math.PI * 2)
+    const arc = fract(turn).mul(ring.z.mul(Math.PI * 2))
+    const u = select(ring.z.greaterThan(0), arc, select(normal.x.abs().greaterThan(normal.z.abs()), positionWorld.z, positionWorld.x)).toVar('velvetU')
     const y = positionWorld.y.toVar('velvetY')
     const footprint = max(u.fwidth(), y.fwidth()).toVar('velvetFootprint')
     const s = float(seed * 17.3 + 3.1)
