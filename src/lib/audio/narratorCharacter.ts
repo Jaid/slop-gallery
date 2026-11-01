@@ -1,6 +1,32 @@
 import {environmentPick, environmentRoll, environmentSample} from '../environmentSeed.ts'
 
-export const narratorTraits = ['calm', 'knowledgeable', 'lively', 'witty', 'sarcastic', 'humorous', 'self-deprecating', 'wry', 'dry', 'deadpan', 'sardonic', 'cheeky', 'mischievous', 'conspiratorial', 'erudite', 'eloquent', 'articulate', 'composed']
+/** ordered from quiet and controlled to playful and energetic, so neighboring traits in an instruction belong together */
+export const narratorTraits = [
+  // composure
+  'calm',
+  'composed',
+  // authority
+  'knowledgeable',
+  'erudite',
+  'articulate',
+  'eloquent',
+  // understated humor
+  'dry',
+  'deadpan',
+  'wry',
+  'witty',
+  // sharp humor
+  'sarcastic',
+  'sardonic',
+  'self-deprecating',
+  // playful humor
+  'humorous',
+  'cheeky',
+  'mischievous',
+  'conspiratorial',
+  // energy
+  'lively',
+]
 const narratorNouns = ['narration', 'narrator', 'commentary', 'art gallery director']
 const narratorSuffixes = ['', 'pleasant to listen to', 'easy to listen to', 'hooking the listeners', 'easily hooking the listener']
 
