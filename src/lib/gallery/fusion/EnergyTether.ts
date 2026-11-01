@@ -40,7 +40,8 @@ export default class EnergyTether extends Mesh<PlaneGeometry, MeshBasicNodeMater
     const along = positionGeometry.x.add(0.5)
     const base = mix(from, to, along)
     const direction = to.sub(from)
-    const side = cross(direction, cameraPosition.sub(base)).normalize()
+    // Across the strand, so that its front faces the camera.
+    const side = cross(cameraPosition.sub(base), direction).normalize()
     const bend = cross(side, direction).normalize()
     // It writhes most in the middle and is pinned at both ends.
     const writhe = side.mul(mx_noise_float(vec3(along.mul(3.2), clock.mul(2.3), offset)))
