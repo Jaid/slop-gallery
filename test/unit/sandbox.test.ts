@@ -185,8 +185,8 @@ describe('the passage from the Cell’s hall to its round room', () => {
         expect(sandbox.roomAt(position)).toBe(cell)
         expect(sandbox.contains(position)).toBe(true)
       }
-      // A meter deep, beside it lies nothing.
-      expect(layout.passage).toBe(1)
+      // Half a meter deep, beside it lies nothing.
+      expect(layout.passage).toBe(0.5)
       expect(sandbox.placement.contains(cell.toWorld([vestibule.center[0] + layout.arch.width / 2 + 0.3, 1, layout.northZ - layout.passage / 2]))).toBe(false)
     }
   })

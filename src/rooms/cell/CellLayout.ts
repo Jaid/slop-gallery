@@ -26,7 +26,7 @@ const arch = {
   profile: 'arch',
 } as const satisfies RoundVestibule['arch']
 /** how far the vestibule’s wall stands back from the north wall’s center line, which leaves a passage between them, lined like the arch */
-const passage = 1
+const passage = 0.5
 /** the vestibule’s round a lone item */
 const vestibuleRadius = 4
 /** how far apart neighboring pedestals of a rotunda stand at least, middle to middle */
