@@ -5,10 +5,12 @@ import {colliderGeometry} from './architecture.ts'
 import LobedProfileGeometry from './LobedProfileGeometry.ts'
 import RevolvedProfileGeometry from './RevolvedProfileGeometry.ts'
 
-/** how high a column pedestal’s cap stands over its foot, which whatever it carries rests on: lower than the block pedestal’s, for small things like orbs */
-export const columnPedestalHeight = 1.1
-/** the fluted shaft between the base and the capital, its ends hidden in both */
-export const columnShaft = {
+/** how much larger the column is built than its parts are measured below */
+const scale = 1.5
+/** how high the cap stands over the foot, as measured */
+const height = 1.1
+/** the fluted shaft between the base and the capital, its ends hidden in both, as measured */
+const shaft = {
   /** out to its fillets, the strips between the flutes */
   radius: 0.13,
   bottom: 0.23,
@@ -19,11 +21,25 @@ export const columnShaft = {
   /** how much of each flute’s period its fillet takes */
   fillet: 0.16,
 }
+/** how far the column reaches out from its axis, its plinth at the foot and its abacus at the cap, as measured */
+const reach = {
+  foot: 0.235,
+  cap: 0.205,
+}
+/** how high a column pedestal’s cap stands over its foot, which whatever it carries rests on */
+export const columnPedestalHeight = height * scale
+/** the fluted shaft between the base and the capital, its ends hidden in both */
+export const columnShaft = {
+  ...shaft,
+  radius: shaft.radius * scale,
+  bottom: shaft.bottom * scale,
+  top: shaft.top * scale,
+  fluteDepth: shaft.fluteDepth * scale,
+}
 /** how far the column reaches out from its axis: its plinth at the foot and its abacus at the cap */
 export const columnPedestalRadius = {
-  foot: 0.235,
-  /** as wide as the plinth, for the orb holder’s feet */
-  cap: 0.235,
+  foot: reach.foot * scale,
+  cap: reach.cap * scale,
 }
 /** sides of the turned base and capital, enough to read round */
 const sides = 72
@@ -50,43 +66,44 @@ export function fluteLobe(fillet: number) {
 
 /**
  * A slender column of stone to carry small things like orbs: a round plinth under a large and a small torus, a fluted shaft and a capital of an astragal, an ovolo and a round abacus, its cap {@link columnPedestalHeight} over its foot.
+ * Every part is measured at two thirds of its size, then built {@link scale} times larger.
  */
 export default class ColumnPedestalGeometry {
   readonly stone = mergeParts([
     // The base, from inside the shaft out over its fillet and both tori and down the plinth, then in under it.
     new RevolvedProfileGeometry([
-      [columnShaft.radius - 0.01, 0.24],
+      [shaft.radius - 0.01, 0.24],
       [0.15, 0.24],
       ...arc([0.15, 0.195], [0.028, 0.03], Math.PI / 2, -Math.PI / 2, 12),
       ...arc([0.185, 0.115], [0.045, 0.05], Math.PI / 2, -Math.PI / 2, 16),
       [0.23, 0.065],
-      [columnPedestalRadius.foot, 0.06],
-      [columnPedestalRadius.foot, 0.005],
+      [reach.foot, 0.06],
+      [reach.foot, 0.005],
       [0.23, 0],
       [0, 0],
     ], {sides}),
     new LobedProfileGeometry([
-      [columnShaft.radius - columnShaft.fluteDepth / 2, columnShaft.top, columnShaft.fluteDepth / 2, 0],
-      [columnShaft.radius - columnShaft.fluteDepth / 2, columnShaft.bottom, columnShaft.fluteDepth / 2, 0],
+      [shaft.radius - shaft.fluteDepth / 2, shaft.top, shaft.fluteDepth / 2, 0],
+      [shaft.radius - shaft.fluteDepth / 2, shaft.bottom, shaft.fluteDepth / 2, 0],
     ], {
-      lobe: fluteLobe(columnShaft.fillet),
-      lobes: columnShaft.flutes,
+      lobe: fluteLobe(shaft.fillet),
+      lobes: shaft.flutes,
       segmentsPerLobe: 24,
     }),
     // The capital, from the middle of its top out over the abacus, in under it round the ovolo, over the astragal and into the shaft.
     new RevolvedProfileGeometry([
-      [0, columnPedestalHeight],
-      [columnPedestalRadius.cap - 0.005, columnPedestalHeight],
-      [columnPedestalRadius.cap, columnPedestalHeight - 0.005],
-      [columnPedestalRadius.cap, 1.06],
-      [columnPedestalRadius.cap - 0.005, 1.055],
-      ...arc([0.15, 1.055], [0.06, 0.05], 0, -Math.PI / 2, 12),
+      [0, height],
+      [reach.cap - 0.005, height],
+      [reach.cap, height - 0.005],
+      [reach.cap, 1.06],
+      [reach.cap - 0.005, 1.055],
+      ...arc([0.15, 1.055], [0.035, 0.05], 0, -Math.PI / 2, 12),
       ...arc([0.15, 0.97], [0.016, 0.015], Math.PI / 2, -Math.PI / 2, 12),
       [0.14, 0.955],
       [0.14, 0.94],
-      [columnShaft.radius - 0.01, 0.94],
+      [shaft.radius - 0.01, 0.94],
     ], {sides}),
-  ])
+  ]).scale(scale, scale, scale)
   readonly collision = colliderGeometry(this.stone)
 
   dispose() {

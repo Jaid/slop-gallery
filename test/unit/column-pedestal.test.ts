@@ -2,11 +2,10 @@ import {describe, expect, test} from 'bun:test'
 
 import ColumnPedestalGeometry, {columnPedestalHeight, columnPedestalRadius, columnShaft, fluteLobe} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
 import OrbHolderGeometry from '../../src/lib/gallery/OrbHolderGeometry.ts'
-import {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
 import CellLayout from '../../src/rooms/cell/CellLayout.ts'
 
 describe('the column pedestal', () => {
-  test('stands a fluted shaft between a round base and capital, slenderer than the block pedestal and far under the ceiling, its cap wide enough for an orb holder’s feet', () => {
+  test('stands a slender fluted shaft between a round base and capital far under the ceiling, its cap wide enough for an orb holder’s feet', () => {
     const column = new ColumnPedestalGeometry
     const holder = new OrbHolderGeometry
     try {
@@ -15,8 +14,7 @@ describe('the column pedestal', () => {
       expect(min.y).toBeCloseTo(0, 6)
       expect(max.y).toBeCloseTo(columnPedestalHeight, 6)
       expect(Math.max(-min.x, max.x, -min.z, max.z)).toBeCloseTo(columnPedestalRadius.foot, 3)
-      expect(columnPedestalRadius.foot * 2).toBeLessThan(0.5)
-      expect(columnPedestalHeight).toBeLessThan(pedestalHeight)
+      expect(columnPedestalRadius.foot * 2).toBeLessThan(columnPedestalHeight / 2)
       const {height} = new CellLayout(0)
       expect(columnPedestalHeight).toBeLessThan(height / 2)
       // The holder’s feet stay well within the cap’s rim.

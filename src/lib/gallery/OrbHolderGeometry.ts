@@ -10,10 +10,6 @@ import {orbRadius} from './orbs/index.ts'
 /** a point in a plane: of a turned outline, its radius and height, or of a flat one, across and up */
 type Point = readonly [x: number, y: number]
 
-/** how much larger the stand is built than its parts are measured below, which keeps the orb’s middle about as high over the cap while the cup takes in more of it */
-const scale = 1.25
-/** how far the hollow inside the cup keeps clear of a seated orb, as measured below */
-const bowlClearance = 0.006
 /** the beaded band the cup stands on, raised over the cap on the feet: its underside, the beads along its bottom and top edges and the plain frieze between them */
 const band = {
   bottom: 0.034,
@@ -47,7 +43,7 @@ const feet = {
 const segments = 96
 
 /** how high the middle of an orb resting on the lip stands over the holder’s foot, where its ball touches the lip’s roll all round */
-export const orbSeat = (lip.y + Math.sqrt((orbRadius / scale + lip.tube) ** 2 - lip.radius ** 2)) * scale
+export const orbSeat = lip.y + Math.sqrt((orbRadius + lip.tube) ** 2 - lip.radius ** 2)
 
 const semicircle = ([radius, y]: Point, size: number, from: number, to: number, steps = 8): Array<Vector2> => Array.from({length: steps + 1}, (_, index) => {
   const angle = from + (to - from) * index / steps
@@ -56,20 +52,15 @@ const semicircle = ([radius, y]: Point, size: number, from: number, to: number, 
 /** the cup’s outline before it is gadrooned, `t` from its foot up to under the lip: swelling out below its middle and drawing in again toward the lip */
 const cupRadius = (t: number) => cup.foot[0] + (cup.top[0] - cup.foot[0]) * t + cup.bulge * Math.sin(Math.PI * t ** 0.75)
 const cupY = (t: number) => cup.foot[1] + (cup.top[1] - cup.foot[1]) * t
-/** where the orb’s ball meets nothing but the lip: the hollow inside the cup, from inside the lip’s roll under it and down round the seated ball, clear of it, to the middle */
-const bowl: Array<Point> = (() => {
-  const middle = orbSeat / scale
-  const radius = orbRadius / scale + bowlClearance
-  const top = Math.asin((lip.y - lip.tube - 0.004 - middle) / radius)
-  return [
-    [lip.radius - lip.tube, lip.y],
-    [lip.radius, lip.y - lip.tube],
-    ...Array.from({length: 9}, (_, index): Point => {
-      const angle = top + (-Math.PI / 2 - top) * index / 8
-      return [index === 8 ? 0 : Math.cos(angle) * radius, middle + Math.sin(angle) * radius]
-    }),
-  ]
-})()
+/** where the orb’s ball meets nothing but the lip: the hollow inside the cup, from under the lip down to the middle */
+const bowl: Array<Point> = [
+  [lip.radius - lip.tube, lip.y],
+  [0.098, 0.112],
+  [0.085, 0.095],
+  [0.06, 0.08],
+  [0.03, 0.074],
+  [0, 0.073],
+]
 /** The band’s turned outline, from the middle of its underside out and up round its beads to the cup’s foot. */
 function bandProfile() {
   return [
@@ -174,7 +165,6 @@ function foot(): Array<BufferGeometry> {
  * A stand for an orb on a pedestal’s cap, cast in dark metal like a fortune teller’s crystal ball stand, the y axis up through its middle from the cap.
  *
  * A gadrooned cup with a rolled lip, which the orb rests in, stands on a band beaded along both edges, raised on three scrolled feet with acanthus leaves, one of them to the front.
- * Every part is measured at four fifths of its size, then built {@link scale} times larger.
  */
 export default class OrbHolderGeometry {
   /** the stand turned smooth, without its lobes, feet and ornament, where the orb and everything thrown at it touch it */
@@ -195,7 +185,7 @@ export default class OrbHolderGeometry {
       // A foot stands out along x until it is turned toward the front, then on round by a third each.
       parts.push(...foot().map(part => part.rotateY(-Math.PI / 2 + index * Math.PI * 2 / feet.count)))
     }
-    this.metal = mergeParts(parts).scale(scale, scale, scale)
+    this.metal = mergeParts(parts)
     const outline = [
       new Vector2(0, 0),
       new Vector2(0.125, 0),
@@ -204,8 +194,7 @@ export default class OrbHolderGeometry {
       ...semicircle([lip.radius, lip.y], lip.tube, -Math.PI / 4, Math.PI, 12),
       ...bowl.slice(1).map(([radius, y]) => new Vector2(radius, y)),
     ]
-    const collision = new LatheGeometry(outline, 48)
-    this.collision = collision.scale(scale, scale, scale)
+    this.collision = new LatheGeometry(outline, 48)
   }
 
   dispose() {
