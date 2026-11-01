@@ -25,7 +25,7 @@ export const cellLed = {
   drop: 0.32,
 } as const
 
-/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, a short passage leads on to a round room where its layout stands a pedestal for every item it holds, upholstered in the Arena’s velvet and lit by an LED panel in the middle of its ceiling, or a door closes the arch while it holds none. */
+/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under a gabled ceiling and the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, a short passage leads on to a round room where its layout stands a pedestal for every item it holds, upholstered in the Arena’s velvet and lit by an LED panel in the middle of its ceiling, or a door closes the arch while it holds none. */
 export default class Cell extends Room {
   override readonly air: Array<Box3>
   override readonly color = '#5d242b'
@@ -97,7 +97,8 @@ export default class Cell extends Room {
     this.height = height
     this.size = size
     this.air = [
-      floorBox(size, 0, height),
+      // Up to the ridge of its gabled ceiling.
+      floorBox(size, 0, layout.ridgeHeight),
       ...vestibule ? [
         floorBox([layout.arch.width, passage], 0, height, [vestibule.center[0], northZ - passage / 2]),
         floorBox([vestibule.radius * 2, vestibule.radius * 2], 0, height, vestibule.center),

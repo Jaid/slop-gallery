@@ -1,22 +1,27 @@
 import type {RoundVestibule} from './roundVestibule.ts'
+import type {Vec3} from './types.ts'
 
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
-import {BufferGeometry, CylinderGeometry, ExtrudeGeometry, Path, Shape, TorusGeometry} from 'three/webgpu'
+import {BufferGeometry, CylinderGeometry, Euler, ExtrudeGeometry, Path, Shape, TorusGeometry} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {corniceBands} from './architectureDimensions.ts'
-import rosette from './rosette.ts'
+import {corniceBands, wallFace} from './architectureDimensions.ts'
+
+/** where a slope of the hall’s ceiling lies, in the Cell’s frame: the middle of its underside and the turn that carries its own frame there */
+export type CellSlope = {
+  position: Vec3
+  rotation: Euler
+}
 
 /** how thick the ceilings’ slabs are, centered on the ceiling height */
 export const cellCeilingSlab = 0.18
 /**
- * The hall’s coffered ceiling, in meters: a grid of walnut beams and a gilt fillet round the field of every coffer.
- * Both counts are odd, so a coffer lies in the middle of the hall, which a ceiling rose round the chandelier’s canopy adorns.
+ * The hall’s coffered ceiling, in meters: a grid of walnut beams up both slopes of its gable and a gilt fillet round the field of every coffer.
  */
 export const cellCoffers = {
-  /** how many coffers run across the hall along x and along z */
-  count: [9, 7],
+  /** how many coffers run across the hall along x, and up each slope from the eave to the ridge */
+  count: [9, 4],
   beam: {
     width: 0.2,
     depth: 0.2,
@@ -29,11 +34,18 @@ export const cellCoffers = {
     depth: 0.008,
     bevel: 0.004,
   },
-  /** the ceiling rose: a disk deep enough to close the gap over the canopy, which hangs a few centimeters under the ceiling, ringed by a rosette without a boss */
-  rose: {
-    size: 0.8,
-    radius: 0.36,
-    depth: 0.045,
+} as const
+/** the walnut ridge beam along the hall’s apex, where both slopes meet, which the chandelier hangs from on a brass rod */
+export const cellRidge = {
+  width: 0.3,
+  /** deep enough to take in the rafters’ ends where both slopes meet */
+  depth: 0.36,
+  radius: 0.015,
+  /** the brass rod’s radius and the plate it is screwed into under the beam */
+  rod: 0.014,
+  plate: {
+    radius: 0.075,
+    depth: 0.03,
   },
 } as const
 /** The round room’s ceiling: a gilt ring in from the wall, round the LED panel in its middle. */
@@ -43,7 +55,7 @@ export const cellRoundCeiling = {
     tube: 0.025,
   },
 } as const
-/** how far the hall’s walls’ cornice stands out of their center lines, which frames the coffers all round */
+/** how far the hall’s walls’ cornice stands out of their center lines, which the coffers start beyond at the eaves */
 const corniceFront = Math.max(...corniceBands.map(band => band.front))
 const roundSegments = 96
 
@@ -53,16 +65,17 @@ export function cellLedY(height: number) {
 }
 
 /**
- * The coffers along a side of the hall `length` long, `count` of them, every one as wide between the beams or the cornice round it: their clear width, their middles and the middles of the beams between them, relative to the hall’s middle.
+ * The coffers along a line `length` meters long round its middle, `count` of them, every one as wide between the beams, starting `margins` meters in from either end: their clear width, their middles and the middles of the beams between them.
  */
-export function cofferLine(length: number, count: number) {
+export function cofferLine(length: number, count: number, [start, end]: readonly [number, number]) {
   const {width} = cellCoffers.beam
-  const span = length - corniceFront * 2
+  const from = -length / 2 + start
+  const span = length - start - end
   const field = (span - (count - 1) * width) / count
   return {
     field,
-    middles: Array.from({length: count}, (_, index) => -span / 2 + field / 2 + index * (field + width)),
-    beams: Array.from({length: count - 1}, (_, index) => -span / 2 + (index + 1) * field + (index + 0.5) * width),
+    middles: Array.from({length: count}, (_, index) => from + field / 2 + index * (field + width)),
+    beams: Array.from({length: count - 1}, (_, index) => from + (index + 1) * field + (index + 0.5) * width),
   }
 }
 
@@ -96,70 +109,123 @@ function filletFrame(x: number, z: number) {
 }
 
 /**
- * The Cell’s ceilings, relative to its origin, by material: the hall’s slab, whose underside forms the coffers’ fields, and the round room’s slab, the beams of the hall’s coffers and every bit of gilding on both.
+ * The Cell’s ceilings, relative to its origin, by material: the hall’s gabled ceiling rising from its north and south walls to a ridge along its middle like a house’s roof, coffered in walnut with gilt fillets up both slopes, its gables papered like the walls under them, and the round room’s level slab with its gilt ring.
+ *
+ * Both slopes share one set of geometries in a slope’s own frame, which {@link slopes} place: x along the hall, z down the slope from the ridge to the eave, y out of the underside, which lies at y = 0.
  */
 export default class CellCeilingGeometry {
-  /** the beams running along x, from wall to wall */
+  /** the purlins running along x, from gable to gable, between the coffers up a slope */
   readonly beams: BufferGeometry
   /**
-   * the beams running along z, between those along x and on into the walls, laid along local x: the mesh turns them a quarter about y, which carries local x to world −z and local z to world x, so a material whose grain follows local x follows them too
+   * the rafters running down a slope, between the purlins, and one against each gable, laid along local x: the mesh turns them a quarter about y, which carries local x to the slope’s −z and local z to its x, so a material whose grain follows local x follows them too
    */
   readonly crossBeams: BufferGeometry
-  /** the coffers’ fillets, the ceiling rose and the round ceiling’s ring */
+  /** the triangles of the east and west walls between the top of the walls and the slopes, in the Cell’s frame */
+  readonly gables: BufferGeometry
+  /** the coffers’ fillets up a slope */
   readonly gilt: BufferGeometry
-  readonly hall: BufferGeometry
-  /** the round room’s slab, empty while a door closes the arch */
+  /** the brass rod from the ridge beam down into the chandelier’s canopy, which hangs as high as under a level ceiling, and the plate under the beam, in the Cell’s frame */
+  readonly hanger: BufferGeometry
+  /** how long a slope runs along its underside, from the wall’s center line at the eave to the ridge */
+  readonly length: number
+  /** the ridge beam, in the Cell’s frame */
+  readonly ridge: BufferGeometry
+  /** the round room’s gilt ring, in the Cell’s frame, empty while a door closes the arch */
+  readonly roundGilt: BufferGeometry
+  /** the round room’s slab, in the Cell’s frame, empty while a door closes the arch */
   readonly rounds: BufferGeometry
+  /** a slope’s slab, its underside at y = 0 */
+  readonly slab: BufferGeometry
+  /** the south and the north slope */
+  readonly slopes: readonly [CellSlope, CellSlope]
 
-  constructor({height, size: [width, depth], vestibule}: {
-    /** how high the ceilings hang over the floor, the middle of their slabs */
+  constructor({height, roofPitch, size: [width, depth], vestibule}: {
+    /** how high the ceilings hang over the floor at the walls, the middle of their slabs */
     height: number
+    /** how steeply the hall’s ceiling rises from the north and south walls to its ridge, in radians */
+    roofPitch: number
     /** the hall’s floor plan, centered on the origin */
     size: readonly [width: number, depth: number]
     /** the round room beyond the hall’s north wall, if the arch opens there */
     vestibule?: Pick<RoundVestibule, 'center' | 'radius'>
   }) {
     const underside = height - cellCeilingSlab / 2
-    const {beam, count: [countX, countZ], fillet, rose} = cellCoffers
-    const alongX = cofferLine(width, countX)
-    const alongZ = cofferLine(depth, countZ)
-    const beamY = underside - beam.depth / 2
-    /** A beam `length` meters long along x, hanging from the ceiling with its middle under `[x, z]`. */
+    const rise = depth / 2 * Math.tan(roofPitch)
+    const apex = underside + rise
+    const {beam, count: [countX, countSlope], fillet} = cellCoffers
+    this.length = depth / 2 / Math.cos(roofPitch)
+    const half = this.length / 2
+    // Up a slope from the cornice at the eave to the ridge beam, and across from the rafter against one gable to the one against the other.
+    const alongX = cofferLine(width, countX, [wallFace + beam.width, wallFace + beam.width])
+    const alongSlope = cofferLine(this.length, countSlope, [cellRidge.width / 2 / Math.cos(roofPitch), corniceFront / Math.cos(roofPitch)])
+    /** A beam `length` meters long along x, hanging from the underside with its middle under `[x, z]`. */
     const beamPiece = (length: number, x: number, z: number) => {
       const piece = new RoundedBoxGeometry(length, beam.depth, beam.width, 1, beam.radius)
-      return piece.translate(x, beamY, z)
+      return piece.translate(x, -beam.depth / 2, z)
     }
-    const hall = new RoundedBoxGeometry(width, cellCeilingSlab, depth, 2, 0.045)
-    this.hall = hall.translate(0, height, 0)
-    this.beams = mergeParts(alongZ.beams.map(z => beamPiece(width, 0, z)))
-    // Butting against the sides of the beams along x, and from the outermost ones on into the walls.
-    const stops = [-depth / 2, ...alongZ.beams.flatMap(z => [z - beam.width / 2, z + beam.width / 2]), depth / 2]
+    const slab = new RoundedBoxGeometry(width, cellCeilingSlab, this.length, 2, 0.045)
+    this.slab = slab.translate(0, cellCeilingSlab / 2, 0)
+    this.beams = mergeParts(alongSlope.beams.map(z => beamPiece(width, 0, z)))
+    // Butting against the sides of the purlins, from the ridge beam down to the wall at the eave.
+    const stops = [-half, ...alongSlope.beams.flatMap(z => [z - beam.width / 2, z + beam.width / 2]), half]
     const pieces = Array.from({length: stops.length / 2}, (_, index) => [stops[index * 2], stops[index * 2 + 1]] as const)
-    this.crossBeams = mergeParts(alongX.beams.flatMap(x => pieces.map(([from, to]) => beamPiece(to - from, -(from + to) / 2, x))))
-    const frame = filletFrame(alongX.field - fillet.inset * 2, alongZ.field - fillet.inset * 2)
-    const gilt: Array<BufferGeometry> = []
-    for (const x of alongX.middles) {
-      for (const z of alongZ.middles) {
-        gilt.push(frame.clone().translate(x, underside, z))
-      }
-    }
-    const disk = new CylinderGeometry(rose.radius, rose.radius, rose.depth, 48)
-    gilt.push(disk.translate(0, underside - rose.depth / 2, 0), rosette(rose.size, {boss: false}).rotateX(Math.PI).translate(0, underside, 0))
+    const rafters = [-(width / 2 - wallFace - beam.width / 2), ...alongX.beams, width / 2 - wallFace - beam.width / 2]
+    this.crossBeams = mergeParts(rafters.flatMap(x => pieces.map(([from, to]) => beamPiece(to - from, -(from + to) / 2, x))))
+    const frame = filletFrame(alongX.field - fillet.inset * 2, alongSlope.field - fillet.inset * 2)
+    this.gilt = mergeParts(alongX.middles.flatMap(x => alongSlope.middles.map(z => frame.clone().translate(x, 0, z))))
     frame.dispose()
+    const middle: Vec3 = [0, underside + rise / 2, depth / 4]
+    this.slopes = [
+      {
+        position: middle,
+        rotation: new Euler(roofPitch, 0, 0),
+      },
+      // Turned round, so its eave lies to the north.
+      {
+        position: [0, middle[1], -middle[2]],
+        rotation: new Euler(roofPitch, Math.PI, 0, 'YXZ'),
+      },
+    ]
+    // Along the apex, its top where both undersides meet, its upper edges hidden in the slabs.
+    const ridge = new RoundedBoxGeometry(width, cellRidge.depth, cellRidge.width, 2, cellRidge.radius)
+    this.ridge = ridge.translate(0, apex - cellRidge.depth / 2, 0)
+    const ridgeBottom = apex - cellRidge.depth
+    // Into the canopy, which sits right under where a level ceiling would hang, as the chandelier is made for.
+    const rodBottom = underside - 0.06
+    const rod = new CylinderGeometry(cellRidge.rod, cellRidge.rod, ridgeBottom - rodBottom + 0.01, 16)
+    const plate = new CylinderGeometry(cellRidge.plate.radius, cellRidge.plate.radius, cellRidge.plate.depth, 32)
+    this.hanger = mergeParts([
+      rod.translate(0, (ridgeBottom + 0.01 + rodBottom) / 2, 0),
+      plate.translate(0, ridgeBottom - cellRidge.plate.depth / 2 + 0.002, 0),
+    ])
+    // From the top of the wall under it, as thick as the wall’s face, up to just under the slabs’ top, so the slabs cover its sloping edges.
+    const gable = new Shape
+    gable.moveTo(-depth / 2, height)
+    gable.lineTo(depth / 2, height)
+    gable.lineTo(0, height + rise)
+    gable.closePath()
+    this.gables = mergeParts([-1, 1].map(side => {
+      const triangle = new ExtrudeGeometry(gable, {
+        depth: wallFace,
+        bevelEnabled: false,
+      })
+      // The shape’s x runs along z and its extrusion out of the room, toward the wall’s center line.
+      return triangle.rotateY(side * Math.PI / 2).translate(side * (width / 2 - wallFace), 0, 0)
+    }))
     if (vestibule) {
       const {center: [x, z], radius} = vestibule
       const ring = new TorusGeometry(radius - cellRoundCeiling.ring.inset, cellRoundCeiling.ring.tube, 8, roundSegments)
-      gilt.push(ring.rotateX(Math.PI / 2).translate(x, underside, z))
-      const slab = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
-      this.rounds = slab.translate(x, height, z)
+      this.roundGilt = ring.rotateX(Math.PI / 2).translate(x, underside, z)
+      const round = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
+      this.rounds = round.translate(x, height, z)
     } else {
+      this.roundGilt = new BufferGeometry
       this.rounds = new BufferGeometry
     }
-    this.gilt = mergeParts(gilt)
   }
 
   dispose() {
-    for (const geometry of [this.beams, this.crossBeams, this.gilt, this.hall, this.rounds]) {
+    for (const geometry of [this.beams, this.crossBeams, this.gables, this.gilt, this.hanger, this.ridge, this.roundGilt, this.rounds, this.slab]) {
       geometry.dispose()
     }
   }

@@ -25,6 +25,8 @@ const arch = {
   height: 4.2,
   profile: 'arch',
 } as const satisfies RoundVestibule['arch']
+/** how steeply the hall’s gabled ceiling rises from its north and south walls to the ridge along its middle, like a house’s roof */
+const roofPitch = Math.PI / 6
 /** how far the vestibule’s wall stands back from the north wall’s center line, which leaves a passage between them, lined like the arch */
 const passage = 0.5
 /** the vestibule’s round a lone item */
@@ -62,7 +64,7 @@ export default class CellLayout {
   readonly chandelierLift = round(height - chandelierCeiling)
   /** edge length of the floor’s marble tiles, which run whole from wall to wall */
   readonly floorTile = tile
-  /** how high the ceilings hang, over the Cell and the round room beyond it alike */
+  /** how high the ceilings hang at the walls, the middle of their slabs: over the round room all over and over the hall where its ceiling rises from the walls to its ridge */
   readonly height = height
   /** the z of the north wall’s center line, relative to the room’s origin */
   readonly northZ = northZ
@@ -71,6 +73,10 @@ export default class CellLayout {
   /** a pedestal for every item, in their order */
   readonly pedestals: ReadonlyArray<CellPedestal>
   readonly plan: CellPlan
+  /** how high the hall’s ceiling rises at its ridge, along the middle of its slabs */
+  readonly ridgeHeight = round(height + size[1] / 2 * Math.tan(roofPitch))
+  /** how steeply the hall’s ceiling rises from its north and south walls to its ridge, in radians */
+  readonly roofPitch = roofPitch
   readonly size = size
   /** the round room beyond the north wall’s arch, a vestibule or a rotunda, or undefined while a door closes the arch */
   readonly vestibule: RoundVestibule | undefined
@@ -108,6 +114,15 @@ export default class CellLayout {
         rotation: facing(position, center),
       }
     })
+  }
+
+  /** How high the ceiling hangs over the point of the floor plan, relative to the room’s origin, along the middle of its slab: rising from the hall’s north and south walls to its ridge, and level over the passage and the round room. */
+  ceilingAt(x: number, z: number) {
+    const [width, depth] = size
+    if (Math.abs(x) > width / 2 || Math.abs(z) > depth / 2) {
+      return height
+    }
+    return round(height + (depth / 2 - Math.abs(z)) * Math.tan(roofPitch))
   }
 
   /** The round room round the center, its one arch facing the north wall’s across the passage. */

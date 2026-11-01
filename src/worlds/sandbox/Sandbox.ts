@@ -64,14 +64,15 @@ export default class Sandbox extends World<Cell> {
     this.items = items
     const cell = this.room('cell')
     const [x, , z] = this.spawn.position
-    this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.height, [x, 1, z])
+    this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.room.layout.ridgeHeight, [x, 1, z])
   }
 
-  /** Anywhere on the floor of the Cell or the round room beyond its north wall a body fits, from the floor up to the ceiling. */
+  /** Anywhere on the floor of the Cell or the round room beyond its north wall a body fits, from the floor up to the ceiling, which rises to a ridge over the Cell’s hall. */
   override contains(position: Vec3) {
     const cell = this.room('cell')
-    const [, y] = position
-    return y >= -0.2 && y < cell.height && cell.room.floorContains(cell.toLocal(position), bodyRadius)
+    const local = cell.toLocal(position)
+    const [x, y, z] = local
+    return y >= -0.2 && y < cell.room.layout.ceilingAt(x, z) && cell.room.floorContains(local, bodyRadius)
   }
 
   /** The Cell’s floor is level everywhere, so every floor mirrors in one plane. */

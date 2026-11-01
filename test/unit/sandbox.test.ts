@@ -5,11 +5,11 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
-import {ExtrudeGeometry, Quaternion, Shape, Vector3} from 'three/webgpu'
+import {ExtrudeGeometry, Matrix4, Quaternion, Shape, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {openingCasingFronts, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellLedY, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellLedY, cellRidge, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
 import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
@@ -420,63 +420,137 @@ describe('the Cell’s trim and door', () => {
   })
 })
 describe('the Cell’s ceilings', () => {
-  test('coffer the hall in equal fields between the beams and the cornice, one of them round the chandelier and clear of its ring', () => {
-    const {size} = new CellLayout(0)
-    const {beam, count} = cellCoffers
-    for (const [axis, length] of size.entries()) {
-      const {beams, field, middles} = cofferLine(length, count[axis])
-      expect(count[axis] % 2).toBe(1)
-      expect(middles).toHaveLength(count[axis])
-      expect(beams).toHaveLength(count[axis] - 1)
-      // Fields and beams alternate evenly from cornice to cornice, the cornice 34 cm out of the walls’ center lines.
-      expect(middles[0] - field / 2).toBeCloseTo(-length / 2 + 0.34, 9)
-      expect(middles.at(-1)! + field / 2).toBeCloseTo(length / 2 - 0.34, 9)
+  test('rise from the hall’s north and south walls to a ridge along its middle like a house’s roof, and hang level over the round room', () => {
+    const layout = new CellLayout(1)
+    const [width, depth] = layout.size
+    expect(layout.roofPitch).toBeCloseTo(Math.PI / 6, 9)
+    expect(layout.ridgeHeight).toBeCloseTo(layout.height + depth / 2 * Math.tan(layout.roofPitch), 9)
+    expect(layout.ceilingAt(0, depth / 2)).toBeCloseTo(layout.height, 9)
+    expect(layout.ceilingAt(width / 2, -depth / 2)).toBeCloseTo(layout.height, 9)
+    expect(layout.ceilingAt(-3, 0)).toBeCloseTo(layout.ridgeHeight, 9)
+    expect(layout.ceilingAt(4, 2)).toBeCloseTo(layout.ceilingAt(4, -2), 9)
+    expect(layout.ceilingAt(0, 2) - layout.ceilingAt(0, 3)).toBeCloseTo(Math.tan(layout.roofPitch), 9)
+    expect(layout.ceilingAt(...layout.vestibule!.center)).toBe(layout.height)
+    // The hall’s air reaches up to the ridge, and a body fits under the slopes but not through them.
+    const sandbox = new Sandbox(ids.slice(0, 1))
+    const cell = sandbox.room('cell')
+    expect(cell.room.bounds.max.y).toBeCloseTo(layout.ridgeHeight, 9)
+    expect(sandbox.contains(cell.toWorld([0, layout.ridgeHeight - 1, 0]))).toBe(true)
+    expect(sandbox.contains(cell.toWorld([0, layout.ridgeHeight - 1, depth / 2 - 1]))).toBe(false)
+    expect(sandbox.contains(cell.toWorld([layout.vestibule!.center[0], layout.height + 0.5, layout.vestibule!.center[1]]))).toBe(false)
+  })
+  test('coffer both slopes in nearly square fields of equal size between the rafters and purlins, from the cornice at the eaves up to the ridge beam and from gable to gable', () => {
+    const layout = new CellLayout(0)
+    const [width, depth] = layout.size
+    const {beam, count: [countX, countSlope]} = cellCoffers
+    const length = depth / 2 / Math.cos(layout.roofPitch)
+    const sides = [
+      [width, countX, [wallFace + beam.width, wallFace + beam.width]],
+      [length, countSlope, [cellRidge.width / 2 / Math.cos(layout.roofPitch), 0.34 / Math.cos(layout.roofPitch)]],
+    ] as const
+    const fields = sides.map(([size, count, [start, end]]) => {
+      const {beams, field, middles} = cofferLine(size, count, [start, end])
+      expect(middles).toHaveLength(count)
+      expect(beams).toHaveLength(count - 1)
+      expect(middles[0] - field / 2).toBeCloseTo(-size / 2 + start, 9)
+      expect(middles.at(-1)! + field / 2).toBeCloseTo(size / 2 - end, 9)
       for (const [index, middle] of beams.entries()) {
         expect(middle - beam.width / 2).toBeCloseTo(middles[index] + field / 2, 9)
         expect(middle + beam.width / 2).toBeCloseTo(middles[index + 1] - field / 2, 9)
       }
-      expect(middles[(count[axis] - 1) / 2]).toBeCloseTo(0, 9)
-      // The chandelier’s ring swings 66 cm out from its stem.
-      expect(field / 2).toBeGreaterThan(0.8)
-    }
-    const [x, z] = size.map((length, axis) => cofferLine(length, count[axis]).field)
-    expect(Math.abs(x - z) / x).toBeLessThan(0.02)
+      return field
+    })
+    expect(Math.abs(fields[0] - fields[1]) / fields[0]).toBeLessThan(0.02)
   })
-  for (const count of [0, 1, 2, 3, 4, 6, 12]) {
-    test(`hangs every beam and bit of gilding under its slab, high over the arches, the LED panel in the middle of the vestibule’s, with ${count} items`, () => {
+  for (const count of [0, 1, 2, 4, 12]) {
+    test(`lays both slopes from the eaves’ wall tops to the ridge, the beams and gilding under them, the gables up to them and the chandelier’s rod down from the ridge beam, with ${count} items`, () => {
       const layout = new CellLayout(count)
       const geometry = new CellCeilingGeometry(layout)
       try {
         const underside = layout.height - cellCeilingSlab / 2
+        const apex = layout.ridgeHeight - cellCeilingSlab / 2
         const [width, depth] = layout.size
-        for (const part of [geometry.beams, geometry.crossBeams, geometry.gilt, geometry.hall]) {
+        const half = geometry.length / 2
+        expect(geometry.length).toBeCloseTo(depth / 2 / Math.cos(layout.roofPitch), 9)
+        // A slope’s own frame: x along the hall, z down from the ridge to the eave, its underside at y = 0.
+        for (const part of [geometry.slab, geometry.beams, geometry.crossBeams, geometry.gilt]) {
           part.computeBoundingBox()
         }
+        expect(geometry.slab.boundingBox!.min.y).toBeCloseTo(0, 6)
+        expect(geometry.slab.boundingBox!.max.y).toBeCloseTo(cellCeilingSlab, 6)
+        expect(geometry.slab.boundingBox!.max.z).toBeCloseTo(half, 6)
         const beams = geometry.beams.boundingBox!
-        expect(beams.min.y).toBeCloseTo(underside - cellCoffers.beam.depth, 6)
-        expect(beams.max.y).toBeCloseTo(underside, 6)
+        expect(beams.max.y).toBeCloseTo(0, 6)
+        expect(beams.min.y).toBeCloseTo(-cellCoffers.beam.depth, 6)
         expect(beams.max.x).toBeCloseTo(width / 2, 6)
-        // Laid along x, the mesh turns them onto z: local x becomes world −z and local z world x.
+        // Laid along x, the mesh turns them down the slope: local x becomes the slope’s −z and local z its x.
         const cross = geometry.crossBeams.boundingBox!
-        expect(cross.min.x).toBeCloseTo(-depth / 2, 6)
-        expect(cross.max.x).toBeCloseTo(depth / 2, 6)
-        expect(Math.max(-cross.min.z, cross.max.z)).toBeLessThan(width / 2)
+        expect(cross.min.x).toBeCloseTo(-half, 6)
+        expect(cross.max.x).toBeCloseTo(half, 6)
+        expect(cross.max.z).toBeCloseTo(width / 2 - wallFace, 6)
         expect(cross.min.y).toBeCloseTo(beams.min.y, 6)
         const gilt = geometry.gilt.boundingBox!
-        // No deeper than the beams.
         expect(gilt.min.y).toBeGreaterThan(beams.min.y)
-        expect(gilt.min.y).toBeGreaterThan(layout.arch.height + 1)
-        expect(gilt.max.y).toBeLessThan(layout.height)
-        expect(geometry.hall.boundingBox!.min.y).toBeCloseTo(underside, 6)
+        expect(gilt.max.y).toBeLessThan(cellCeilingSlab)
+        // Each slope runs from the wall’s center line at its eave, where the walls end, up to the ridge.
+        const [south, north] = geometry.slopes.map(({position, rotation}) => {
+          const matrix = new Matrix4
+          const turn = new Quaternion
+          return matrix.compose(new Vector3(...position), turn.setFromEuler(rotation), new Vector3(1, 1, 1))
+        })
+        const at = (matrix: Matrix4, z: number) => {
+          const point = new Vector3(0, 0, z)
+          return point.applyMatrix4(matrix)
+        }
+        for (const [matrix, side] of [[south, 1], [north, -1]] as const) {
+          const eave = at(matrix, half)
+          const ridge = at(matrix, -half)
+          expect(eave.y).toBeCloseTo(underside, 9)
+          expect(eave.z).toBeCloseTo(side * depth / 2, 9)
+          expect(ridge.y).toBeCloseTo(apex, 9)
+          expect(ridge.z).toBeCloseTo(0, 9)
+          // The underside faces down into the hall.
+          const normal = new Vector3(0, -1, 0)
+          normal.transformDirection(matrix)
+          expect(normal.y).toBeCloseTo(-Math.cos(layout.roofPitch), 9)
+          expect(Math.sign(normal.z)).toBe(-side)
+        }
+        // Over the arch through the north wall everywhere.
+        expect(underside - cellCoffers.beam.depth).toBeGreaterThan(layout.arch.height + 1)
+        for (const part of [geometry.ridge, geometry.hanger, geometry.gables]) {
+          part.computeBoundingBox()
+        }
+        expect(geometry.ridge.boundingBox!.max.y).toBeCloseTo(apex, 6)
+        expect(geometry.ridge.boundingBox!.min.y).toBeCloseTo(apex - cellRidge.depth, 6)
+        // Into the canopy, which hangs where it would under a level ceiling, and up into the ridge beam.
+        const hanger = geometry.hanger.boundingBox!
+        expect(hanger.min.y).toBeLessThan(layout.height - cellCeilingSlab / 2)
+        expect(hanger.min.y).toBeGreaterThan(layout.chandelierLift + 5.6)
+        expect(hanger.max.y).toBeGreaterThan(apex - cellRidge.depth)
+        expect(hanger.max.y).toBeLessThan(apex - cellRidge.depth + 0.02)
+        // As thick as the walls’ faces, from their tops up to the slopes, which cover their sloping edges.
+        const gables = geometry.gables.boundingBox!
+        expect(gables.min.x).toBeCloseTo(-width / 2, 6)
+        expect(gables.max.x).toBeCloseTo(width / 2, 6)
+        expect(gables.min.z).toBeCloseTo(-depth / 2, 6)
+        expect(gables.max.z).toBeCloseTo(depth / 2, 6)
+        expect(gables.min.y).toBeCloseTo(layout.height, 6)
+        expect(gables.max.y).toBeGreaterThan(apex)
+        expect(gables.max.y).toBeLessThan(apex + cellCeilingSlab / Math.cos(layout.roofPitch))
+        const gablePosition = geometry.gables.getAttribute('position')
+        for (let index = 0; index < gablePosition.count; index++) {
+          expect(Math.abs(gablePosition.getX(index))).toBeGreaterThanOrEqual(width / 2 - wallFace - 1e-6)
+        }
         if (layout.vestibule) {
           geometry.rounds.computeBoundingBox()
           expect(geometry.rounds.boundingBox!.min.y).toBeCloseTo(underside, 6)
+          geometry.roundGilt.computeBoundingBox()
+          expect(geometry.roundGilt.boundingBox!.max.y).toBeLessThan(underside + 0.03)
+          // The panel’s housing reaches 5 mm into the slab, over the round room’s middle.
+          expect(cellLedY(layout.height) + knotLightHousingY + knotLightHousingSize[1] / 2).toBeCloseTo(underside + 0.005, 9)
         } else {
           expect(geometry.rounds.getAttribute('position')).toBeUndefined()
-        }
-        // The panel’s housing reaches 5 mm into the slab, over the vestibule’s middle, where no rosette hangs.
-        if (layout.vestibule) {
-          expect(cellLedY(layout.height) + knotLightHousingY + knotLightHousingSize[1] / 2).toBeCloseTo(underside + 0.005, 9)
+          expect(geometry.roundGilt.getAttribute('position')).toBeUndefined()
         }
       } finally {
         geometry.dispose()

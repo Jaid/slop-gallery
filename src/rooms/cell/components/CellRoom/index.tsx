@@ -90,7 +90,7 @@ const threshold = {
 /** the top of every floor, a millimeter over its slab, all in one plane, which the floors’ shared mirror reflects the room in */
 const floorY = 0.001
 
-/** The Sandbox’s one room: a hall with the Vesper’s varnished wood underfoot, papered like the Sienna under a coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, and beyond its north wall the passage on to the round room with the items on their pedestals, or the door that closes it while there are none. */
+/** The Sandbox’s one room: a hall with the Vesper’s varnished wood underfoot, papered like the Sienna under a gabled, coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, and beyond its north wall the passage on to the round room with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
   // The Sienna’s damask, its baseboards, casings and cornice in one varnished timber, which the ceiling’s beams share.
@@ -104,7 +104,7 @@ export default function CellRoom() {
     <ShadowCaching />
     <HallFloor />
     {hallWalls.map(wall => <WallSurface key={wall.id} material={joinery} plaster={surfaces.plaster} revealMaterial={wall === northWall ? surfaces.velvet : undefined} surfaceMaterial={damask} wall={wall} />)}
-    <CellCeiling beams={joinery} />
+    <CellCeiling beams={joinery} paper={damask} />
     <group position={[x, chandelierLift, z]}>
       <Chandelier lamp={cell.room.globalId('chandelier')} />
     </group>
