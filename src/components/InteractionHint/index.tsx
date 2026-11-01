@@ -12,10 +12,8 @@ import css from './style.module.sass'
 
 const controlNames: Record<HintControl, string> = {
   KeyE: 'E',
-  KeyQ: 'Q',
   KeyV: 'V',
   MouseLeft: 'Left mouse button',
-  MouseRight: 'Right mouse button',
 }
 /** Name of the aimed object and the controls available on it, e.g. “Knotty Prince · E Listen · V Inspect”. */
 export function InteractionHintView({content, visible}: {
@@ -44,8 +42,8 @@ export default function InteractionHint() {
 }
 
 function Control({control}: {control: HintControl}) {
-  if (control === 'MouseLeft' || control === 'MouseRight') {
-    return <kbd className={clsx(css.key, css.mouse)} aria-label={controlNames[control]} title={controlNames[control]}><MouseIcon button={control === 'MouseLeft' ? 'left' : 'right'} /></kbd>
+  if (control === 'MouseLeft') {
+    return <kbd className={clsx(css.key, css.mouse)} aria-label={controlNames[control]} title={controlNames[control]}><MouseIcon button='left' /></kbd>
   }
   return <kbd className={css.key}>{controlNames[control]}</kbd>
 }

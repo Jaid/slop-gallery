@@ -11,7 +11,7 @@ import {Group} from 'three/webgpu'
 import {InteractionHintView} from '#component/InteractionHint'
 
 import {propObjects} from '../../src/components/Scene/GrabbableProp.tsx'
-import {describeHeld, describeTarget} from '../../src/components/Scene/interaction/describeTarget.ts'
+import {describeTarget} from '../../src/components/Scene/interaction/describeTarget.ts'
 import {readCrosshair} from '../../src/lib/crosshair.ts'
 import {interactiveObjects, registerInteractiveObject} from '../../src/lib/gallery/interactiveObjects.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
@@ -335,19 +335,6 @@ describe('target descriptions', () => {
       },
     ])
   })
-  test('a held object offers throwing with either control', () => {
-    propObjects.set('prop-apple', prop(false, 'The original forbidden download'))
-    expect(describeHeld('prop-apple', [])).toEqual({
-      id: 'prop-apple',
-      title: 'The original forbidden download',
-      keys: [
-        {
-          controls: ['MouseRight', 'KeyQ'],
-          action: 'Throw',
-        },
-      ],
-    })
-  })
 })
 describe('hint view', () => {
   test('renders the name, styled keys and mouse icons', () => {
@@ -361,8 +348,8 @@ describe('hint view', () => {
             action: 'Use',
           },
           {
-            controls: ['MouseRight', 'KeyQ'],
-            action: 'Throw',
+            controls: ['KeyV'],
+            action: 'Inspect',
           },
           {
             controls: ['MouseLeft'],
@@ -376,11 +363,11 @@ describe('hint view', () => {
     expect(html).toContain('data-testid="interaction-hint"')
     expect(html).toContain('data-visible="true"')
     expect(html).toContain('Sign')
-    expect(html.match(/<kbd/g)).toHaveLength(4)
+    expect(html.match(/<kbd/g)).toHaveLength(3)
     expect(html).toMatch(/<kbd[^>]*>E<\/kbd>/)
+    expect(html).toMatch(/<kbd[^>]*>V<\/kbd>/)
     expect(html).toContain('aria-label="Left mouse button"')
-    expect(html).toContain('aria-label="Right mouse button"')
-    expect(html.match(/<svg/g)).toHaveLength(2)
+    expect(html.match(/<svg/g)).toHaveLength(1)
     expect(html).toContain('Grab is not possible right now')
   })
   test('hidden hints stay in the DOM for the exit animation but are hidden from assistive tech', () => {

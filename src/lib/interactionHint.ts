@@ -1,4 +1,4 @@
-export type HintControl = 'KeyE' | 'KeyQ' | 'KeyV' | 'MouseLeft' | 'MouseRight'
+export type HintControl = 'KeyE' | 'KeyV' | 'MouseLeft'
 
 export type HintKey = {
   /** short verb for what the controls do */

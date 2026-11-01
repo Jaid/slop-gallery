@@ -15,7 +15,7 @@ import interactionHint from '#src/lib/interactionHint.ts'
 import world from '#src/worlds/current.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
-import {describeHeld, describeTarget} from './describeTarget.ts'
+import {describeTarget} from './describeTarget.ts'
 
 // The welcome narration only plays with `?intro_narration`.
 const introNarration = readIntroNarration()
@@ -116,12 +116,8 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
 function updateHint() {
   const s = useGallery.getState()
   const now = performance.now() / 1000
-  if (!s.locked || s.dragging || cameraPose.focused) {
+  if (!s.locked || s.dragging || cameraPose.focused || s.held) {
     interactionHint.update(null, now, true)
-    return
-  }
-  if (s.held) {
-    interactionHint.update(describeHeld(s.held, s.portraits), now, true)
     return
   }
   interactionHint.update(describeTarget(s.active, s.portraits), now)

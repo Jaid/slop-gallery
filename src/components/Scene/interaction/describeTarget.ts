@@ -19,10 +19,6 @@ const blockedGrab: HintKey = {
   ...grab,
   blocked: true,
 }
-const throwKey: HintKey = {
-  controls: ['MouseRight', 'KeyQ'],
-  action: 'Throw',
-}
 /** The aimed object’s name and the controls that act on it, mirroring the input handlers. */
 export function describeTarget(id: string | null, portraits: ReadonlyArray<Portrait>): HintContent | null {
   if (!id) {
@@ -64,18 +60,6 @@ export function describeTarget(id: string | null, portraits: ReadonlyArray<Portr
     id,
     title,
     keys,
-  }
-}
-/** While carrying something, throwing it is the only remaining control besides letting go of the left button. */
-export function describeHeld(id: string, portraits: ReadonlyArray<Portrait>): HintContent | null {
-  const title = titleOf(id, findPortrait(id, portraits))
-  if (!title) {
-    return null
-  }
-  return {
-    id,
-    title,
-    keys: [throwKey],
   }
 }
 
