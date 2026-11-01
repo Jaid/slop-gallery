@@ -1,6 +1,8 @@
+import type {FusionTiming} from '../gallery/fusion/timing.ts'
 import type {Vec3} from '../gallery/types.ts'
 import type {AudioOutput} from './proceduralAudio.ts'
 
+import {beats, drags, gathering, implosion, introSeconds, lash} from '../gallery/fusion/intro.ts'
 import {whiteNoise} from './ambience/base/noise.ts'
 
 type Tone = {
@@ -63,7 +65,7 @@ function impulse(context: BaseAudioContext) {
 }
 
 /**
- * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every ingredient that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles.
+ * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: its intro’s own, a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every ingredient that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles.
  * Everything rings in a short, bright reverb. It plays on the sound engine’s effects master, which the mute covers.
  */
 export default class FusionSound {
@@ -192,28 +194,14 @@ export default class FusionSound {
     this.release(duration * 0.3, duration * 0.4)
   }
 
-  /** The portal opens: a whoosh sweeping up, a soft thump and a rising sparkle, and the beds start. */
-  open() {
+  /** The portal opens `elapsed` seconds into the fusion: the beds start, and whatever of the intro’s sound is still to come plays. */
+  open(timing: FusionTiming, elapsed = 0) {
     if (this.stopped || this.beds) {
       return
     }
     const now = this.context.currentTime
-    this.hiss(now, 0.9, {
-      filter: 'bandpass',
-      frequency: 250,
-      end: 3500,
-      q: 1.5,
-      volume: 0.09,
-      attack: 0.45,
-    })
-    this.tone(now, 0.55, {
-      frequency: 95,
-      end: 42,
-      volume: 0.14,
-      attack: 0.01,
-    })
-    for (const [index, frequency] of [587.33, 880, 1174.66, 1760].entries()) {
-      this.bell(now + 0.1 + index * 0.07, frequency, 0.016, 0.9)
+    if (elapsed < timing.intro) {
+      this.intro(now - elapsed, timing)
     }
     this.beds = this.startBeds(now)
   }
@@ -288,7 +276,11 @@ export default class FusionSound {
     }
   }
 
+  /** Filtered noise. */
   private hiss(start: number, duration: number, {attack = 0.01, end, filter, frequency, q = 1, volume}: Hiss) {
+    if (this.past(start)) {
+      return
+    }
     const source = new AudioBufferSourceNode(this.context, {buffer: whiteNoise(this.context)})
     const shaping = new BiquadFilterNode(this.context, {
       type: filter,
@@ -302,10 +294,185 @@ export default class FusionSound {
     this.play(source.connect(shaping), source, start, duration, volume, attack, Math.random() * 3)
   }
 
+  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, and the ember’s heartbeat, its first two beats cracking leashes like whips and its third igniting the portal with a roar and a chord. */
+  private intro(start: number, timing: FusionTiming) {
+    const at = (seconds: number) => start + introSeconds(seconds, timing)
+    const until = (from: number, to: number) => introSeconds(to - from, timing)
+    // A pinprick of glass.
+    this.tone(at(0), 0.25, {
+      frequency: 3100,
+      end: 2400,
+      volume: 0.02,
+      attack: 0.002,
+    })
+    this.bell(at(0.01), 1568, 0.012, 0.6)
+    // The inhale: air rushing in, ever higher, over a pressure drop and a rising screech.
+    this.hiss(at(0.02), until(0.05, implosion), {
+      filter: 'bandpass',
+      frequency: 180,
+      end: 2600,
+      q: 2.5,
+      volume: 0.11,
+      attack: until(0.12, implosion),
+    })
+    this.hiss(at(0.02), until(0.05, implosion), {
+      filter: 'lowpass',
+      frequency: 300,
+      end: 900,
+      volume: 0.07,
+      attack: until(0.25, implosion),
+    })
+    this.tone(at(0.02), until(0, implosion), {
+      frequency: 72,
+      end: 26,
+      volume: 0.13,
+      attack: until(0.25, implosion),
+    })
+    this.tone(at(0.1), until(0.1, implosion), {
+      frequency: 140,
+      end: 1100,
+      volume: 0.016,
+      attack: until(0.15, implosion),
+      type: 'sawtooth',
+    })
+    // The work rattles on its wall before it tears loose.
+    for (let index = 0; index < 7; index++) {
+      this.hiss(at(0.02 + index * 0.019 + index % 2 * 0.005), 0.022, {
+        filter: 'bandpass',
+        frequency: 2300 + index % 3 * 600,
+        q: 6,
+        volume: 0.03 + index * 0.004,
+        attack: 0.001,
+      })
+    }
+    // Each is dragged in with a whoosh.
+    for (const drag of drags) {
+      this.hiss(at(drag), until(drag, implosion), {
+        filter: 'bandpass',
+        frequency: 500,
+        end: 3200,
+        q: 1.2,
+        volume: 0.05,
+        attack: until(drag + 0.05, implosion),
+      })
+    }
+    // The burst: a crack, a deep boom and a gong ringing out.
+    this.hiss(at(implosion), 0.06, {
+      filter: 'highpass',
+      frequency: 3000,
+      volume: 0.06,
+      attack: 0.001,
+    })
+    this.tone(at(implosion), 1.4, {
+      frequency: 120,
+      end: 28,
+      volume: 0.11,
+      attack: 0.004,
+    })
+    this.hiss(at(implosion), 1, {
+      filter: 'lowpass',
+      frequency: 5000,
+      end: 120,
+      volume: 0.08,
+      attack: 0.004,
+    })
+    this.bell(at(implosion + 0.02), 196, 0.022, 2.6)
+    // The motes stream back in: a swarm of tiny glints, ever denser and brighter, over a soft rising hiss and a swelling hum.
+    const [gatherFrom, gatherTo] = gathering
+    for (let index = 0; index < 40; index++) {
+      const share = Math.sqrt(index / 40)
+      this.tone(at(gatherFrom + (gatherTo - gatherFrom) * share), 0.05 + Math.random() * 0.06, {
+        frequency: 2200 + Math.random() * 4000 + 1500 * share,
+        volume: 0.004 + 0.007 * share,
+        attack: 0.002,
+      })
+    }
+    this.hiss(at(gatherFrom), until(gatherFrom, gatherTo), {
+      filter: 'highpass',
+      frequency: 3000,
+      end: 6000,
+      volume: 0.02,
+      attack: until(gatherFrom + 0.1, gatherTo),
+    })
+    this.tone(at(gatherFrom), until(gatherFrom, beats[0]) + 0.1, {
+      frequency: 60,
+      end: 90,
+      volume: 0.05,
+      attack: until(gatherFrom + 0.1, beats[0]),
+    })
+    for (const [index, beat] of beats.entries()) {
+      const strength = index === beats.length - 1 ? 1.5 : 1
+      // Lub, dub.
+      this.tone(at(beat), 0.32, {
+        frequency: 82,
+        end: 38,
+        volume: 0.15 * strength,
+        attack: 0.004,
+      })
+      this.tone(at(beat) + 0.2, 0.26, {
+        frequency: 70,
+        end: 34,
+        volume: 0.09 * strength,
+        attack: 0.004,
+      })
+      this.hiss(at(beat), 0.12, {
+        filter: 'lowpass',
+        frequency: 900,
+        end: 150,
+        volume: 0.06 * strength,
+        attack: 0.003,
+      })
+      if (!(index < drags.length)) {
+        continue
+      }
+      // The leash cracks like a whip and yanks its satellite in.
+      this.tone(at(beat) + 0.02, 0.09, {
+        frequency: 700,
+        end: 3200,
+        volume: 0.018,
+        attack: 0.002,
+        type: 'triangle',
+      })
+      this.hiss(at(beat + lash), 0.05, {
+        filter: 'highpass',
+        frequency: 4200,
+        volume: 0.07,
+        attack: 0.001,
+      })
+      this.hiss(at(beat + lash), 0.45, {
+        filter: 'bandpass',
+        frequency: 1800,
+        end: 500,
+        q: 1.3,
+        volume: 0.05,
+        attack: 0.03,
+      })
+    }
+    // The last beat ignites it: a roar of flame and a chord.
+    const ignition = beats.at(-1)!
+    this.hiss(at(ignition), 1, {
+      filter: 'bandpass',
+      frequency: 300,
+      end: 2500,
+      q: 0.7,
+      volume: 0.08,
+      attack: 0.08,
+    })
+    for (const [index, frequency] of [440, 554.37, 659.25, 880].entries()) {
+      this.bell(at(ignition) + 0.04 + index * 0.04, frequency, 0.02, 1.8)
+    }
+  }
+
+  /** whether a sound due at `start` is already over, like the start of an intro the sound engine was made too late for */
+  private past(start: number) {
+    return this.stopped || start < this.context.currentTime - 0.02
+  }
+
   private play(through: AudioNode, source: AudioScheduledSourceNode, start: number, duration: number, volume: number, attack: number, offset?: number) {
     const envelope = new GainNode(this.context, {gain: 0})
+    const peak = Math.min(attack, duration * 0.9)
     envelope.gain.setValueAtTime(0, start)
-    envelope.gain.linearRampToValueAtTime(volume, start + Math.min(attack, duration * 0.9))
+    envelope.gain.linearRampToValueAtTime(volume, start + peak)
     envelope.gain.exponentialRampToValueAtTime(silence, start + duration)
     through.connect(envelope).connect(this.bus)
     this.sources.add(source)
@@ -397,7 +564,11 @@ export default class FusionSound {
     }
   }
 
+  /** An oscillator, gliding and wobbling if asked to. */
   private tone(start: number, duration: number, {attack = 0.005, end, frequency, type = 'sine', vibrato, volume}: Tone) {
+    if (this.past(start)) {
+      return
+    }
     const oscillator = new OscillatorNode(this.context, {
       frequency,
       type,

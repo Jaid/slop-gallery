@@ -2,7 +2,7 @@ import type {FusionOutcome} from '../../src/lib/gallery/fusion/Fusion.ts'
 
 import FusionSound from '../../src/lib/audio/FusionSound.ts'
 import {portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
-import {orbitAngle} from '../../src/lib/gallery/fusion/orbit.ts'
+import {introOrbitRate, orbitAngle} from '../../src/lib/gallery/fusion/orbit.ts'
 import {fusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
 
 type Outcome = Exclude<FusionOutcome['kind'], 'abort'>
@@ -27,34 +27,39 @@ export default async function verify({listen = false, scenarios = [['success', 6
 } = {}) {
   const results = []
   for (const [outcome, resultAt] of scenarios) {
-    const {buffer, end} = await render(outcome, resultAt)
-    let peak = 0
-    let power = 0
-    let tail = 0
-    const tailStart = Math.ceil((end + 2.6) * rate)
-    for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
-      for (const [index, sample] of buffer.getChannelData(channel).entries()) {
-        assert(Number.isFinite(sample), `the ${outcome} rendered a nonfinite sample`)
-        peak = Math.max(peak, Math.abs(sample))
-        power += sample * sample
-        if (index >= tailStart) {
-          tail = Math.max(tail, Math.abs(sample))
-        }
-      }
-    }
-    assert(peak > 0.01, `the ${outcome} rendered silence`)
-    assert(peak < 0.9, `the ${outcome} exceeded headroom with ${peak}`)
-    assert(tail < 0.0005, `the ${outcome} did not finish silently: ${tail}`)
-    results.push({
-      outcome,
-      seconds: Number(buffer.duration.toFixed(2)),
-      peak: Number(peak.toFixed(4)),
-      rms: Number(Math.sqrt(power / buffer.length / buffer.numberOfChannels).toFixed(5)),
-      tail: Number(tail.toFixed(6)),
-      ...listen ? {wav: wav(buffer)} : {},
-    })
+    results.push(await check(outcome, resultAt, listen))
   }
   return results
+}
+/** Renders one fusion and checks its sound. */
+async function check(outcome: Outcome, resultAt: number, listen: boolean) {
+  const {buffer, end} = await render(outcome, resultAt)
+  let peak = 0
+  let power = 0
+  let tail = 0
+  const tailStart = Math.ceil((end + 2.6) * rate)
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    for (const [index, sample] of buffer.getChannelData(channel).entries()) {
+      assert(Number.isFinite(sample), `the ${outcome} rendered a nonfinite sample`)
+      peak = Math.max(peak, Math.abs(sample))
+      power += sample * sample
+      if (index >= tailStart) {
+        tail = Math.max(tail, Math.abs(sample))
+      }
+    }
+  }
+  assert(peak > 0.01, `the ${outcome} rendered silence`)
+  assert(peak < 0.9, `the ${outcome} exceeded headroom with ${peak}`)
+  assert(tail < 0.0005, `the ${outcome} did not finish silently: ${tail}`)
+  return {
+    outcome,
+    resultAt,
+    seconds: Number(buffer.duration.toFixed(2)),
+    peak: Number(peak.toFixed(4)),
+    rms: Number(Math.sqrt(power / buffer.length / buffer.numberOfChannels).toFixed(5)),
+    tail: Number(tail.toFixed(6)),
+    ...listen ? {wav: wav(buffer)} : {},
+  }
 }
 /** 16-bit stereo WAV of the buffer, for listening to a render. */
 function wav(buffer: AudioBuffer) {
@@ -121,7 +126,7 @@ async function render(outcome: Outcome, resultAt: number) {
         const emerged = outcome === 'success' && moment >= emergedAt ? emergedAt : undefined
         const envelope = portalEnvelope(moment, known, emerged, fusionTiming, 2)
         if (moment === 0) {
-          sound.open()
+          sound.open(fusionTiming)
         }
         let next = stage
         if (emerged !== undefined) {
@@ -149,7 +154,7 @@ async function render(outcome: Outcome, resultAt: number) {
         } : undefined
         sound.update({
           energy: envelope.energy,
-          orbit: (orbitAngle(0, moment, climaxing) - orbitAngle(0, moment - 0.01, climaxing)) / 0.01,
+          orbit: moment < fusionTiming.intro ? introOrbitRate(moment, fusionTiming) : (orbitAngle(0, moment, climaxing) - orbitAngle(0, moment - 0.01, climaxing)) / 0.01,
           spin: envelope.spin,
         })
       }

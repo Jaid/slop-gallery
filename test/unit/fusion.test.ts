@@ -4,11 +4,12 @@ import {describe, expect, test} from 'bun:test'
 
 import {Quaternion, Vector3} from 'three/webgpu'
 
-import {portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
+import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
-import {orbitPoint, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
+import {introTether} from '../../src/lib/gallery/fusion/intro.ts'
+import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, satelliteSize} from '../../src/lib/gallery/fusion/portalFrame.ts'
-import {fusionTiming, ingredientAt} from '../../src/lib/gallery/fusion/timing.ts'
+import {fusionTiming, ingredientAt, introTurns} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
   id: 'work',
@@ -57,33 +58,27 @@ describe('portal frame', () => {
   })
 })
 describe('timeline', () => {
-  test('opening the portal and showing both ingredients once takes exactly the minimum', () => {
-    expect(fusionTiming.gather + 2 * fusionTiming.ingredient).toBeCloseTo(fusionTiming.minimum)
+  test('the intro fills the minimum', () => {
+    expect(fusionTiming.intro).toBe(fusionTiming.minimum)
   })
-  test('the ingredients surface one after another, over and over', () => {
-    expect(ingredientAt(0.5, 2)).toBeUndefined()
-    const {gather, ingredient} = fusionTiming
-    expect(ingredientAt(gather + ingredient / 2, 2)).toEqual({
+  test('after the intro, the ingredients surface one after another, over and over', () => {
+    const {intro: introEnd, ingredient} = fusionTiming
+    expect(ingredientAt(introEnd - 0.1, 2)).toBeUndefined()
+    expect(ingredientAt(introEnd + ingredient / 2, 2)).toEqual({
       index: 0,
-      turn: 0,
+      turn: introTurns,
       clarity: 1,
     })
-    expect(ingredientAt(gather + ingredient * 1.5, 2)).toMatchObject({
+    expect(ingredientAt(introEnd + ingredient * 1.5, 2)).toMatchObject({
       index: 1,
-      turn: 1,
+      turn: introTurns + 1,
       clarity: 1,
     })
-    expect(ingredientAt(gather + ingredient * 2.5, 2)).toMatchObject({
-      index: 0,
-      turn: 2,
-    })
-    expect(ingredientAt(gather + 0.001, 2)!.clarity).toBeLessThan(0.05)
+    expect(ingredientAt(introEnd + 0.001, 2)!.clarity).toBeLessThan(0.05)
   })
-  test('the portal opens, closes after the result is out and dies down when it fizzles', () => {
-    expect(portalEnvelope(0, undefined, undefined, fusionTiming, 2).size).toBe(0)
-    expect(portalEnvelope(fusionTiming.gather, undefined, undefined, fusionTiming, 2).size).toBeCloseTo(1, 1)
+  test('the portal brews after its intro, closes after the result is out and dies down when it fizzles', () => {
     // It swells while an ingredient shows.
-    expect(portalEnvelope(fusionTiming.gather + fusionTiming.ingredient / 2, undefined, undefined, fusionTiming, 2).size).toBeGreaterThan(1.1)
+    expect(portalEnvelope(fusionTiming.intro + fusionTiming.ingredient / 2, undefined, undefined, fusionTiming, 2).size).toBeGreaterThan(1.1)
     const success = {
       kind: 'success' as const,
       at: 5,
@@ -109,16 +104,14 @@ describe('orbit', () => {
     quaternion: facing.setFromAxisAngle(new Vector3(0, 1, 0), work.rotation),
   }
   const satellite: SatelliteOrbit = {
+    index: 0,
     phase: -2.3,
     scale: 0.5,
     start,
     home: start,
   }
-  test('a work flies from its wall into orbit, shrinking, and circles clear of the wall and the floor', () => {
-    const first = satellitePose(frame, fusionTiming, satellite, 0, undefined, pose())
-    expect(first.position.distanceTo(start.position)).toBeLessThan(1e-9)
-    expect(first.scale).toBe(1)
-    for (let elapsed = fusionTiming.gather; elapsed < 12; elapsed += 0.05) {
+  test('after the intro, a work circles clear of the wall and the floor', () => {
+    for (let elapsed = fusionTiming.intro; elapsed < 12; elapsed += 0.05) {
       const {position, scale} = satellitePose(frame, fusionTiming, satellite, elapsed, undefined, pose())
       expect(scale).toBe(0.5)
       expect(wallSide(position)).toBeGreaterThan(satelliteSize / 2)
@@ -145,6 +138,87 @@ describe('orbit', () => {
     expect(end.quaternion.angleTo(start.quaternion)).toBeLessThan(1e-6)
   })
 })
+describe('intro', () => {
+  const facing = new Quaternion
+  facing.setFromAxisAngle(new Vector3(0, 1, 0), work.rotation)
+  const satellites: Array<SatelliteOrbit> = [{
+    index: 0,
+    phase: -Math.PI / 2 - 0.7,
+    scale: 0.5,
+    start: {
+      position: new Vector3(...work.position),
+      quaternion: facing,
+    },
+    home: {
+      position: new Vector3(...work.position),
+      quaternion: facing,
+    },
+  }, {
+    index: 1,
+    phase: Math.PI / 2 - 0.7,
+    scale: 0.7,
+    start: {
+      position: new Vector3(work.position[0] + 0.6, work.position[1] - 0.3, work.position[2] + 0.8),
+      quaternion: new Quaternion,
+    },
+    tumble: new Vector3(0.6, 0.8, 0),
+  }]
+  const end = fusionTiming.intro
+  const just = end - 1e-4
+  test('starts from where everything was seized and hands it over to the orbit where the loop picks it up', () => {
+    for (const satellite of satellites) {
+      const first = satellitePose(frame, fusionTiming, satellite, 0, undefined, pose())
+      expect(first.position.distanceTo(satellite.start.position)).toBeLessThan(1e-6)
+      expect(first.quaternion.angleTo(satellite.start.quaternion)).toBeLessThan(1e-6)
+      expect(first.scale).toBeCloseTo(1, 6)
+      const before = satellitePose(frame, fusionTiming, satellite, just, undefined, pose())
+      const after = satellitePose(frame, fusionTiming, satellite, end, undefined, pose())
+      expect(before.position.distanceTo(after.position)).toBeLessThan(0.01)
+      expect(before.quaternion.angleTo(after.quaternion)).toBeLessThan(0.01)
+      expect(before.scale).toBeCloseTo(after.scale, 2)
+    }
+  })
+  test('keeps everything above the floor and moving smoothly', () => {
+    for (const satellite of satellites) {
+      let last: Vector3 | undefined
+      for (let elapsed = 0; elapsed < end; elapsed += 1 / 120) {
+        const {position, scale} = satellitePose(frame, fusionTiming, satellite, elapsed, undefined, pose())
+        expect(Number.isFinite(position.x + position.y + position.z + scale)).toBe(true)
+        expect(position.y).toBeGreaterThan(0.3)
+        // A yank may be quick, but nothing jumps faster than 24 m/s between frames.
+        if (last) {
+          expect(position.distanceTo(last)).toBeLessThan(0.2)
+        }
+        last = position.clone()
+      }
+    }
+  })
+  test('shows each ingredient once, then settles into the brewing portal', () => {
+    const shown = new Map<number, number>
+    for (let elapsed = 0; elapsed < end; elapsed += 0.01) {
+      const {image} = portalEnvelope(elapsed, undefined, undefined, fusionTiming, 2)
+      if (!(image && 'index' in image && image.clarity > 0.9)) {
+        continue
+      }
+      expect(image.turn).toBe(image.index)
+      shown.set(image.index, (shown.get(image.index) ?? 0) + 1)
+    }
+    expect(shown.keys().toArray().toSorted((a, b) => a - b)).toEqual([0, 1])
+    const last = portalEnvelope(just, undefined, undefined, fusionTiming, 2)
+    const brewed = brewing(end, fusionTiming, 2)
+    for (const key of ['size', 'energy', 'lens', 'spin'] as const) {
+      expect(Math.abs(last[key] - brewed[key])).toBeLessThan(0.05)
+    }
+    expect(portalEnvelope(0, undefined, undefined, fusionTiming, 2).size).toBeLessThan(0.1)
+  })
+  test('binds both with tethers and sets them circling by its end', () => {
+    for (const index of [0, 1]) {
+      expect(introTether(index, just, fusionTiming).glow).toBeCloseTo(1, 1)
+      expect(introTether(index, just, fusionTiming).reach).toBeCloseTo(1, 2)
+    }
+    expect(Math.abs(introOrbitRate(just, fusionTiming) - orbitSpeed)).toBeLessThan(0.3)
+  })
+})
 const spec = () => ({
   work,
   partner: {
@@ -155,7 +229,7 @@ const spec = () => ({
 })
 describe('fusion', () => {
   const timing = {
-    gather: 0.01,
+    intro: 0.08,
     ingredient: 0.02,
     minimum: 0.08,
     climax: 0.04,

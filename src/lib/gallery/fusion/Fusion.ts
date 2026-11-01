@@ -43,7 +43,7 @@ const poll = 100
 let opened = 0
 
 /**
- * A merge as the gallery shows it: a portal opens in front of the hung work, which flies into orbit around it with what was thrown into it, while the portal shows their images in turn.
+ * A merge as the gallery shows it: a portal opens in front of the hung work with its intro, which brings the work and what was thrown into it into orbit around it, while the portal shows their images in turn.
  * The director tells it how the merge went and waits for its timeline: the outcome never shows before {@link FusionTiming.minimum}, a result flips out after the climax and a failure hands everything back after the fizzle.
  * Its own clock is `performance.now()`, which the renderer and the virtual clock of the film script follow too.
  */

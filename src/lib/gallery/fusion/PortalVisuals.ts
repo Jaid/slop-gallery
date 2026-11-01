@@ -4,8 +4,10 @@ import type {PortalPalette} from './PortalCore.ts'
 import {Color, Group} from 'three/webgpu'
 
 import EnergyTether from './EnergyTether.ts'
+import GatheringMotes from './GatheringMotes.ts'
 import PortalCore from './PortalCore.ts'
 import PortalSparks from './PortalSparks.ts'
+import RealityWarp from './RealityWarp.ts'
 
 /** the portal’s own colors: a deep indigo heart, an electric blue swirl and a golden rim */
 export const portalPalette = {
@@ -38,25 +40,29 @@ export function paletteOf(color?: string): PortalPalette {
 }
 
 /**
- * Everything a fusion’s portal draws: its glowing disc, its sparks and a tether to each of the two things orbiting it. The disc and the sparks stand at the portal’s middle, the tethers lay themselves out in the world.
+ * Everything a fusion’s portal draws: its glowing disc, its sparks and a tether to each of the two things orbiting it, and the parts only the intro shows: the warp and the motes. All but the tethers stand at the portal’s middle; the tethers lay themselves out in the world.
  * At radius 0 and without energy, nothing shows, but every part still draws, which lets their pipelines compile behind the loading screen.
  */
 export default class PortalVisuals {
   readonly core = new PortalCore
+  readonly motes = new GatheringMotes
   readonly root = new Group
   readonly sparks = new PortalSparks
   readonly tethers = [new EnergyTether(0), new EnergyTether(13.7)]
+  readonly warp = new RealityWarp
   private readonly middle = new Group
 
   constructor() {
     this.root.name = 'fusion'
-    this.middle.add(this.core, this.sparks)
+    this.middle.add(this.warp, this.core, this.sparks, this.motes)
     this.root.add(this.middle, ...this.tethers)
   }
 
   dispose() {
     this.core.dispose()
     this.sparks.dispose()
+    this.warp.dispose()
+    this.motes.dispose()
     for (const tether of this.tethers) {
       tether.dispose()
     }
@@ -65,7 +71,7 @@ export default class PortalVisuals {
   /** Colors every part. */
   paint({core, rim, swirl}: PortalPalette) {
     this.core.uniforms.core.value.copy(core)
-    for (const {uniforms} of [this.core, this.sparks, ...this.tethers]) {
+    for (const {uniforms} of [this.core, this.sparks, this.motes, ...this.tethers]) {
       uniforms.rim.value.copy(rim)
       uniforms.swirl.value.copy(swirl)
     }

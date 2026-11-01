@@ -8,17 +8,17 @@ export type FusionTiming = {
   climax: number
   /** A failed fusion hands the work back to its wall and spits out what was thrown into it. */
   fizzle: number
-  /** The portal opens and the work and what was thrown into it fly into orbit around it. */
-  gather: number
-  /** Each ingredient surfaces in the portal for this long, one after another, over and over until the outcome is in. */
+  /** After the intro, each ingredient surfaces in the portal for this long, one after another, over and over until the outcome is in. */
   ingredient: number
+  /** The ceremony opens with this, once and never looped: the portal forms, takes hold of the work and what was thrown into it and shows each ingredient once, until both orbit it. */
+  intro: number
   /** The outcome never shows before this, however fast the image model answers. */
   minimum: number
 }
 
-/** Opening the portal and showing both ingredients once takes exactly the minimum. */
+/** The intro fills the minimum, which every fusion waits for anyway. */
 export const fusionTiming: FusionTiming = {
-  gather: 1,
+  intro: 4,
   ingredient: 1.5,
   minimum: 4,
   climax: 1.3,
@@ -26,19 +26,30 @@ export const fusionTiming: FusionTiming = {
   fizzle: 1,
 }
 
-/** the share of an ingredient’s turn it takes to surface from the swirl, and again to sink back into it */
+/** how many turns of the ingredients the intro shows, one each, which the turns after it count on from */
+export const introTurns = 2
+/** the share of an image’s turn it takes to surface from the swirl, and again to sink back into it */
 const surfacing = 0.24
 
-/** The ingredient the portal shows `elapsed` seconds into a fusion of `count` ingredients and how clearly, from 0, lost in the swirl, to 1; none while the portal opens. */
-export function ingredientAt(elapsed: number, count: number, {gather, ingredient}: Pick<FusionTiming, 'gather' | 'ingredient'> = fusionTiming) {
-  if (elapsed < gather || count === 0 || ingredient <= 0) {
+/** How clearly an image whose turn lasts from `from` to `to` seconds shows `elapsed` seconds in, from 0, lost in the swirl, to 1. */
+export function clarityBetween(elapsed: number, from: number, to: number) {
+  const progress = (elapsed - from) / (to - from)
+  if (progress < 0 || progress > 1) {
+    return 0
+  }
+  return Math.min(clamp(progress / surfacing, 0, 1), clamp((1 - progress) / surfacing, 0, 1))
+}
+
+/** The ingredient the portal shows `elapsed` seconds into a fusion of `count` ingredients and how clearly, once its intro is over; the intro shows its own. */
+export function ingredientAt(elapsed: number, count: number, {ingredient, intro}: Pick<FusionTiming, 'ingredient' | 'intro'> = fusionTiming) {
+  if (elapsed < intro || count === 0 || ingredient <= 0) {
     return
   }
-  const turn = Math.floor((elapsed - gather) / ingredient)
-  const progress = (elapsed - gather) / ingredient - turn
+  const turn = Math.floor((elapsed - intro) / ingredient)
+  const start = intro + turn * ingredient
   return {
-    index: turn % count,
-    turn,
-    clarity: Math.min(clamp(progress / surfacing, 0, 1), clamp((1 - progress) / surfacing, 0, 1)),
+    index: (introTurns + turn) % count,
+    turn: introTurns + turn,
+    clarity: clarityBetween(elapsed, start, start + ingredient),
   }
 }

@@ -68,7 +68,7 @@ const tumbleAxis = (id: string) => {
  * The work returns to its wall when the fusion fails or is aborted and flips out of the portal as the result otherwise; a loose work thrown into it is spat out on failure and consumed on success; a prop is always spat back out.
  */
 export default class Satellites {
-  /** where each satellite is in the world this frame, for the tethers; empty once it is handed back */
+  /** where each satellite is in the world this frame, by its orbit’s index, for the tethers; empty once it is handed back */
   readonly centers: Array<Vector3 | undefined> = []
   private readonly fusion: Fusion
   private list?: Array<Satellite>
@@ -97,13 +97,13 @@ export default class Satellites {
     const {fusion} = this
     const {frame, outcome, timing} = fusion
     this.list ??= this.seize()
-    for (const [index, satellite] of this.list.entries()) {
+    for (const satellite of this.list) {
       if (satellite.kind === 'portrait' && portraitObjects.get(satellite.id)?.group !== satellite.group) {
         // The result replaced it.
         satellite.released ??= elapsed
       }
       if (satellite.released !== undefined) {
-        this.centers[index] = undefined
+        this.centers[satellite.orbit.index] = undefined
         satellite.group.scale.setScalar(satellite.releasedScale + (1 - satellite.releasedScale) * easeOutBack(clamp((elapsed - satellite.released) / regrowth, 0, 1)))
         continue
       }
@@ -139,7 +139,7 @@ export default class Satellites {
         }
       }
       this.place(satellite)
-      this.centers[index] = satellite.pose.position
+      this.centers[satellite.orbit.index] = satellite.pose.position
     }
   }
 
@@ -181,7 +181,7 @@ export default class Satellites {
   private seize() {
     const {spec} = this.fusion
     const list: Array<Satellite> = []
-    // The work starts on the far side, toward its wall, so it barely detours on its way into orbit; the other one starts opposite.
+    // The two circle opposite each other, side by side along the wall when the intro hands them to the orbit.
     const phase = -Math.PI / 2 - 0.7
     const portraits = useGallery.getState().portraits
     const add = (kind: Satellite['kind'], id: string, body: RapierRigidBody, group: Object3D, scale: number, tumble?: Vector3) => {
@@ -192,6 +192,7 @@ export default class Satellites {
         body,
         group,
         orbit: {
+          index: kind === 'work' ? 0 : 1,
           phase: kind === 'work' ? phase : phase + Math.PI,
           scale,
           start,

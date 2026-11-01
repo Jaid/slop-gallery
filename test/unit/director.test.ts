@@ -33,7 +33,7 @@ beforeEach(() => {
   })
 })
 const instant: FusionTiming = {
-  gather: 0,
+  intro: 0,
   ingredient: 1,
   minimum: 0,
   climax: 0,
@@ -346,7 +346,7 @@ test('generated image admission failure preserves both originals', async () => {
   }
 })
 const brief: FusionTiming = {
-  gather: 0.02,
+  intro: 0.02,
   ingredient: 0.04,
   minimum: 0.15,
   climax: 0.05,

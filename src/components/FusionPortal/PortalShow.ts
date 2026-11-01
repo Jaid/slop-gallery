@@ -3,13 +3,14 @@ import type {PortalPalette} from '#src/lib/gallery/fusion/PortalCore.ts'
 import type {Texture} from 'three/webgpu'
 
 import {clamp} from 'math'
-import {Color, Group, PointLight} from 'three/webgpu'
+import {Color, Group, PointLight, Vector3} from 'three/webgpu'
 
 import FusionSound from '#src/lib/audio/FusionSound.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
-import {orbitAngle} from '#src/lib/gallery/fusion/orbit.ts'
+import {decorateIntro, introTether} from '#src/lib/gallery/fusion/intro.ts'
+import {introOrbitRate, orbitAngle} from '#src/lib/gallery/fusion/orbit.ts'
 import PortalVisuals, {emberPalette, paletteOf} from '#src/lib/gallery/fusion/PortalVisuals.ts'
 import {holdArtworkTexture} from '#src/lib/useArtworkTexture.ts'
 
@@ -26,6 +27,7 @@ type HeldImage = {
 
 /** how far the portal’s light reaches, in meters */
 const lightRange = 8
+const middle = new Vector3
 
 /**
  * One fusion as the scene shows it: its portal, its light, its sound and the choreography of what orbits it, all following the fusion’s clock frame by frame.
@@ -92,6 +94,7 @@ export default class PortalShow {
     const {uniforms} = visuals.core
     uniforms.radius.value = frame.radius * envelope.size
     uniforms.energy.value = envelope.energy
+    uniforms.lens.value = envelope.lens
     uniforms.flash.value = envelope.flash
     uniforms.pulse.value = envelope.pulse
     uniforms.pulseStrength.value = envelope.pulseStrength
@@ -104,14 +107,20 @@ export default class PortalShow {
     sparks.energy.value = envelope.size > 0.05 ? envelope.energy * (1 - envelope.embers) : 0
     sparks.burst.value = envelope.burst
     sparks.burstStrength.value = envelope.burstStrength
+    decorateIntro(visuals, elapsed, timing, frame.normal)
     this.satellites.update(elapsed)
+    middle.fromArray(frame.center)
     for (const [index, tether] of visuals.tethers.entries()) {
       const from = this.satellites.centers[index]
+      const binding = elapsed < timing.intro ? introTether(index, elapsed, timing) : {
+        glow: 1,
+        reach: 1,
+      }
       tether.uniforms.clock.value = elapsed
-      tether.uniforms.energy.value = from ? Math.min(envelope.energy, 1.3) * clamp((elapsed - 0.35) / 0.5, 0, 1) : 0
-      tether.uniforms.to.value.fromArray(frame.center)
+      tether.uniforms.energy.value = from ? Math.min(envelope.energy, 1.3) * binding.glow : 0
+      tether.uniforms.to.value.copy(middle)
       if (from) {
-        tether.uniforms.from.value.copy(from)
+        tether.uniforms.from.value.lerpVectors(middle, from, binding.reach)
       }
     }
     this.light.intensity = envelope.light
@@ -119,7 +128,7 @@ export default class PortalShow {
     if (!this.sound && this.stage === 'brewing') {
       this.sound = this.listen()
     }
-    const orbit = (orbitAngle(0, elapsed, this.climax()) - orbitAngle(0, elapsed - 0.01, this.climax())) / 0.01
+    const orbit = elapsed < timing.intro ? introOrbitRate(elapsed, timing) : (orbitAngle(0, elapsed, this.climax()) - orbitAngle(0, elapsed - 0.01, this.climax())) / 0.01
     this.cue(elapsed, envelope.image && 'turn' in envelope.image ? envelope.image.turn : undefined)
     this.sound?.update({
       energy: envelope.energy,
@@ -185,8 +194,9 @@ export default class PortalShow {
     if (!engine || !useGallery.getState().sound) {
       return
     }
-    const sound = new FusionSound(engine, this.fusion.frame.center)
-    sound.open()
+    const {fusion} = this
+    const sound = new FusionSound(engine, fusion.frame.center)
+    sound.open(fusion.timing, fusion.elapsed())
     return sound
   }
 
