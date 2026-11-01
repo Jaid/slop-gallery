@@ -1,25 +1,35 @@
 import type {ArenaPolish, ArenaSurfaces} from '#component/ArenaShell'
 
-import {CylinderCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
+import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
-import {CylinderGeometry, ExtrudeGeometry} from 'three/webgpu'
+import {Fragment, useMemo} from 'react'
+import {ExtrudeGeometry} from 'three/webgpu'
+import {useGraphicsModeValue} from 'use-graphics-mode'
 
-import ArenaShell, {useArenaMarble, useArenaSurfaces} from '#component/ArenaShell'
+import {ArenaFloor, useArenaSurfaces} from '#component/ArenaShell'
 import Chandelier from '#component/Chandelier'
 import Orb from '#component/Orb'
 import OrbHolder, {useOrbHolder} from '#component/OrbHolder'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
+import SiennaWainscot from '#component/SiennaWainscot'
 import SpotlightThrower, {useSpotlightThrower} from '#component/SpotlightThrower'
+import {surfaceTexture} from '#src/components/Scene/materials.ts'
+import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
+import {siennaWainscotFields} from '#src/lib/gallery/siennaWainscot.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
+import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
+import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
+import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import {throwerSpot} from '#src/rooms/cell/Cell.ts'
+import CellCeiling from '#src/rooms/cell/components/CellCeiling/index.tsx'
 import CellDoor from '#src/rooms/cell/components/CellDoor/index.tsx'
 import sandbox from '#src/worlds/sandbox/index.ts'
 
@@ -28,7 +38,12 @@ const {layout} = cell.room
 const {chandelierLift, floorTile, vestibule} = layout
 const [width, depth] = cell.size
 const [x, z] = cell.center
+const roundWallIds = new Set(layout.spaces.map(space => cell.room.globalId(space.name)))
 const walls = sandbox.walls.filter(wall => wall.room === cell.id)
+/** the hall’s four walls, papered like the Sienna’s */
+const hallWalls = walls.filter(wall => !roundWallIds.has(wall.id))
+/** the round walls of the spaces beyond the north wall, upholstered in the Arena’s velvet */
+const roundWalls = walls.filter(wall => roundWallIds.has(wall.id))
 const northWall = walls.find(wall => wall.id === cell.room.globalId('north'))!
 const door = northWall.holes?.find(hole => hole.name === 'door')
 /** where a point of the floor plan, relative to the room’s origin, lies in the world */
@@ -38,23 +53,34 @@ const worldPoint = ([pointX, pointZ]: readonly [number, number]) => {
 }
 // Whole tiles from the north-west corner, which the walls then meet at a tile’s edge all the way round.
 const floorOrigin = [x - width / 2, z - depth / 2] as const
-/** Polished hard like the Cinnabar’s terrazzo, so the chandelier and the velvet mirror clearly in it. */
+/** Polished hard like the Cinnabar’s terrazzo, so the chandelier and the walls mirror clearly in it. */
 const polish: ArenaPolish = {
   strength: 0.4,
   grazingStrength: 0.2,
 }
 const slabThickness = 0.24
 const circleSegments = 96
+/** how far one repeat of the wood’s texture reaches along x and z, as the Vesper’s floor spreads its 3 × 3 repeats over 12 × 24 m */
+const woodRepeat = [4, 8] as const
 
-/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, dim enough that the items’ throwers stand out, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
+/** The Sandbox’s one room: a hall with the Arena’s marble underfoot, papered and paneled like the Sienna under a coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, dim enough that the items’ throwers stand out, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
+  // The Sienna’s damask over its wainscot, their baseboards, casings, cornice, frames and rails in one varnished timber, which the ceiling’s beams share.
+  const damask = useDisposable(useMemo(() => new DamaskWallpaperMaterial, []))
+  const joinery = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'x'}), []))
+  const fields = useDisposable(useMemo(() => new JoineryWoodMaterial(siennaWainscotFields), []))
   return <group name='cell'>
     <ambientLight intensity={0.15} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={0.45} />
     {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
     <ShadowPool />
-    <ArenaShell center={cell.center} floorOrigin={floorOrigin} height={cell.height} polish={polish} size={cell.size} surfaces={surfaces} tile={floorTile} walls={walls} />
+    <ArenaFloor center={cell.center} origin={floorOrigin} polish={polish} size={cell.size} tile={floorTile} />
+    {hallWalls.map(wall => <Fragment key={wall.id}>
+      <WallSurface material={joinery} plaster={surfaces.plaster} surfaceMaterial={damask} wall={wall} />
+      <SiennaWainscot field={fields} frame={joinery} wall={wall} />
+    </Fragment>)}
+    <CellCeiling beams={joinery} />
     <group position={[x, chandelierLift, z]}>
       <Chandelier lamp={cell.room.globalId('chandelier')} />
     </group>
@@ -62,9 +88,15 @@ export default function CellRoom() {
   </group>
 }
 
-/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap under the spotlight throwers aimed at it. */
+/** Every round space beyond the north wall: the Vesper’s varnished wood on their floors and out under their arches, the Arena’s velvet on their walls and on the reveals that line the arches out to the walls they open through, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap under the spotlight throwers aimed at it. */
 function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
-  const marble = useArenaMarble(floorOrigin, floorTile, polish)
+  const {floorReflections, surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
+  const wood = useDisposable(useMemo(() => {
+    const texture = surfaceTexture('wood', surfaceAnisotropy)
+    texture.repeat.set(1 / woodRepeat[0], 1 / woodRepeat[1])
+    return texture
+  }, [surfaceAnisotropy]))
+  const floor = useDisposable(useMemo(() => new WoodFloorMaterial(wood, floorReflections), [floorReflections, wood]))
   const pedestal = usePedestal()
   const holder = useOrbHolder()
   const thrower = useSpotlightThrower()
@@ -75,15 +107,16 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
         bevelEnabled: false,
         curveSegments: circleSegments,
       })
-      // Its top as high as the room’s marble, so all of them mirror in one plane.
+      // Its top as high as the hall’s marble, so all of them mirror in one plane.
       const [spaceX, spaceZ] = worldPoint(space.center)
       return geometry.rotateX(-Math.PI / 2).translate(spaceX, 0.001 - slabThickness, spaceZ)
     }))
-    const ceiling = mergeParts(layout.spaces.map(space => {
-      const [spaceX, spaceZ] = worldPoint(space.center)
-      const disk = new CylinderGeometry(space.radius, space.radius, 0.18, circleSegments)
-      return disk.translate(spaceX, cell.height, spaceZ)
-    }))
+    // In meters across the world, so the grain runs on unbroken from one space into the next, along z like the Vesper’s.
+    const position = slab.getAttribute('position')
+    const uv = slab.getAttribute('uv')
+    for (let index = 0; index < uv.count; index++) {
+      uv.setXY(index, position.getX(index), -position.getZ(index))
+    }
     // Every arch through a round wall, lined out to the plane where the wall it opens onto touches it.
     const reveals = mergeParts(layout.spaces.flatMap(space => {
       const wall = walls.find(candidate => candidate.id === cell.room.globalId(space.name))!
@@ -91,12 +124,11 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
     }))
     return {
       slab,
-      ceiling,
       reveals,
       floorCollision: colliderGeometry(slab),
       revealCollision: colliderGeometry(reveals),
       dispose() {
-        for (const geometry of [slab, ceiling, reveals]) {
+        for (const geometry of [slab, reveals]) {
           geometry.dispose()
         }
       },
@@ -107,14 +139,10 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
     <RigidBody colliders={false} type='fixed'>
       <TrimeshCollider args={parts.floorCollision} />
       <TrimeshCollider args={parts.revealCollision} />
-      {layout.spaces.map(space => {
-        const [spaceX, spaceZ] = worldPoint(space.center)
-        return <CylinderCollider key={space.name} args={[0.09, space.radius]} position={[spaceX, cell.height, spaceZ]} />
-      })}
     </RigidBody>
-    <mesh geometry={parts.slab} material={marble} name='cell-vestibule-floor' receiveShadow />
-    <Branch if={marble.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={marble.reflectionTarget!} /></group></Branch>
-    <mesh castShadow geometry={parts.ceiling} material={surfaces.ceiling} name='cell-vestibule-ceiling' receiveShadow />
+    {roundWalls.map(wall => <WallSurface key={wall.id} material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} wall={wall} />)}
+    <mesh geometry={parts.slab} material={floor} name='cell-vestibule-floor' receiveShadow />
+    <Branch if={floor.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={floor.reflectionTarget!} /></group></Branch>
     <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
     {layout.throwers.map(({ceiling, target}) => <SpotlightThrower key={ceiling.join()} {...thrower} ceiling={cell.toWorld(ceiling)} target={cell.toWorld(target)} tint={throwerSpot.tint} />)}
     {sandbox.items.map((orb, index) => {

@@ -37,7 +37,7 @@ export const throwerFill = {
 /** the most throwers whose light casts shadows */
 const maxShadowedThrowers = 4
 
-/** The Sandbox’s one room: a sealed hall in the Arena’s marble and velvet under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, its layout lays out a pedestal for every item it holds, each lit by spotlight throwers, or a door closes the arch while it holds none. */
+/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered and paneled like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, its layout lays out a pedestal for every item it holds in round spaces upholstered in the Arena’s velvet, each lit by spotlight throwers, or a door closes the arch while it holds none. */
 export default class Cell extends Room {
   override readonly air: Array<Box3>
   override readonly color = '#5d242b'
@@ -96,14 +96,12 @@ export default class Cell extends Room {
       u: vestibule?.center[0] ?? 0,
     }
     const walls: Record<string, RoomWall> = {
-      // Four plain walls, which artworks may hang on.
-      north: planWall(size, 'north', height, {
-        baseboardSection: cellBaseboard,
-        holes: vestibule ? {vestibule: opening} : {door: opening},
-      }),
-      east: planWall(size, 'east', height, {baseboardSection: cellBaseboard}),
-      south: planWall(size, 'south', height, {baseboardSection: cellBaseboard}),
-      west: planWall(size, 'west', height, {baseboardSection: cellBaseboard}),
+      // Four plain walls, which artworks may hang on, with the Sienna’s tall baseboard under its wainscot.
+      north: planWall(size, 'north', height, {holes: vestibule ? {vestibule: opening} : {door: opening}}),
+      east: planWall(size, 'east', height),
+      south: planWall(size, 'south', height),
+      west: planWall(size, 'west', height),
+      // The round spaces’ velvet walls keep the Arena’s low molded baseboard in black lacquer.
       ...Object.fromEntries(spaces.map(space => [space.name, {
         ...roundVestibuleWall(space, [0, 0, 0], height),
         baseboardSection: cellBaseboard,

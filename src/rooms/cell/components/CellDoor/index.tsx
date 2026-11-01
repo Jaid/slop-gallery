@@ -12,7 +12,7 @@ import PolishedBrassMaterial from '#src/lib/materials/PolishedBrassMaterial.ts'
 /** how thick the door stands for the player to bump into, out of the wall’s center line */
 const colliderDepth = 0.09
 
-/** The Cell’s door, shut in the opening `hole` of `wall` while there is nothing beyond: black lacquered leaves upholstered in the walls’ velvet, with brass nailheads, kick plates and ring pulls. Beyond it lies nothing, so it never opens. */
+/** The Cell’s door, shut in the opening `hole` of `wall` while there is nothing beyond: black lacquered leaves upholstered in the Arena’s velvet, with brass nailheads, kick plates and ring pulls. Beyond it lies nothing, so it never opens. */
 export default function CellDoor({hole, surfaces, wall}: {
   hole: WallOpening
   surfaces: ArenaSurfaces

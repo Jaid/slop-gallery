@@ -43,7 +43,7 @@ const beadTop = plinth.top + groove.height + beadRadius * 2
 const capFront = grooveFront - fillet.depth
 const capBottom = beadTop + fillet.height
 /**
- * The Cell’s baseboard in the Arena’s black lacquer, low and finely molded instead of the two tall plain bands: a slim plinth with its toe on the floor, a shadow line cut in over it, a round bead catching the chandeliers’ light, a narrow fillet and an ogee cap curving back into the velvet.
+ * The baseboard of the Cell’s round spaces in the Arena’s black lacquer, low and finely molded instead of the two tall plain bands: a slim plinth with its toe on the floor, a shadow line cut in over it, a round bead catching the throwers’ light, a narrow fillet and an ogee cap curving back into the velvet.
  * It stands 20 cm high and less than 4 cm out of the wall’s face.
  */
 const cellBaseboard: NonNullable<Wall['baseboardSection']> = [

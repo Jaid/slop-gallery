@@ -4,10 +4,12 @@ import {describe, expect, test} from 'bun:test'
 
 import {architectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellRoundCeiling, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
+import {siennaWainscot, siennaWainscotPanel} from '../../src/lib/gallery/siennaWainscot.ts'
 import {aimThrower} from '../../src/lib/gallery/SpotlightThrowerGeometry.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
@@ -232,25 +234,40 @@ describe('the Cell’s layout', () => {
   })
 })
 describe('the Cell’s trim and door', () => {
-  test('runs a low molded baseboard along every wall, round ones too, which stands out of the face less than the old bands', () => {
+  test('runs a low molded baseboard along the round spaces’ walls, which stands out of the face less than the old bands, and the Sienna’s tall one along the hall’s under its wainscot', () => {
     const [toe] = cellBaseboard
     const top = cellBaseboard.at(-1)!
     expect(toe).toEqual([toe[0], 0])
     expect(top[0]).toBe(wallFace)
     expect(top[1]).toBeLessThan(0.25)
     expect(Math.max(...cellBaseboard.map(([front]) => front))).toBeLessThan(0.2)
-    for (const count of [0, 3]) {
+    const {frame} = siennaWainscotPanel
+    const frameBottom = frame.y - frame.size[1] / 2
+    for (const count of [0, 1, 3]) {
       const sandbox = new Sandbox(ids.slice(0, count))
-      for (const wall of sandbox.walls) {
+      const round = sandbox.walls.filter(wall => wall.curveRadius)
+      const hall = sandbox.walls.filter(wall => !wall.curveRadius)
+      expect(round).toHaveLength(sandbox.room('cell').room.layout.spaces.length)
+      expect(hall.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-west'])
+      for (const wall of round) {
         expect(wall.baseboardSection).toBe(cellBaseboard)
+      }
+      for (const wall of hall) {
+        expect(wall.baseboardSection).toBeUndefined()
         const [trim] = architectureGeometry(wall).trim
         trim.computeBoundingBox()
-        // Its own height, apart from the plinth blocks the casing of an opening stands on; a round wall’s bends with it.
+        // The wainscot’s frames stand right on it, apart from the plinth blocks the casing of an opening stands on.
         if (!wall.holes?.length) {
-          expect(trim.boundingBox!.max.y).toBeCloseTo(top[1], 6)
+          expect(trim.boundingBox!.max.y).toBeLessThanOrEqual(frameBottom)
+          expect(trim.boundingBox!.max.y).toBeGreaterThan(frameBottom - 0.02)
         }
-        if (!wall.curveRadius) {
-          expect(trim.boundingBox!.max.z).toBeLessThan(wall.holes?.length ? 0.4 : 0.15)
+        // Panels all along it, clear of the arch.
+        const panels = siennaWainscot(wall)
+        expect(panels.length).toBeGreaterThanOrEqual(wall.holes?.length ? 6 : 7)
+        for (const hole of wall.holes ?? []) {
+          for (const u of panels) {
+            expect(Math.abs(u - hole.u)).toBeGreaterThanOrEqual(hole.width / 2 + siennaWainscotPanel.width / 2)
+          }
         }
       }
     }
@@ -293,4 +310,73 @@ describe('the Cell’s trim and door', () => {
       profile: 'rectangle',
     })).toThrow(RangeError)
   })
+})
+describe('the Cell’s ceilings', () => {
+  test('coffer the hall in equal fields between the beams and the cornice, one of them round the chandelier and clear of its ring', () => {
+    const {size} = new CellLayout(0)
+    const {beam, count} = cellCoffers
+    for (const [axis, length] of size.entries()) {
+      const {beams, field, middles} = cofferLine(length, count[axis])
+      expect(count[axis] % 2).toBe(1)
+      expect(middles).toHaveLength(count[axis])
+      expect(beams).toHaveLength(count[axis] - 1)
+      // Fields and beams alternate evenly from cornice to cornice, the cornice 34 cm out of the walls’ center lines.
+      expect(middles[0] - field / 2).toBeCloseTo(-length / 2 + 0.34, 9)
+      expect(middles.at(-1)! + field / 2).toBeCloseTo(length / 2 - 0.34, 9)
+      for (const [index, middle] of beams.entries()) {
+        expect(middle - beam.width / 2).toBeCloseTo(middles[index] + field / 2, 9)
+        expect(middle + beam.width / 2).toBeCloseTo(middles[index + 1] - field / 2, 9)
+      }
+      expect(middles[(count[axis] - 1) / 2]).toBeCloseTo(0, 9)
+      // The chandelier’s ring swings 66 cm out from its stem.
+      expect(field / 2).toBeGreaterThan(0.8)
+    }
+    const [x, z] = size.map((length, axis) => cofferLine(length, count[axis]).field)
+    expect(Math.abs(x - z) / x).toBeLessThan(0.02)
+  })
+  for (const count of [0, 1, 2, 3, 4, 6, 12]) {
+    test(`hangs every beam and bit of gilding under its slab, high over the arches, and rings the round ceilings clear of the throwers, with ${count} items`, () => {
+      const layout = new CellLayout(count)
+      const geometry = new CellCeilingGeometry(layout)
+      try {
+        const underside = layout.height - cellCeilingSlab / 2
+        const [width, depth] = layout.size
+        for (const part of [geometry.beams, geometry.crossBeams, geometry.gilt, geometry.hall]) {
+          part.computeBoundingBox()
+        }
+        const beams = geometry.beams.boundingBox!
+        expect(beams.min.y).toBeCloseTo(underside - cellCoffers.beam.depth, 6)
+        expect(beams.max.y).toBeCloseTo(underside, 6)
+        expect(beams.max.x).toBeCloseTo(width / 2, 6)
+        // Laid along x, the mesh turns them onto z: local x becomes world −z and local z world x.
+        const cross = geometry.crossBeams.boundingBox!
+        expect(cross.min.x).toBeCloseTo(-depth / 2, 6)
+        expect(cross.max.x).toBeCloseTo(depth / 2, 6)
+        expect(Math.max(-cross.min.z, cross.max.z)).toBeLessThan(width / 2)
+        expect(cross.min.y).toBeCloseTo(beams.min.y, 6)
+        const gilt = geometry.gilt.boundingBox!
+        // No deeper than the beams.
+        expect(gilt.min.y).toBeGreaterThan(beams.min.y)
+        expect(gilt.min.y).toBeGreaterThan(layout.arch.height + 1)
+        expect(gilt.max.y).toBeLessThan(layout.height)
+        expect(geometry.hall.boundingBox!.min.y).toBeCloseTo(underside, 6)
+        if (layout.spaces.length) {
+          geometry.rounds.computeBoundingBox()
+          expect(geometry.rounds.boundingBox!.min.y).toBeCloseTo(underside, 6)
+        } else {
+          expect(geometry.rounds.getAttribute('position')).toBeUndefined()
+        }
+        // Every thrower’s stem leaves the ceiling clear of each round ceiling’s ring and of its rosette, whose petals reach 0.92 × its size from the middle.
+        for (const {ceiling: [x, , z]} of layout.throwers) {
+          for (const space of layout.spaces) {
+            const reach = distance([x, z], space.center)
+            expect(Math.abs(reach - (space.radius - cellRoundCeiling.ring.inset))).toBeGreaterThan(cellRoundCeiling.ring.tube + 0.15)
+            expect(reach).toBeGreaterThan(cellRoundCeiling.rosette * 0.92 + 0.03)
+          }
+        }
+      } finally {
+        geometry.dispose()
+      }
+    })
+  }
 })
