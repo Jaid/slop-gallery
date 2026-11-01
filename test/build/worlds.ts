@@ -1,30 +1,65 @@
+import type {OutputList} from '../../src/lib/vite/outputListPlugin.ts'
 import type {WorldInfo} from '../../src/worlds/index.ts'
 
-import {join, parse} from 'node:path'
+import {join, relative} from 'node:path'
 
 import {knots} from 'knot-materials'
 
+import {hashedFileName, immutableExtensions} from '../../src/lib/vite/immutableHeadersPlugin.ts'
+import {outputListFile} from '../../src/lib/vite/outputListPlugin.ts'
+import artworks from '../../src/worlds/gallery/artworks.ts'
 import {worldIds, worlds} from '../../src/worlds/index.ts'
 
-// Verifies the production build in dist (bun run build first): one page for every world, with each world, every Knot material and the Knots’ announcements in chunks of their own that only load on demand.
+// Verifies the production build in dist (bun run build first): one page for every world, with each world, every Knot material and the Knots’ announcements in chunks of their own that only load on demand, and every file but the page named by its content.
+// Files are named by their content hash, so the chunks and assets are looked up in the output list the build writes next to it.
 const directory = 'dist'
+const root = join(import.meta.dir, '..', '..')
 const everyFileGlob = new Bun.Glob('**/*')
 const scanned = await Array.fromAsync(everyFileGlob.scan(directory))
 const files = scanned.map(file => file.replaceAll('\\', '/'))
+const {chunks, assets} = await Bun.file(join(root, outputListFile)).json() as OutputList
 const fail = (message: string): never => {
   throw new Error(message)
 }
+/** the repository-relative path of a source file, as the output list names modules */
+const fromRoot = (file: string) => relative(root, file).replaceAll('\\', '/')
 if (files.some(file => file.endsWith('.map'))) {
   fail('A production source map escaped into the build.')
 }
-for (const chunk of ['main.js', 'sub.js', 'react.js', 'three.js', 'rapier.js', 'vendor.js', ...worldIds.map(id => `${id}.js`)]) {
-  if (!files.includes(chunk)) {
-    fail(`The build is missing ${chunk}.`)
+const listed = new Set([...chunks, ...assets].map(output => output.fileName))
+const unlisted = files.find(file => !listed.has(file))
+if (unlisted) {
+  fail(`${unlisted} is not in the output list, which is older than the build.`)
+}
+// Hashes are case-sensitive, so on a case-insensitive file system two of them can name the same file, which keeps only one.
+const lost = [...listed].find(file => !files.includes(file))
+if (lost) {
+  fail(`${lost} is in the output list but not in the build, like when another file’s hash differs from its hash only in case.`)
+}
+// Only the page, the headers and the bake reports keep their names.
+const named = files.filter(file => !hashedFileName.test(file))
+const unexpected = named.find(file => !['_headers', 'index.html'].includes(file) && !/^bake-[\w-]+\.json$/u.test(file))
+if (unexpected) {
+  fail(`${unexpected} is not named by its content hash.`)
+}
+const headers = await Bun.file(join(directory, '_headers')).text()
+for (const extension of immutableExtensions(files)) {
+  if (!headers.includes(`/*.${extension}\n  Cache-Control: public, max-age=31536000, immutable`)) {
+    fail(`The headers do not let browsers keep the .${extension} files for good.`)
   }
 }
-for (const folder of ['art/', 'audio/']) {
-  if (!files.some(file => file.startsWith(folder))) {
-    fail(`The gallery’s public ${folder} assets are missing.`)
+const chunkNamed = (name: string) => chunks.find(chunk => chunk.name === name) ?? fail(`The build is missing the ${name} chunk.`)
+const chunkOf = (module: string) => chunks.find(chunk => chunk.facadeModule === module) ?? fail(`The build has no chunk of its own for ${module}.`)
+const assetOf = (file: string) => assets.find(asset => asset.originalFileNames.includes(fromRoot(file)))
+for (const name of ['main', 'sub', 'react', 'three', 'rapier', 'vendor', 'world-base']) {
+  chunkNamed(name)
+}
+const worldChunks = new Map(worldIds.map(id => [id, chunkOf(`src/worlds/${id}/index.ts`).fileName]))
+for (const {id, source, narration} of artworks) {
+  for (const file of [source, narration]) {
+    if (typeof file === 'string' && !assetOf(file)) {
+      fail(`The build is missing the ${id} artwork’s ${fromRoot(file)}.`)
+    }
   }
 }
 const html = await Bun.file(join(directory, 'index.html')).text()
@@ -36,24 +71,16 @@ for (const id of worldIds) {
   if (!html.includes(JSON.stringify(title)) || !html.includes(JSON.stringify(tagline))) {
     fail(`The loading screen does not know ${title}.`)
   }
-  // Bun imports the wallpaper as its file, which the build emits under its name, encoded as JXL.
-  const wallpaperFile = wallpaper && `${parse(wallpaper).name}.jxl`
-  if (wallpaperFile && (!files.includes(wallpaperFile) || !html.includes(JSON.stringify(`/${wallpaperFile}`)))) {
+  // Bun imports the wallpaper as its file, which the build emits encoded as JXL.
+  const wallpaperFile = wallpaper && assetOf(wallpaper)?.fileName
+  if (wallpaper && (!wallpaperFile?.endsWith('.jxl') || !html.includes(JSON.stringify(`/${wallpaperFile}`)))) {
     fail(`The loading screen’s wallpaper of ${title} is missing.`)
   }
 }
-const knotChunks = new Map(knots.map(knot => [`knot-${knot.id}.js`, knot.id]))
-const missing = knotChunks.keys().filter(chunk => !files.includes(chunk)).toArray()
-if (missing.length) {
-  fail(`${missing.length} Knot materials have no chunk of their own, starting with ${missing[0]}.`)
-}
-/** the chunks a chunk imports statically, which load before it runs */
-const staticImports = async (chunk: string) => {
-  const code = await Bun.file(join(directory, chunk)).text()
-  return code.matchAll(/(?<![\w$.])(?:export|import)(?:[\s{][^"';]*?from)?\s*["']\.\/([^"']+\.js)["']/gu).map(match => match[1]).toArray()
-}
+const knotChunks = new Map(knots.map(knot => [chunks.find(chunk => chunk.facadeModule === `packages/knot-materials/src/entries/${knot.id}/Material.ts`)?.fileName ?? fail(`The Knot material ${knot.id} has no chunk of its own.`), knot.id]))
+const staticImports = new Map(chunks.map(chunk => [chunk.fileName, chunk.imports]))
 /** every chunk the chunk needs before it runs */
-const closure = async (chunk: string) => {
+const closure = (chunk: string) => {
   const seen = new Set<string>
   const pending = [chunk]
   while (pending.length) {
@@ -62,73 +89,72 @@ const closure = async (chunk: string) => {
       continue
     }
     seen.add(next)
-    pending.push(...await staticImports(next))
+    pending.push(...staticImports.get(next) ?? [])
   }
   return seen
 }
+const main = chunkNamed('main').fileName
 // The page runs its module scripts and preloads the chunks they import.
 const entries = html.matchAll(/<(?:script type="module"[^>]*src|link rel="modulepreload"[^>]*href)="\/([^"]+\.js)"/gu).map(match => match[1]).toArray()
-if (!entries.includes('main.js')) {
-  fail('index.html does not run main.js.')
+if (!entries.includes(main)) {
+  fail('index.html does not run the main chunk.')
 }
-const closures = await Promise.all(entries.map(closure))
-const initial = new Set(closures.flatMap(chunks => [...chunks]))
-for (const chunk of ['knot-catalog.js', 'knot-shaders.js']) {
-  if (!files.includes(chunk)) {
-    fail(`The build is missing ${chunk}.`)
-  }
-  if (initial.has(chunk)) {
-    fail(`${chunk} loads with the page instead of on demand.`)
+const initial = new Set(entries.flatMap(entry => [...closure(entry)]))
+for (const name of ['knot-catalog', 'knot-shaders']) {
+  if (initial.has(chunkNamed(name).fileName)) {
+    fail(`The ${name} chunk loads with the page instead of on demand.`)
   }
 }
-if (files.some(file => /^data\d*\.js$/u.test(file))) {
+if (chunks.some(chunk => /^data\d*$/u.test(chunk.name))) {
   fail('The Knots’ metadata is split into a chunk per entry.')
 }
+const worldOf = (chunk: string) => worldIds.find(id => worldChunks.get(id) === chunk)
 for (const chunk of initial) {
-  if (knotChunks.has(chunk) || worldIds.some(id => chunk === `${id}.js`)) {
-    fail(`${chunk} loads with the page instead of on demand.`)
+  if (knotChunks.has(chunk) || worldOf(chunk)) {
+    fail(`${knotChunks.get(chunk) ?? worldOf(chunk)} loads with the page instead of on demand.`)
   }
 }
-const initialSources = await Promise.all([...initial].map(chunk => Bun.file(join(directory, chunk)).text()))
+const read = (chunk: string) => Bun.file(join(directory, chunk)).text()
+const initialSources = await Promise.all([...initial].map(read))
 const initialCode = initialSources.join('\n')
 // Every announcement goes by its path, like entries/<id> for a Knot’s title.
 if (knots.some(knot => initialCode.includes(`"entries/${knot.id}"`))) {
   fail('The Knots’ announcements load with the page.')
 }
-for (const id of worldIds) {
-  const chunks = await closure(`${id}.js`)
-  // The page waits for its world in main.js, so a world importing it would wait for itself.
-  if (chunks.has('main.js')) {
-    fail(`The ${id} world imports main.js, which waits for it to load.`)
+for (const [id, worldChunk] of worldChunks) {
+  const needed = closure(worldChunk)
+  // The page waits for its world in the main chunk, so a world importing it would wait for itself.
+  if (needed.has(main)) {
+    fail(`The ${id} world imports the main chunk, which waits for it to load.`)
   }
-  for (const chunk of chunks) {
-    if (knotChunks.has(chunk) || worldIds.some(other => other !== id && chunk === `${other}.js`)) {
-      fail(`The ${id} world loads ${chunk} with it.`)
+  for (const chunk of needed) {
+    const other = worldOf(chunk)
+    if (knotChunks.has(chunk) || other && other !== id) {
+      fail(`The ${id} world loads ${knotChunks.get(chunk) ?? other} with it.`)
     }
   }
 }
 // Only a material’s own chunk may hold it, so loading anything else never downloads a material, nor the textures baked for it.
-for (const chunk of files) {
-  if (!chunk.endsWith('.js') || knotChunks.has(chunk)) {
+for (const chunk of chunks) {
+  if (knotChunks.has(chunk.fileName)) {
     continue
   }
-  const imported = await staticImports(chunk)
-  const leaked = imported.find(other => knotChunks.has(other))
+  const leaked = chunk.imports.find(other => knotChunks.has(other))
   if (leaked) {
-    fail(`${chunk} imports the Knot material chunk ${leaked}.`)
+    fail(`${chunk.facadeModule ?? chunk.name} imports the Knot material chunk of ${knotChunks.get(leaked)}.`)
   }
 }
 // The Exhibition’s showcased Knots load their materials once they mount and their announcements once they first speak.
-const exhibition = await closure('ExhibitionRoom.js')
-if (exhibition.has('knottingham.js')) {
+const exhibition = closure(chunkOf('src/rooms/exhibition/components/ExhibitionRoom/index.tsx').fileName)
+if (exhibition.has(worldChunks.get('knottingham')!)) {
   fail('The Exhibition loads the Knottingham world with it.')
 }
-const exhibitionKnotChunks = [...exhibition].filter(other => knotChunks.has(other))
-if (exhibitionKnotChunks.length) {
-  fail(`The Exhibition loads ${exhibitionKnotChunks[0]} with it.`)
+const exhibitionKnot = [...exhibition].find(other => knotChunks.has(other))
+if (exhibitionKnot) {
+  fail(`The Exhibition loads the Knot material of ${knotChunks.get(exhibitionKnot)} with it.`)
 }
-const exhibitionSources = await Promise.all([...exhibition].map(other => Bun.file(join(directory, other)).text()))
+const exhibitionSources = await Promise.all([...exhibition].map(read))
 if (knots.some(knot => exhibitionSources.some(code => code.includes(`"entries/${knot.id}"`)))) {
   fail('The Exhibition loads the Knots’ announcements with it.')
 }
-console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand.`)
+console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand, and ${files.length - named.length} of ${files.length} files are named by their content.`)

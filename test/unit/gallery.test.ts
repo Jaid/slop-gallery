@@ -1,4 +1,5 @@
 import {beforeEach, describe, expect, test} from 'bun:test'
+import {sep} from 'node:path'
 
 import {dropPortrait} from '../../src/lib/gallery/actions.ts'
 import {imageSize} from '../../src/lib/gallery/ImageImporter.ts'
@@ -6,6 +7,7 @@ import {maximumPortraits} from '../../src/lib/gallery/imagePolicy.ts'
 import portraitLabel, {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import artworks from '../../src/worlds/gallery/artworks.ts'
 import walls, {galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
@@ -231,23 +233,23 @@ describe('collection changes', () => {
   })
 })
 describe('default artworks', () => {
-  test('default IDs match unique, existing artwork and narration filenames', async () => {
-    const defaultIds = new Set(samplePortraits.map(p => p.id))
-    expect(defaultIds.size).toBe(samplePortraits.length)
-    for (const p of samplePortraits) {
-      if (typeof p.source !== 'string') {
-        throw new TypeError('Default artworks must reference bundled images.')
-      }
-      expect(p.id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
-      expect(p.source).toMatch(new RegExp(String.raw`^/art/${p.id}\.jxl$`))
-      expect(await Bun.file(new URL(`../../public${p.source}`, import.meta.url)).exists()).toBe(true)
-      if (!p.narration) {
-        // Recordings are prerendered with an OpenRouter key; only the Salon’s works may still be waiting for theirs.
-        expect(p.wallId).toStartWith('salon-')
+  test('every artwork imports an image and maybe a narration named after its unique ID', async () => {
+    const ids = new Set(artworks.map(artwork => artwork.id))
+    expect(ids.size).toBe(artworks.length)
+    for (const {id, source, narration} of artworks) {
+      expect(id).toMatch(/^[a-z]+(?:-[a-z]+)*$/)
+      // Bun imports them as their files, which the build names by their content.
+      expect(source).toEndWith(`${sep}${id}.jxl`)
+      expect(await Bun.file(source).exists()).toBe(true)
+      if (!narration) {
         continue
       }
-      expect(p.narration).toBe(`/audio/${p.id}.opus`)
-      expect(await Bun.file(new URL(`../../public${p.narration}`, import.meta.url)).exists()).toBe(true)
+      expect(narration).toEndWith(`${sep}${id}.opus`)
+      expect(await Bun.file(narration).exists()).toBe(true)
     }
+  })
+  test('the furnished gallery of the tests hangs the default artworks', () => {
+    const ids = new Set(artworks.map(artwork => artwork.id))
+    expect(samplePortraits.every(portrait => ids.has(portrait.id))).toBe(true)
   })
 })

@@ -1,13 +1,47 @@
 import type {Artwork} from '#src/lib/gallery/types.ts'
 
+import breadImage from '#root/assets/art/bread.jxl'
+import catImage from '#root/assets/art/cat.jxl'
+import dogImage from '#root/assets/art/dog.jxl'
+import duckImage from '#root/assets/art/duck.jxl'
+import frogImage from '#root/assets/art/frog.jxl'
+import fruitImage from '#root/assets/art/fruit.jxl'
+import ghostsImage from '#root/assets/art/ghosts.jxl'
+import gleanersImage from '#root/assets/art/gleaners.jxl'
+import gnomesImage from '#root/assets/art/gnomes.jxl'
+import gooseImage from '#root/assets/art/goose.jxl'
+import jatteImage from '#root/assets/art/jatte.jxl'
+import lobsterImage from '#root/assets/art/lobster.jxl'
+import orangeImage from '#root/assets/art/orange.jxl'
+import pigeonImage from '#root/assets/art/pigeon.jxl'
+import toastImage from '#root/assets/art/toast.jxl'
+import treeImage from '#root/assets/art/tree.jxl'
+import venusImage from '#root/assets/art/venus.jxl'
+import waveImage from '#root/assets/art/wave.jxl'
+import wolfImage from '#root/assets/art/wolf.jxl'
+import breadNarration from '#root/assets/audio/bread.opus'
+import catNarration from '#root/assets/audio/cat.opus'
+import dogNarration from '#root/assets/audio/dog.opus'
+import duckNarration from '#root/assets/audio/duck.opus'
+import frogNarration from '#root/assets/audio/frog.opus'
+import fruitNarration from '#root/assets/audio/fruit.opus'
+import ghostsNarration from '#root/assets/audio/ghosts.opus'
+import gooseNarration from '#root/assets/audio/goose.opus'
+import lobsterNarration from '#root/assets/audio/lobster.opus'
+import orangeNarration from '#root/assets/audio/orange.opus'
+import pigeonNarration from '#root/assets/audio/pigeon.opus'
+import toastNarration from '#root/assets/audio/toast.opus'
+import treeNarration from '#root/assets/audio/tree.opus'
+import wolfNarration from '#root/assets/audio/wolf.opus'
+
 const artworks: Array<Artwork> = [
   {
     id: 'goose',
     title: 'His Unbothered Majesty',
     creator: 'Cornelius van Honk',
     description: 'A ruler of impeccable breeding and absolutely no qualifications. His foreign policy consists primarily of hissing.',
-    source: '/art/goose.jxl',
-    narration: '/audio/goose.opus',
+    source: gooseImage,
+    narration: gooseNarration,
     ratio: '1:1',
   },
   {
@@ -15,8 +49,8 @@ const artworks: Array<Artwork> = [
     title: 'A Slightly Larger Tomorrow',
     creator: 'The Department of Lobbys',
     description: 'The village had asked for a little more sunshine. The universe, as usual, misunderstood the brief.',
-    source: '/art/orange.jxl',
-    narration: '/audio/orange.opus',
+    source: orangeImage,
+    narration: orangeNarration,
     ratio: '1:1',
   },
   {
@@ -24,8 +58,8 @@ const artworks: Array<Artwork> = [
     title: 'The Velvet Doge',
     creator: 'The Department of Good Dogs',
     description: 'A peaceful velvet pup with no appointments, no responsibilities and a deeply held belief that the entire sofa belongs to him.',
-    source: '/art/dog.jxl',
-    narration: '/audio/dog.opus',
+    source: dogImage,
+    narration: dogNarration,
     ratio: '1:1',
   },
   {
@@ -33,8 +67,8 @@ const artworks: Array<Artwork> = [
     title: 'Much Neon. Very Cosmic.',
     creator: 'The Department of Good Dogs',
     description: 'A galactic predator of pure neon fury. His cosmic authority is absolute, provided nobody mentions the vacuum cleaner.',
-    source: '/art/wolf.jxl',
-    narration: '/audio/wolf.opus',
+    source: wolfImage,
+    narration: wolfNarration,
     ratio: '1:1',
   },
   {
@@ -42,8 +76,8 @@ const artworks: Array<Artwork> = [
     title: 'Rooted in Absolutely Nothing',
     creator: 'Sylvia Nimbus',
     description: 'A tree with excellent aspirations and a rather relaxed relationship with the ground. The gardener has requested a ladder.',
-    source: '/art/tree.jxl',
-    narration: '/audio/tree.opus',
+    source: treeImage,
+    narration: treeNarration,
     ratio: '1:1',
   },
   {
@@ -51,8 +85,8 @@ const artworks: Array<Artwork> = [
     title: 'Mona Coo Lisa',
     creator: 'Leonardo da Birb',
     description: 'Her enigmatic smile hides the fact she just stole your sandwich. A masterpiece of urban elegance and mild menace.',
-    source: '/art/pigeon.jxl',
-    narration: '/audio/pigeon.opus',
+    source: pigeonImage,
+    narration: pigeonNarration,
     ratio: '1:1',
   },
   {
@@ -60,8 +94,8 @@ const artworks: Array<Artwork> = [
     title: 'His Golden Crispness',
     creator: 'Imperial Court of Toast',
     description: 'The sovereign ruler of breakfast, anointed in salted butter and reigning over four slots of unyielding thermal perfection.',
-    source: '/art/toast.jxl',
-    narration: '/audio/toast.opus',
+    source: toastImage,
+    narration: toastNarration,
     ratio: '1:1',
   },
   {
@@ -69,8 +103,8 @@ const artworks: Array<Artwork> = [
     title: 'Cosmic Inconvenience',
     creator: 'Meow-ghelangelo',
     description: 'Proof that given infinite cosmic authority, a feline will still push entire clusters of stars off the counter simply to see them explode into supernovas.',
-    source: '/art/cat.jxl',
-    narration: '/audio/cat.opus',
+    source: catImage,
+    narration: catNarration,
     ratio: '1:1',
   },
   {
@@ -78,8 +112,8 @@ const artworks: Array<Artwork> = [
     title: 'The Algorithm Dreams of Fruit',
     creator: 'Generative Orchard No. 6',
     description: 'Synthetic produce contemplates whether humans can distinguish hunger from engagement. The banana has already accepted cookies.',
-    source: '/art/fruit.jxl',
-    narration: '/audio/fruit.opus',
+    source: fruitImage,
+    narration: fruitNarration,
     ratio: '3:2',
   },
   {
@@ -87,8 +121,8 @@ const artworks: Array<Artwork> = [
     title: 'The Last Course Refuses to End',
     creator: 'Ectoplasmic Catering Collective',
     description: 'Dinner ran long. By approximately four centuries. No guest will admit who ordered the bottomless spectral linguine.',
-    source: '/art/ghosts.jxl',
-    narration: '/audio/ghosts.opus',
+    source: ghostsImage,
+    narration: ghostsNarration,
     ratio: '3:2',
   },
   {
@@ -96,8 +130,8 @@ const artworks: Array<Artwork> = [
     title: 'Apotheosis of the Rubber Duck',
     creator: 'Michelangelo di Slop',
     description: 'The sacred bath toy ascends to the celestial heavens, forever untethered from bathtubs, soapsuds, and mortality.',
-    source: '/art/duck.jxl',
-    narration: '/audio/duck.opus',
+    source: duckImage,
+    narration: duckNarration,
     ratio: '1:1',
   },
   {
@@ -105,8 +139,8 @@ const artworks: Array<Artwork> = [
     title: 'The Sourdough Soliloquy',
     creator: 'Jan van der Crumb',
     description: 'Born of wild yeast and existential dread, this loaf contemplated the fleeting cruelty of butter before meeting the serrated knife.',
-    source: '/art/bread.jxl',
-    narration: '/audio/bread.opus',
+    source: breadImage,
+    narration: breadNarration,
     ratio: '1:1',
   },
   {
@@ -114,8 +148,8 @@ const artworks: Array<Artwork> = [
     title: 'Mona Ribbit',
     creator: 'Leonardo da Pond',
     description: 'She smiles because she knows something you don’t – mostly where the flies are and why your pond is inferior.',
-    source: '/art/frog.jxl',
-    narration: '/audio/frog.opus',
+    source: frogImage,
+    narration: frogNarration,
     ratio: '1:1',
   },
   {
@@ -123,8 +157,8 @@ const artworks: Array<Artwork> = [
     title: 'An Uninvited Tea Guest',
     creator: 'Salvador Deli',
     description: 'The tea is cold. The guest is shellfish. Nobody is having the afternoon they had imagined.',
-    source: '/art/lobster.jxl',
-    narration: '/audio/lobster.opus',
+    source: lobsterImage,
+    narration: lobsterNarration,
     ratio: '1:1',
   },
   {
@@ -132,7 +166,7 @@ const artworks: Array<Artwork> = [
     title: 'The Great Wave off Breakfast',
     creator: 'Katsushika Hokuspoon',
     description: 'Three fishermen of the flake guild brace themselves as the morning milk rises. The spoon in the distance watches, patient as a mountain.',
-    source: '/art/wave.jxl',
+    source: waveImage,
     ratio: '3:2',
   },
   {
@@ -140,7 +174,7 @@ const artworks: Array<Artwork> = [
     title: 'The Birth of Venus Flytrap',
     creator: 'Sandro Botanicelli',
     description: 'Born of sea foam and blown ashore by the winds, the goddess of carnivorous love arrives hungry. The attendant brought a cloak and, wisely, a snack.',
-    source: '/art/venus.jxl',
+    source: venusImage,
     ratio: '3:2',
   },
   {
@@ -148,7 +182,7 @@ const artworks: Array<Artwork> = [
     title: 'The Gleaners of Lot C',
     creator: 'Jean-François Millepied',
     description: 'Bent beneath the evening sun, the humble gather what the drive-through left behind. Nothing is wasted. Everything is salted.',
-    source: '/art/gleaners.jxl',
+    source: gleanersImage,
     ratio: '3:2',
   },
   {
@@ -156,7 +190,7 @@ const artworks: Array<Artwork> = [
     title: 'The Night Watering',
     creator: 'Rembrandt van Rake',
     description: 'The garden militia marches out at dusk to defend the begonias. Their captain has never once explained what they are guarding them from.',
-    source: '/art/gnomes.jxl',
+    source: gnomesImage,
     ratio: '3:2',
   },
   {
@@ -164,7 +198,7 @@ const artworks: Array<Artwork> = [
     title: 'A Sunday Afternoon on the Island of La Grande Jatte, Mostly Ducks',
     creator: 'Georges Seurquack',
     description: 'Ten thousand patient dots record a perfect afternoon of promenades, parasols and crumbs. One bread roll is out for a walk. Nobody finds this unusual.',
-    source: '/art/jatte.jxl',
+    source: jatteImage,
     ratio: '3:2',
   },
 ]

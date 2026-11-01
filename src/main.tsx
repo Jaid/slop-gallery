@@ -1,4 +1,5 @@
-// Must run before any renderer updates its node time.
+// Stale chunks must be handled before the world loads, which may already find the previous build’s chunks gone, and frozen time before any renderer updates its node time.
+import './lib/staleChunks.ts'
 import './lib/frozenTime.ts'
 import './style.sass'
 

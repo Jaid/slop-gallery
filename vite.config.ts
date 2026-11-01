@@ -19,7 +19,9 @@ import jxlHeadersPlugin from 'vite-plugin-jxl-headers'
 import mediaMixinsPlugin from 'vite-plugin-media-mixins'
 import titlePlugin from 'vite-plugin-title'
 
+import immutableHeadersPlugin from '#src/lib/vite/immutableHeadersPlugin.ts'
 import loadingScreenPlugin from '#src/lib/vite/loadingScreenPlugin.ts'
+import outputListPlugin from '#src/lib/vite/outputListPlugin.ts'
 import rapierWasmPlugin from '#src/lib/vite/rapierWasmPlugin.ts'
 import worldChunksPlugin from '#src/lib/vite/worldChunksPlugin.ts'
 import {defaultWorld, selectWorld, worldIds, worldParameters, worldRooms, worlds} from '#src/worlds/index.ts'
@@ -88,6 +90,8 @@ const getProductionConfig = () => {
     plugins: [
       jxlPlugin(),
       jxlHeadersPlugin(),
+      immutableHeadersPlugin(),
+      outputListPlugin(),
       rapierWasmPlugin(),
       // Only recipes that take longer to generate than their snapshots take to download; the rest load sooner without them.
       bakeThreePlugin({
@@ -162,25 +166,10 @@ const getProductionConfig = () => {
               },
             ],
           },
-          chunkFileNames: chunkInfo => {
-            if (chunkInfo.name === 'rolldown-runtime') {
-              return 'runtime.js'
-            }
-            // Every Knot material loads on its own once a Knot wears it, as a chunk named after its entry.
-            const knot = chunkInfo.facadeModuleId ? /[/\\]knot-materials[/\\]src[/\\]entries[/\\]([^/\\]+)[/\\]Material\.ts$/u.exec(chunkInfo.facadeModuleId)?.[1] : undefined
-            if (knot) {
-              return `knot-${knot}.js`
-            }
-            // Components live in folders of their name, so a chunk that starts at a component’s index takes the folder’s name.
-            const folder = chunkInfo.name === 'index' && chunkInfo.facadeModuleId ? /([^/\\]+)[/\\]index\.tsx?$/u.exec(chunkInfo.facadeModuleId)?.[1] : undefined
-            return `${folder ?? '[name]'}.js`
-          },
-          assetFileNames: chunkInfo => {
-            if (['index.css', 'main.css'].includes(chunkInfo.names[0] ?? '')) {
-              return 'style.css'
-            }
-            return '[name].[ext]'
-          },
+          // Every file but the page is named by its content, so browsers can keep it for good and a deploy can never leave them running stale chunks under the same name; see immutableHeadersPlugin. The build’s output list (outputListPlugin) tells which is which.
+          entryFileNames: '[hash:8].js',
+          chunkFileNames: '[hash:8].js',
+          assetFileNames: '[hash:8].[ext]',
         },
         checks: {
           pluginTimings: false,
