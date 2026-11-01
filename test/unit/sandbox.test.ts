@@ -115,6 +115,27 @@ describe('the Cell’s layout', () => {
     // Toward the arch, in front of the item.
     expect(left[2]).toBeGreaterThan(z)
   })
+  test('softens the dark round the throwers’ pools with a faint point light halfway between them, shadowless, and none while the door is shut', () => {
+    const closed = new Sandbox([])
+    expect(closed.lamps().some(lamp => lamp.id === 'cell-thrower_fill')).toBe(false)
+    for (const count of [1, 2, 3]) {
+      const sandbox = new Sandbox(ids.slice(0, count))
+      const {layout} = sandbox.room('cell').room
+      const lamps = sandbox.lamps()
+      const fill = lamps.find(lamp => lamp.id === 'cell-thrower_fill')!
+      expect(fill.kind ?? 'point').toBe('point')
+      expect(fill.shadow ?? false).toBe(false)
+      const pivots = layout.throwers.map(({ceiling, target}) => aimThrower(ceiling, target).pivot)
+      for (const axis of [0, 1, 2]) {
+        expect(fill.position[axis]).toBeCloseTo(pivots.reduce((sum, pivot) => sum + pivot[axis], 0) / pivots.length, 9)
+      }
+      const throwers = lamps.filter(lamp => /^cell-thrower_\d+$/u.test(lamp.id))
+      expect(throwers).toHaveLength(layout.throwers.length)
+      for (const thrower of throwers) {
+        expect(fill.strength!).toBeLessThan(thrower.strength! / 2)
+      }
+    }
+  })
   for (const count of [2, 3]) {
     test(`gives each of ${count} items a round alcove of its own, off the vestibule across from the arch, from the left to the right`, () => {
       const layout = new CellLayout(count)
@@ -123,7 +144,7 @@ describe('the Cell’s layout', () => {
       expect(vestibule.arches.map(arch => arch.name)).toEqual(['cell', ...layout.alcoves.map(alcove => alcove.name)])
       const sandbox = new Sandbox(ids.slice(0, count))
       const cell = sandbox.room('cell')
-      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', ...layout.alcoves.map((_, index) => `cell-thrower_${index}`)])
+      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', ...layout.alcoves.map((_, index) => `cell-thrower_${index}`), 'cell-thrower_fill'])
       expectThrowersOver(layout)
       // Each inside its alcove’s arch, aimed at the alcove’s own item.
       for (const [index, {ceiling, target}] of layout.throwers.entries()) {

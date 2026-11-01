@@ -27,6 +27,13 @@ export const throwerSpot = {
   range: 9,
   decay: 1.5,
 } as const
+/** a faint light from no visible source between the throwers, which softens the dark round their pools without a shadow of its own */
+export const throwerFill = {
+  strength: 10,
+  tint: '#ffffff',
+  range: 10,
+  decay: 1.5,
+} as const
 /** the most throwers whose light casts shadows */
 const maxShadowedThrowers = 4
 
@@ -72,6 +79,15 @@ export default class Cell extends Room {
         strength: throwerSpot.strength * share,
         // Every spot that casts a shadow costs every lit material a lights node of its own, so a rotunda’s many leave theirs out.
         shadow: layout.throwers.length <= maxShadowedThrowers ? 'heavy' : false,
+      }
+    }
+    if (layout.throwers.length) {
+      // As high as their pivots, in the middle between them.
+      const pivots = layout.throwers.map(({ceiling, target}) => aimThrower(ceiling, target).pivot)
+      const middle = (axis: number) => pivots.reduce((sum, pivot) => sum + pivot[axis], 0) / pivots.length
+      lamps.thrower_fill = {
+        position: [middle(0), middle(1), middle(2)],
+        ...throwerFill,
       }
     }
     // The arch through the north wall opens into the vestibule, or a door that stays shut fills it.

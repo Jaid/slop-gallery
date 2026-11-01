@@ -145,7 +145,7 @@ describe('worlds', () => {
     const cell = single.room('cell')
     const vestibule = cell.room.layout.vestibule!
     expect(cell.room.layout.plan).toBe('single')
-    expect(single.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-thrower_0', 'cell-thrower_1'])
+    expect(single.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-thrower_0', 'cell-thrower_1', 'cell-thrower_fill'])
     expect(single.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-vestibule', 'cell-west'])
     const holes = single.walls.flatMap(wall => (wall.holes ?? []).map(hole => `${wall.id}/${hole.name}`))
     expect(holes).toEqual(['cell-north/vestibule', 'cell-vestibule/cell'])
