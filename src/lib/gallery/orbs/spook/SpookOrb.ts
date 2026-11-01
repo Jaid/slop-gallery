@@ -4,7 +4,7 @@ import GhostsOrbMaterial from '#src/lib/materials/orb/GhostsOrbMaterial.ts'
 import {spookMood} from '#src/lib/moods/index.ts'
 
 import Orb from '../base/Orb.ts'
-import photo from './photo.jxl'
+import photo from './photo.jxl' with {distance: '1', format: 'jxl', maximumLong: '512'}
 
 /** Blinking ghosts drifting through green mist. It lets something supernatural slip into a work. */
 export default class SpookOrb extends Orb {
