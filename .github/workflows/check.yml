@@ -5,7 +5,11 @@ on:
   pull_request:
 jobs:
   check:
-    runs-on: ubuntu-latest
+    # The libjxl packages are built for this release
+    runs-on: ubuntu-24.04
+    env:
+      imageMagickVersion: 7.1.2-35
+      libjxlVersion: 0.12.0
     steps:
     - name: checkout
       uses: actions/checkout@v7.0.1
@@ -13,10 +17,33 @@ jobs:
       uses: oven-sh/setup-bun@v2.2.0
       with:
         bun-version: 1.4.4
+    # vite-plugin-jxl encodes images with cjxl, which apt only has in an old version without the metadata stripping it uses
     - name: installSystemPackages
       run: |
+        curl --silent --show-error --location --fail --output "$RUNNER_TEMP/libjxl.tar" "https://github.com/libjxl/libjxl/releases/download/v$libjxlVersion/jxl-debs-amd64-ubuntu-24.04.tar"
+        tar --extract --file "$RUNNER_TEMP/libjxl.tar" --directory "$RUNNER_TEMP" --wildcards 'jxl_*.deb' 'libjxl_*.deb' 'libjxl-dev_*.deb'
         sudo apt-get update
-        sudo apt-get install --yes --no-install-recommends ffmpeg
+        sudo apt-get install --yes --no-install-recommends ffmpeg build-essential pkg-config libpng-dev libjpeg-dev liblcms2-dev libbrotli-dev zlib1g-dev "$RUNNER_TEMP"/jxl_*.deb "$RUNNER_TEMP"/libjxl_*.deb "$RUNNER_TEMP"/libjxl-dev_*.deb
+    # vite-plugin-jxl decodes and scales the images with ImageMagick 7, whose prebuilt packages (apt, AppImage, Homebrew) lack the JPEG XL delegate
+    - name: cacheImageMagick
+      id: cacheImageMagick
+      uses: actions/cache@v6.1.0
+      with:
+        path: ~/imagemagick
+        key: imagemagick-${{ env.imageMagickVersion }}-libjxl-${{ env.libjxlVersion }}-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}
+    - name: buildImageMagick
+      if: steps.cacheImageMagick.outputs.cache-hit != 'true'
+      run: |
+        git clone --quiet --depth 1 --branch "$imageMagickVersion" https://github.com/ImageMagick/ImageMagick.git "$RUNNER_TEMP/imagemagick"
+        cd "$RUNNER_TEMP/imagemagick"
+        ./configure --prefix="$HOME/imagemagick" --with-jxl --without-x --without-perl --without-magick-plus-plus --disable-docs --disable-openmp
+        make --jobs="$(nproc)"
+        make install
+    - name: setupImageMagick
+      run: |
+        echo "$HOME/imagemagick/bin" >> "$GITHUB_PATH"
+        "$HOME/imagemagick/bin/magick" -list format | grep --extended-regexp "^ *JXL"
+        cjxl --version
     - name: install
       run: bun install --frozen-lockfile
     - name: check
