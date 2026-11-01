@@ -112,7 +112,7 @@ export default abstract class OrbGlassMaterial extends MeshPhysicalNodeMaterial 
         eye,
         jitter,
       })
-      const transmittance = fill.transmittance.toVar('orbTransmittance')
+      const transmittance = fill.transmittance.toVar('orbFillTransmittance')
       // The ray leaves the fill bent once more, and keeps drifting until it meets whatever stands behind the orb.
       const exit = origin.add(direction.mul(length))
       const outgoing = refract(direction, exit.negate(), fillIor)
