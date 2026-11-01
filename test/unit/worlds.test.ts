@@ -13,7 +13,7 @@ import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/place
 import world from '../../src/worlds/current.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import galleryWalls from '../../src/worlds/gallery/walls.ts'
-import {defaultWorld, readWorld, selectWorld, worldIds, worldParameters, worlds} from '../../src/worlds/index.ts'
+import {defaultWorld, readWorld, selectWorld, worldIds, worldParameters, worldRooms, worlds} from '../../src/worlds/index.ts'
 import knottingham from '../../src/worlds/knottingham/index.ts'
 import sandbox from '../../src/worlds/sandbox/index.ts'
 import Sandbox from '../../src/worlds/sandbox/Sandbox.ts'
@@ -29,13 +29,27 @@ describe('world selection', () => {
     expect(selectWorld('?seed=1&spawn=lobby')).toBe('gallery')
     expect(readWorld('http://localhost/')).toBe('gallery')
   })
-  test('opens the world ?world names, even next to Knottingham’s parameters', () => {
-    expect(selectWorld('?world=knottingham')).toBe('knottingham')
-    expect(selectWorld('?world=gallery')).toBe('gallery')
-    expect(selectWorld('?world=gallery&candidate=grok')).toBe('gallery')
-    expect(selectWorld('?world=sandbox')).toBe('sandbox')
-    expect(selectWorld('?world=sandbox&candidate=grok')).toBe('sandbox')
-    expect(readWorld('https://slop.gallery/?world=knottingham')).toBe('knottingham')
+  test('opens the world holding the room ?room names, even next to another world’s parameters', () => {
+    expect(selectWorld('?room=arena')).toBe('knottingham')
+    expect(selectWorld('?room=cell')).toBe('sandbox')
+    expect(selectWorld('?room=lobby')).toBe('gallery')
+    expect(selectWorld('?room=cell&candidate=grok')).toBe('sandbox')
+    expect(selectWorld('?room=arena&item=prop-orb-spook')).toBe('knottingham')
+    expect(readWorld('https://slop.gallery/?room=arena')).toBe('knottingham')
+    expect(readWorld('https://slop.gallery/?room=cell&spawn=center')).toBe('sandbox')
+  })
+  test('opens every world by each of its rooms', () => {
+    for (const instance of [slopGallery, knottingham, sandbox]) {
+      for (const room of instance.rooms) {
+        expect(selectWorld(`?room=${room.id}`)).toBe(instance.id)
+      }
+    }
+  })
+  test('leaves a ?room no world has, or none at all, to the worlds’ own parameters', () => {
+    expect(selectWorld('?room=missing')).toBe('gallery')
+    expect(selectWorld('?room')).toBe('gallery')
+    expect(selectWorld('?room=missing&rarity=edit')).toBe('knottingham')
+    expect(selectWorld('?room=lobby&item=prop-orb-spook')).toBe('sandbox')
   })
   test('opens Knottingham for any of its own parameters, also bare ones', () => {
     for (const parameter of worldParameters.knottingham) {
@@ -43,31 +57,27 @@ describe('world selection', () => {
       expect(selectWorld(`?seed=3&${parameter}`)).toBe('knottingham')
     }
   })
-  test('opens the Sandbox for ?item, unless ?world names another', () => {
+  test('opens the Sandbox for ?item', () => {
     expect(selectWorld('?item=prop-orb-spook')).toBe('sandbox')
     expect(selectWorld('?seed=3&item=prop-orb-spook,prop-orb-horror')).toBe('sandbox')
     expect(selectWorld('?item')).toBe('sandbox')
-    expect(selectWorld('?world=gallery&item=prop-orb-spook')).toBe('gallery')
     expect(readWorld('https://slop.gallery/?item=prop-orb-halloween')).toBe('sandbox')
   })
-  test('opens every world by its id', () => {
-    for (const id of worldIds) {
-      expect(selectWorld(`?world=${id}`)).toBe(id)
-    }
-  })
-  test('ignores an unknown ?world', () => {
-    expect(selectWorld('?world=knots')).toBe('gallery')
-    expect(selectWorld('?world=soundboard&rarity=edit')).toBe('knottingham')
+  test('ignores ?world', () => {
+    expect(selectWorld('?world=knottingham')).toBe('gallery')
+    expect(selectWorld('?world=sandbox&rarity=edit')).toBe('knottingham')
   })
   test('runs on its own, as the loading screen inlines its source', () => {
     const source = new Function(`return (${selectWorld.toString()})`) as () => typeof selectWorld
     const inlined = source()
-    // A copy of its parameters, as the page gets them as JSON.
+    // Copies of its parameters and rooms, as the page gets them as JSON.
     const parameters = structuredClone(worldParameters)
-    expect(inlined('?shots=2', parameters)).toBe('knottingham')
-    expect(inlined('?item=prop-orb-spook', parameters)).toBe('sandbox')
-    expect(inlined('?world=gallery&shots=2', parameters)).toBe('gallery')
-    expect(inlined('?world=sandbox', parameters)).toBe('sandbox')
+    const rooms = structuredClone(worldRooms)
+    expect(inlined('?shots=2', parameters, rooms)).toBe('knottingham')
+    expect(inlined('?item=prop-orb-spook', parameters, rooms)).toBe('sandbox')
+    expect(inlined('?room=cell&shots=2', parameters, rooms)).toBe('sandbox')
+    expect(inlined('?room=arena', parameters, rooms)).toBe('knottingham')
+    expect(inlined('?room=lobby', parameters, rooms)).toBe('gallery')
   })
   test('every world has a title and storage key of its own', () => {
     expect(worldIds).toEqual(['gallery', 'knottingham', 'sandbox'])

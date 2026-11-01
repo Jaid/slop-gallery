@@ -21,7 +21,7 @@ import titlePlugin from 'vite-plugin-title'
 import loadingScreenPlugin from '#src/lib/vite/loadingScreenPlugin.ts'
 import rapierWasmPlugin from '#src/lib/vite/rapierWasmPlugin.ts'
 import worldChunksPlugin from '#src/lib/vite/worldChunksPlugin.ts'
-import {defaultWorld, selectWorld, worldIds, worldParameters, worlds} from '#src/worlds/index.ts'
+import {defaultWorld, selectWorld, worldIds, worldParameters, worldRooms, worlds} from '#src/worlds/index.ts'
 
 const getCommonConfig = () => {
   const config: UserConfig = {
@@ -40,7 +40,7 @@ const getCommonConfig = () => {
         worlds,
         defaultWorld,
         select: selectWorld,
-        selectorArguments: [worldParameters],
+        selectorArguments: [worldParameters, worldRooms],
       }),
       reactPlugin(),
       babelPlugin({

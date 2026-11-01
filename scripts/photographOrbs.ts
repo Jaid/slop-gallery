@@ -23,7 +23,6 @@ const ids = entries.filter(entry => entry.isDirectory() && entry.name !== 'base'
 const setup = await resolveGallerySetup({
   graphics: 'heavy',
   seed: '1',
-  world: 'sandbox',
   item: ids.map(id => `prop-orb-${id}`).join(','),
 })
 await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/.vite-orb-photos'})

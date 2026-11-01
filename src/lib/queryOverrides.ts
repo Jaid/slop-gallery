@@ -1,4 +1,3 @@
-import {readWorld} from '#src/worlds/index.ts'
 import {readItems} from '#src/worlds/sandbox/items.ts'
 
 import {readAiSettings} from './ai/settings.ts'
@@ -72,7 +71,6 @@ const readers: Record<string, Reader> = {
   stream_budget: readStreamBudget,
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
-  world: readWorld,
   telemetry: readTelemetry,
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),
   metrics_ingestion_endpoint: searchParameter('metrics_ingestion_endpoint'),

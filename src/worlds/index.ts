@@ -34,27 +34,34 @@ export const worlds = {
   },
 } as const satisfies Record<WorldId, WorldInfo>
 
-/** the world a URL without a `?world` and without any world’s own parameters opens */
+/** the world a URL opens without any other world’s room in `?room` and without any other world’s own parameters */
 export const defaultWorld = 'gallery' satisfies WorldId
 
-/** the URL parameters only one world reads, by that world, which open it without a `?world`: Knottingham’s, like `?shots`, and the Sandbox’s `?item` */
+/** the URL parameters only one world reads, by that world, which open it: Knottingham’s, like `?shots`, and the Sandbox’s `?item` */
 export const worldParameters = {
   knottingham: ['candidate', 'knot_id', 'model', 'shots', 'candidate_limit', 'candidate_order', 'rarity', 'rarity_filter'],
   sandbox: ['item'],
 } as const satisfies Partial<Record<WorldId, ReadonlyArray<string>>>
 
+/** the ids of the rooms of every world but the gallery, by that world, which open it when `?room` names one: Knottingham’s Arena and the Sandbox’s Cell */
+export const worldRooms = {
+  knottingham: ['arena'],
+  sandbox: ['cell'],
+} as const satisfies Partial<Record<WorldId, ReadonlyArray<string>>>
+
 /**
- * The world a URL query opens: the one `?world` names, otherwise the first whose own parameters, from `parameters`, it gives any of, otherwise the gallery.
+ * The world a URL query opens: the one whose room, from `rooms`, `?room` names, otherwise the first whose own parameters, from `parameters`, it gives any of, otherwise the gallery.
  *
  * Self-contained, so the loading screen can run its source before any script loads.
  */
-export function selectWorld(search: string, parameters: Partial<Record<WorldId, ReadonlyArray<string>>> = worldParameters): WorldId {
+export function selectWorld(search: string, parameters: Partial<Record<WorldId, ReadonlyArray<string>>> = worldParameters, rooms: Partial<Record<WorldId, ReadonlyArray<string>>> = worldRooms): WorldId {
   const query = new URLSearchParams(search)
   // The world ids once more, as the loading screen runs this function without the module around it.
   const known: ReadonlyArray<WorldId> = ['gallery', 'knottingham', 'sandbox']
-  const requested = known.find(id => id === query.get('world'))
-  if (requested) {
-    return requested
+  const room = query.get('room')
+  const holder = room ? known.find(id => rooms[id]?.includes(room)) : undefined
+  if (holder) {
+    return holder
   }
   return known.find(id => parameters[id]?.some(parameter => query.has(parameter))) ?? 'gallery'
 }

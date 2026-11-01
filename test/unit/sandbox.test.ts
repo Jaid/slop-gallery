@@ -37,11 +37,8 @@ describe('?item', () => {
     expect(readItems(`?item=prop-orb-halloween#data:${data}`)).toEqual(['prop-orb-horror', 'prop-orb-spook'])
   })
   test('shows among the query overrides as given, and not at all without items', () => {
-    expect(readQueryOverrides('http://localhost/?world=sandbox')).toEqual({world: 'sandbox'})
-    expect(readQueryOverrides('http://localhost/?world=sandbox&item=prop-orb-spook,%20prop-orb-horror')).toEqual({
-      world: 'sandbox',
-      item: 'prop-orb-spook,prop-orb-horror',
-    })
+    expect(readQueryOverrides('http://localhost/?item=')).toBeUndefined()
+    expect(readQueryOverrides('http://localhost/?item=prop-orb-spook,%20prop-orb-horror')).toEqual({item: 'prop-orb-spook,prop-orb-horror'})
   })
   test('puts every orb it names on a pedestal of its own, in their order, and refuses ids it doesn’t know', () => {
     const sandbox = new Sandbox(['prop-orb-horror', 'prop-orb-spook'])

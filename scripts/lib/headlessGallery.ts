@@ -144,7 +144,7 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   return {
     target,
-    /** the world the page opens, which --world or Knottingham’s own parameters choose */
+    /** the world the page opens, which --room or a world’s own parameters choose */
     world: readWorld(`?${search}`),
     search,
     seed,
