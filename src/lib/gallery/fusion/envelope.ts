@@ -127,22 +127,24 @@ export function portalEnvelope(elapsed: number, outcome: FusionOutcome | undefin
   }
 }
 
-/** The portal brewing once its intro is over, showing the ingredients in turn until the outcome is in. The intro settles into it as it ends. */
+/** The portal brewing once its intro is over, showing the ingredients in turn until the outcome is in. The intro settles into it as it ends, and the souls it reeled in land in it with a blaze, a shockwave and a burst of sparks. */
 export function brewing(elapsed: number, timing: FusionTiming, ingredients: number): PortalEnvelope {
   const ingredient = ingredientAt(elapsed, ingredients, timing)
   const energy = 0.92 + 0.08 * Math.sin(elapsed * 3.1) + 0.05 * Math.sin(elapsed * 7.3)
+  const landed = elapsed - timing.intro
+  const landing = landed >= 0 && landed < timing.ingredient
   return {
-    burst: 10,
-    burstStrength: 0,
+    burst: landing ? landed : 10,
+    burstStrength: landing ? 0.6 : 0,
     embers: 0,
     energy,
-    flash: 0,
+    flash: landed >= 0 ? 0.75 * Math.exp(-landed * 9) : 0,
     image: ingredient,
     lens: 1,
-    light: brewingLight * energy,
-    // A small shockwave greets every ingredient as it starts to surface.
-    pulse: Math.max(0, elapsed - timing.intro) % timing.ingredient,
-    pulseStrength: 0.35,
+    light: brewingLight * energy + (landed >= 0 ? 45 * Math.exp(-landed * 6) : 0),
+    // A small shockwave greets every ingredient as it starts to surface, a big one the souls.
+    pulse: Math.max(0, landed) % timing.ingredient,
+    pulseStrength: landing ? 1.2 : 0.35,
     // It swells a little while an ingredient shows, so the image reads.
     size: 1 + 0.03 * Math.sin(elapsed * 2.3) + 0.14 * (ingredient?.clarity ?? 0),
     // The vortex quickens the longer the image model takes.

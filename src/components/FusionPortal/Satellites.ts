@@ -68,7 +68,7 @@ const tumbleAxis = (id: string) => {
  * The work returns to its wall when the fusion fails or is aborted and flips out of the portal as the result otherwise; a loose work thrown into it is spat out on failure and consumed on success; a prop is always spat back out.
  */
 export default class Satellites {
-  /** where each satellite is in the world this frame, by its orbit’s index, for the tethers; empty once it is handed back */
+  /** where each satellite is in the world this frame, by its orbit’s index, for the siphons; empty once it is handed back */
   readonly centers: Array<Vector3 | undefined> = []
   private readonly fusion: Fusion
   private list?: Array<Satellite>

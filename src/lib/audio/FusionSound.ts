@@ -2,7 +2,7 @@ import type {FusionTiming} from '../gallery/fusion/timing.ts'
 import type {Vec3} from '../gallery/types.ts'
 import type {AudioOutput} from './proceduralAudio.ts'
 
-import {beats, drags, gathering, implosion, introSeconds, lash} from '../gallery/fusion/intro.ts'
+import {beats, choreographed, drags, gathering, implosion, introSeconds, seizures, slurp, yank} from '../gallery/fusion/intro.ts'
 import {whiteNoise} from './ambience/base/noise.ts'
 
 type Tone = {
@@ -294,7 +294,7 @@ export default class FusionSound {
     this.play(source.connect(shaping), source, start, duration, volume, attack, Math.random() * 3)
   }
 
-  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, and the ember’s heartbeat, its first two beats cracking leashes like whips and its third igniting the portal with a roar and a chord. */
+  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, the ember’s heartbeat, its first two beats yanking the satellites in with a whoosh and its third igniting the portal with a roar and a chord, and the portal drawing the souls out with the snap of its strands and a ghostly wail rising over it, slurping them in and landing them with a thump. */
   private intro(start: number, timing: FusionTiming) {
     const at = (seconds: number) => start + introSeconds(seconds, timing)
     const until = (from: number, to: number) => introSeconds(to - from, timing)
@@ -425,21 +425,8 @@ export default class FusionSound {
       if (!(index < drags.length)) {
         continue
       }
-      // The leash cracks like a whip and yanks its satellite in.
-      this.tone(at(beat) + 0.02, 0.09, {
-        frequency: 700,
-        end: 3200,
-        volume: 0.018,
-        attack: 0.002,
-        type: 'triangle',
-      })
-      this.hiss(at(beat + lash), 0.05, {
-        filter: 'highpass',
-        frequency: 4200,
-        volume: 0.07,
-        attack: 0.001,
-      })
-      this.hiss(at(beat + lash), 0.45, {
+      // It yanks its satellite in with a whoosh.
+      this.hiss(at(beat + yank), 0.45, {
         filter: 'bandpass',
         frequency: 1800,
         end: 500,
@@ -461,6 +448,55 @@ export default class FusionSound {
     for (const [index, frequency] of [440, 554.37, 659.25, 880].entries()) {
       this.bell(at(ignition) + 0.04 + index * 0.04, frequency, 0.02, 1.8)
     }
+    // The strands snap out, and a wail of two trembling voices rises while they draw the souls out.
+    for (const seizure of seizures) {
+      this.hiss(at(seizure), 0.09, {
+        filter: 'bandpass',
+        frequency: 2600,
+        end: 5200,
+        q: 2.5,
+        volume: 0.045,
+        attack: 0.002,
+      })
+    }
+    for (const [index, frequency] of [392, 587.33].entries()) {
+      this.tone(at(seizures[0]) + 0.08, until(seizures[0], choreographed), {
+        frequency,
+        end: frequency * 2,
+        volume: 0.011,
+        attack: until(seizures[0] + 0.3, choreographed),
+        vibrato: [frequency * 0.018, 5.3 + index * 0.9],
+      })
+    }
+    // They slurp the souls in, ever faster, and land them in the portal with a thump.
+    this.hiss(at(slurp), until(slurp, choreographed) + 0.04, {
+      filter: 'bandpass',
+      frequency: 450,
+      end: 6000,
+      q: 3,
+      volume: 0.08,
+      attack: until(slurp + 0.05, choreographed),
+    })
+    this.tone(at(slurp), until(slurp, choreographed), {
+      frequency: 160,
+      end: 1300,
+      volume: 0.014,
+      attack: until(slurp + 0.05, choreographed),
+      type: 'triangle',
+    })
+    this.tone(at(choreographed), 0.55, {
+      frequency: 110,
+      end: 38,
+      volume: 0.13,
+      attack: 0.004,
+    })
+    this.hiss(at(choreographed), 0.4, {
+      filter: 'lowpass',
+      frequency: 2600,
+      end: 180,
+      volume: 0.05,
+      attack: 0.004,
+    })
   }
 
   /** whether a sound due at `start` is already over, like the start of an intro the sound engine was made too late for */

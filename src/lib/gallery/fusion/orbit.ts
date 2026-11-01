@@ -5,7 +5,7 @@ import type {FusionTiming} from './timing.ts'
 import {clamp, fade} from 'math'
 import {Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
-import {beats, departure, dragged, drags, implosion, introClock, introSeconds, lash} from './intro.ts'
+import {beats, departure, dragged, drags, implosion, introClock, introSeconds, yank} from './intro.ts'
 
 /** radians per second the satellites circle the portal at while it brews */
 export const orbitSpeed = 1.45
@@ -162,29 +162,29 @@ function stuttering(frame: PortalFrame, timing: FusionTiming, satellite: Satelli
   return orbiting(frame, satellite, elapsed, angle, 1 + Math.sin(elapsed * 47) * 0.035, out)
 }
 /**
- * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, once its leash catches it, yanked to its place beside the ember, from where the last beat sets it off around the portal.
+ * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, on its beat of the ember, yanked to its place beside it, from where the last beat sets it off around the portal.
  */
 function entering(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrbit, elapsed: number, out: SatellitePose) {
   const t = introClock(elapsed, timing)
   const index = Math.min(satellite.index, 1)
-  const yank = beats[index] + lash
-  if (t < yank) {
+  const yanked = beats[index] + yank
+  if (t < yanked) {
     return loose(frame, timing, satellite, t, out)
   }
   orbiting(frame, satellite, elapsed, rampedAngle(satellite.phase, elapsed, introSeconds(beats[2], timing), introSeconds(departure, timing)), 1, out)
-  // It dangles on its leash until the last beat sets it off.
+  // It bobs in its place until the last beat sets it off.
   const dangling = 1 - fade(clamp((t - beats[2]) / departure, 0, 1))
   out.position.addScaledVector(tangent.fromArray(frame.tangent), 0.05 * Math.sin(t * 3.1 + index) * dangling).addScaledVector(up, 0.03 * Math.sin(t * 4.3 + index * 2) * dangling)
-  // Yanked from where the leash caught it, it springs past its place and back.
-  loose(frame, timing, satellite, yank, from)
-  const after = t - yank
+  // Yanked from where it drifted, it springs past its place and back.
+  loose(frame, timing, satellite, yanked, from)
+  const after = t - yanked
   const pull = 1 - Math.exp(-after * 7) * Math.cos(after * 12)
   out.position.lerpVectors(from.position, out.position, pull)
   out.quaternion.slerpQuaternions(from.quaternion, target.copy(out.quaternion), clamp(pull, 0, 1))
   out.scale = from.scale + (out.scale - from.scale) * clamp(pull, 0, 1.1)
   return out
 }
-/** Where the satellite is `t` seconds into the choreography until a leash catches it: rattling, then dragged toward the singularity, swirling and spinning, and knocked out by the burst to its own side, past the place its leash will yank it to, drifting there and still turning. */
+/** Where the satellite is `t` seconds into the choreography until the ember yanks it in: rattling, then dragged toward the singularity, swirling and spinning, and knocked out by the burst to its own side, past the place the ember will yank it to, drifting there and still turning. */
 function loose(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrbit, t: number, out: SatellitePose) {
   const start = drags[Math.min(satellite.index, 1)]
   center.fromArray(frame.center)

@@ -6,7 +6,7 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
-import {introTether} from '../../src/lib/gallery/fusion/intro.ts'
+import {beats, introSeconds, introSiphon, slurp} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, satelliteSize} from '../../src/lib/gallery/fusion/portalFrame.ts'
 import {fusionTiming, ingredientAt, introTurns} from '../../src/lib/gallery/fusion/timing.ts'
@@ -211,10 +211,19 @@ describe('intro', () => {
     }
     expect(portalEnvelope(0, undefined, undefined, fusionTiming, 2).size).toBeLessThan(0.1)
   })
-  test('binds both with tethers and sets them circling by its end', () => {
+  test('draws both souls out after the last beat, reels them into the portal by its end and sets both circling freely', () => {
     for (const index of [0, 1]) {
-      expect(introTether(index, just, fusionTiming).glow).toBeCloseTo(1, 1)
-      expect(introTether(index, just, fusionTiming).reach).toBeCloseTo(1, 2)
+      expect(introSiphon(index, introSeconds(beats[2], fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
+      expect(introSiphon(index, introSeconds(slurp, fusionTiming), fusionTiming)?.reach).toBeCloseTo(1, 6)
+      let reach = 1
+      for (let elapsed = introSeconds(slurp, fusionTiming); elapsed < end; elapsed += 0.01) {
+        const drawn = introSiphon(index, elapsed, fusionTiming)!
+        expect(drawn.reach).toBeLessThanOrEqual(reach)
+        reach = drawn.reach
+      }
+      expect(introSiphon(index, just, fusionTiming)!.reach).toBeLessThan(0.01)
+      expect(introSiphon(index, end, fusionTiming)).toBeUndefined()
+      expect(introSiphon(index, end + 3, fusionTiming)).toBeUndefined()
     }
     expect(Math.abs(introOrbitRate(just, fusionTiming) - orbitSpeed)).toBeLessThan(0.3)
   })

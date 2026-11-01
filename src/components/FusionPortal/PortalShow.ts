@@ -9,7 +9,7 @@ import FusionSound from '#src/lib/audio/FusionSound.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
-import {decorateIntro, introTether} from '#src/lib/gallery/fusion/intro.ts'
+import {decorateIntro, introSiphon} from '#src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitAngle} from '#src/lib/gallery/fusion/orbit.ts'
 import PortalVisuals, {emberPalette, paletteOf} from '#src/lib/gallery/fusion/PortalVisuals.ts'
 import {holdArtworkTexture} from '#src/lib/useArtworkTexture.ts'
@@ -110,18 +110,20 @@ export default class PortalShow {
     decorateIntro(visuals, elapsed, timing, frame.normal)
     this.satellites.update(elapsed)
     middle.fromArray(frame.center)
-    for (const [index, tether] of visuals.tethers.entries()) {
+    for (const [index, siphon] of visuals.siphons.entries()) {
       const from = this.satellites.centers[index]
-      const binding = elapsed < timing.intro ? introTether(index, elapsed, timing) : {
-        glow: 1,
-        reach: 1,
+      const drawn = from && introSiphon(index, elapsed, timing)
+      siphon.uniforms.energy.value = drawn ? Math.min(envelope.energy, 1.3) * drawn.glow : 0
+      if (!drawn) {
+        continue
       }
-      tether.uniforms.clock.value = elapsed
-      tether.uniforms.energy.value = from ? Math.min(envelope.energy, 1.3) * binding.glow : 0
-      tether.uniforms.to.value.copy(middle)
-      if (from) {
-        tether.uniforms.from.value.lerpVectors(middle, from, binding.reach)
-      }
+      siphon.uniforms.clock.value = elapsed
+      siphon.uniforms.flow.value = drawn.flow
+      siphon.uniforms.slack.value = drawn.slack
+      siphon.uniforms.soul.value = drawn.soul
+      siphon.uniforms.width.value = drawn.width
+      siphon.uniforms.to.value.copy(middle)
+      siphon.uniforms.from.value.lerpVectors(middle, from, drawn.reach)
     }
     this.light.intensity = envelope.light
     this.light.color.copy(this.paint.swirl).lerp(this.paint.rim, envelope.flash / 2)
