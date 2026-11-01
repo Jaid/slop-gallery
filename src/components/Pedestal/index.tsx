@@ -1,10 +1,11 @@
 import type {Vec3} from '#src/lib/gallery.ts'
+import type {ReactNode} from 'react'
 
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
-import PedestalGeometry from '#src/lib/gallery/PedestalGeometry.ts'
+import PedestalGeometry, {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 
 export function usePedestal() {
@@ -16,7 +17,9 @@ export function usePedestal() {
   }
 }
 
-export default function Pedestal({position, rotation = 0, geometry, material}: ReturnType<typeof usePedestal> & {
+export default function Pedestal({position, rotation = 0, children, geometry, material}: ReturnType<typeof usePedestal> & {
+  /** what stands on its cap, fixed to it and turning with it, its y up from the cap */
+  children?: ReactNode
   position: Vec3
   /** its turn about y */
   rotation?: number
@@ -35,5 +38,6 @@ export default function Pedestal({position, rotation = 0, geometry, material}: R
       <primitive attach='geometry' object={geometry.reveals} />
       <meshStandardNodeMaterial color='#514a3d' roughness={0.85} />
     </mesh>
+    <group position={[0, pedestalHeight, 0]}>{children}</group>
   </RigidBody>
 }

@@ -9,10 +9,11 @@ import {CylinderGeometry, ExtrudeGeometry} from 'three/webgpu'
 import ArenaShell, {useArenaMarble, useArenaSurfaces} from '#component/ArenaShell'
 import Chandelier from '#component/Chandelier'
 import Orb from '#component/Orb'
+import OrbHolder, {useOrbHolder} from '#component/OrbHolder'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {orbRadius} from '#src/lib/gallery/orbs/index.ts'
+import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
@@ -59,10 +60,11 @@ export default function CellRoom() {
   </group>
 }
 
-/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, the vestibule’s chandelier and the items on their pedestals. */
+/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, the vestibule’s chandelier and the items on their pedestals, every orb resting in a holder on its pedestal’s cap. */
 function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
   const marble = useArenaMarble(floorOrigin, floorTile, polish)
   const pedestal = usePedestal()
+  const holder = useOrbHolder()
   const parts = useDisposable(useMemo(() => {
     const slab = mergeParts(layout.spaces.map(space => {
       const geometry = new ExtrudeGeometry(roundVestibuleFloorShape(space), {
@@ -118,8 +120,9 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
       const {position, rotation} = layout.pedestals[index]
       const [pedestalX, pedestalZ] = worldPoint(position)
       return <group key={orb.id}>
-        <Pedestal {...pedestal} position={[pedestalX, 0, pedestalZ]} rotation={rotation} />
-        <Orb orb={orb} position={[pedestalX, pedestalHeight + orbRadius + 0.005, pedestalZ]} />
+        <Pedestal {...pedestal} position={[pedestalX, 0, pedestalZ]} rotation={rotation}><OrbHolder {...holder} /></Pedestal>
+        {/* Let down onto the holder’s lip from just over it. */}
+        <Orb orb={orb} position={[pedestalX, pedestalHeight + orbSeat + 0.002, pedestalZ]} />
       </group>
     })}
   </group>

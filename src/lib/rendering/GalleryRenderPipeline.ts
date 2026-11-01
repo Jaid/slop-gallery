@@ -1,5 +1,5 @@
 import type {RenderPipelineSettings, RenderPipelineUniform} from './renderPipelineSettings.ts'
-import type {Camera, NodeBuilder, NodeMaterial, Object3D, Renderer, RenderTarget, Scene, TextureNode} from 'three/webgpu'
+import type {Camera, Node, NodeMaterial, Object3D, Renderer, RenderTarget, Scene, TextureNode} from 'three/webgpu'
 
 import {WireframeFloodPass} from 'capture-session'
 import {vxgi} from 'three/addons/lighting/vxgi/VXGINode.js'
@@ -15,13 +15,14 @@ import {ssr} from 'three/addons/tsl/display/SSRNode.js'
 import {sss} from 'three/addons/tsl/display/SSSNode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
 import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
-import {BlendMode, DirectionalLight, HalfFloatType, MRTNode, NoBlending, Node, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
+import {BlendMode, DirectionalLight, HalfFloatType, NoBlending, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
 
 import {mountedRooms, pendingRooms} from '../gallery/roomLoading.ts'
 import {floorReflectionBlur, floorReflectionGrazing, floorReflectionLevel, floorReflectionRoughness, floorReflectionStrength, renderFloorReflection} from '../materials/FloorMaterial.ts'
 import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
+import MaterialOutputsNode from './MaterialOutputsNode.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
 
@@ -50,29 +51,15 @@ export type GalleryRenderPipelineOptions = {
  * MRT outputs for a soft, depth-less transparent sprite, like a water droplet or a puff of mist: its color blends as usual, but its geometry buffers carry alpha 0, so the normal and motion of the surface behind it stay in place.
  *
  * Without this, the sprite’s whole quad – including the fully transparent part around the soft disc – writes its camera-facing normal over the background’s, and the ambient occlusion, reading that normal against the background’s depth, darkens the quad to a black rectangle.
- *
- * Rendered into a target without these buffers, like a capture target or the canvas, the material writes its color alone.
  */
-export class TransparentSpriteOutputsNode extends MRTNode {
+export class TransparentSpriteOutputsNode extends MaterialOutputsNode {
   constructor() {
     super({
-      output,
       normal: vec4(normalView, 0),
       // The velocity node’s declaration lacks the node extensions every other node has.
       velocity: vec4(velocity as unknown as Node<'vec2'>, 0, 0),
       diffuseColor: vec4(0),
     })
-  }
-
-  override setup(builder: NodeBuilder) {
-    const target = builder.renderer.getRenderTarget()
-    if (target?.textures.some(texture => texture.name in this.outputNodes)) {
-      return super.setup(builder)
-    }
-    // The builder keeps the struct output for every MRT node; a target without named outputs gets the color at its first attachment.
-    this.members = [output.convert((builder as NodeBuilder & {getOutputType: (index: number) => string}).getOutputType(0))]
-    const plain = Node.prototype as Node
-    return plain.setup.call(this, builder)
   }
 }
 
@@ -241,7 +228,7 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         }
       })
       if (screenSpaceReflections && camera instanceof PerspectiveCamera) {
-        // Screen-space reflections on the metallic surfaces, like gilded frames and trims, blurred by their roughness, on top of the floors’ planar mirror. The non-stochastic pass weighs every hit by metalness, so dielectrics would only cost time. Their fifth scene target needs the higher attachment limit that cinematic and `?development` request, and the normal goes in as the texture node despite the `vec3` typing, because the pass samples it at neighboring texels.
+        // Screen-space reflections on the metallic surfaces, like gilded frames and trims, blurred by their roughness, on top of the floors’ planar mirror. The non-stochastic pass weighs every hit by metalness, so dielectrics would only cost time; a dark metal writes its reflectance there instead through its own outputs (see `MaterialOutputsNode`), or it would mirror its surroundings as brightly as gold. Their fifth scene target needs the higher attachment limit that cinematic and `?development` request, and the normal goes in as the texture node despite the `vec3` typing, because the pass samples it at neighboring texels.
         const metalRoughness = scenePass.getTextureNode('metalrough')
         const reflection = own(ssr(scenePass.getTextureNode('output'), depth, normal as unknown as Node<'vec3'>, {
           camera,
