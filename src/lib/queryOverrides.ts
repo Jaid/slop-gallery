@@ -17,6 +17,7 @@ import {readMood} from './moods/forcedMood.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
 import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
+import {readFov} from './rendering/fov.ts'
 import {readGraphicsModeName} from './rendering/graphicsMode.ts'
 import {readEditLamps, readShowLamps} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
@@ -48,6 +49,7 @@ const readers: Record<string, Reader> = {
   edit_lamps: readEditLamps,
   edit_portrait_slots: readPortraitSlotEditing,
   flying: readFlying,
+  fov: readFov,
   frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,

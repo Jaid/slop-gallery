@@ -6,6 +6,7 @@ import {create} from 'zustand'
 
 import {getLightingTuning, lightingPresets, useLighting} from '../gallery/lighting.ts'
 import {getAntiAliasing} from './antiAliasing.ts'
+import {readFov} from './fov.ts'
 import {getGraphicsProfile, readCinematicGraphics} from './graphicsMode.ts'
 import {getRenderPipelineSettings} from './renderPipelineSettings.ts'
 import {readScale} from './scale.ts'
@@ -13,7 +14,7 @@ import {readScale} from './scale.ts'
 /** key that shows or hides the tuning panel with `?development` */
 export const graphicsTuningKey = 'KeyG'
 
-/** the game camera’s vertical field of view in degrees, before any zoom */
+/** the game camera’s vertical field of view in degrees, before any zoom, unless `?fov` sets another */
 export const defaultFov = 62
 
 /** How the camera sees and the canvas resolves: values outside the render pipeline that the tuning panel changes too. */
@@ -29,10 +30,10 @@ export type ViewTuning = {
 /** everything the tuning panel changes: the render pipeline, the lighting of levels that follow it, and the view */
 export type CustomGraphics = LightingTuning & RenderPipelineSettings & ViewTuning
 
-/** The view a page starts with: the permalink’s scale, the camera’s field of view and the tone mapping React Three Fiber sets up. */
+/** The view a page starts with: the permalink’s field of view and scale and the tone mapping React Three Fiber sets up. */
 export function getViewTuning(): ViewTuning {
   return {
-    fov: defaultFov,
+    fov: readFov() ?? defaultFov,
     renderScale: readScale() ?? 1,
     toneMapping: ACESFilmicToneMapping,
   }

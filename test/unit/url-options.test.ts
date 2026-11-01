@@ -6,6 +6,7 @@ import {readDevelopmentMode} from '../../src/lib/developmentMode.ts'
 import {readFlying} from '../../src/lib/gallery/flyMode.ts'
 import {readAlbedo} from '../../src/lib/rendering/albedo.ts'
 import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAliasing.ts'
+import {readFov} from '../../src/lib/rendering/fov.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readRatio} from '../../src/lib/rendering/ratio.ts'
 import {readScale} from '../../src/lib/rendering/scale.ts'
@@ -46,6 +47,14 @@ describe('URL options', () => {
     for (const value of ['', '0', '-0.1', 'auto', 'NaN', 'Infinity']) {
       expect(readNear(`?near=${value}`)).toBeUndefined()
       expect(readScale(`?scale=${value}`)).toBeUndefined()
+    }
+  })
+  test('?fov accepts degrees above 0 and below 180', () => {
+    for (const [value, expected] of [['90', 90], ['62.5', 62.5], ['1e1', 10], ['0.5', 0.5], ['179.9', 179.9]] as const) {
+      expect(readFov(`?fov=${value}`)).toBe(expected)
+    }
+    for (const search of ['', '?fov', '?fov=', '?fov=0', '?fov=-60', '?fov=180', '?fov=270', '?fov=wide', '?fov=NaN', '?fov=Infinity']) {
+      expect(readFov(search)).toBeUndefined()
     }
   })
   test('?ratio accepts a positive width-to-height ratio as x:x, x/x or a number', () => {
