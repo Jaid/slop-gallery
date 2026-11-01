@@ -67,6 +67,8 @@ const create = (overrides: Partial<AiSettings> = {}, key = '') => {
   producer = new PortraitNarration({
     ...settings,
     ai: false,
+    // Alignment has its own test, so the rest count speech requests alone.
+    stt_model: false,
     ...overrides,
   }, key, narrator)
   return producer
@@ -152,6 +154,7 @@ test('bundled narration is queued as a URL without a provider or redundant fetch
   producer.enqueue('goose')
   await flush()
   expect(recordings).toEqual(['/audio/goose.opus'])
+  expect(narrationState(narrator.getSnapshot())?.timing).toBeUndefined()
   expect(fetchSpy).not.toHaveBeenCalled()
   expect(spoken).toHaveLength(0)
 })
@@ -249,4 +252,60 @@ test('eager generation populates the same cache without playing or taking a queu
   await flush()
   expect(fetchSpy).toHaveBeenCalledTimes(1)
   expect(players).toHaveLength(1)
+})
+const urlOf = (input: RequestInfo | URL) => (input instanceof Request ? input.url : input.toString())
+/** answers transcription requests with `transcription` and speech requests with generated audio */
+const routedFetch = (transcription: Response) => (async (input: RequestInfo | URL) => (urlOf(input).endsWith('/audio/transcriptions') ? transcription.clone() : new Response(new Blob(['audio'], {type: 'audio/mpeg'})))) as typeof fetch
+test('generated speech is aligned before it plays, so the narration carries its timing, and only once thanks to the cache', async () => {
+  fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(routedFetch(Response.json({
+    words: [{
+      word: 'his',
+      start: 0.1,
+      end: 0.3,
+    }, {
+      word: 'unbothered',
+      start: 0.4,
+      end: 1,
+    }],
+  })))
+  create({
+    ai: true,
+    stt_model: 'x-ai/grok-stt-1.0',
+  }, 'test-key')
+  const first = producer.enqueue('goose')!
+  await flush()
+  expect(fetchSpy.mock.calls.map(([url]) => urlOf(url))).toEqual(['https://openrouter.ai/api/v1/audio/speech', 'https://openrouter.ai/api/v1/audio/transcriptions'])
+  expect(JSON.parse(fetchSpy.mock.calls[1][1]!.body as string)).toMatchObject({
+    model: 'x-ai/grok-stt-1.0',
+    input_audio: {format: 'mp3'},
+  })
+  const state = narrationState(narrator.getSnapshot())!
+  expect(state.source).toBe('audio')
+  expect(state.timing?.words[1]).toMatchObject({
+    start: 0.4,
+    end: 1,
+  })
+  players[0].end()
+  await first.finished
+  producer.enqueue('goose')
+  await flush()
+  expect(fetchSpy).toHaveBeenCalledTimes(2)
+  expect(narrationState(narrator.getSnapshot())?.timing).toBe(state.timing)
+})
+test('a failed alignment still plays the generated audio, just without a timing', async () => {
+  const warn = spyOn(console, 'warn').mockImplementation(() => {})
+  fetchSpy = spyOn(globalThis, 'fetch').mockImplementation(routedFetch(new Response('busy', {status: 503})))
+  create({
+    ai: true,
+    stt_model: 'x-ai/grok-stt-1.0',
+  }, 'test-key')
+  producer.enqueue('goose')
+  await flush()
+  expect(narrationState(narrator.getSnapshot())).toMatchObject({
+    source: 'audio',
+    timing: undefined,
+  })
+  expect(recordings[0]).toBeInstanceOf(Blob)
+  expect(warn).toHaveBeenCalled()
+  warn.mockRestore()
 })

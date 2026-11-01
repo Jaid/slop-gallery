@@ -5,6 +5,7 @@ import type {AudioHandle, Narrator} from 'use-narrator/core'
 import {noop} from 'es-toolkit'
 import {SpeechCache} from 'use-narrator/core'
 
+import NarrationAligner from '../ai/NarrationAligner.ts'
 import NarrationGenerator from '../ai/NarrationGenerator.ts'
 import {tieredModel} from '../ai/settings.ts'
 import {notify} from '../gallery/actions.ts'
@@ -65,10 +66,27 @@ export default class PortraitNarration {
   constructor(private readonly settings: AiSettings, private readonly key: string, private readonly target: Narrator = narrator) {
     const generator = new NarrationGenerator(key, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice ?? narratorVoice(environmentSeed))
     const character = settings.narrator_character ?? narratorCharacter(environmentSeed)
-    this.cache = new SpeechCache((speech, signal) => generator.generate(speech.text, {
-      signal: AbortSignal.any([signal, AbortSignal.timeout(90_000)]),
-      character,
-    }))
+    const aligner = settings.stt_model === false ? undefined : new NarrationAligner(key, settings.stt_model)
+    this.cache = new SpeechCache(async (speech, signal) => {
+      const audio = await generator.generate(speech.text, {
+        signal: AbortSignal.any([signal, AbortSignal.timeout(90_000)]),
+        character,
+      })
+      if (!aligner) {
+        return audio
+      }
+      // Subtitles follow the words when this works and fall back to an estimate when it doesn’t, so it never holds the narration back for long.
+      try {
+        return {
+          audio,
+          timing: await aligner.align(audio, speech.text, {signal: AbortSignal.any([signal, AbortSignal.timeout(8000)])}),
+        }
+      } catch (error) {
+        signal.throwIfAborted()
+        console.warn('The narration could not be aligned for subtitles.', error)
+        return audio
+      }
+    })
     this.unsubscribe = useGallery.subscribe(() => {
       for (const [id, request] of this.requests) {
         const current = storyFor(id)

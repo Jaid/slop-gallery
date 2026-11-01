@@ -11,6 +11,7 @@ const tierVariants = {
 } as const
 export type AiTier = keyof typeof tierVariants
 
+const defaultSttModel = 'x-ai/grok-stt-1.0'
 const defaults = {
   ai: true,
   /** the service tier to ask for; without one, model IDs go out unchanged */
@@ -19,6 +20,8 @@ const defaults = {
   text_model_effort: 'low',
   image_model: 'google/gemini-nano-banana-2.1',
   audio_model: 'google/gemini-3.8-flash-tts',
+  /** the speech-to-text model that times every generated narration’s words for its subtitles, or `false` to skip that step and pace subtitles by an estimate */
+  stt_model: defaultSttModel as false | string,
   /** the speech model’s voice ID; without it, the environment seed picks the narrator’s voice */
   narrator_voice: undefined as string | undefined,
   /** the narrator’s delivery instructions, sent verbatim; without them, the environment seed picks the narrator’s traits */
@@ -33,6 +36,20 @@ const normalizeBoolean = (fallback: boolean) => (value: unknown) => {
   }
 }
 const normalizeString = (fallback: string) => (value: unknown) => (typeof value === 'string' ? value : fallback)
+/** a model ID, `false` for a `false` or `0` flag, and the default for a bare, `true` or `1` one */
+const normalizeOptionalModel = (fallback: string) => (value: unknown): false | string => {
+  if (value === false) {
+    return false
+  }
+  if (typeof value !== 'string' || !value.trim()) {
+    return fallback
+  }
+  try {
+    return parseBoolean(value) && fallback
+  } catch {
+    return value.trim()
+  }
+}
 /** a non-blank string, or `undefined` to let the environment seed decide */
 const normalizeOptionalString = (value: unknown) => (typeof value === 'string' && value.trim() ? value : undefined)
 const aiSettingsSchema = optis({
@@ -44,6 +61,7 @@ const aiSettingsSchema = optis({
     text_model_effort: normalizeString(defaults.text_model_effort),
     image_model: normalizeString(defaults.image_model),
     audio_model: normalizeString(defaults.audio_model),
+    stt_model: normalizeOptionalModel(defaultSttModel),
     narrator_voice: normalizeOptionalString,
     narrator_character: normalizeOptionalString,
     eager_audio: normalizeBoolean(defaults.eager_audio),
