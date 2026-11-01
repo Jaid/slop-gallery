@@ -250,7 +250,7 @@ test('points imports to the encoded image in development', async () => {
     expect(imported).toContain('virtual:jxl')
     // What Vite’s middleware unwraps from the browser’s request.
     const virtual = await server.transformRequest(imported.replace('/@id/__x00__', '\0'))
-    const cached = /"\/(cache\/[\da-f]{64}\.jxl)\?(?:import&)?url"/u.exec(virtual!.code)?.[1]
+    const cached = /"\/(cache\/[\w-]{8}\.jxl)\?(?:import&)?url"/u.exec(virtual!.code)?.[1]
     expect(cached).toBeDefined()
     expect(await size(await fs.readFile(join(root, cached!)))).toBe('40x20')
   } finally {

@@ -18,7 +18,8 @@
     "test": "bun test ./test"
   },
   "dependencies": {
-    "fs-extra": "11.4.1"
+    "fs-extra": "11.4.1",
+    "make-base64": "0.2.0"
   },
   "peerDependencies": {
     "vite": "^8.3.5"
