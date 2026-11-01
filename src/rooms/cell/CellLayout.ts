@@ -1,6 +1,8 @@
 import type {RoundVestibule} from '#src/lib/gallery/roundVestibule.ts'
 import type {FloorSize} from '../base/Room.ts'
 
+import {wallFace} from '#src/lib/gallery/architectureDimensions.ts'
+import easedRamp, {easedRampKnots} from '#src/lib/gallery/easedRamp.ts'
 import {chandelierCeiling} from '#src/lib/physics/chandelier.ts'
 
 /** a round space of the Cell beyond its north wall */
@@ -24,12 +26,18 @@ const tile = 0.5
 const size: FloorSize = [18, 14]
 const height = 6
 const northZ = -size[1] / 2
-/** every arch beyond the north wall, and the one through it, which a door closes while the Cell has no items */
+/** the arch through the north wall, which a door closes while the Cell has no items, and every arch beyond it, as high over the hall’s floor */
 const arch = {
   width: 3,
   height: 4.2,
   profile: 'arch',
 } as const satisfies RoundVestibule['arch']
+/** how much lower the floors of the round spaces lie than the hall’s, down a ramp in the passage between them */
+const sink = 0.15
+/** how steeply the passage’s ramp falls at most, halfway down, like the Fortress’ */
+const steepest = 0.25
+/** how far apart the knots of the passage’s ramp lie at most, closer than the Fortress’ long ramps’, so the tiles running down it bend smoothly */
+const rampKnotSpacing = 0.08
 /** the vestibule’s, round a lone item or the arches into the alcoves */
 const vestibuleRadius = 4
 /** an alcove’s, which leaves 2 m to walk round its pedestal */
@@ -48,6 +56,10 @@ const ringClearance = 2.4
 /** The turn about y that faces a pedestal at `from` toward `to`. */
 const facing = ([x, z]: readonly [number, number], [toX, toZ]: readonly [number, number]) => Math.atan2(toX - x, toZ - z) + 0
 const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
+/** the passage’s ramp, from the north wall’s face on to the round spaces’ floor: an eased ramp falls 1.5 times as steeply halfway as a straight one would */
+const rampLength = round(1.5 * sink / steepest)
+/** how far the vestibule’s wall stands back from the north wall’s center line, which leaves a passage between them as deep as the north wall’s face and the ramp */
+const passage = round(wallFace + rampLength)
 /** The plan for as many items. */
 function planFor(itemCount: number): CellPlan {
   if (itemCount < 2) {
@@ -63,11 +75,13 @@ function planFor(itemCount: number): CellPlan {
  * - one: a round vestibule with the pedestal in its middle
  * - two or three: the vestibule as a hub with an arch into a small round alcove for each, fanned out across from the arch
  * - four and more: the vestibule as a rotunda, as large as a ring of their pedestals round its middle takes, the ring open toward the arch
+ *
+ * Whenever the arch opens, a short passage leads on from it to the vestibule, its floor easing down a ramp to the round spaces’ sunken floors.
  */
 export default class CellLayout {
   /** the small round rooms off the vestibule, one for each item, when there are two or three */
   readonly alcoves: ReadonlyArray<CellSpace>
-  /** the arch through the north wall and every arch beyond it, as it opens straight across */
+  /** the arch through the north wall, as it opens straight across, whose crown every arch beyond it shares */
   readonly arch = arch
   /** how much higher the Cell’s chandelier hangs than from the ceiling it is made for, so it hangs right under the Cell’s */
   readonly chandelierLift = round(height - chandelierCeiling)
@@ -77,9 +91,17 @@ export default class CellLayout {
   readonly height = height
   /** the z of the north wall’s center line, relative to the room’s origin */
   readonly northZ = northZ
+  /** how far north of the north wall’s center line the passage through it ends, where the vestibule’s wall touches it */
+  readonly passage = passage
   /** a pedestal for every item, in their order */
   readonly pedestals: ReadonlyArray<CellPedestal>
   readonly plan: CellPlan
+  /** where the knots of the passage’s ramp lie, in meters north of the north wall’s face, from its head to its foot; its eased profile runs straight from knot to knot */
+  readonly rampKnots = easedRampKnots(rampLength, rampKnotSpacing)
+  /** how long the passage’s ramp runs north from the north wall’s face down to the round spaces’ floor */
+  readonly rampLength = rampLength
+  /** how much lower the round spaces’ floors lie than the hall’s */
+  readonly sink = sink
   readonly size = size
   /** the round room beyond the north wall’s arch, or undefined while a door closes it */
   readonly vestibule: CellSpace | undefined
@@ -100,7 +122,7 @@ export default class CellLayout {
       const slots = itemCount + 1
       const ring = Math.max(ringMinimum, ringSpacing / 2 / Math.sin(Math.PI / slots))
       const radius = ring + ringClearance
-      const center = [0, northZ - radius] as const
+      const center = [0, round(northZ - passage - radius)] as const
       this.vestibule = this.space('vestibule', center, radius, [['cell', Math.PI / 2]])
       this.alcoves = []
       this.pedestals = Array.from({length: itemCount}, (_, index) => {
@@ -113,7 +135,7 @@ export default class CellLayout {
       })
       return
     }
-    const center = [0, northZ - vestibuleRadius] as const
+    const center = [0, round(northZ - passage - vestibuleRadius)] as const
     if (this.plan === 'single') {
       this.vestibule = this.space('vestibule', center, vestibuleRadius, [['cell', Math.PI / 2]])
       this.alcoves = []
@@ -143,12 +165,24 @@ export default class CellLayout {
     return this.vestibule ? [this.vestibule, ...this.alcoves] : []
   }
 
+  /** How high the floor lies at `z`, relative to the room’s origin, anywhere on the floor plan: level in the hall, easing down the passage’s ramp from the north wall’s face, and sunk by {@link sink} in the round spaces beyond it. */
+  floorAt(z: number) {
+    if (!this.vestibule) {
+      return 0
+    }
+    return round(-sink * easedRamp(northZ - wallFace - z, rampLength, rampKnotSpacing))
+  }
+
   private space(name: string, center: readonly [number, number], radius: number, arches: ReadonlyArray<readonly [name: string, angle: number]>): CellSpace {
     return {
       name,
       center,
       radius,
-      arch,
+      // From the sunken floor up to the same crown as the arch through the north wall.
+      arch: {
+        ...arch,
+        height: round(arch.height + sink),
+      },
       arches: arches.map(([archName, angle]) => ({
         name: archName,
         angle,

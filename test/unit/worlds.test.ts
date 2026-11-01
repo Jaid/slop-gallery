@@ -163,13 +163,19 @@ describe('worlds', () => {
     const [vestibuleX, vestibuleZ] = vestibule.center
     const northZ = -cell.size[1] / 2
     const half = vestibule.arch.width / 2
-    expect(vestibuleZ + vestibule.radius).toBe(northZ)
+    // A passage leads on from the arch to where the vestibule’s wall touches it.
+    const {passage} = cell.room.layout
+    expect(passage).toBeGreaterThan(wallFace * 2)
+    expect(vestibuleZ + vestibule.radius).toBeCloseTo(northZ - passage, 9)
     expect(single.roomAt([vestibuleX, 1, vestibuleZ])).toBe(cell)
     expect(single.contains([vestibuleX + 2, 1, vestibuleZ])).toBe(true)
     expect(single.contains([vestibuleX + vestibule.radius, 1, vestibuleZ])).toBe(false)
-    expect(single.contains([vestibuleX, 1, northZ])).toBe(true)
-    expect(single.placement.contains([vestibuleX + half - 0.1, 1, northZ - 0.1])).toBe(true)
-    expect(single.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
+    for (const z of [northZ, northZ - passage / 2, northZ - passage]) {
+      expect(single.roomAt([vestibuleX, 1, z])).toBe(cell)
+      expect(single.contains([vestibuleX, 1, z])).toBe(true)
+      expect(single.placement.contains([vestibuleX + half - 0.1, 1, z - 0.1])).toBe(true)
+      expect(single.placement.contains([vestibuleX + half + 0.3, 1, z - 0.1])).toBe(false)
+    }
     expect(single.placement.contains([vestibuleX, 1, vestibuleZ - vestibule.radius - 0.1])).toBe(false)
     // Straight through the arch, across the vestibule to the far side of its wall.
     const [, , z] = single.spawn.position

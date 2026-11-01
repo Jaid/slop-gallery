@@ -1,16 +1,24 @@
 import type {Vec3} from '../../src/lib/gallery/types.ts'
+import type {BufferGeometry} from 'three/webgpu'
 
 import {describe, expect, test} from 'bun:test'
 
+import RAPIER from '@dimforge/rapier3d-compat'
+import EgoMotor from 'ego-player/motor'
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
+import {ExtrudeGeometry, Quaternion, Vector3} from 'three/webgpu'
 
-import {architectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
+import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
+import {openingCasingFronts, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellLedY, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
+import rampSurfaceGeometry from '../../src/lib/gallery/rampSurfaceGeometry.ts'
+import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
+import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
+import {openingTop} from '../../src/lib/placement/wallGeometry.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
 import Cell, {alcoveLight, cellLed} from '../../src/rooms/cell/Cell.ts'
@@ -20,6 +28,7 @@ import RoomMap from '../../src/rooms/lib/RoomMap.ts'
 import {readItems} from '../../src/worlds/sandbox/items.ts'
 import Sandbox from '../../src/worlds/sandbox/Sandbox.ts'
 
+await RAPIER.init()
 const ids = orbs.map(orb => orb.propId)
 /** the footprint of a pedestal, which no other may come closer to, middle to middle, than its diagonal */
 const pedestalDiagonal = 1.16 * Math.SQRT2
@@ -92,7 +101,8 @@ describe('the Cell’s layout', () => {
     const layout = new CellLayout(1)
     const vestibule = layout.vestibule!
     expect(vestibule.radius).toBe(4)
-    expect(vestibule.center).toEqual([0, layout.northZ - 4])
+    expect(vestibule.center[0]).toBe(0)
+    expect(vestibule.center[1]).toBeCloseTo(layout.northZ - layout.passage - 4, 9)
     expect(layout.pedestals).toEqual([{
       position: vestibule.center,
       rotation: 0,
@@ -162,7 +172,7 @@ describe('the Cell’s layout', () => {
       const layout = new CellLayout(count)
       const vestibule = layout.vestibule!
       expect(layout.alcoves).toEqual([])
-      expect(vestibule.center[1] + vestibule.radius).toBeCloseTo(layout.northZ, 9)
+      expect(vestibule.center[1] + vestibule.radius).toBeCloseTo(layout.northZ - layout.passage, 9)
       expect(vestibule.radius).toBeGreaterThan(4)
       const ring = distance(layout.pedestals[0].position, vestibule.center)
       expect(ring).toBeGreaterThanOrEqual(2.4 - 1e-9)
@@ -201,6 +211,216 @@ describe('the Cell’s layout', () => {
     const layout = new CellLayout(0)
     expect(pedestalHeight).toBeLessThan(layout.height / 2)
   })
+})
+describe('the passage from the Cell’s hall to its round spaces', () => {
+  test('eases its floor down from the north wall’s face to the round spaces’ sunken floor, never steeper than 1 in 4, while a door keeps the hall level', () => {
+    const closed = new CellLayout(0)
+    expect([closed.northZ - 2, closed.northZ, 0].map(z => closed.floorAt(z))).toEqual([0, 0, 0])
+    for (const count of [1, 3, 6]) {
+      const layout = new CellLayout(count)
+      const {northZ, passage, rampLength, sink} = layout
+      expect(sink).toBeGreaterThan(0)
+      expect(passage).toBeCloseTo(wallFace + rampLength, 9)
+      expect(layout.floorAt(0)).toBe(0)
+      expect(layout.floorAt(northZ)).toBe(0)
+      expect(layout.floorAt(northZ - wallFace)).toBe(0)
+      expect(layout.floorAt(northZ - passage)).toBeCloseTo(-sink, 9)
+      for (const space of layout.spaces) {
+        expect(layout.floorAt(space.center[1] - space.radius)).toBeCloseTo(-sink, 9)
+      }
+      let previous = 0
+      for (let step = 1; step <= 100; step++) {
+        const y = layout.floorAt(northZ - wallFace - rampLength * step / 100)
+        expect(y).toBeLessThanOrEqual(previous)
+        expect((previous - y) / (rampLength / 100)).toBeLessThanOrEqual(0.25 + 1e-9)
+        previous = y
+      }
+    }
+  })
+  test('sinks the round spaces’ walls and pedestals to their floor, under the same ceiling, every arch crowned as high as the one through the north wall', () => {
+    const sandbox = new Sandbox(ids.slice(0, 3))
+    const cell = sandbox.room('cell')
+    const {layout} = cell.room
+    const north = sandbox.walls.find(wall => wall.id === 'cell-north')!
+    const arch = north.holes!.find(hole => hole.name === 'vestibule')!
+    const crown = north.center[1] + openingTop(arch, arch.u)
+    const round = sandbox.walls.filter(wall => wall.curveRadius)
+    expect(round).toHaveLength(layout.spaces.length)
+    for (const wall of round) {
+      expect(wall.center[1]).toBeCloseTo(-layout.sink, 9)
+      expect(wall.center[1] + wall.height).toBeCloseTo(north.center[1] + north.height, 9)
+      for (const hole of wall.holes!) {
+        expect(wall.center[1] + openingTop(hole, hole.u)).toBeCloseTo(crown, 9)
+      }
+    }
+    for (const {position: [x, z]} of layout.pedestals) {
+      const position = cell.toWorld([x, 1, z])
+      expect(sandbox.floorHeight(position)).toBeCloseTo(-layout.sink, 9)
+      expect(sandbox.placement.floorHeight(position)).toBeCloseTo(-layout.sink, 9)
+    }
+    expect(sandbox.floorHeight(sandbox.spawn.position)).toBe(0)
+    // Standing on the sunken floor, but not under it.
+    const [x, z] = layout.pedestals[0].position
+    expect(sandbox.contains(cell.toWorld([x + 1.2, 0.05 - layout.sink, z]))).toBe(true)
+    expect(sandbox.contains(cell.toWorld([x + 1.2, -0.25 - layout.sink, z]))).toBe(false)
+  })
+  test('lines the passage with the reveal of the vestibule’s arch, from its wall on to the north wall’s face and from the sunken floor up to the crown, between the jambs of the arch through the north wall', () => {
+    const sandbox = new Sandbox(ids.slice(0, 1))
+    const cell = sandbox.room('cell')
+    const {layout} = cell.room
+    const ring = sandbox.walls.find(wall => wall.id === 'cell-vestibule')!
+    const hole = ring.holes!.find(candidate => candidate.name === 'cell')!
+    const reveal = roundRevealGeometry(ring, hole, layout.vestibule!.arch, layout.passage - wallFace).rotateY(ring.rotation).translate(...ring.center)
+    try {
+      reveal.computeBoundingBox()
+      const {min, max} = reveal.boundingBox!
+      const [archX, , northFace] = cell.toWorld([layout.vestibule!.center[0], 0, layout.northZ - wallFace])
+      expect(max.z).toBeCloseTo(northFace, 6)
+      expect(min.x).toBeCloseTo(archX - layout.arch.width / 2, 6)
+      expect(max.x).toBeCloseTo(archX + layout.arch.width / 2, 6)
+      expect(min.y).toBeCloseTo(-layout.sink, 6)
+      expect(max.y).toBeCloseTo(layout.arch.height, 6)
+      // Every face looks into the passage, toward its middle line.
+      const position = reveal.getAttribute('position')
+      const normal = reveal.getAttribute('normal')
+      for (let index = 0; index < position.count; index++) {
+        const towardMiddle = (archX - position.getX(index)) * normal.getX(index) + (layout.arch.height - layout.arch.width / 2 - position.getY(index)) * normal.getY(index)
+        expect(towardMiddle).toBeGreaterThan(0)
+      }
+    } finally {
+      reveal.dispose()
+    }
+  })
+  test('lays the ramp’s surface through the floor’s heights, facing up and blending into the level floors at its ends', () => {
+    const layout = new CellLayout(1)
+    expect(layout.rampKnots[0]).toBe(0)
+    expect(layout.rampKnots.at(-1)).toBeCloseTo(layout.rampLength, 9)
+    const profile = [[0, 0] as const, ...layout.rampKnots.map(along => [wallFace + along, layout.floorAt(layout.northZ - wallFace - along)] as const)]
+    const ramp = rampSurfaceGeometry(layout.arch.width, profile)
+    try {
+      const position = ramp.getAttribute('position')
+      const normal = ramp.getAttribute('normal')
+      expect(position.count).toBe(profile.length * 2)
+      for (let index = 0; index < position.count; index++) {
+        const [along, y] = profile[Math.floor(index / 2)]
+        expect(Math.abs(position.getX(index))).toBeCloseTo(layout.arch.width / 2, 9)
+        expect(position.getZ(index)).toBeCloseTo(along, 6)
+        expect(position.getY(index)).toBeCloseTo(y, 6)
+        expect(normal.getX(index)).toBe(0)
+        // No steeper than 1 in 4.
+        expect(normal.getY(index)).toBeGreaterThanOrEqual(1 / Math.hypot(1, 0.25))
+        // Falling along +z, it leans that way.
+        expect(normal.getZ(index)).toBeGreaterThanOrEqual(0)
+      }
+      expect([normal.getY(0), normal.getZ(0)]).toEqual([1, 0])
+      // Every triangle faces up.
+      const index = ramp.index!
+      for (let corner = 0; corner < index.count; corner += 3) {
+        const [a, b, c] = [0, 1, 2].map(offset => index.getX(corner + offset))
+        const abX = position.getX(b) - position.getX(a)
+        const abZ = position.getZ(b) - position.getZ(a)
+        const acX = position.getX(c) - position.getX(a)
+        const acZ = position.getZ(c) - position.getZ(a)
+        expect(abZ * acX - abX * acZ).toBeGreaterThan(0)
+      }
+    } finally {
+      ramp.dispose()
+    }
+    expect(() => rampSurfaceGeometry(1, [[0, 0]])).toThrow(RangeError)
+    expect(() => rampSurfaceGeometry(1, [[0, 0], [0, -0.1]])).toThrow(RangeError)
+    expect(() => rampSurfaceGeometry(0, [[0, 0], [1, -0.1]])).toThrow(RangeError)
+  })
+  for (const sprint of [false, true]) {
+    for (const returning of [false, true]) {
+      test(`a player walks from the hall over the threshold board and down the ramp into the vestibule, sprint ${sprint}, returning ${returning}`, () => {
+        const sandbox = new Sandbox(ids.slice(0, 1))
+        const {layout} = sandbox.room('cell').room
+        const vestibule = layout.vestibule!
+        const [width, depth] = layout.size
+        const world = new RAPIER.World({
+          x: 0,
+          y: -9.81,
+          z: 0,
+        })
+        const fps = 60
+        world.timestep = 1 / fps
+        const ring = sandbox.walls.find(wall => wall.id === 'cell-vestibule')!
+        // Built like CellRoom’s: the vestibule’s sunken slab, the ramp from the north wall’s center line and the passage’s reveal, in world meters, the Cell standing at the world’s origin.
+        const slab = new ExtrudeGeometry(roundVestibuleFloorShape(vestibule), {
+          depth: 0.24,
+          bevelEnabled: false,
+          curveSegments: 96,
+        })
+        const parts: Array<BufferGeometry> = [
+          slab.rotateX(-Math.PI / 2).translate(vestibule.center[0], 0.001 - layout.sink - 0.24, vestibule.center[1]),
+          rampSurfaceGeometry(layout.arch.width + 0.02, [[0, 0], ...layout.rampKnots.map(along => [wallFace + along, layout.floorAt(layout.northZ - wallFace - along)] as const)]).rotateY(Math.PI).translate(vestibule.center[0], 0.001, layout.northZ),
+          roundRevealGeometry(ring, ring.holes!.find(hole => hole.name === 'cell')!, vestibule.arch, layout.passage - wallFace).rotateY(ring.rotation).translate(...ring.center),
+        ]
+        const turn = new Quaternion
+        for (const wall of sandbox.walls) {
+          turn.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
+          for (const args of architectureGeometry(wall).collision) {
+            world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(turn))
+          }
+        }
+        for (const part of parts) {
+          world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(part)))
+        }
+        world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, 0.12, depth / 2).setTranslation(0, 0.001 - 0.12, 0))
+        const board = openingCasingFronts.classic + wallFace
+        world.createCollider(RAPIER.ColliderDesc.cuboid(layout.arch.width / 2 + 0.01, 0.009, board / 2).setTranslation(vestibule.center[0], 0.001 + 0.009, layout.northZ + openingCasingFronts.classic - board / 2))
+        // Straight through the arch and down the passage, then beside the pedestal’s place, at a walk until clear of the ramp unless sprinting.
+        const path: Array<readonly [x: number, z: number]> = [
+          [vestibule.center[0], layout.northZ + 3],
+          [vestibule.center[0], layout.northZ - layout.passage - 0.8],
+          [vestibule.center[0] + 1.5, vestibule.center[1]],
+        ]
+        if (returning) {
+          path.reverse()
+        }
+        const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? -layout.sink : 0) + 0.04, path[0][1]))
+        const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
+        const motor = new EgoMotor(RAPIER, world, body, collider)
+        const facing = new Quaternion
+        try {
+          let target = 1
+          for (let i = 0; i < fps * 30 && target < path.length; i++) {
+            const position = body.translation()
+            const dx = path[target][0] - position.x
+            const dz = path[target][1] - position.z
+            if (Math.hypot(dx, dz) < Math.max(0.3, (sprint ? 8 : 3) / fps)) {
+              target++
+              continue
+            }
+            facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(-dx, -dz))
+            motor.step(world.timestep, {
+              forward: true,
+              sprint,
+            }, facing)
+            world.step()
+            // Never sinking into the floor nor lifted off it on the way.
+            expect(position.y).toBeGreaterThan(layout.floorAt(position.z) - 0.02)
+          }
+          expect({
+            target,
+            position: body.translation(),
+          }).toMatchObject({target: path.length})
+          for (let i = 0; i < fps; i++) {
+            motor.step(world.timestep, {}, facing)
+            world.step()
+          }
+          expect(body.translation().y).toBeCloseTo((returning ? 0 : -layout.sink) + 0.001 + 0.02, 2)
+          expect(motor.grounded).toBe(true)
+        } finally {
+          motor.dispose()
+          world.free()
+          for (const part of parts) {
+            part.dispose()
+          }
+        }
+      })
+    }
+  }
 })
 describe('the Cell’s trim and door', () => {
   test('runs a low molded baseboard along the round spaces’ walls, which stands out of the face less than the old bands, and the Sienna’s tall one along the hall’s, the velvet lining the arch through the north one', () => {

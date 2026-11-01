@@ -11,8 +11,9 @@ const degenerate = 1e-12
  * The lining of an opening through a round wall, in the wall’s own frame: from the wall’s center line, where the wall’s own cut through it ends, straight out to the plane touching that line at the opening’s middle, where a straight wall or the open end of a passage meets the round wall back to back.
  * The gap between them widens toward the jambs as the round wall curves away from the plane. The lining closes it round the opening’s jambs and head; its sill is left to the floor.
  * `back` is the opening as it comes out in that plane, centered on the touching point. The lining is lofted between both outlines, point by point, so they need the same profile; its faces are flat and face into the opening.
+ * With a `reach`, the plane stands that far out beyond the touching point instead, and the lining runs on to it as a passage between the round wall and whatever lies beyond.
  */
-export default function roundRevealGeometry(wall: Pick<Wall, 'curveRadius'>, hole: WallOpening, back: Omit<WallOpening, 'u'>) {
+export default function roundRevealGeometry(wall: Pick<Wall, 'curveRadius'>, hole: WallOpening, back: Omit<WallOpening, 'u'>, reach = 0) {
   const radius = wall.curveRadius
   if (radius === undefined || !(radius > 0)) {
     throw new RangeError('A round reveal needs a wall that curves round its room.')
@@ -23,8 +24,10 @@ export default function roundRevealGeometry(wall: Pick<Wall, 'curveRadius'>, hol
   // In the wall’s frame, x runs along it at its middle, z into the room, and its bend centers at z = radius.
   const onWall = (u: number, y: number) => new Vector3(Math.sin(u / radius) * radius, y, radius - Math.cos(u / radius) * radius)
   const turn = hole.u / radius
-  const touch = onWall(hole.u, 0)
   const tangent = new Vector3(Math.cos(turn), 0, Math.sin(turn))
+  // Out of the ring, away from the room the wall faces.
+  const outward = new Vector3(Math.sin(turn), 0, -Math.cos(turn))
+  const touch = onWall(hole.u, 0).addScaledVector(outward, reach)
   const front = openingOutline(hole).map(({x, y}) => onWall(x, y))
   const backOutline = openingOutline({
     ...back,

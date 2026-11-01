@@ -8,7 +8,7 @@ const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
 const points = (corners: ReadonlyArray<readonly [number, number]>) => corners.map(([x, z]) => `${round(x)},${round(z)}`).join(' ')
 
 /**
- * The Cell’s floor plan for the map, as SVG markup in meters relative to the room’s origin: the room, and beyond its north wall, if it opens there, the vestibule, its alcoves and the passages under the arches between them, with the pedestals on them.
+ * The Cell’s floor plan for the map, as SVG markup in meters relative to the room’s origin: the room, and beyond its north wall, if it opens there, the passage on to the vestibule, the vestibule, its alcoves and the passages under the arches between them, with the pedestals on them.
  * The viewBox frames the walls’ center lines.
  */
 export default function cellMap(layout: CellLayout) {
@@ -18,7 +18,8 @@ export default function cellMap(layout: CellLayout) {
   const shapes: Array<string> = []
   if (layout.vestibule) {
     const [vestibuleX] = layout.vestibule.center
-    const notch = layout.northZ - inset - 0.025
+    // Through the north wall and the passage beyond, a little into the vestibule’s inset.
+    const notch = layout.northZ - layout.passage - inset - 0.025
     shapes.push(`<path d="M ${-half} ${-half} H ${round(vestibuleX - archHalf)} V ${round(notch)} H ${round(vestibuleX + archHalf)} V ${-half} H ${half} V ${half} H ${-half} Z"/>`)
   } else {
     shapes.push(`<rect x="${-half}" y="${-half}" width="${round(half * 2)}" height="${round(half * 2)}"/>`)

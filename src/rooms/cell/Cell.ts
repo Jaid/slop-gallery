@@ -34,7 +34,7 @@ export const alcoveLight = {
   drop: 1.4,
 } as const
 
-/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, its layout lays out a pedestal for every item it holds in round spaces upholstered in the Arena’s velvet, lit by an LED panel in the vestibule’s ceiling and a light in each alcove, or a door closes the arch while it holds none. */
+/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, a short passage ramps down to the round spaces where its layout lays out a pedestal for every item it holds, upholstered in the Arena’s velvet, lit by an LED panel in the vestibule’s ceiling and a light in each alcove, or a door closes the arch while it holds none. */
 export default class Cell extends Room {
   override readonly air: Array<Box3>
   override readonly color = '#5d242b'
@@ -53,7 +53,7 @@ export default class Cell extends Room {
   }
 
   constructor(readonly layout: CellLayout) {
-    const {chandelierLift, height, size, spaces, vestibule} = layout
+    const {chandelierLift, height, northZ, passage, sink, size, spaces, vestibule} = layout
     const lamps: Record<string, Lamp> = {
       // The Sienna’s, below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source; it swings along with it.
       chandelier: {
@@ -94,11 +94,15 @@ export default class Cell extends Room {
       east: planWall(size, 'east', height),
       south: planWall(size, 'south', height),
       west: planWall(size, 'west', height),
-      // The round spaces’ velvet walls keep the Arena’s low molded baseboard in black lacquer.
-      ...Object.fromEntries(spaces.map(space => [space.name, {
-        ...roundVestibuleWall(space, [0, 0, 0], height),
-        baseboardSection: cellBaseboard,
-      }])),
+      // The round spaces’ velvet walls stand on their sunken floors, up to the same ceiling, and keep the Arena’s low molded baseboard in black lacquer.
+      ...Object.fromEntries(spaces.map(space => {
+        const {center: [x, , z], ...wall} = roundVestibuleWall(space, [0, 0, 0], height + sink)
+        return [space.name, {
+          ...wall,
+          center: [x, -sink, z],
+          baseboardSection: cellBaseboard,
+        }]
+      })),
     }
     super({
       title: 'Cell',
@@ -112,16 +116,24 @@ export default class Cell extends Room {
     this.size = size
     this.air = [
       floorBox(size, 0, height),
-      ...spaces.map(space => floorBox([space.radius * 2, space.radius * 2], 0, height, space.center)),
+      ...vestibule ? [floorBox([layout.arch.width, passage], -sink, height + sink, [vestibule.center[0], northZ - passage / 2])] : [],
+      ...spaces.map(space => floorBox([space.radius * 2, space.radius * 2], -sink, height + sink, space.center)),
     ]
     // Its whole floor plan and those of the spaces beyond its north wall at every height, as they are all there is.
     this.fence = new Geofence(this.air.map(box => footprint([box])))
   }
 
-  /** Whether the position, relative to the room’s origin, lies on the floor of the room or of a space beyond its north wall, at least `margin` meters from the walls’ center lines. */
+  /** Whether the position, relative to the room’s origin, lies on the floor of the room, of the passage through its north wall or of a space beyond it, at least `margin` meters from the walls’ center lines. */
   floorContains([x, , z]: Vec3, margin = 0) {
-    const [width, depth] = this.layout.size
+    const {arch, northZ, passage, size: [width, depth], spaces, vestibule} = this.layout
     const inRoom = Math.abs(x) <= width / 2 - margin && Math.abs(z) <= depth / 2 - margin
-    return inRoom || this.layout.spaces.some(space => insideRoundVestibule(space, x, z, margin))
+    // On through the north wall’s center line into the room and past the plane where the vestibule’s wall touches the passage, overlapping both.
+    const inPassage = vestibule !== undefined && Math.abs(x - vestibule.center[0]) <= arch.width / 2 - margin && z <= northZ + margin && z >= northZ - passage - margin
+    return inRoom || inPassage || spaces.some(space => insideRoundVestibule(space, x, z, margin))
+  }
+
+  /** How high the floor lies under the position, relative to the room’s origin, anywhere on its floor plan. */
+  floorHeight([, , z]: Vec3) {
+    return this.layout.floorAt(z)
   }
 }

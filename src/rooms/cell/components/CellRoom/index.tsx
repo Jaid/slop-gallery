@@ -1,12 +1,13 @@
 import type {ArenaPolish, ArenaSurfaces} from '#component/ArenaShell'
 import type {Material} from 'three/webgpu'
 
+import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
-import {useMemo} from 'react'
+import {useEffect, useMemo} from 'react'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
-import {ExtrudeGeometry, PlaneGeometry} from 'three/webgpu'
+import {ExtrudeGeometry, PlaneGeometry, Vector3} from 'three/webgpu'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import {useArenaMarble, useArenaSurfaces} from '#component/ArenaShell'
@@ -24,10 +25,12 @@ import {openingCasingFronts, wallFace} from '#src/lib/gallery/architectureDimens
 import {cellLedY} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
+import rampSurfaceGeometry from '#src/lib/gallery/rampSurfaceGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
+import {setFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
@@ -38,7 +41,7 @@ import sandbox from '#src/worlds/sandbox/index.ts'
 
 const cell = sandbox.room('cell')
 const {layout} = cell.room
-const {chandelierLift, floorTile, vestibule} = layout
+const {chandelierLift, floorTile, northZ, passage, rampLength, sink, vestibule} = layout
 const [width, depth] = cell.size
 const [x, z] = cell.center
 const roundWallIds = new Set(layout.spaces.map(space => cell.room.globalId(space.name)))
@@ -88,6 +91,13 @@ const threshold = {
   back: -wallFace,
   front: openingCasingFronts.classic,
 }
+/** the top of the hall’s floor, a millimeter over its slab */
+const hallFloorY = 0.001
+/** the top of the round spaces’ floors, sunk under the hall’s */
+const sunkenFloorY = hallFloorY - sink
+/** where the camera passes from the hall’s mirror to the round spaces’, in world z: halfway down the passage’s ramp */
+const mirrorSwitchZ = cell.toWorld([0, 0, northZ - wallFace - rampLength / 2])[2]
+const cameraPosition = new Vector3
 
 /** The Sandbox’s one room: a hall with the Vesper’s varnished wood underfoot, papered like the Sienna under a coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
@@ -146,19 +156,19 @@ function HallFloor() {
     <mesh castShadow geometry={geometry.slab} name='cell-floor-slab' position={[x, -slabThickness / 2, z]} receiveShadow>
       <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
     </mesh>
-    <mesh geometry={geometry.plane} material={floor} name='cell-wood-floor' position={[x, 0.001, z]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
+    <mesh geometry={geometry.plane} material={floor} name='cell-wood-floor' position={[x, hallFloorY, z]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}>
       <Branch if={reflection}><primitive object={reflection!} /></Branch>
     </mesh>
   </>
 }
-/** Every round space beyond the north wall: the Arena’s checkered marble on their floors and out under their arches, a walnut board on the threshold of the arch into the hall, the Arena’s velvet on their walls and on the reveals that line the arches out to the walls they open through, the Banquet’s LED panel in the middle of the vestibule’s ceiling, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap. */
+/** Every round space beyond the north wall: the Arena’s checkered marble on their sunken floors, out under their arches and up the ramp of the passage from the hall, a walnut board on the threshold of the arch into the hall, the Arena’s velvet on their walls and on the reveals that line the arches out to the walls they open through, the passage’s included, the Banquet’s LED panel in the middle of the vestibule’s ceiling, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap. */
 function Vestibule({joinery, surfaces}: {
   /** the hall’s walnut, its grain along each mesh’s x axis */
   joinery: Material
   surfaces: ArenaSurfaces
 }) {
-  // One for every floor in a plane of its own, and theirs lie in the hall’s.
-  const floor = useArenaMarble(floorOrigin, floorTile, polish)
+  // One for every floor in a plane of its own, and theirs all lie in one, which the ramp climbs out of.
+  const floor = useArenaMarble(floorOrigin, floorTile, polish, sunkenFloorY)
   const pedestal = usePedestal()
   const holder = useOrbHolder()
   const parts = useDisposable(useMemo(() => {
@@ -168,54 +178,66 @@ function Vestibule({joinery, surfaces}: {
         bevelEnabled: false,
         curveSegments: circleSegments,
       })
-      // Its top as high as the hall’s wood, so all of them mirror in one plane.
       const [spaceX, spaceZ] = worldPoint(space.center)
-      return geometry.rotateX(-Math.PI / 2).translate(spaceX, 0.001 - slabThickness, spaceZ)
+      return geometry.rotateX(-Math.PI / 2).translate(spaceX, sunkenFloorY - slabThickness, spaceZ)
     }))
-    // Every arch through a round wall, lined out to the plane where the wall it opens onto touches it.
+    // From the north wall’s center line, level under the threshold board to the wall’s face, then down the eased ramp to the vestibule’s floor, a centimeter into the reveal on either side.
+    const profile = [[0, 0] as const, ...layout.rampKnots.map(along => [wallFace + along, layout.floorAt(northZ - wallFace - along)] as const)]
+    const [rampX, , rampZ] = cell.toWorld([vestibule!.center[0], 0, northZ])
+    const ramp = rampSurfaceGeometry(arch!.width + 0.02, profile).rotateY(Math.PI).translate(rampX, hallFloorY, rampZ)
+    // Every arch through a round wall, lined out to the plane where the wall it opens onto touches it, and the vestibule’s arch on through the passage to the north wall’s face.
     const reveals = mergeParts(layout.spaces.flatMap(space => {
       const wall = walls.find(candidate => candidate.id === cell.room.globalId(space.name))!
-      return wall.holes!.map(hole => roundRevealGeometry(wall, hole, layout.arch).rotateY(wall.rotation).translate(...wall.center))
+      return wall.holes!.map(hole => roundRevealGeometry(wall, hole, space.arch, hole.name === 'cell' ? passage - wallFace : 0).rotateY(wall.rotation).translate(...wall.center))
     }))
     const board = new RoundedBoxGeometry(arch!.width + 0.02, threshold.height, threshold.front - threshold.back, 2, threshold.radius)
     return {
       slab,
+      ramp,
       reveals,
       board,
       floorCollision: colliderGeometry(slab),
+      rampCollision: colliderGeometry(ramp),
       revealCollision: colliderGeometry(reveals),
       dispose() {
-        for (const geometry of [slab, reveals, board]) {
+        for (const geometry of [slab, ramp, reveals, board]) {
           geometry.dispose()
         }
       },
     }
   }, []))
+  // The floors share one mirror, which only shows the room right in one plane: the hall’s while the camera stands on its side of the ramp’s middle, the round spaces’ beyond, and the other floor shows its plain polish meanwhile.
+  useFrame(({camera}) => {
+    setFloorReflectionHeight(camera.getWorldPosition(cameraPosition).z < mirrorSwitchZ ? sunkenFloorY : hallFloorY)
+  })
+  useEffect(() => () => setFloorReflectionHeight(null), [])
   const [vestibuleX, vestibuleZ] = worldPoint(vestibule!.center)
   return <group name='cell-vestibule'>
     <RigidBody colliders={false} type='fixed'>
       <TrimeshCollider args={parts.floorCollision} />
+      <TrimeshCollider args={parts.rampCollision} />
       <TrimeshCollider args={parts.revealCollision} />
     </RigidBody>
-    {/* Lying on both floors across the seam where they meet, along the north wall’s center line. */}
+    {/* Lying on the hall’s floor and the head of the ramp across the seam where they meet, along the north wall’s center line. */}
     <group position={northWall.center} rotation={[0, northWall.rotation, 0]}>
       <RigidBody colliders={false} type='fixed'>
-        <CuboidCollider args={[(arch!.width + 0.02) / 2, threshold.height / 2, (threshold.front - threshold.back) / 2]} position={[arch!.u, 0.001 + threshold.height / 2, (threshold.front + threshold.back) / 2]} />
+        <CuboidCollider args={[(arch!.width + 0.02) / 2, threshold.height / 2, (threshold.front - threshold.back) / 2]} position={[arch!.u, hallFloorY + threshold.height / 2, (threshold.front + threshold.back) / 2]} />
       </RigidBody>
-      <mesh castShadow geometry={parts.board} material={joinery} name='cell-threshold' position={[arch!.u, 0.001 + threshold.height / 2, (threshold.front + threshold.back) / 2]} receiveShadow />
+      <mesh castShadow geometry={parts.board} material={joinery} name='cell-threshold' position={[arch!.u, hallFloorY + threshold.height / 2, (threshold.front + threshold.back) / 2]} receiveShadow />
     </group>
     {roundWalls.map(wall => <WallSurface key={wall.id} material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} wall={wall} />)}
     <mesh geometry={parts.slab} material={floor} name='cell-vestibule-floor' receiveShadow />
-    <Branch if={floor.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={floor.reflectionTarget!} /></group></Branch>
+    <mesh geometry={parts.ramp} material={floor} name='cell-passage-ramp' receiveShadow />
+    <Branch if={floor.reflectionTarget}><group position={[vestibuleX, sunkenFloorY, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={floor.reflectionTarget!} /></group></Branch>
     <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
     <CeilingLeds lamps={led!.lamps} name='cell-vestibule' slots={led!.slots} />
     {sandbox.items.map(({id, orb}, index) => {
       const {position, rotation} = layout.pedestals[index]
       const [pedestalX, pedestalZ] = worldPoint(position)
       return <group key={id}>
-        <Pedestal {...pedestal} position={[pedestalX, 0, pedestalZ]} rotation={rotation}><OrbHolder {...holder} /></Pedestal>
+        <Pedestal {...pedestal} position={[pedestalX, -sink, pedestalZ]} rotation={rotation}><OrbHolder {...holder} /></Pedestal>
         {/* Let down onto the holder’s lip from just over it. */}
-        <Orb id={id} orb={orb} position={[pedestalX, pedestalHeight + orbSeat + 0.002, pedestalZ]} />
+        <Orb id={id} orb={orb} position={[pedestalX, pedestalHeight + orbSeat + 0.002 - sink, pedestalZ]} />
       </group>
     })}
   </group>
