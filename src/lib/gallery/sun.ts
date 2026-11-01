@@ -12,7 +12,7 @@ export type SunlitRoom = {
 }
 
 /** How far the light’s shadow camera stands from the origin along its direction, well above the vault’s crown. */
-const distance = 80
+const sunDistance = 80
 const margin = 1
 const up = [0, 1, 0] as const
 const cross = (a: readonly [number, number, number], b: readonly [number, number, number]) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]] as const
@@ -45,9 +45,13 @@ export function sunlitPoints(rooms: Iterable<SunlitRoom>): Array<Vec3> {
   return points
 }
 
-/** Where a directional light shining from `toward` (any length) stands, and the shadow frustum that spans every one of the points from there. */
-export function sunGeometry(toward: Vec3, points: ReadonlyArray<Vec3>) {
+/**
+ * Where a directional light shining from `toward` (any length) stands, and the shadow frustum that spans every one of the points from there.
+ * It stands 80 m from the origin, or with `nearest` right beyond the points: the volumetric light fades with the depth into the frustum from the light, which then starts over the highest of them.
+ */
+export function sunGeometry(toward: Vec3, points: ReadonlyArray<Vec3>, {nearest = false}: {nearest?: boolean} = {}) {
   const direction = normalize(toward)
+  const distance = nearest ? Math.max(...points.map(point => dot(point, direction))) + margin + 0.5 : sunDistance
   // The basis of a camera at the light, looking at the origin, as Object3D.lookAt builds it.
   const right = normalize(cross(up, direction))
   const top = cross(direction, right)
@@ -81,5 +85,5 @@ export const middaySun = sunDirectionFromAngles(193.7, 51)
 
 /** How far in front of the shadow camera of a sun shining from `direction` the crown of the Lobby’s vault stands, which has to stay in front of it to cast a shadow. */
 export function sunClearance(direction: Vec3) {
-  return distance - dot([0, lobbyVault.crownY, 0], normalize(direction))
+  return sunDistance - dot([0, lobbyVault.crownY, 0], normalize(direction))
 }

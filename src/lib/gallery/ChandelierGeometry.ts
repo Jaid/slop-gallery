@@ -3,9 +3,9 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CylinderGeometry, QuadraticBezierCurve3, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '../physics/chandelier.ts'
+import {chandelierCanopyTop, chandelierRod, chandelierStemCenter, chandelierStemHalfHeight} from '../physics/chandelier.ts'
 
-/** Consolidated by material and shadow behavior, with all eight candle arms retained. */
+/** Consolidated by material and shadow behavior, with all eight candle arms retained; hung from a rod `rod` meters long over the canopy, its brass takes in the rod and the ball at its top. */
 export default class ChandelierGeometry {
   readonly armColliders: Array<Float32Array> = []
   readonly brass: BufferGeometry
@@ -15,9 +15,9 @@ export default class ChandelierGeometry {
   readonly pendant: SphereGeometry
   readonly ringColliders: Array<Float32Array> = []
 
-  constructor() {
+  constructor({rod = 0}: {rod?: number} = {}) {
     const canopy = new CylinderGeometry(0.3, 0.22, 0.12, 32)
-    this.canopy = canopy.translate(0, chandelierPhysics.anchor[1] + 0.02, 0)
+    this.canopy = canopy.translate(0, chandelierCanopyTop - 0.06, 0)
     const pendant = new SphereGeometry(0.09, 16, 12)
     this.pendant = pendant.scale(1, 1.4, 1).translate(0, -0.38, 0)
     for (let i = 0; i < 16; i++) {
@@ -34,6 +34,12 @@ export default class ChandelierGeometry {
       hub.scale(1, 1.5, 1),
       ring.rotateX(Math.PI / 2).translate(0, -0.12, 0),
     ]
+    if (rod > 0) {
+      // From inside the canopy up to the middle of the ball at its top.
+      const shaft = new CylinderGeometry(chandelierRod.radius, chandelierRod.radius, rod + 0.02, 16)
+      const swivel = new SphereGeometry(chandelierRod.swivel, 16, 12)
+      brass.push(shaft.translate(0, chandelierCanopyTop + (rod - 0.02) / 2, 0), swivel.translate(0, chandelierCanopyTop + rod, 0))
+    }
     const candles: Array<BufferGeometry> = []
     const flames: Array<BufferGeometry> = []
     const arm = new QuadraticBezierCurve3(new Vector3(0.18, 0, 0), new Vector3(0.8, -0.5, 0), new Vector3(1.25, 0.15, 0))

@@ -4,29 +4,40 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
-import {chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
+import {chandelierCanopyTop, chandelierPhysics, chandelierRod} from '../../src/lib/physics/chandelier.ts'
 
 await RAPIER.init()
-function simulate(mass: number, miss = false, fixture = chandelierPhysics) {
-  const geometry = new ChandelierGeometry
+/** How far a projectile of `mass` swings the fixture out at most, hung from its canopy or from a rod `rod` meters long over it, and, with `canopy`, how far its canopy moves sideways at most, checking that it settles within `settle` seconds. */
+function simulate(mass: number, miss = false, fixture = chandelierPhysics, {canopy, rod = 0, settle = 45}: {
+  canopy?: {
+    peak: number
+  }
+  rod?: number
+  settle?: number
+} = {}) {
+  const geometry = new ChandelierGeometry({rod})
+  const pivot = rod > 0 ? [0, chandelierCanopyTop + rod, 0] as const : fixture.anchor
   const world = new RAPIER.World({
     x: 0,
     y: -9.81,
     z: 0,
   })
   world.timestep = 1 / 120
-  const anchor = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, fixture.height + fixture.anchor[1], 0))
+  const anchor = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, fixture.height + pivot[1], 0))
   const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, fixture.height, 0).setAngularDamping(fixture.angularDamping).setLinearDamping(fixture.linearDamping).setCcdEnabled(true).setCanSleep(false).setAdditionalSolverIterations(8))
   world.createCollider(RAPIER.ColliderDesc.ball(0.21).setMass(fixture.hubMass), body)
   world.createCollider(RAPIER.ColliderDesc.ball(0.12).setTranslation(0, -0.38, 0).setMass(fixture.pendantMass), body)
   world.createCollider(RAPIER.ColliderDesc.cylinder((fixture.anchor[1] - 0.05) / 2, 0.022).setTranslation(0, (fixture.anchor[1] + 0.15) / 2, 0).setMass(fixture.stemMass), body)
+  if (rod > 0) {
+    world.createCollider(RAPIER.ColliderDesc.cylinder((rod - 0.1) / 2, chandelierRod.radius).setTranslation(0, chandelierCanopyTop + (rod - 0.1) / 2, 0).setMass(fixture.rodMass), body)
+  }
   for (const vertices of geometry.armColliders) {
     world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!.setMass(fixture.armMass).setRestitution(0.15), body)
   }
   for (const vertices of geometry.ringColliders) {
     world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!.setMass(fixture.ringMass).setRestitution(0.15), body)
   }
-  world.createImpulseJoint(RAPIER.JointData.spherical(new Vector3, new Vector3(...fixture.anchor)), anchor, body, true)
+  world.createImpulseJoint(RAPIER.JointData.spherical(new Vector3, new Vector3(...pivot)), anchor, body, true)
   const offset = () => Math.hypot(body.translation().x, body.translation().z)
   try {
     for (let i = 0; i < 120; i++) {
@@ -42,12 +53,19 @@ function simulate(mass: number, miss = false, fixture = chandelierPhysics) {
       peak = Math.max(peak, offset())
       const q = body.rotation()
       const p = body.translation()
-      const pin = new Vector3(...fixture.anchor)
-      pin.applyQuaternion(new Quaternion(q.x, q.y, q.z, q.w)).add(new Vector3(p.x, p.y, p.z))
-      drift = Math.max(drift, pin.distanceTo(new Vector3(0, fixture.height + fixture.anchor[1], 0)))
+      const turn = new Quaternion(q.x, q.y, q.z, q.w)
+      const pin = new Vector3(...pivot)
+      pin.applyQuaternion(turn).add(new Vector3(p.x, p.y, p.z))
+      drift = Math.max(drift, pin.distanceTo(new Vector3(0, fixture.height + pivot[1], 0)))
+      if (!canopy) {
+        continue
+      }
+      const top = new Vector3(0, chandelierCanopyTop, 0)
+      top.applyQuaternion(turn).add(new Vector3(p.x, p.y, p.z))
+      canopy.peak = Math.max(canopy.peak, Math.hypot(top.x, top.z))
     }
     expect(drift).toBeLessThan(0.012)
-    for (let i = 0; i < 120 * 45; i++) {
+    for (let i = 0; i < 120 * settle; i++) {
       world.step()
     }
     expect(offset()).toBeLessThan(0.015)
@@ -71,10 +89,26 @@ describe('suspended Sienna chandelier', () => {
       armMass: 0.4,
       hubMass: 2,
       stemMass: 0.35,
+      rodMass: 0,
       ringMass: 0.025,
       pendantMass: 0.1,
     })
     expect(heavy).toBeGreaterThan(previous * 1.15)
+  })
+  test('hung from a rod, swings about the ball at its top, canopy and all, and settles under it', () => {
+    const canopy = {
+      peak: 0,
+    }
+    // From so far under the ball, the pot swings it out farther, so it takes longer to settle.
+    const swing = simulate(5, false, chandelierPhysics, {
+      canopy,
+      rod: 3.7,
+      settle: 100,
+    })
+    expect(swing).toBeGreaterThan(0.05)
+    // The canopy swings along, nearly as far as the hub, which hangs farther from the ball.
+    expect(canopy.peak).toBeGreaterThan(swing * 0.5)
+    expect(canopy.peak).toBeLessThan(swing)
   })
   test('a miss does not trigger a canned swing', () => {
     expect(simulate(5, true)).toBeLessThan(0.001)

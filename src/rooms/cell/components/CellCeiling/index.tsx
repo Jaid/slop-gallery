@@ -10,6 +10,7 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import CellCeilingGeometry, {cellCeilingSlab, cellRidge} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
 import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
+import ClearGlassMaterial from '#src/lib/materials/ClearGlassMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import sandbox from '#src/worlds/sandbox/index.ts'
 
@@ -18,9 +19,11 @@ const {layout} = cell.room
 const {vestibule} = layout
 const [width] = layout.size
 
-/** The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets, under a walnut ridge beam the chandelier hangs from on a brass rod, its gables papered like the walls, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, the beams and the gables. */
+/**
+ * The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets and all but the outer ones glazed as roof lights, under a walnut ridge beam with the brass plate the chandelier hangs from, its gables papered like the walls, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, across the roof lights, the beams and the gables.
+ */
 export default function CellCeiling({beams, paper}: {
-  /** the wood of the beams, its grain along each mesh’s x axis */
+  /** the wood of the beams and the roof lights’ sashes, its grain along each mesh’s x axis */
   beams: Material
   /** the hall’s wallpaper, which the gables carry on up to the slopes */
   paper: Material
@@ -39,8 +42,20 @@ export default function CellCeiling({beams, paper}: {
     roughness: 0.88,
   }), [isHeavy]))
   const brass = useDisposable(useMemo(() => new BrassMaterial, []))
+  const glass = useDisposable(useMemo(() => {
+    const material = new ClearGlassMaterial({
+      name: 'cell-skylight-glass',
+      ior: 1.52,
+      absorption: 0.04,
+      clearcoat: 0.3,
+    })
+    // Its depth ends the moonlight’s shafts at the panes; marching on through the moonlit air over the roof, they would veil the stars in every light.
+    material.depthWrite = true
+    return material
+  }, []))
   return <group name='cell-ceiling' position={cell.toWorld([0, 0, 0])}>
     {geometry.slopes.map(({position, rotation}, index) => <group key={index} name={`cell-ceiling-slope-${index}`} position={position} rotation={rotation}>
+      {/* The slab’s collider runs on across the roof lights. */}
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[width / 2, cellCeilingSlab / 2, geometry.length / 2]} position={[0, cellCeilingSlab / 2, 0]} />
         <TrimeshCollider args={collision.beams} />
@@ -52,6 +67,10 @@ export default function CellCeiling({beams, paper}: {
       <mesh castShadow geometry={geometry.beams} material={beams} name='cell-ceiling-beams' receiveShadow />
       <mesh castShadow geometry={geometry.crossBeams} material={beams} name='cell-ceiling-cross-beams' receiveShadow rotation={[0, Math.PI / 2, 0]} />
       <mesh geometry={geometry.gilt} material={gold} name='cell-ceiling-gilt' receiveShadow />
+      <mesh castShadow geometry={geometry.sash} material={beams} name='cell-skylight-sash' receiveShadow />
+      <mesh castShadow geometry={geometry.sashStiles} material={beams} name='cell-skylight-sash-stiles' receiveShadow rotation={[0, Math.PI / 2, 0]} />
+      {/* Letting the moon through. */}
+      <mesh geometry={geometry.glass} material={glass} name='cell-skylight-glass' />
     </group>)}
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, cellRidge.depth / 2, cellRidge.width / 2]} position={[0, layout.ridgeHeight - cellCeilingSlab / 2 - cellRidge.depth / 2, 0]} />
@@ -59,7 +78,7 @@ export default function CellCeiling({beams, paper}: {
       {vestibule && <CylinderCollider args={[cellCeilingSlab / 2, vestibule.radius]} position={[vestibule.center[0], layout.height, vestibule.center[1]]} />}
     </RigidBody>
     <mesh castShadow geometry={geometry.ridge} material={beams} name='cell-ceiling-ridge' receiveShadow />
-    <mesh castShadow geometry={geometry.hanger} material={brass} name='cell-chandelier-rod' receiveShadow />
+    <mesh castShadow geometry={geometry.plate} material={brass} name='cell-chandelier-plate' receiveShadow />
     <mesh castShadow geometry={geometry.gables} material={paper} name='cell-gables' receiveShadow />
     <Branch if={vestibule}>
       <>

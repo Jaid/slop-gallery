@@ -3,24 +3,32 @@ import type {Object3D} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSphericalJoint} from '@react-three/rapier'
+import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
-import {chandelierLampY, chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
+import {chandelierCanopyTop, chandelierLampY, chandelierPhysics, chandelierRod, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 
-/** The Sienna’s swinging chandelier, hanging from the ceiling over its parent’s origin, which carries the lamp with the global id `lamp` along. */
-export default function Chandelier({lamp: lampId}: {
+/**
+ * The Sienna’s swinging chandelier, hanging from the ceiling over its parent’s origin, which carries the lamp with the global id `lamp` along.
+ * It swings under its canopy, which sits fixed right under the ceiling, or, hung from a rod, about the ball at the rod’s top, canopy and rod and all.
+ */
+export default function Chandelier({lamp: lampId, rod = 0}: {
   /** the global id of the room’s lamp the fixture carries, which hangs below its metalwork at rest, see `chandelierLampY` */
   lamp: string
+  /** how long a brass rod the fixture hangs from, from the top of its canopy up to the middle of the ball it swings about, or 0 to swing under a canopy fixed to the ceiling */
+  rod?: number
 }) {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
-  useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
+  const pivot: [number, number, number] = rod > 0 ? [0, chandelierCanopyTop + rod, 0] : chandelierPhysics.anchor
+  useSphericalJoint(anchor, fixture, [[0, 0, 0], pivot])
   const brass = useDisposable(useMemo(() => new BrassMaterial, []))
-  const geometry = useDisposable(useMemo(() => new ChandelierGeometry, []))
+  const geometry = useDisposable(useMemo(() => new ChandelierGeometry({rod}), [rod]))
+  const canopy = <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
   const source = useRef<Object3D>(null)
   const lamp = useLamp(lampId)
   useFrame(() => {
@@ -31,14 +39,17 @@ export default function Chandelier({lamp: lampId}: {
     }
   })
   return <group name={lampId} position={[0, chandelierPhysics.height, 0]}>
-    <RigidBody colliders={false} position={chandelierPhysics.anchor} type='fixed' ref={anchor} />
-    <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
+    <RigidBody colliders={false} position={pivot} type='fixed' ref={anchor} />
+    <Branch not={rod > 0}>{canopy}</Branch>
     <RigidBody additionalSolverIterations={8} angularDamping={chandelierPhysics.angularDamping} canSleep={false} ccd colliders={false} linearDamping={chandelierPhysics.linearDamping} ref={fixture}>
       <BallCollider args={[0.21]} mass={chandelierPhysics.hubMass} />
       <BallCollider args={[0.12]} mass={chandelierPhysics.pendantMass} position={[0, -0.38, 0]} />
       <CylinderCollider args={[chandelierStemHalfHeight, 0.022]} mass={chandelierPhysics.stemMass} position={[0, chandelierStemCenter, 0]} />
+      {/* Ending short of the ball, which tucks into whatever the rod hangs from. */}
+      <Branch if={rod > 0.2}><CylinderCollider args={[(rod - 0.1) / 2, chandelierRod.radius]} mass={chandelierPhysics.rodMass} position={[0, chandelierCanopyTop + (rod - 0.1) / 2, 0]} /></Branch>
       {geometry.armColliders.map((vertices, i) => <ConvexHullCollider key={i} args={[vertices]} mass={chandelierPhysics.armMass} restitution={0.15} />)}
       {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider key={`ring-${i}`} args={[vertices]} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
+      <Branch if={rod > 0}>{canopy}</Branch>
       <mesh castShadow geometry={geometry.brass} name='chandelier-brass'><primitive attach='material' object={brass} /></mesh>
       <mesh castShadow geometry={geometry.candles} name='chandelier-candles'><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>

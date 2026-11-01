@@ -5,17 +5,18 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
-import {ExtrudeGeometry, Matrix4, Quaternion, Shape, Vector3} from 'three/webgpu'
+import {DoubleSide, ExtrudeGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, PlaneGeometry, Quaternion, Raycaster, Shape, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {openingCasingFronts, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellLedY, cellRidge, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, cellLedY, cellRidge, cellSkylights, cofferLine, isCellSkylight} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
 import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
+import {chandelierCanopyTop, chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
 import Cell, {cellLed} from '../../src/rooms/cell/Cell.ts'
@@ -23,6 +24,7 @@ import CellLayout from '../../src/rooms/cell/CellLayout.ts'
 import cellMap from '../../src/rooms/cell/map.ts'
 import RoomMap from '../../src/rooms/lib/RoomMap.ts'
 import {readItems} from '../../src/worlds/sandbox/items.ts'
+import {moonDirection} from '../../src/worlds/sandbox/night.ts'
 import Sandbox from '../../src/worlds/sandbox/Sandbox.ts'
 
 await RAPIER.init()
@@ -462,8 +464,124 @@ describe('the Cell’s ceilings', () => {
     })
     expect(Math.abs(fields[0] - fields[1]) / fields[0]).toBeLessThan(0.02)
   })
+  test('glaze every coffer up both slopes but those along the gables, the eave and the ridge, open through the slab inside the gilt fillet and divided into panes by the sash’s bars', () => {
+    const layout = new CellLayout(1)
+    const geometry = new CellCeilingGeometry(layout)
+    const material = new MeshBasicMaterial({side: DoubleSide})
+    try {
+      const [width] = layout.size
+      const {beam, count: [countX, countSlope], fillet} = cellCoffers
+      const {inset, panes, sash} = cellSkylights
+      expect(inset).toBeGreaterThan(fillet.inset + fillet.width)
+      expect(geometry.skylights).toHaveLength((countX - 2) * (countSlope - 2))
+      const alongX = cofferLine(width, countX, [wallFace + beam.width, wallFace + beam.width])
+      const alongSlope = cofferLine(geometry.length, countSlope, [cellRidge.width / 2 / Math.cos(layout.roofPitch), 0.34 / Math.cos(layout.roofPitch)])
+      const opening = [alongX.field - inset * 2, alongSlope.field - inset * 2] as const
+      const across = cofferLine(opening[0], panes[0], [sash.frame, sash.frame], sash.bar)
+      const down = cofferLine(opening[1], panes[1], [sash.frame, sash.frame], sash.bar)
+      const slab = new Mesh(geometry.slab, material)
+      const glass = new Mesh(geometry.glass, material)
+      const rails = new Mesh(geometry.sash, material)
+      // Laid along x and turned down the slope by the mesh, like the rafters.
+      const stiles = new Mesh(geometry.sashStiles, material)
+      stiles.rotation.y = Math.PI / 2
+      stiles.updateMatrixWorld()
+      /** What a ray straight up through the point of a slope’s underside meets first. */
+      const first = (x: number, z: number) => {
+        const ray = new Raycaster(new Vector3(x, -0.01, z), new Vector3(0, 1, 0))
+        return ray.intersectObjects([slab, glass, rails, stiles], false)[0]?.object
+      }
+      for (const [column, x] of alongX.middles.entries()) {
+        for (const [row, z] of alongSlope.middles.entries()) {
+          const glazed = isCellSkylight(column, row)
+          expect(geometry.skylights.some(([skylightX, skylightZ]) => Math.abs(skylightX - x) + Math.abs(skylightZ - z) < 1e-9)).toBe(glazed)
+          if (!glazed) {
+            expect(first(x, z)).toBe(slab)
+            continue
+          }
+          // Every pane shows the sky through its glass alone.
+          for (const paneX of across.middles) {
+            for (const paneZ of down.middles) {
+              expect(first(x + paneX, z + paneZ)).toBe(glass)
+            }
+          }
+          // The bars between the panes and the frame round them are in its way, and the slab just outside the opening, under the fillet.
+          expect(first(x + across.beams[0], z + down.middles[1])).toBe(stiles)
+          expect(first(x + across.middles[1], z + down.beams[0])).toBe(rails)
+          expect(first(x + opening[0] / 2 - 0.01, z)).toBe(stiles)
+          expect(first(x, z + opening[1] / 2 - 0.01)).toBe(rails)
+          expect(first(x + opening[0] / 2 + 0.003, z)).toBe(slab)
+          expect(first(x, z - opening[1] / 2 - 0.003)).toBe(slab)
+        }
+      }
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+  })
+  test('let the moon shine onto the hall’s floor through the roof lights’ glass and nowhere else, and show the night sky over the Cell', () => {
+    const layout = new CellLayout(1)
+    const geometry = new CellCeilingGeometry(layout)
+    const material = new MeshBasicMaterial({side: DoubleSide})
+    const walls = new PlaneGeometry(1, 1)
+    try {
+      const [width, depth] = layout.size
+      const shell = new Group
+      const glass: Array<Mesh> = []
+      for (const {position, rotation} of geometry.slopes) {
+        const slope = new Group
+        slope.position.set(...position)
+        slope.rotation.copy(rotation)
+        const rafters = new Mesh(geometry.crossBeams, material)
+        rafters.rotation.y = Math.PI / 2
+        const panes = new Mesh(geometry.glass, material)
+        slope.add(new Mesh(geometry.slab, material), new Mesh(geometry.beams, material), rafters, panes)
+        glass.push(panes)
+        shell.add(slope)
+      }
+      shell.add(new Mesh(geometry.ridge, material), new Mesh(geometry.gables, material))
+      // The walls along their center lines, up to the ceiling.
+      for (const [x, z, turn, span] of [[width / 2, 0, Math.PI / 2, depth], [-width / 2, 0, Math.PI / 2, depth], [0, depth / 2, 0, width], [0, -depth / 2, 0, width]] as const) {
+        const wall = new Mesh(walls, material)
+        wall.scale.set(span, layout.height, 1)
+        wall.position.set(x, layout.height / 2, z)
+        wall.rotation.y = turn
+        shell.add(wall)
+      }
+      shell.updateMatrixWorld(true)
+      const opaque = shell.children.flatMap(child => (child instanceof Mesh ? [child] : child.children)).filter(child => !glass.includes(child as Mesh))
+      const toMoon = new Vector3(...moonDirection)
+      toMoon.normalize()
+      let lit = 0
+      let samples = 0
+      for (let x = -width / 2 + 0.5; x < width / 2; x += 1) {
+        for (let z = -depth / 2 + 0.5; z < depth / 2; z += 1) {
+          samples++
+          const ray = new Raycaster(new Vector3(x, 0.01, z), toMoon)
+          if (ray.intersectObjects(opaque, false).length > 0) {
+            continue
+          }
+          lit++
+          // Out under the sky only through a pane.
+          expect(ray.intersectObjects(glass, false).length).toBeGreaterThan(0)
+        }
+      }
+      expect(lit / samples).toBeGreaterThan(0.08)
+      expect(lit / samples).toBeLessThan(0.6)
+      const sandbox = new Sandbox(ids.slice(0, 1))
+      const cell = sandbox.room('cell')
+      expect(cell.skybox).toBe('night')
+      expect(sandbox.skybox('night')).not.toBeNull()
+      expect(sandbox.skybox('sky')).toBeNull()
+      expect(cell.volumetricSun).toBeGreaterThan(0)
+    } finally {
+      geometry.dispose()
+      material.dispose()
+      walls.dispose()
+    }
+  })
   for (const count of [0, 1, 2, 4, 12]) {
-    test(`lays both slopes from the eaves’ wall tops to the ridge, the beams and gilding under them, the gables up to them and the chandelier’s rod down from the ridge beam, with ${count} items`, () => {
+    test(`lays both slopes from the eaves’ wall tops to the ridge, the beams, sashes and gilding under them, the gables up to them and the plate the chandelier’s rod hangs from under the ridge beam, with ${count} items`, () => {
       const layout = new CellLayout(count)
       const geometry = new CellCeilingGeometry(layout)
       try {
@@ -473,8 +591,13 @@ describe('the Cell’s ceilings', () => {
         const half = geometry.length / 2
         expect(geometry.length).toBeCloseTo(depth / 2 / Math.cos(layout.roofPitch), 9)
         // A slope’s own frame: x along the hall, z down from the ridge to the eave, its underside at y = 0.
-        for (const part of [geometry.slab, geometry.beams, geometry.crossBeams, geometry.gilt]) {
+        for (const part of [geometry.slab, geometry.beams, geometry.crossBeams, geometry.gilt, geometry.sash, geometry.glass]) {
           part.computeBoundingBox()
+        }
+        // The sashes and their glass within the slab, a little under its top.
+        for (const part of [geometry.sash, geometry.glass]) {
+          expect(part.boundingBox!.min.y).toBeGreaterThan(0)
+          expect(part.boundingBox!.max.y).toBeLessThan(cellCeilingSlab - cellSkylights.sash.top + 1e-6)
         }
         expect(geometry.slab.boundingBox!.min.y).toBeCloseTo(0, 6)
         expect(geometry.slab.boundingBox!.max.y).toBeCloseTo(cellCeilingSlab, 6)
@@ -517,17 +640,21 @@ describe('the Cell’s ceilings', () => {
         }
         // Over the arch through the north wall everywhere.
         expect(underside - cellCoffers.beam.depth).toBeGreaterThan(layout.arch.height + 1)
-        for (const part of [geometry.ridge, geometry.hanger, geometry.gables]) {
+        for (const part of [geometry.ridge, geometry.plate, geometry.gables]) {
           part.computeBoundingBox()
         }
         expect(geometry.ridge.boundingBox!.max.y).toBeCloseTo(apex, 6)
         expect(geometry.ridge.boundingBox!.min.y).toBeCloseTo(apex - cellRidge.depth, 6)
-        // Into the canopy, which hangs where it would under a level ceiling, and up into the ridge beam.
-        const hanger = geometry.hanger.boundingBox!
-        expect(hanger.min.y).toBeLessThan(layout.height - cellCeilingSlab / 2)
-        expect(hanger.min.y).toBeGreaterThan(layout.chandelierLift + 5.6)
-        expect(hanger.max.y).toBeGreaterThan(apex - cellRidge.depth)
-        expect(hanger.max.y).toBeLessThan(apex - cellRidge.depth + 0.02)
+        // The plate reaches into the ridge beam, and the ball at the top of the chandelier’s rod tucks into it from under it.
+        const plate = geometry.plate.boundingBox!
+        const pivot = cellChandelierPivot(layout.ridgeHeight)
+        expect(plate.max.y).toBeCloseTo(apex - cellRidge.depth + 0.002, 6)
+        expect(plate.min.y).toBeCloseTo(pivot, 6)
+        // The rod reaches down from the ball to the canopy, which hangs where it would under a level ceiling, under the slabs where they meet the walls.
+        const canopyTop = layout.chandelierLift + chandelierPhysics.height + chandelierCanopyTop
+        expect(canopyTop + layout.chandelierRod).toBeCloseTo(pivot, 9)
+        expect(canopyTop).toBeLessThan(underside)
+        expect(canopyTop).toBeGreaterThan(underside - 0.1)
         // As thick as the walls’ faces, from their tops up to the slopes, which cover their sloping edges.
         const gables = geometry.gables.boundingBox!
         expect(gables.min.x).toBeCloseTo(-width / 2, 6)

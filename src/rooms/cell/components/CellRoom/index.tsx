@@ -26,19 +26,22 @@ import {columnPedestalHeight} from '#src/lib/gallery/ColumnPedestalGeometry.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
+import {sunGeometry, sunlitPoints} from '#src/lib/gallery/sun.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
-import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
+import {getShadowProps} from '#src/lib/rendering/shadowFilterNodes.ts'
 import {cellLed} from '#src/rooms/cell/Cell.ts'
 import CellCeiling from '#src/rooms/cell/components/CellCeiling/index.tsx'
 import CellDoor from '#src/rooms/cell/components/CellDoor/index.tsx'
 import sandbox from '#src/worlds/sandbox/index.ts'
+import {moonDirection, moonlight} from '#src/worlds/sandbox/night.ts'
 
 const cell = sandbox.room('cell')
 const {layout} = cell.room
-const {chandelierLift, floorTile, northZ, passage, vestibule} = layout
+const {chandelierLift, chandelierRod, floorTile, northZ, passage, vestibule} = layout
 const [width, depth] = cell.size
 const [x, z] = cell.center
 const walls = sandbox.walls.filter(wall => wall.room === cell.id)
@@ -56,10 +59,15 @@ const worldPoint = ([pointX, pointZ]: readonly [number, number]) => {
 }
 // Whole tiles from the hall’s north-west corner, which the arch through its north wall then opens at a tile’s edge.
 const floorOrigin = [x - width / 2, z - depth / 2] as const
-/** Polished enough that the LED panel and the velvet mirror in it, more faintly than in the Cinnabar’s terrazzo. */
+/** Polished to a clear mirror of the LED panel, the velvet and the columns. */
 const polish: ArenaPolish = {
-  strength: 0.2,
-  grazingStrength: 0.1,
+  strength: 0.4,
+  grazingStrength: 0.2,
+}
+/** The hall’s varnish, glossier than the Vesper’s, so its mirror shows the room more sharply. */
+const varnish = {
+  roughness: 0.15,
+  gaussianBlur: 13,
 }
 const slabThickness = 0.24
 const circleSegments = 96
@@ -89,8 +97,12 @@ const threshold = {
 }
 /** the top of every floor, a millimeter over its slab, all in one plane, which the floors’ shared mirror reflects the room in */
 const floorY = 0.001
+/** where the moon’s light stands, right over the Cell’s roof, so its shafts keep their glow down into the room, with a shadow frustum round the whole Cell and its roof */
+const moon = sunGeometry(moonDirection, sunlitPoints(sandbox.rooms), {nearest: true})
+/** texels along each axis of the moon’s shadow map in heavy graphics, about a centimeter each across the Cell */
+const moonShadowMapSize = 2048
 
-/** The Sandbox’s one room: a hall with the Vesper’s varnished wood underfoot, papered like the Sienna under a gabled, coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, and beyond its north wall the passage on to the round room with the items on their pedestals, or the door that closes it while there are none. */
+/** The Sandbox’s one room: a hall with the Vesper’s varnished wood underfoot, papered like the Sienna under a gabled, coffered ceiling with roof lights and the Sienna’s chandelier, lit besides by the moon through the roof lights and a faint studio fill from no visible source, and beyond its north wall the passage on to the round room with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
   // The Sienna’s damask, its baseboards, casings and cornice in one varnished timber, which the ceiling’s beams share.
@@ -99,6 +111,7 @@ export default function CellRoom() {
   return <group name='cell'>
     <ambientLight intensity={0.15} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={0.45} />
+    <Moonlight />
     {/* Each chandelier’s lamp borrows one of its slots for its shadow, which only renders again once something in its reach moves. */}
     <ShadowPool />
     <ShadowCaching />
@@ -106,12 +119,24 @@ export default function CellRoom() {
     {hallWalls.map(wall => <WallSurface key={wall.id} material={joinery} plaster={surfaces.plaster} revealMaterial={wall === northWall ? surfaces.velvet : undefined} surfaceMaterial={damask} wall={wall} />)}
     <CellCeiling beams={joinery} paper={damask} />
     <group position={[x, chandelierLift, z]}>
-      <Chandelier lamp={cell.room.globalId('chandelier')} />
+      <Chandelier lamp={cell.room.globalId('chandelier')} rod={chandelierRod} />
     </group>
     <Branch if={door} else={<Vestibule joinery={joinery} surfaces={surfaces} />}><CellDoor hole={door!} surfaces={surfaces} wall={northWall} /></Branch>
   </group>
 }
 
+/** The moon shining through the roof lights, the roof and walls shadowing the rest of the room, which the render pipeline marches for its shafts in heavy graphics. */
+function Moonlight() {
+  const profile = useGraphicsModeValue(getGraphicsProfile)
+  // Without the roof’s shadow, it would light the whole room.
+  if (!profile.shadows) {
+    return null
+  }
+  const settings = getSunShadowSettings(profile, moonShadowMapSize)
+  const {bottom, far, left, near, normalBias, right, top} = moon.shadow
+  // A new filter needs a new shadow, so the light is built anew.
+  return <directionalLight key={settings.samples} castShadow color={moonlight.color} intensity={moonlight.intensity} name='moon' position={moon.position} shadow-camera-bottom={bottom} shadow-camera-far={far} shadow-camera-left={left} shadow-camera-near={near} shadow-camera-right={right} shadow-camera-top={top} shadow-normalBias={normalBias} {...getShadowProps(settings)} />
+}
 /** The hall’s floor: the Vesper’s varnished wood, mirroring the room through a blur, on a dark slab with its collider. */
 function HallFloor() {
   const {floorReflections, surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
@@ -120,7 +145,7 @@ function HallFloor() {
     texture.repeat.set(1 / woodRepeat[0], 1 / woodRepeat[1])
     return texture
   }, [surfaceAnisotropy]))
-  const floor = useDisposable(useMemo(() => new WoodFloorMaterial(wood, floorReflections), [floorReflections, wood]))
+  const floor = useDisposable(useMemo(() => new WoodFloorMaterial(wood, floorReflections, varnish), [floorReflections, wood]))
   const geometry = useDisposable(useMemo(() => {
     const slab = new RoundedBoxGeometry(width, slabThickness, depth, 2, 0.035)
     const plane = new PlaneGeometry(width, depth)

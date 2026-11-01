@@ -1,7 +1,8 @@
 import type {RoundVestibule} from '#src/lib/gallery/roundVestibule.ts'
 import type {FloorSize} from '../base/Room.ts'
 
-import {chandelierCeiling} from '#src/lib/physics/chandelier.ts'
+import {cellChandelierPivot} from '#src/lib/gallery/CellCeilingGeometry.ts'
+import {chandelierCanopyTop, chandelierCeiling, chandelierPhysics} from '#src/lib/physics/chandelier.ts'
 
 /** a pedestal carrying one item */
 export type CellPedestal = {
@@ -27,6 +28,11 @@ const arch = {
 } as const satisfies RoundVestibule['arch']
 /** how steeply the hall’s gabled ceiling rises from its north and south walls to the ridge along its middle, like a house’s roof */
 const roofPitch = Math.PI / 6
+const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
+/** how high the hall’s ceiling rises at its ridge, along the middle of its slabs */
+const ridgeHeight = round(height + size[1] / 2 * Math.tan(roofPitch))
+/** how much higher the chandelier hangs than from the ceiling it is made for, so its canopy hangs right under the ceiling at the walls */
+const chandelierLift = round(height - chandelierCeiling)
 /** how far the vestibule’s wall stands back from the north wall’s center line, which leaves a passage between them, lined like the arch */
 const passage = 0.5
 /** the vestibule’s round a lone item */
@@ -39,7 +45,6 @@ const ringMinimum = 3.2
 const ringClearance = 3
 /** The turn about y that faces a pedestal at `from` toward `to`. */
 const facing = ([x, z]: readonly [number, number], [toX, toZ]: readonly [number, number]) => Math.atan2(toX - x, toZ - z) + 0
-const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
 /** The plan for as many items. */
 function planFor(itemCount: number): CellPlan {
   if (itemCount < 2) {
@@ -60,8 +65,10 @@ function planFor(itemCount: number): CellPlan {
 export default class CellLayout {
   /** the arch through the north wall and the one through the round room’s wall, as it opens straight across */
   readonly arch = arch
-  /** how much higher the Cell’s chandelier hangs than from the ceiling it is made for, so it hangs right under the Cell’s */
-  readonly chandelierLift = round(height - chandelierCeiling)
+  /** how much higher the Cell’s chandelier hangs than from the ceiling it is made for, so its canopy hangs right under the Cell’s ceiling where it meets the walls */
+  readonly chandelierLift = chandelierLift
+  /** how long the brass rod the chandelier swings from is, from the top of its canopy up to the plate under the ridge beam */
+  readonly chandelierRod = round(cellChandelierPivot(ridgeHeight) - chandelierLift - chandelierPhysics.height - chandelierCanopyTop)
   /** edge length of the floor’s marble tiles, which run whole from wall to wall */
   readonly floorTile = tile
   /** how high the ceilings hang at the walls, the middle of their slabs: over the round room all over and over the hall where its ceiling rises from the walls to its ridge */
@@ -74,7 +81,7 @@ export default class CellLayout {
   readonly pedestals: ReadonlyArray<CellPedestal>
   readonly plan: CellPlan
   /** how high the hall’s ceiling rises at its ridge, along the middle of its slabs */
-  readonly ridgeHeight = round(height + size[1] / 2 * Math.tan(roofPitch))
+  readonly ridgeHeight = ridgeHeight
   /** how steeply the hall’s ceiling rises from its north and south walls to its ridge, in radians */
   readonly roofPitch = roofPitch
   readonly size = size

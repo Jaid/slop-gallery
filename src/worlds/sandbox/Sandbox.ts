@@ -1,5 +1,6 @@
 import type {Orb} from '#src/lib/gallery/orbs/index.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
+import type {SkyboxId} from '#src/rooms/index.ts'
 
 import {lazy} from 'react'
 
@@ -12,6 +13,7 @@ import artworks from '#src/worlds/gallery/artworks.ts'
 import World from '../base/World.ts'
 import {worlds} from '../index.ts'
 import {readItems} from './items.ts'
+import nightSky from './night.ts'
 
 const minimap = lazy(() => import('#component/SandboxMinimap'))
 const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx'))
@@ -78,6 +80,11 @@ export default class Sandbox extends World<Cell> {
   /** The Cell’s floor is level everywhere, so every floor mirrors in one plane. */
   override floorHeight(_position: Vec3) {
     return 0
+  }
+
+  /** `night` is the starry, moonlit sky over the Cell’s roof lights. */
+  override skybox(id: SkyboxId) {
+    return id === 'night' ? nightSky : null
   }
 
   /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself, and on through the arches. */
