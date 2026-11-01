@@ -4,6 +4,8 @@ import {BufferGeometry, Float32BufferAttribute, Uint32BufferAttribute, Vector3} 
 export type LobedProfilePoint = readonly [number, number, number, number]
 
 export type LobedProfileOptions = {
+  /** the lobes’ cross-section: how far the surface swells (1) or sinks (−1) at a turn through a lobe, 0 at its crest and ±π at the hollows beside it, repeating every full turn; `Math.cos` by default */
+  lobe?: (turn: number) => number
   /** number of lobes around the axis */
   lobes: number
   /** angle of the first lobe’s crest from +x, in radians */
@@ -26,7 +28,7 @@ const defaultSmoothAngle = 40 * Math.PI / 180
 export default class LobedProfileGeometry extends BufferGeometry {
   override readonly type = 'LobedProfileGeometry'
 
-  constructor(profile: ReadonlyArray<LobedProfilePoint>, {lobes, phase = 0, segmentsPerLobe = 5, smoothAngle = defaultSmoothAngle, uv}: LobedProfileOptions) {
+  constructor(profile: ReadonlyArray<LobedProfilePoint>, {lobe: shape = Math.cos, lobes, phase = 0, segmentsPerLobe = 5, smoothAngle = defaultSmoothAngle, uv}: LobedProfileOptions) {
     super()
     if (!Number.isInteger(lobes) || lobes < 2 || !Number.isInteger(segmentsPerLobe) || segmentsPerLobe < 2) {
       throw new RangeError('A lobed profile needs at least two lobes of at least two segments each.')
@@ -66,7 +68,7 @@ export default class LobedProfileGeometry extends BufferGeometry {
       const [radius, y, scallop, dip] = profile[point]
       for (let side = 0; side < ringLength; side++) {
         const angle = side / sides * Math.PI * 2
-        const lobe = Math.cos(lobes * (angle - phase))
+        const lobe = shape(lobes * (angle - phase))
         const r = radius + scallop * lobe
         positions.push(r * Math.cos(angle), y + dip * (1 - lobe) / 2, -r * Math.sin(angle))
         uvs.push(...textureAt(point, side / sides))
