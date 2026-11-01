@@ -35,29 +35,20 @@ test('a complete nameplate can be picked up, canceled, thrown and picked up agai
     const rotation = body.rotation()
     body.sleep()
     expect(carried.grab()).toBe(true)
-    expect(body.isSleeping()).toBe(false)
-    expect(body.isFixed()).toBe(true)
-    for (let i = 0; i < body.numColliders(); i++) {
-      expect(body.collider(i).isEnabled()).toBe(false)
-    }
+    expect(body.isEnabled()).toBe(false)
     for (let i = 0; i < 90; i++) {
-      carried.move([0, 1.5, 1], [0, 1.5, 2], 1 / 60)
       world.step()
     }
-    expect(body.translation().y).toBeGreaterThan(1.4)
-    expect(body.translation().z).toBeGreaterThan(1.9)
     carried.cancel()
     expect(body.translation()).toEqual(resting)
     expect(body.rotation()).toEqual(rotation)
     expect(body.isDynamic()).toBe(true)
     expect(carried.grab()).toBe(true)
-    for (let i = 0; i < 90; i++) {
-      carried.move([0, 1.5, 1], [0, 1.5, 2], 1 / 60)
-      world.step()
-    }
-    expect(carried.release(true, [0, 0, 1])).toBe(false)
+    expect(carried.release([0, 1.5, 1], [0, 1.5, 2], true)).toBe(false)
     expect(body.linvel().z).toBe(10)
     expect(body.angvel().x).toBe(3)
+    // Rapier reports colliders as their body left them until its next step.
+    world.step()
     for (let i = 0; i < body.numColliders(); i++) {
       expect(body.collider(i).isEnabled()).toBe(true)
     }
@@ -69,10 +60,8 @@ test('a complete nameplate can be picked up, canceled, thrown and picked up agai
     const landed = body.translation()
     expect(carried.grab()).toBe(true)
     for (let i = 0; i < 90; i++) {
-      carried.move([landed.x, 1.5, landed.z], [landed.x, 1.5, landed.z + 1], 1 / 60)
       world.step()
     }
-    expect(body.translation().y).toBeGreaterThan(1.4)
     carried.cancel()
     expect(body.translation()).toEqual(landed)
     expect(body.isDynamic()).toBe(true)

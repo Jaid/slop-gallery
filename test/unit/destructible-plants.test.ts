@@ -81,12 +81,7 @@ function plant(kind: DestructiblePlantKind, id = kind as string, x = 0) {
 function pluckAll(leaves: Array<GrabbableBody>) {
   for (const [i, leaf] of leaves.entries()) {
     expect(leaf.grab()).toBe(true)
-    leaf.body.setTranslation({
-      x: 10 + i,
-      y: 2,
-      z: 0,
-    }, true)
-    leaf.release(false, [0, 0, 1])
+    leaf.release([10 + i, 2, -1], [10 + i, 2, 0], false)
   }
 }
 describe('new destructible botanical models', () => {
@@ -196,10 +191,9 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const original = leaf.body.translation()
       const rotation = leaf.body.rotation()
       expect(leaf.grab()).toBe(true)
-      for (let frame = 0; frame < 20; frame++) {
-        leaf.move([0, 1.5, 3], [0, 1.5, 2], 0.05)
-      }
-      expect(leaf.body.translation()).not.toEqual(original)
+      // Carried, the leaf is out of the physics where it hung.
+      expect(leaf.body.isEnabled()).toBe(false)
+      expect(leaf.body.translation()).toEqual(original)
       expect(attachments.remaining).toBe(leaves.length - 1)
       leaf.cancel()
       expect(leaf.body.translation()).toEqual(original)
@@ -235,12 +229,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const leaf = leaves[1]
       expect(leaf.body.numColliders()).toBe(2)
       leaf.grab()
-      leaf.body.setTranslation({
-        x: 0,
-        y: 2,
-        z: 3,
-      }, true)
-      leaf.release(true, [0, 0, 1])
+      leaf.release([0, 2, 2], [0, 2, 3], true)
       expect(leaf.body.isDynamic()).toBe(true)
       expect(leaf.body.linvel().z).toBe(10)
       for (let i = 0; i < leaf.body.numColliders(); i++) {
@@ -260,12 +249,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       pluckAll(leaves)
       const positions = leaves.map(leaf => leaf.body.translation())
       pot.grab()
-      pot.body.setTranslation({
-        x: 0,
-        y: 2,
-        z: 3,
-      }, true)
-      pot.release(true, [0, 0, 1])
+      pot.release([0, 2, 2], [0, 2, 3], true)
       expect(pot.body.isDynamic()).toBe(true)
       expect(pot.body.numColliders()).toBe(geometry.leaves.length + 2)
       expect(leaves.map(leaf => leaf.body.translation())).toEqual(positions)
@@ -321,10 +305,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const loose = leaves.map(leaf => leaf.body.translation())
       const enabled = Array.from({length: pot.body.numColliders()}, (_, i) => pot.body.collider(i).isEnabled())
       pot.grab()
-      for (let frame = 0; frame < 20; frame++) {
-        pot.move([0, 2, 3], [0, 2, 4], 0.05)
-      }
-      expect(pot.body.translation()).not.toEqual(original)
+      expect(pot.body.isEnabled()).toBe(false)
       pot.cancel()
       expect(pot.body.translation()).toEqual(original)
       expect(pot.body.isFixed()).toBe(true)
@@ -339,10 +320,7 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       const handle = pot.body.handle
       world.createCollider(RAPIER.ColliderDesc.cuboid(40, 0.1, 40).setTranslation(0, -0.1, 0))
       pot.grab()
-      for (let frame = 0; frame < 20; frame++) {
-        pot.move([0, 2, 3], [0, 2, 4], 0.05)
-      }
-      pot.release(false, [0, 0, 1])
+      pot.release([0, 2, 3], [0, 2, 4], false)
       for (let i = 0; i < 360; i++) {
         world.step()
       }
@@ -377,19 +355,9 @@ for (const kind of ['birdOfParadise', 'peaceLily'] as const) {
       expect(attachments.remaining).toBe(1)
       expect(pot.grab()).toBe(false)
       leaf.grab()
-      leaf.body.setTranslation({
-        x: 10,
-        y: 2,
-        z: 0,
-      }, true)
-      leaf.release(false, [0, 0, 1])
+      leaf.release([10, 2, -1], [10, 2, 0], false)
       pot.grab()
-      pot.body.setTranslation({
-        x: 0,
-        y: 2,
-        z: 4,
-      }, true)
-      pot.release(false, [0, 0, 1])
+      pot.release([0, 2, 3], [0, 2, 4], false)
       leaf.body.setTranslation({
         x: 0,
         y: -13,

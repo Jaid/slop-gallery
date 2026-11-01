@@ -4,7 +4,7 @@ import type RootedPlantAttachment from '#src/lib/physics/RootedPlantAttachment.t
 import {ConvexHullCollider} from '@react-three/rapier'
 import {Vector3} from 'three/webgpu'
 
-import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
+import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
 import initializeFoliageCollider from '#src/lib/physics/initializeFoliageCollider.ts'
 
@@ -16,7 +16,7 @@ export default function DestructiblePlantRoot({id, geometry, attachments}: {
   const resources = decorationResources()
   const center = geometry.stems.boundingBox!.getCenter(new Vector3)
   return <GrabbableProp
-    id={`${id}-root`} angularDamping={0.4} attachmentBody={() => propObjects.get(`${id}-pot`)?.body} blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`} canGrab={attachments.canGrabRoot}
+    id={`${id}-root`} angularDamping={0.4} blockedMessage={() => `Rip off all leaves before uprooting this plant (${attachments.remaining} remaining).`} canGrab={attachments.canGrabRoot}
     colliders={false}
     friction={0.8}
     linearDamping={0.3}

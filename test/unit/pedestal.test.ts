@@ -95,25 +95,15 @@ describe('sculpture pedestals', () => {
     expect(body.translation().y).toBeCloseTo(1.4225, 2)
     expect(Math.abs(body.linvel().y)).toBeLessThan(0.01)
   })
-  test('lets a carried flat prop clear the new cap without flying through it', () => {
+  test('lets go of a flat prop held into the new cap short of it, not inside it', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.43, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455).setEnabled(false), body)
     const placement = new PropPlacement(world, body)
     world.step()
-    for (let i = 0; i < 120; i++) {
-      const destination = placement.constrain([0, 1.4, 1.8], [0, 1.2, 0.35])!
-      expect(destination).not.toBeNull()
-      const next = placement.follow(destination, 1 / 60)!
-      expect(next).not.toBeNull()
-      expect(placement.hasRoom(next, false)).toBe(true)
-      body.setTranslation({
-        x: next[0],
-        y: next[1],
-        z: next[2],
-      }, false)
-      world.step()
-    }
-    expect(body.translation().z).toBeGreaterThan(1)
+    const position = placement.reach([0, 1.4, 1.8], [0, 1.2, 0.35])!
+    expect(position).not.toBeNull()
+    expect(placement.hasRoom(position)).toBe(true)
+    expect(position[2]).toBeGreaterThan(1)
   })
   for (const [x, z] of [[0, 1], [0, -1], [1, 0], [-1, 0], [-0.96, 0.28]] as const) {
     test(`picks up a settled three-part prop from direction ${x}, ${z}, including after canceling`, () => {
@@ -134,18 +124,16 @@ describe('sculpture pedestals', () => {
       const resting = body.translation()
       for (let attempt = 0; attempt < 2; attempt++) {
         expect(controller.grab()).toBe(true)
-        for (let i = 0; i < 120; i++) {
-          controller.move([x * 1.8, 1.4, z * 1.8], [x * 0.35, 1.2, z * 0.35], 1 / 60)
-          world.step()
-        }
-        const held = body.translation()
-        expect(Math.hypot(held.x - resting.x, held.z - resting.z)).toBeGreaterThan(0.8)
-        expect(controller.placement.hasRoom([held.x, held.y, held.z])).toBe(true)
+        expect(body.isEnabled()).toBe(false)
         if (attempt === 0) {
           controller.cancel()
           expect(body.translation()).toEqual(resting)
         } else {
-          expect(controller.release(true, [x, 0, z])).toBe(false)
+          // Held level toward the pedestal’s middle, it comes to rest against the cap’s edge.
+          expect(controller.release([x * 1.8, 1.4, z * 1.8], [x * 0.35, 1.4, z * 0.35], true)).toBe(false)
+          const released = body.translation()
+          expect(Math.hypot(released.x - resting.x, released.z - resting.z)).toBeGreaterThan(0.8)
+          expect(controller.placement.hasRoom([released.x, released.y, released.z])).toBe(true)
           expect(body.isDynamic()).toBe(true)
           expect(body.linvel().y).toBe(2)
           for (let i = 0; i < body.numColliders(); i++) {

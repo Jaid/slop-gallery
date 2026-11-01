@@ -4,13 +4,12 @@ import type PlantAttachment from '#src/lib/physics/PlantAttachment.ts'
 import {ConvexHullCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 
-import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
+import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import decorationResources from '#src/lib/gallery/plantDecorations/DecorationResources.ts'
 import initializeFoliageCollider from '#src/lib/physics/initializeFoliageCollider.ts'
 import {leafPhysics} from '#src/lib/physics/plantPhysics.ts'
 
-export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, foliageMaterial}: {
-  anchorId: string
+export default function DestructiblePlantLeaf({id, leaf, attachments, foliageMaterial}: {
   attachments: PlantAttachment
   foliageMaterial: 'foliage' | 'waxyFoliage'
   id: string
@@ -18,7 +17,7 @@ export default function DestructiblePlantLeaf({id, leaf, attachments, anchorId, 
 }) {
   const resources = decorationResources()
   return <GrabbableProp
-    id={id} colliders={false} position={leaf.position} rotation={leaf.rotation} title={leaf.title} type='fixed' {...leafPhysics} attachmentBody={() => propObjects.get(anchorId)?.body}
+    id={id} colliders={false} position={leaf.position} rotation={leaf.rotation} title={leaf.title} type='fixed' {...leafPhysics}
     mass={leaf.mass}
     recoverAsDynamic={attachments.recoverLeafAsDynamic}
     onAttachmentChange={attached => attachments.setLeafAttached(id, attached)}

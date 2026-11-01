@@ -53,7 +53,7 @@ test('Rapier force release is one-way and never resumes showcase rotation', () =
   rotation.advance(10)
   rotation.step(body)
   expect(body.rotation()).toEqual(releasedRotation)
-  // Grabbing temporarily fixes a released Knot; this must not put it back into showcase mode.
+  // A released Knot that is fixed again must not go back into showcase mode.
   body.setBodyType(RAPIER.RigidBodyType.Fixed, true)
   rotation.advance(10)
   rotation.step(body)
@@ -70,7 +70,7 @@ test('showcase state blocks grabbing until the Knot has been physically released
   expect(carried.grab()).toBe(false)
   rotation.release(body)
   expect(carried.grab()).toBe(true)
-  expect(body.isFixed()).toBe(true)
+  expect(body.isEnabled()).toBe(false)
   carried.cancel()
   expect(body.isDynamic()).toBe(true)
 })

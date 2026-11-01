@@ -9,7 +9,6 @@ import PropPlacement from './PropPlacement.ts'
 import {beginBodyThrow, clearBodyThrow} from './ThrowState.ts'
 
 export type GrabbableBodyOptions = {
-  attachmentBody?: () => RigidBody | undefined
   canGrab?: () => boolean
   onAttachmentChange?: (attached: boolean) => void
   recoverAsDynamic?: () => boolean
@@ -27,74 +26,55 @@ type BodyPose = {
   type: ReturnType<RigidBody['bodyType']>
 }
 
-// Shared by sculptures, the apple and detachable foliage. A canceled pluck restores
-// the original fixed attachment; a canceled re-grab restores a loose dynamic leaf.
+/** how fast a thrown prop leaves the hand, in meters per second, with a little extra upward */
+const throwSpeed = 10
+const throwLift = 2
+
+/**
+ * The physics side of carrying a prop: while carried, its body is out of the simulation altogether, so nothing collides with it, not even the player, and whoever carries it shows it by its own object. Only letting go asks the world where the prop fits.
+ * Shared by sculptures, the apple and detachable foliage. A canceled pluck leaves a leaf attached where it was; a canceled re-grab leaves a loose leaf where it lay.
+ */
 export default class GrabbableBody {
   readonly placement: PropPlacement
+  private carrying = false
   private home: BodyPose | null = null
-  private lastClear: Vec3 | null = null
-  private saved: BodyPose | null = null
 
   constructor(readonly body: RigidBody, world: World, private readonly options: GrabbableBodyOptions = {}) {
-    this.placement = new PropPlacement(world, body, () => {
-      return this.saved?.type === RigidBodyType.Fixed ? this.options.attachmentBody?.() : undefined
-    })
+    this.placement = new PropPlacement(world, body)
   }
 
   get active() {
-    return this.saved !== null
+    return this.carrying
   }
 
+  /** Leaves the prop where it was before it was grabbed, which is where its body never stopped being. */
   cancel() {
-    if (!this.saved) {
+    if (!this.carrying) {
       return
     }
-    this.restore(this.saved)
-    this.saved = null
+    this.carrying = false
+    this.body.setEnabled(true)
+    this.body.wakeUp()
+    this.options.onAttachmentChange?.(this.body.isFixed())
   }
 
   grab() {
-    if (this.active || this.options.canGrab?.() === false) {
+    if (this.carrying || this.options.canGrab?.() === false) {
       return false
     }
     this.rememberHome()
     clearBodyThrow(this.body)
-    this.saved = this.capture()
-    this.lastClear = this.saved.position
-    for (const collider of this.colliders()) {
-      collider.setEnabled(false)
-    }
-    // Fixed previews avoid kinematic platform velocities pushing the player.
-    this.body.setBodyType(RigidBodyType.Fixed, true)
-    // Changing type does not wake sleeping props, whose meshes Rapier skips.
-    this.body.wakeUp()
+    this.carrying = true
     this.stop()
+    this.body.setEnabled(false)
     this.options.onAttachmentChange?.(false)
     return true
-  }
-
-  move(origin: Vec3, target: Vec3, delta: number) {
-    if (!this.active) {
-      return
-    }
-    const destination = this.placement.constrain(origin, target)
-    if (!destination) {
-      return
-    }
-    const position = this.placement.follow(destination, delta)
-    if (!position) {
-      return
-    }
-    this.translate(position)
-    if (this.placement.hasRoom(position)) {
-      this.lastClear = position
-    }
   }
 
   recover() {
     this.rememberHome()
     const position = this.body.translation()
-    if (!this.active && this.home && position.y < currentWorld.placement.floorHeight([position.x, position.y, position.z]) - 4) {
+    if (!this.carrying && this.home && position.y < currentWorld.placement.floorHeight([position.x, position.y, position.z]) - 4) {
       // A leaf cannot reattach to an anchor that has itself been picked up or thrown.
       const home = this.options.recoverAsDynamic?.() ? {
         ...this.home,
@@ -105,45 +85,57 @@ export default class GrabbableBody {
     }
   }
 
-  release(throwing: boolean, direction: Vec3) {
-    if (!this.saved) {
+  /**
+   * Lets go of the prop as far from `origin`, inside the player’s capsule, toward `target`, where it was held, as it fits, loose and, if `throwing`, thrown along `direction`, by default that line. Where it fits nowhere, it stays where it was before it was grabbed.
+   * Returns whether it did, so the player can be told.
+   */
+  release(origin: Vec3, target: Vec3, throwing: boolean, direction?: Vec3) {
+    if (!this.carrying) {
       return false
     }
-    const current = this.body.translation()
-    let returned = false
-    if (!this.placement.hasRoom([current.x, current.y, current.z])) {
-      const fallback = this.lastClear && this.placement.hasRoom(this.lastClear) ? this.lastClear : this.saved.position
-      // An embedded root may not have cleared its pot yet. Restore the attachment
-      // instead of enabling an overlapping dynamic body inside the solid pot hull.
-      if (!this.placement.hasRoom(fallback)) {
-        this.cancel()
-        return true
-      }
-      this.translate(fallback)
-      returned = true
+    const position = this.placement.reach(origin, target)
+    if (!position) {
+      this.cancel()
+      return true
     }
-    this.saved = null
-    this.body.setBodyType(RigidBodyType.Dynamic, true)
+    this.carrying = false
+    const line = direction ?? target.map((value, axis) => value - origin[axis])
+    const length = Math.hypot(...line) || 1
+    const [x, y, z] = line.map(value => value / length)
+    this.body.setTranslation({
+      x: position[0],
+      y: position[1],
+      z: position[2],
+    }, false)
+    this.body.setBodyType(RigidBodyType.Dynamic, false)
+    // Rapier hands the colliders their own state again at its next step.
+    this.body.setEnabled(true)
     for (const collider of this.colliders()) {
       collider.setEnabled(true)
     }
     this.body.wakeUp()
-    this.body.setLinvel({
-      x: direction[0] * (throwing ? 10 : 0),
-      y: throwing ? direction[1] * 10 + 2 : 0,
-      z: direction[2] * (throwing ? 10 : 0),
+    this.body.setLinvel(throwing ? {
+      x: x * throwSpeed,
+      y: y * throwSpeed + throwLift,
+      z: z * throwSpeed,
+    } : {
+      x: 0,
+      y: 0,
+      z: 0,
     }, true)
-    this.body.setAngvel({
-      x: throwing ? 3 : 0,
-      y: throwing ? 2 : 0,
-      z: throwing ? 1 : 0,
+    this.body.setAngvel(throwing ? {
+      x: 3,
+      y: 2,
+      z: 1,
+    } : {
+      x: 0,
+      y: 0,
+      z: 0,
     }, true)
     if (throwing) {
       beginBodyThrow(this.body)
-    } else {
-      clearBodyThrow(this.body)
     }
-    return returned
+    return false
   }
 
   rememberHome() {
@@ -170,7 +162,11 @@ export default class GrabbableBody {
   private restore(pose: BodyPose) {
     clearBodyThrow(this.body)
     this.body.setBodyType(pose.type, true)
-    this.translate(pose.position)
+    this.body.setTranslation({
+      x: pose.position[0],
+      y: pose.position[1],
+      z: pose.position[2],
+    }, false)
     this.body.setRotation(pose.rotation, true)
     for (const [i, collider] of this.colliders().entries()) {
       collider.setEnabled(pose.collisions[i] ?? false)
@@ -191,13 +187,5 @@ export default class GrabbableBody {
       y: 0,
       z: 0,
     }, true)
-  }
-
-  private translate(position: Vec3) {
-    this.body.setTranslation({
-      x: position[0],
-      y: position[1],
-      z: position[2],
-    }, false)
   }
 }

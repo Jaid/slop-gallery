@@ -3,90 +3,45 @@ import type {Collider, RigidBody, World} from '@dimforge/rapier3d-compat'
 
 import {Quaternion, Vector3} from 'three/webgpu'
 
+/** how far a released prop stays from what its sweep hits, in meters */
 const skin = 0.025
 
+/** Where a prop fits in the world, with its own shapes and its current rotation, asked only when a carried prop is let go of. */
 export default class PropPlacement {
-  private carryObstacle = (collider: Collider) => {
-    const data = collider.parent()?.userData
-    const player = data && typeof data === 'object' && 'isPlayer' in data && data.isPlayer === true
-    const anchor = this.extractionAnchor?.()
-    return this.obstacle(collider) && !player && (!anchor || collider.parent()?.handle !== anchor.handle)
-  }
-
   private obstacle = (collider: Collider) => collider.isEnabled() && !collider.isSensor()
 
-  constructor(readonly world: World, readonly body: RigidBody, private readonly extractionAnchor?: () => RigidBody | undefined) {}
+  private sweepObstacle = (collider: Collider) => {
+    const data = collider.parent()?.userData
+    const player = data && typeof data === 'object' && 'isPlayer' in data && data.isPlayer === true
+    return this.obstacle(collider) && !player
+  }
 
-  constrain(origin: Vec3, target: Vec3): Vec3 | null {
+  constructor(readonly world: World, readonly body: RigidBody) {}
+
+  /** Whether the prop fits at `position`; `includePlayer` false lets it overlap the player’s capsule. */
+  hasRoom(position: Vec3, includePlayer = true) {
+    const predicate = includePlayer ? this.obstacle : this.sweepObstacle
+    return this.shapes(position).every(({center, orientation, shape}) => !this.world.intersectionWithShape(center, orientation, shape, undefined, undefined, undefined, this.body, predicate))
+  }
+
+  /**
+   * How far toward `target` the prop gets from `origin`, which lies inside the player’s capsule, before any of its parts meets something: the place to let it go, short of walls, pedestals and floors in the way. Null where it fits nowhere along the way, not even clear of the player.
+   * Every part sweeps, offset covers and labels too: a center ray misses pedestals below the sightline and lets the prop’s edges enter the stone.
+   */
+  reach(origin: Vec3, target: Vec3): Vec3 | null {
+    const start = new Vector3(...origin)
     const direction = new Vector3(...target)
-    direction.sub(new Vector3(...origin))
+    direction.sub(start)
     let distance = direction.length()
     direction.normalize()
-    // Sweep every part of the object, including offset covers and labels. A center ray
-    // misses pedestals below the sightline and lets the prop’s edges enter the stone.
-    const collision = this.sweep(origin, direction, distance)
-    if (collision) {
-      distance = Math.max(0, collision.hit.time_of_impact)
-    }
-    const destination = new Vector3(...origin)
-    const position = destination.addScaledVector(direction, distance).toArray()
-    // In a space narrower than the prop, keep its previous pose rather than pushing
-    // geometry through an obstacle. Release still checks the player as well.
-    return this.hasRoom(position, false) ? position : null
-  }
-
-  follow(target: Vec3, delta: number): Vec3 | null {
-    const current = this.body.translation()
-    const position = new Vector3(current.x, current.y, current.z)
-    if (!Number.isFinite(delta) || delta <= 0) {
-      return position.toArray()
-    }
-    const dt = Math.min(delta, 0.05)
-    const movement = new Vector3(...target)
-    movement.sub(position)
-    // About 95% settled in 125 ms, independent of refresh rate. Limit both
-    // long-distance pickups and resumed frames so neither produces a one-frame jump.
-    let budget = Math.min(movement.length() * -Math.expm1(-24 * dt), 20 * dt)
-    movement.clampLength(0, budget)
-    for (let i = 0; i < 3 && movement.lengthSq() > 1e-12; i++) {
-      const direction = movement.clone().normalize()
-      const collision = this.sweep(position.toArray(), direction, movement.length())
-      if (!collision) {
-        position.add(movement)
-        break
+    for (const {center, orientation, shape} of this.shapes(origin)) {
+      const hit = this.world.castShape(center, orientation, direction, shape, skin, distance, false, undefined, undefined, undefined, this.body, this.sweepObstacle)
+      if (hit) {
+        distance = Math.max(0, hit.time_of_impact)
       }
-      const {hit, center, orientation} = collision
-      const travel = Math.max(0, hit.time_of_impact)
-      position.addScaledVector(direction, travel)
-      budget = Math.max(0, budget - travel)
-      const normal = new Vector3(hit.normal1.x, hit.normal1.y, hit.normal1.z)
-      normal.normalize()
-      // Rapier reports the obstacle witness in world space and the moving witness
-      // in shape-local space. Ease a resting prop out of its tiny contact overlap.
-      const witness = new Vector3(hit.witness2.x, hit.witness2.y, hit.witness2.z)
-      witness.applyQuaternion(orientation).add(center).addScaledVector(direction, travel)
-      const separation = witness.sub(new Vector3(hit.witness1.x, hit.witness1.y, hit.witness1.z)).dot(normal)
-      let lift = Math.min(budget, Math.max(0, skin - separation) + 0.0001)
-      const obstruction = this.sweep(position.toArray(), normal, lift, 0)
-      if (obstruction) {
-        lift = Math.min(lift, Math.max(0, obstruction.hit.time_of_impact))
-      }
-      position.addScaledVector(normal, lift)
-      budget = Math.max(0, budget - lift)
-      movement.addScaledVector(direction, -travel)
-      const intoSurface = movement.dot(normal)
-      if (intoSurface < 0) {
-        movement.addScaledVector(normal, -intoSurface)
-      }
-      movement.clampLength(0, budget)
     }
-    const result = position.toArray()
-    return this.hasRoom(result, false) ? result : null
-  }
-
-  hasRoom(position: Vec3, includePlayer = true) {
-    const predicate = includePlayer ? this.obstacle : this.carryObstacle
-    return this.shapes(position).every(({center, orientation, shape}) => !this.world.intersectionWithShape(center, orientation, shape, undefined, undefined, undefined, this.body, predicate))
+    const position = start.addScaledVector(direction, distance).toArray()
+    return this.hasRoom(position) ? position : null
   }
 
   private shapes(position: Vec3) {
@@ -103,26 +58,5 @@ export default class PropPlacement {
         orientation: parentRotation.clone().multiply(new Quaternion(colliderRotation.x, colliderRotation.y, colliderRotation.z, colliderRotation.w)),
       }
     })
-  }
-
-  private sweep(origin: Vec3, direction: Vector3, distance: number, clearance = skin) {
-    let nearest: {
-      center: Vector3
-      hit: NonNullable<ReturnType<World['castShape']>>
-      orientation: Quaternion
-    } | null = null
-    for (const {center, orientation, shape} of this.shapes(origin)) {
-      const hit = this.world.castShape(center, orientation, direction, shape, clearance, distance, false, undefined, undefined, undefined, this.body, this.carryObstacle)
-      if (!hit) {
-        continue
-      }
-      distance = Math.max(0, hit.time_of_impact)
-      nearest = {
-        hit,
-        center,
-        orientation,
-      }
-    }
-    return nearest
   }
 }

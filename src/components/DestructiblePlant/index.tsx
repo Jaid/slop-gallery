@@ -66,7 +66,7 @@ export default function DestructiblePlant({id, kind, pot, position, rotation = 0
     {/* Loose leaves remain siblings of the pot, so moving it never drags them along. */}
     <group position={[0, definition.soilHeight, 0]}>
       <Branch if={rooted}><Root id={id} attachments={attachments as RootedPlantAttachment} geometry={geometry} /></Branch>
-      {geometry.leaves.map(leaf => <Leaf key={leaf.id} id={`${id}-${leaf.id}`} anchorId={`${id}-pot`} attachments={attachments} foliageMaterial={geometry.foliageMaterial} leaf={leaf} />)}
+      {geometry.leaves.map(leaf => <Leaf key={leaf.id} id={`${id}-${leaf.id}`} attachments={attachments} foliageMaterial={geometry.foliageMaterial} leaf={leaf} />)}
     </group>
   </group>
 }

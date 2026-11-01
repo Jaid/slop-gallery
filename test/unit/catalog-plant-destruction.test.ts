@@ -55,7 +55,6 @@ function fixture(kind: DestructibleCatalogKind) {
     canGrab: attachments.canGrabRoot,
     onAttachmentChange: attachments.setRootAttached,
     recoverAsDynamic: attachments.recoverRootAsDynamic,
-    attachmentBody: () => potBody,
   })
   const leaves = model.leaves.map(leaf => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(leaf.position[0], leaf.position[1] + soil, leaf.position[2]).setCcdEnabled(true))
@@ -63,7 +62,6 @@ function fixture(kind: DestructibleCatalogKind) {
     return new GrabbableBody(body, world, {
       onAttachmentChange: attached => attachments.setLeafAttached(leaf.id, attached),
       recoverAsDynamic: attachments.recoverLeafAsDynamic,
-      attachmentBody: () => potBody,
     })
   })
   world.createCollider(RAPIER.ColliderDesc.cuboid(50, 0.1, 50).setTranslation(0, -0.1, 0))
@@ -82,10 +80,7 @@ function fixture(kind: DestructibleCatalogKind) {
 function clearLeaves(leaves: Array<GrabbableBody>) {
   for (const [i, leaf] of leaves.entries()) {
     expect(leaf.grab()).toBe(true)
-    for (let frame = 0; frame < 20; frame++) {
-      leaf.move([3 + i * 0.5, 2, 3], [3 + i * 0.5, 2, 4], 0.05)
-    }
-    leaf.release(false, [0, 0, 1])
+    leaf.release([3 + i * 0.5, 2, 3], [3 + i * 0.5, 2, 4], false)
     expect(leaf.body.isDynamic()).toBe(true)
   }
 }
@@ -148,10 +143,7 @@ describe('catalog plant destruction', () => {
     expect(state.rootAttached).toBe(true)
     expect(pot.grab()).toBe(false)
     expect(root.grab()).toBe(true)
-    for (let frame = 0; frame < 20; frame++) {
-      root.move([0, 2, 3], [0, 2, 4], 0.05)
-    }
-    root.release(true, [0, 0, 1])
+    root.release([0, 2, 3], [0, 2, 4], true)
     expect(root.body.isDynamic()).toBe(true)
     root.grab()
     root.cancel()
@@ -165,16 +157,10 @@ describe('catalog plant destruction', () => {
     const {model, leaves, root, pot} = fixture(kind)
     clearLeaves(leaves)
     root.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      root.move([0, 2, 3], [0, 2, 4], 0.05)
-    }
-    root.release(true, [0, 0, 1])
+    root.release([0, 2, 3], [0, 2, 4], true)
     const positions = [root, ...leaves].map(piece => piece.body.translation())
     pot.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      pot.move([-3, 2, 3], [-3, 2, 4], 0.05)
-    }
-    pot.release(true, [0, 0, 1])
+    pot.release([-3, 2, 3], [-3, 2, 4], true)
     expect([root, ...leaves].map(piece => piece.body.translation())).toEqual(positions)
     expect(pot.body.numColliders()).toBe(2)
     expect(root.body.numColliders()).toBe(model.stemColliders.length)
@@ -191,10 +177,7 @@ describe('catalog plant destruction', () => {
     const state = attachments
     clearLeaves(leaves)
     root.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      root.move([0, 2, 3], [0, 2, 4], 0.05)
-    }
-    root.release(false, [0, 0, 1])
+    root.release([0, 2, 3], [0, 2, 4], false)
     leaves[0].body.setTranslation({
       x: 0,
       y: -13,
@@ -212,15 +195,9 @@ describe('catalog plant destruction', () => {
     expect(state.rootAttached).toBe(true)
     expect(pot.grab()).toBe(false)
     root.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      root.move([0, 2, 3], [0, 2, 4], 0.05)
-    }
-    root.release(false, [0, 0, 1])
+    root.release([0, 2, 3], [0, 2, 4], false)
     pot.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      pot.move([-3, 2, 3], [-3, 2, 4], 0.05)
-    }
-    pot.release(false, [0, 0, 1])
+    pot.release([-3, 2, 3], [-3, 2, 4], false)
     root.body.setTranslation({
       x: 0,
       y: -13,
@@ -231,39 +208,29 @@ describe('catalog plant destruction', () => {
     expect(state.rootAttached).toBe(false)
     expect(state.canGrabPot()).toBe(true)
   })
-  test.each(['snake', 'calathea'] as const)('%s extracts embedded geometry without weakening release or other-obstacle collisions', kind => {
+  test.each(['snake', 'calathea'] as const)('%s lets go of the root away from the pot it grew in, still stopping at other obstacles', kind => {
     const {leaves, root, pot, attachments} = fixture(kind)
     clearLeaves(leaves)
-    const piece = root
-    const home = piece.body.translation()
-    expect(piece.placement.hasRoom([home.x, home.y, home.z])).toBe(false)
-    piece.grab()
-    // A same-frame release has not pulled the embedded geometry out yet.
-    expect(piece.release(true, [0, 0, 1])).toBe(true)
-    expect(piece.body.isFixed()).toBe(true)
-    expect(piece.body.translation()).toEqual(home)
-    expect(pot.grab()).toBe(false)
-    piece.grab()
-    for (let i = 0; i < 30; i++) {
-      for (let frame = 0; frame < 20; frame++) {
-        piece.move([0, 2, 2], [0, 2, 3], 0.05)
-      }
-    }
-    expect(piece.body.translation().z).toBeGreaterThan(2.5)
-    expect(piece.release(false, [0, 0, 1])).toBe(false)
-    expect(piece.body.isDynamic()).toBe(true)
-    expect(piece.body.collider(0).isEnabled()).toBe(true)
+    const home = root.body.translation()
+    // Attached, the root sits inside its pot; carried out of the physics and let go of elsewhere, it never has to be pulled out of it.
+    expect(root.placement.hasRoom([home.x, home.y, home.z])).toBe(false)
+    root.grab()
+    expect(root.release([0, 2, 2], [0, 2, 3], false)).toBe(false)
+    expect(root.body.translation().z).toBeCloseTo(3, 6)
+    expect(root.body.isDynamic()).toBe(true)
+    expect(root.body.collider(0).isEnabled()).toBe(true)
     expect(pot.body.collider(0).isEnabled()).toBe(true)
-    world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 2, 0.1).setTranslation(0, 2, 2.5))
+    world.createCollider(RAPIER.ColliderDesc.cuboid(0.5, 2, 0.1).setTranslation(0, 2, 4))
     world.step()
-    piece.grab()
-    for (let frame = 0; frame < 20; frame++) {
-      piece.move([0, 2, 2], [0, 2, 4], 0.05)
-    }
-    expect(piece.body.translation().z).toBeGreaterThan(2.6)
-    // A re-grab of loose geometry must not ignore its former pot.
-    expect(piece.placement.hasRoom([home.x, home.y, home.z], false)).toBe(false)
-    piece.cancel()
+    root.grab()
+    expect(root.release([0, 2, 2], [0, 2, 5], false)).toBe(false)
+    const stopped = root.body.translation()
+    expect(stopped.z).toBeLessThan(3.9)
+    expect(root.placement.hasRoom([stopped.x, stopped.y, stopped.z])).toBe(true)
+    // A loose root still fits nowhere inside its former pot.
+    expect(root.placement.hasRoom([home.x, home.y, home.z], false)).toBe(false)
+    root.grab()
+    root.cancel()
     expect(attachments.remaining).toBe(0)
   })
   test('fresh attachment state resets all three stages and foreign leaf IDs are ignored', () => {
