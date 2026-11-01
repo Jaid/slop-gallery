@@ -9,7 +9,7 @@ import {DoubleSide, ExtrudeGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, Pl
 
 import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
 import {openingCasingFronts, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, cellLedY, cellRidge, cellSkylights, cofferLine, isCellSkylight} from '../../src/lib/gallery/CellCeilingGeometry.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, cellLedY, cellOculus, cellRidge, cellSkylights, cofferLine, isCellSkylight} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
 import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
@@ -519,6 +519,46 @@ describe('the Cell’s ceilings', () => {
       material.dispose()
     }
   })
+  test('pierce both gables with a round window over the middle of the hall, clear of the cornice and of the rafters under the slopes, and glaze it', () => {
+    const layout = new CellLayout(0)
+    const geometry = new CellCeilingGeometry(layout)
+    const material = new MeshBasicMaterial({side: DoubleSide})
+    try {
+      const [width] = layout.size
+      const {casing, radius, rise} = cellOculus
+      const middle = layout.height + rise
+      const outer = radius + casing.width
+      // Over the cornice at the top of the walls, and clear of the rafter along the gable under the slopes, which meet over its middle.
+      expect(middle - outer).toBeGreaterThan(layout.height + 0.3)
+      const underside = layout.ridgeHeight - cellCeilingSlab / 2
+      expect((underside - middle) * Math.cos(layout.roofPitch) - cellCoffers.beam.depth).toBeGreaterThan(outer + 0.2)
+      const gables = new Mesh(geometry.gables, material)
+      const panes = new Mesh(geometry.oculusGlass, material)
+      for (const side of [-1, 1]) {
+        // From the middle of the hall at the height of the window: its middle and the inside of its opening show only glass, just outside it the gable.
+        for (const [z, y, expected] of [[0, middle, panes], [0, middle + radius - 0.05, panes], [radius * 0.7, middle - radius * 0.7, panes], [0, middle + outer + 0.05, gables]] as const) {
+          const origin = new Vector3(0, y, z)
+          const ray = new Raycaster(origin, new Vector3(side, 0, 0))
+          const hits = ray.intersectObjects([gables, panes], false)
+          expect(hits[0]?.object).toBe(expected)
+          if (expected !== panes) {
+            continue
+          }
+          expect(hits.some(hit => hit.object === gables)).toBe(false)
+          expect(hits[0].point.x * side).toBeGreaterThan(width / 2 - 0.105)
+        }
+      }
+      // The casing reaches out round the opening, its gilt bead in its groove.
+      geometry.oculi.computeBoundingBox()
+      expect(geometry.oculi.boundingBox!.max.y).toBeCloseTo(middle + outer, 2)
+      geometry.oculusGilt.computeBoundingBox()
+      expect(geometry.oculusGilt.boundingBox!.max.y).toBeLessThan(middle + outer)
+      expect(geometry.oculusGilt.boundingBox!.max.y).toBeGreaterThan(middle + radius)
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+  })
   test('let the moon shine onto the hall’s floor through the roof lights’ glass and nowhere else, and show the night sky over the Cell', () => {
     const layout = new CellLayout(1)
     const geometry = new CellCeilingGeometry(layout)
@@ -539,7 +579,9 @@ describe('the Cell’s ceilings', () => {
         glass.push(panes)
         shell.add(slope)
       }
-      shell.add(new Mesh(geometry.ridge, material), new Mesh(geometry.gables, material))
+      const oculi = new Mesh(geometry.oculusGlass, material)
+      glass.push(oculi)
+      shell.add(new Mesh(geometry.ridge, material), new Mesh(geometry.gables, material), oculi)
       // The walls along their center lines, up to the ceiling.
       for (const [x, z, turn, span] of [[width / 2, 0, Math.PI / 2, depth], [-width / 2, 0, Math.PI / 2, depth], [0, depth / 2, 0, width], [0, -depth / 2, 0, width]] as const) {
         const wall = new Mesh(walls, material)
@@ -566,7 +608,8 @@ describe('the Cell’s ceilings', () => {
           expect(ray.intersectObjects(glass, false).length).toBeGreaterThan(0)
         }
       }
-      expect(lit / samples).toBeGreaterThan(0.08)
+      // Low in the south-southwest, the moon lights the north-eastern walls more than the floor.
+      expect(lit / samples).toBeGreaterThan(0.03)
       expect(lit / samples).toBeLessThan(0.6)
       const sandbox = new Sandbox(ids.slice(0, 1))
       const cell = sandbox.room('cell')

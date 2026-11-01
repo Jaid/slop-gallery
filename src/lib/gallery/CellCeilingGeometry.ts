@@ -3,7 +3,7 @@ import type {Vec3} from './types.ts'
 
 import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
-import {BufferGeometry, CylinderGeometry, Euler, ExtrudeGeometry, Path, PlaneGeometry, Shape, TorusGeometry} from 'three/webgpu'
+import {BufferGeometry, CircleGeometry, CylinderGeometry, Euler, ExtrudeGeometry, LatheGeometry, Path, PlaneGeometry, Shape, TorusGeometry, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
 import {corniceBands, wallFace} from './architectureDimensions.ts'
@@ -50,6 +50,29 @@ export const cellSkylights = {
     depth: 0.06,
     top: 0.02,
     radius: 0.004,
+  },
+} as const
+/**
+ * The round window high in the middle of each gable, an œil-de-bœuf: its clear opening, how far its middle stands over the top of the walls, the walnut casing round it on the room’s side with a gilt bead in its groove, and its walnut sash, a ring round a smaller one with spokes between them, glazed near the wall’s center line.
+ */
+export const cellOculus = {
+  radius: 0.95,
+  rise: 1.55,
+  casing: {
+    /** how far it reaches out from the opening */
+    width: 0.14,
+    /** how far it stands out of the gable */
+    depth: 0.035,
+    bead: 0.012,
+  },
+  sash: {
+    /** the radius of its bars’ round section */
+    bar: 0.022,
+    /** the inner ring’s radius, as a share of the opening’s */
+    hub: 0.38,
+    spokes: 8,
+    /** how far in from the wall’s center line its glass lies */
+    inset: 0.035,
   },
 } as const
 /** the walnut ridge beam along the hall’s apex, where both slopes meet, which the chandelier hangs from on a brass rod */
@@ -146,7 +169,7 @@ export default class CellCeilingGeometry {
    * the rafters running down a slope, between the purlins, and one against each gable, laid along local x: the mesh turns them a quarter about y, which carries local x to the slope’s −z and local z to its x, so a material whose grain follows local x follows them too
    */
   readonly crossBeams: BufferGeometry
-  /** the triangles of the east and west walls between the top of the walls and the slopes, in the Cell’s frame */
+  /** the triangles of the east and west walls between the top of the walls and the slopes, each pierced by its round window, in the Cell’s frame */
   readonly gables: BufferGeometry
   /** the coffers’ fillets up a slope */
   readonly gilt: BufferGeometry
@@ -154,6 +177,12 @@ export default class CellCeilingGeometry {
   readonly glass: BufferGeometry
   /** how long a slope runs along its underside, from the wall’s center line at the eave to the ridge */
   readonly length: number
+  /** the round windows’ walnut, their casings and their sashes, in the Cell’s frame turned back a quarter about y: the mesh turns it a quarter about y, which carries local x along the gables, so a material whose grain follows local x runs across the windows */
+  readonly oculi: BufferGeometry
+  /** the gilt beads round the round windows’ casings, in the Cell’s frame */
+  readonly oculusGilt: BufferGeometry
+  /** the panes of the round windows, facing into the hall, in the Cell’s frame */
+  readonly oculusGlass: BufferGeometry
   /** the brass plate under the ridge beam, which the chandelier hangs from, in the Cell’s frame */
   readonly plate: BufferGeometry
   /** the ridge beam, in the Cell’s frame */
@@ -278,6 +307,11 @@ export default class CellCeilingGeometry {
     gable.lineTo(depth / 2, height)
     gable.lineTo(0, height + rise)
     gable.closePath()
+    // A centimeter wider than the casing’s lining, which covers its edge.
+    const oculusY = height + cellOculus.rise
+    const porthole = new Path
+    porthole.absarc(0, oculusY, cellOculus.radius + 0.01, 0, Math.PI * 2, true)
+    gable.holes.push(porthole)
     this.gables = mergeParts([-1, 1].map(side => {
       const triangle = new ExtrudeGeometry(gable, {
         depth: wallFace,
@@ -285,6 +319,42 @@ export default class CellCeilingGeometry {
       })
       // The shape’s x runs along z and its extrusion out of the room, toward the wall’s center line.
       return triangle.rotateY(side * Math.PI / 2).translate(side * (width / 2 - wallFace), 0, 0)
+    }))
+    const {casing, radius: aperture, sash: wheel} = cellOculus
+    // The casing’s section, its aperture out from the window’s axis and its distance in from the wall’s center line: out over the gable, round a groove for the bead and down the lining of the opening to the center line, so it faces out of the axis and into the room.
+    const section = [
+      [aperture + casing.width, wallFace],
+      [aperture + casing.width, wallFace + casing.depth * 0.45],
+      [aperture + casing.width - 0.03, wallFace + casing.depth],
+      [aperture + 0.06, wallFace + casing.depth],
+      [aperture + 0.05, wallFace + casing.depth * 0.7],
+      [aperture + 0.02, wallFace + casing.depth * 0.7],
+      [aperture + 0.01, wallFace + casing.depth * 0.4],
+      [aperture, wallFace + casing.depth * 0.15],
+      [aperture, 0],
+    ].map(([across, inward]) => new Vector2(across, inward))
+    /** Turns a part laid round the y axis, its y in from the wall’s center line, onto the round window of the gable on `side`. */
+    const onto = (part: BufferGeometry, side: number) => part.rotateZ(side * Math.PI / 2).translate(side * width / 2, oculusY, 0)
+    /** A part laid round the y axis at `inward` meters in from the wall’s center line, from a geometry lying round the z axis. */
+    const lay = (part: BufferGeometry, inward: number) => part.rotateX(Math.PI / 2).translate(0, inward, 0)
+    this.oculi = mergeParts([-1, 1].flatMap(side => {
+      const spokes = Array.from({length: wheel.spokes}, (_, index) => {
+        const spoke = new CylinderGeometry(wheel.bar * 0.8, wheel.bar * 0.8, aperture * (1 - wheel.hub), 8)
+        // Along x from the inner ring to the outer one, then turned round the axis.
+        return spoke.rotateZ(Math.PI / 2).translate(aperture * (1 + wheel.hub) / 2, wheel.inset, 0).rotateY(index * Math.PI * 2 / wheel.spokes)
+      })
+      return [
+        new LatheGeometry(section, 96),
+        lay(new TorusGeometry(aperture - wheel.bar, wheel.bar, 10, 96), wheel.inset),
+        lay(new TorusGeometry(aperture * wheel.hub, wheel.bar, 10, 48), wheel.inset),
+        ...spokes,
+      ].map(part => onto(part, side))
+    })).rotateY(-Math.PI / 2)
+    this.oculusGilt = mergeParts([-1, 1].map(side => onto(lay(new TorusGeometry(aperture + 0.035, casing.bead, 8, 96), wallFace + casing.depth * 0.7), side)))
+    this.oculusGlass = mergeParts([-1, 1].map(side => {
+      // Facing up the y axis, which turns into the room.
+      const pane = new CircleGeometry(aperture, 96)
+      return onto(pane.rotateX(-Math.PI / 2).translate(0, wheel.inset, 0), side)
     }))
     if (vestibule) {
       const {center: [x, z], radius} = vestibule
@@ -299,7 +369,7 @@ export default class CellCeilingGeometry {
   }
 
   dispose() {
-    for (const geometry of [this.beams, this.crossBeams, this.gables, this.gilt, this.glass, this.plate, this.ridge, this.roundGilt, this.rounds, this.sash, this.sashStiles, this.slab]) {
+    for (const geometry of [this.beams, this.crossBeams, this.gables, this.gilt, this.glass, this.oculi, this.oculusGilt, this.oculusGlass, this.plate, this.ridge, this.roundGilt, this.rounds, this.sash, this.sashStiles, this.slab]) {
       geometry.dispose()
     }
   }

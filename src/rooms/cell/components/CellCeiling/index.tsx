@@ -7,7 +7,8 @@ import {useMemo} from 'react'
 import useGraphicsMode from 'use-graphics-mode'
 
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import CellCeilingGeometry, {cellCeilingSlab, cellRidge} from '#src/lib/gallery/CellCeilingGeometry.ts'
+import {wallFace} from '#src/lib/gallery/architectureDimensions.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellOculus, cellRidge} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
 import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
 import ClearGlassMaterial from '#src/lib/materials/ClearGlassMaterial.ts'
@@ -18,9 +19,11 @@ const cell = sandbox.room('cell')
 const {layout} = cell.room
 const {vestibule} = layout
 const [width] = layout.size
+/** how high the middle of the round windows in the gables stands */
+const oculusY = layout.height + cellOculus.rise
 
 /**
- * The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets and all but the outer ones glazed as roof lights, under a walnut ridge beam with the brass plate the chandelier hangs from, its gables papered like the walls, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, across the roof lights, the beams and the gables.
+ * The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets and all but the outer ones glazed as roof lights, under a walnut ridge beam with the brass plate the chandelier hangs from, its gables papered like the walls and pierced by round windows, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, across the windows, the beams and the gables.
  */
 export default function CellCeiling({beams, paper}: {
   /** the wood of the beams and the roof lights’ sashes, its grain along each mesh’s x axis */
@@ -75,11 +78,15 @@ export default function CellCeiling({beams, paper}: {
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, cellRidge.depth / 2, cellRidge.width / 2]} position={[0, layout.ridgeHeight - cellCeilingSlab / 2 - cellRidge.depth / 2, 0]} />
       <TrimeshCollider args={collision.gables} />
+      {[-1, 1].map(side => <CylinderCollider key={side} args={[wallFace / 2, cellOculus.radius + 0.01]} position={[side * (width / 2 - wallFace / 2), oculusY, 0]} rotation={[0, 0, Math.PI / 2]} />)}
       {vestibule && <CylinderCollider args={[cellCeilingSlab / 2, vestibule.radius]} position={[vestibule.center[0], layout.height, vestibule.center[1]]} />}
     </RigidBody>
     <mesh castShadow geometry={geometry.ridge} material={beams} name='cell-ceiling-ridge' receiveShadow />
     <mesh castShadow geometry={geometry.plate} material={brass} name='cell-chandelier-plate' receiveShadow />
     <mesh castShadow geometry={geometry.gables} material={paper} name='cell-gables' receiveShadow />
+    <mesh castShadow geometry={geometry.oculi} material={beams} name='cell-oculi' receiveShadow rotation={[0, Math.PI / 2, 0]} />
+    <mesh geometry={geometry.oculusGilt} material={gold} name='cell-oculus-gilt' receiveShadow />
+    <mesh geometry={geometry.oculusGlass} material={glass} name='cell-oculus-glass' />
     <Branch if={vestibule}>
       <>
         <mesh castShadow geometry={geometry.rounds} material={plaster} name='cell-ceiling-rounds' receiveShadow />

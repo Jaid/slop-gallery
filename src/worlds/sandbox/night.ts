@@ -1,8 +1,8 @@
 import {sunDirectionFromAngles} from '#src/lib/gallery/sun.ts'
 import nightSky from '#src/lib/materials/NightSky.ts'
 
-/** toward the moon over the Sandbox, high in the south-southwest: it shines steeply through the roof lights of the Cell’s south slope and at a slant through those of its north slope */
-export const moonDirection = sunDirectionFromAngles(195, 45)
+/** toward the moon over the Sandbox, in the south-southwest: it shines through the roof lights of the Cell’s south slope onto the floor and walls of its north-eastern corner, and through the round window of its west gable onto its north wall */
+export const moonDirection = sunDirectionFromAngles(212, 35)
 /** the moonlight’s color, which its shafts glow in too, and its strength */
 export const moonlight = {
   color: '#a9bde6',
