@@ -1,14 +1,16 @@
+import type {Projection} from './GalleryDrawingPipeline.ts'
 import type {WebgpuRendererOptions} from 'three-fiber-game'
 import type {Camera, Material, Scene} from 'three/webgpu'
 
 import {WebgpuRenderer} from 'three-fiber-game'
-import {Object3D, Renderer} from 'three/webgpu'
+import {Object3D} from 'three/webgpu'
 
 import {isDevelopmentMode} from '#src/lib/developmentMode.ts'
 import {startLoading, trackLoadingItems} from '#src/lib/loadingItems.ts'
 import {BatchedLighting} from '#src/lib/materials/lights/base/BatchedLightsNode.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 
+import GalleryDrawingPipeline from './GalleryDrawingPipeline.ts'
 import {cinematicMaxTextureSize, readCinematicGraphics} from './graphicsMode.ts'
 import {readStreamBudget} from './streamBudget.ts'
 
@@ -23,7 +25,6 @@ type RenderObject = {
   scene: Object3D
 }
 type PromiseSink = {push: (promise: Promise<void>) => void}
-type ProjectObject = (this: Renderer, object: Object3D, camera: Camera, groupOrder: number, renderList: unknown, clippingContext: unknown) => void
 /** WebGPUBackend parameters three doesn’t type, which it reads when it requests the device in `init` */
 type BackendInternals = {parameters: {
   device?: GPUDevice
@@ -46,10 +47,8 @@ type Internals = {
     isReady: (renderObject: RenderObject) => boolean
     updateForRender: (renderObject: RenderObject) => void
   }
-  _projectObject: ProjectObject
 }
 
-const projectObject = (Renderer.prototype as unknown as Internals)._projectObject
 // eslint-disable-next-line typescript/unbound-method -- Only compared, to find classes that override it.
 const updateMatrixWorld = Object3D.prototype.updateMatrixWorld
 /** an object’s name, or else its type inside the nearest named ancestor, to tell telemetry and loading items apart */
@@ -154,9 +153,11 @@ export class GalleryRenderer extends WebgpuRenderer {
   private readonly compilingPipelines = new Set<number>
   private culledCamera: Camera | null = null
   private culler: Culler | null = null
+  /** how every render projects its scene; the frame scene’s passes swap in {@link frameProjection} */
+  private readonly drawing = new GalleryDrawingPipeline
   private frame = -1
   /** how the passes of the frame scene project objects, see {@link installProjection} */
-  private frameProjection: ProjectObject = projectObject
+  private frameProjection: Projection = this.drawing.standard
   private frameScene: Scene | null = null
   /** per camera, the recent average of milliseconds spent building an object whose material its passes haven’t built yet; that varies by pass, since three may reuse what another pass built, as for most shadow maps, or build it again for the pass, as for the floor reflection */
   private readonly freshBuildCosts = new WeakMap<Camera, number>
@@ -174,10 +175,10 @@ export class GalleryRenderer extends WebgpuRenderer {
   /** the build cost this frame’s admissions are expected to add up to */
   private plannedBuildCost = 0
   /** projects objects outside of loading, leaving out {@link hidden} outside of {@link unculledCameras} and, outside of shadow maps, {@link hiddenFromView} */
-  private projectCulled?: ProjectObject
-  private projectStreaming?: ProjectObject
+  private projectCulled?: Projection
+  private projectStreaming?: Projection
   /** projects objects while loading, admitting the next ones outside the frustum */
-  private projectWarming?: ProjectObject
+  private projectWarming?: Projection
   /** shadow cameras whose map rendered this frame while streaming */
   private readonly renderedShadowCameras = new Set<Camera>
   /** shadow cameras whose map left out objects whose pipelines were still compiling, with the sequence number of the last pipeline that had started by then */
@@ -211,6 +212,8 @@ export class GalleryRenderer extends WebgpuRenderer {
       trackTimestamp: telemetry !== null,
     })
     this.lighting = new BatchedLighting
+    this.drawingPipeline = this.drawing
+    this.createProjections()
     this.untrackLoading = trackLoadingItems(() => {
       // Incomplete shadow maps render again one per frame in turn, so what they left out stays listed until their next turn. Listing only what last frame’s passes left out would jump with whichever map rendered.
       const waiting = new Set(this.waitingObjects)
@@ -286,10 +289,10 @@ export class GalleryRenderer extends WebgpuRenderer {
   }
 
   override render(scene: Object3D, camera: Camera) {
-    const internals = this.internals
-    const outer = internals._projectObject
+    const {drawing} = this
+    const outer = drawing.projection
     // Only the frame scene warms and streams. A postprocessing pass draws a quad of its own, which streaming would leave out until a later frame, and the quad of the final pass is what draws the scene pass, so that frame would never come.
-    internals._projectObject = scene === this.frameScene ? this.frameProjection : projectObject
+    drawing.projection = scene === this.frameScene ? this.frameProjection : drawing.standard
     try {
       if (scene !== this.frameScene || !scene.matrixWorldAutoUpdate) {
         // Shadow maps render within the frame’s passes.
@@ -309,7 +312,7 @@ export class GalleryRenderer extends WebgpuRenderer {
         super.render(scene, camera)
       })
     } finally {
-      internals._projectObject = outer
+      drawing.projection = outer
     }
   }
 
@@ -496,10 +499,15 @@ export class GalleryRenderer extends WebgpuRenderer {
         compiling = null
       }
     }
-    const {hidden, hiddenFromView, shadowCameras, unculledCameras} = this
-    this.projectCulled = function (this: Renderer, object, camera, groupOrder, renderList, clippingContext) {
+  }
+
+  /** Creates how the frame scene’s passes project objects outside of loading, while warming and while streaming. */
+  private createProjections() {
+    const {drawing, hidden, hiddenFromView, shadowCameras, unculledCameras} = this
+    const {standard} = drawing
+    this.projectCulled = (object, camera, groupOrder, renderList, clippingContext) => {
       if ((!hidden.has(object) || unculledCameras.has(camera)) && (!hiddenFromView.has(object) || shadowCameras.has(camera))) {
-        projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        standard(object, camera, groupOrder, renderList, clippingContext)
       }
     }
     this.projectWarming = (object, camera, groupOrder, renderList, clippingContext) => {
@@ -507,7 +515,7 @@ export class GalleryRenderer extends WebgpuRenderer {
         return
       }
       if (!object.frustumCulled || !('geometry' in object)) {
-        projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        standard(object, camera, groupOrder, renderList, clippingContext)
         return
       }
       let cameras = this.warmObjects.get(object)
@@ -515,7 +523,7 @@ export class GalleryRenderer extends WebgpuRenderer {
         if (!this.admit(object, camera, warmupBuildBudget)) {
           // Postpone the rest of the scene to the next frames.
           this.warmedFrame = -1
-          projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+          standard(object, camera, groupOrder, renderList, clippingContext)
           return
         }
         cameras = new Set
@@ -525,14 +533,14 @@ export class GalleryRenderer extends WebgpuRenderer {
       if (cameras.has(camera)) {
         // Shadow maps drawn while loading are redrawn once the shadow cache takes over, so they only draw what still needs its pipelines.
         if (!this.frameScene?.overrideMaterial) {
-          projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+          standard(object, camera, groupOrder, renderList, clippingContext)
         }
         return
       }
       cameras.add(camera)
       object.frustumCulled = false
       try {
-        projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        standard(object, camera, groupOrder, renderList, clippingContext)
       } finally {
         object.frustumCulled = true
       }
@@ -542,7 +550,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       const cameras = this.warmObjects.get(object)
       if (!object.visible || !object.layers.test(camera.layers) || !object.frustumCulled || !('geometry' in object) || cameras?.has(camera)) {
         if (!culled) {
-          projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+          standard(object, camera, groupOrder, renderList, clippingContext)
         }
         return
       }
@@ -562,7 +570,7 @@ export class GalleryRenderer extends WebgpuRenderer {
           this.gatedObjects.add(object)
         }
         for (const child of object.children) {
-          this.internals._projectObject.call(this, child, camera, groupOrder, renderList, clippingContext)
+          drawing.project(child, camera, groupOrder, renderList, clippingContext)
         }
         return
       }
@@ -573,7 +581,7 @@ export class GalleryRenderer extends WebgpuRenderer {
       }
       object.frustumCulled = false
       try {
-        projectObject.call(this, object, camera, groupOrder, renderList, clippingContext)
+        standard(object, camera, groupOrder, renderList, clippingContext)
       } finally {
         object.frustumCulled = true
       }

@@ -58,6 +58,8 @@ The six-bladed 64-tap aperture, proximity-dependent radius, and highlight treatm
 
 `GalleryRenderer` treats the Fiber scene as the frame scene. Every shadow face and the floor reflection render that scene again, so per-frame work is kept to once per frame:
 
+- Its drawing pipeline (`GalleryDrawingPipeline`, three’s `renderer.drawingPipeline`) projects the frame scene’s passes through the renderer’s own projection, which leaves out culled rooms and admits objects while warming and streaming; every other render projects like three’s default. three moved projection from `Renderer._projectObject()` into the drawing pipeline in r187, and `test/unit/gallery-drawing.test.ts` checks that the renders still go through it.
+
 - Scene matrices update before the first pass of a frame. Later passes reuse them.
 - Point, spot and directional shadow maps update once per frame, not once per camera (patched `ShadowNode`). Without it, each reflection re-rendered every shadow map.
 - In the gallery, `ShadowCache` keeps each shadow map until a shadow caster in its light’s reach moves, appears or disappears, or the light moves. Lights in rooms the camera can't see keep a pending update until their room is in view or their reach meets the view, like the Exhibition's green tunnel lamp shining up through the Lobby's floor.
