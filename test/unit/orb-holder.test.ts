@@ -42,8 +42,10 @@ describe('the orb holder', () => {
       const {min, max} = geometry.metal.boundingBox!
       expect(min.y).toBeCloseTo(0, 6)
       expect(Math.max(-min.x, max.x, -min.z, max.z)).toBeLessThan(0.58)
-      // Its feet spread wider than the orb, which rises out of it by most of its height.
-      expect(max.x).toBeGreaterThan(orbRadius)
+      // Its three feet spread wider than the orb, one of them to the front, along +z, which rises out of it by most of its height.
+      expect(max.z).toBeGreaterThan(orbRadius)
+      expect(-min.z).toBeLessThan(max.z)
+      expect(max.x).toBeCloseTo(-min.x, 6)
       expect(max.y).toBeLessThan(orbSeat)
       expect(orbSeat - orbRadius).toBeGreaterThan(0.07)
     } finally {

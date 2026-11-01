@@ -33,9 +33,9 @@ const lip = {
   tube: 0.0075,
   y: 0.124,
 }
-/** the scrolled feet under the band, one under the middle of each of the pedestal’s faces */
+/** the scrolled feet under the band, evenly round it, one of them pointing to the front, along +z */
 const feet = {
-  count: 4,
+  count: 3,
   /** how thick a foot’s bracket is across, apart from its rounded edges */
   depth: 0.014,
   bevel: 0.003,
@@ -164,7 +164,7 @@ function foot(): Array<BufferGeometry> {
 /**
  * A stand for an orb on a pedestal’s cap, cast in dark metal like a fortune teller’s crystal ball stand, the y axis up through its middle from the cap.
  *
- * A gadrooned cup with a rolled lip, which the orb rests in, stands on a band beaded along both edges, raised on four scrolled feet with acanthus leaves, one under the middle of each of the pedestal’s faces.
+ * A gadrooned cup with a rolled lip, which the orb rests in, stands on a band beaded along both edges, raised on three scrolled feet with acanthus leaves, one of them to the front.
  */
 export default class OrbHolderGeometry {
   /** the stand turned smooth, without its lobes, feet and ornament, where the orb and everything thrown at it touch it */
@@ -182,7 +182,8 @@ export default class OrbHolderGeometry {
       inside,
     ]
     for (let index = 0; index < feet.count; index++) {
-      parts.push(...foot().map(part => part.rotateY(index * Math.PI * 2 / feet.count)))
+      // A foot stands out along x until it is turned toward the front, then on round by a third each.
+      parts.push(...foot().map(part => part.rotateY(-Math.PI / 2 + index * Math.PI * 2 / feet.count)))
     }
     this.metal = mergeParts(parts)
     const outline = [
