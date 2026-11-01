@@ -15,6 +15,7 @@ import Chandelier from '#component/Chandelier'
 import Orb from '#component/Orb'
 import OrbHolder, {useOrbHolder} from '#component/OrbHolder'
 import Pedestal, {usePedestal} from '#component/Pedestal'
+import ShadowCaching from '#component/ShadowCaching'
 import ShadowPool from '#component/ShadowPool'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
@@ -97,8 +98,9 @@ export default function CellRoom() {
   return <group name='cell'>
     <ambientLight intensity={0.15} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={0.45} />
-    {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
+    {/* Each chandelier’s lamp borrows one of its slots for its shadow, which only renders again once something in its reach moves. */}
     <ShadowPool />
+    <ShadowCaching />
     <HallFloor />
     {hallWalls.map(wall => <WallSurface key={wall.id} material={joinery} plaster={surfaces.plaster} revealMaterial={wall === northWall ? surfaces.velvet : undefined} surfaceMaterial={damask} wall={wall} />)}
     <CellCeiling beams={joinery} />
