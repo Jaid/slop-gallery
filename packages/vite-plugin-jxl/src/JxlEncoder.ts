@@ -25,8 +25,10 @@ export type JxlEncoderOptions = {
 }
 
 // Part of every cache key, so that a change to how images are encoded misses every image encoded before it.
-const pipelineVersion = 2
+const pipelineVersion = 3
 const jpegPattern = /\.jpe?g$/iu
+// Everything a JXL file can carry besides the image, its color profile and its orientation, which cjxl takes from the Exif before stripping it.
+const stripMetadata = ['-x', 'strip=exif', '-x', 'strip=xmp', '-x', 'strip=jumbf']
 
 /** the size an image of the given size is scaled down to so that it fits the encoding’s limits, or undefined if it fits already */
 export const getTargetSize = (width: number, height: number, {maximumLong = Infinity, maximumPixels = Infinity}: Pick<JxlEncoding, 'maximumLong' | 'maximumPixels'>) => {
@@ -115,15 +117,15 @@ export default class JxlEncoder {
   }
 
   private async run(file: string, output: string, encoding: JxlEncoding) {
-    const effort = ['--effort', String(encoding.effort), '--brotli_effort', '11', ...encoding.effort > 10 ? ['--allow_expert_options'] : []]
+    const options = ['--effort', String(encoding.effort), '--brotli_effort', '11', ...encoding.effort > 10 ? ['--allow_expert_options'] : [], ...stripMetadata]
     // Only the first frame.
     const input = `${file}[0]`
     const resize = await this.getResizeOptions(input, encoding)
-    // cjxl takes a JPEG as it is and keeps it without loss, which beats decoding it.
+    // cjxl takes a JPEG as it is and keeps its pixels without loss, which beats decoding it. What it would need to restore the JPEG file itself goes, as it holds the stripped metadata.
     if (!resize.length && encoding.distance === 0 && jpegPattern.test(file)) {
-      return Bun.$`${this.cjxlPath} ${file} ${effort} --lossless_jpeg 1 ${output}`.nothrow().quiet()
+      return Bun.$`${this.cjxlPath} ${file} ${options} --lossless_jpeg 1 --allow_jpeg_reconstruction 0 ${output}`.nothrow().quiet()
     }
     // Upright, as an uncompressed PNG, which cjxl reads the quickest.
-    return Bun.$`${this.magickPath} ${input} ${resize} -auto-orient -define png:compression-level=0 -define png:compression-filter=0 png:- | ${this.cjxlPath} - ${effort} --distance ${encoding.distance} ${output}`.nothrow().quiet()
+    return Bun.$`${this.magickPath} ${input} ${resize} -auto-orient -define png:compression-level=0 -define png:compression-filter=0 png:- | ${this.cjxlPath} - ${options} --distance ${encoding.distance} ${output}`.nothrow().quiet()
   }
 }

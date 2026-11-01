@@ -12,6 +12,34 @@ import jxlPlugin, {getTargetSize, virtualJxlPrefix} from '../src/main.ts'
 
 // A bare codestream or the ISO BMFF container around one.
 const isJxl = (bytes: Uint8Array) => bytes[0] === 0xFF && bytes[1] === 0x0A || Buffer.from(bytes.subarray(4, 8)).toString('latin1') === 'JXL '
+/** whether the file is a bare codestream, without the container that metadata boxes would need */
+const isBareCodestream = (bytes: Uint8Array) => bytes[0] === 0xFF && bytes[1] === 0x0A
+const secret = 'SecretArtist'
+/** A JPEG with Exif that turns it a quarter clockwise (orientation 6) and names an artist, and a comment. */
+const writeTaggedJpeg = async (file: string) => {
+  const jpeg = await Bun.$`magick -size 60x120 plasma:fractal -seed 2 -set comment ${secret} jpg:-`.quiet().arrayBuffer()
+  const artist = Buffer.from(`${secret}\0`, 'latin1')
+  // Little-endian TIFF with one IFD of two entries, Orientation (SHORT 6) and Artist (ASCII after the IFD at offset 38).
+  const tiff = Buffer.alloc(38)
+  tiff.write('II', 0, 'latin1')
+  tiff.writeUInt16LE(42, 2)
+  tiff.writeUInt32LE(8, 4)
+  tiff.writeUInt16LE(2, 8)
+  tiff.writeUInt16LE(0x01_12, 10)
+  tiff.writeUInt16LE(3, 12)
+  tiff.writeUInt32LE(1, 14)
+  tiff.writeUInt16LE(6, 18)
+  tiff.writeUInt16LE(0x01_3B, 22)
+  tiff.writeUInt16LE(2, 24)
+  tiff.writeUInt32LE(artist.length, 26)
+  tiff.writeUInt32LE(38, 30)
+  const payload = Buffer.concat([Buffer.from('Exif\0\0', 'latin1'), tiff, artist])
+  const marker = Buffer.alloc(4)
+  marker.writeUInt16BE(0xFF_E1, 0)
+  marker.writeUInt16BE(payload.length + 2, 2)
+  const bytes = Buffer.from(jpeg)
+  await fs.outputFile(file, Buffer.concat([bytes.subarray(0, 2), marker, payload, bytes.subarray(2)]))
+}
 let root: string
 const size = async (bytes: Uint8Array) => {
   const file = join(root, `identify-${crypto.randomUUID()}.jxl`)
@@ -50,6 +78,7 @@ beforeAll(async () => {
   await fs.outputFile(join(root, 'index.html'), '<!doctype html><script type="module" src="./main.ts"></script>')
   await Bun.$`magick -size 200x100 gradient:red-blue ${join(root, 'wide.png')}`.quiet()
   await Bun.$`magick -size 60x120 plasma:fractal -seed 1 ${join(root, 'photo.jpg')}`.quiet()
+  await writeTaggedJpeg(join(root, 'tagged.jpg'))
 })
 afterAll(async () => {
   await fs.remove(root)
@@ -150,11 +179,28 @@ describe('build', () => {
     const {assets} = await runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumLong: \'4000\', maximumPixels: \'1000000\'}\nconsole.log(url)\n')
     expect(await size(assets.find(asset => asset.fileName.endsWith('.jxl'))!.source as Uint8Array)).toBe('200x100')
   })
-  test('transcodes JPEGs at distance 0 without loss', async () => {
-    const {assets} = await runBuild('import url from \'./photo.jpg\' with {format: \'jxl\', distance: \'0\'}\nconsole.log(url)\n')
-    const asset = assets.find(output => output.fileName.endsWith('.jxl'))!
-    // The reconstruction data cjxl keeps of the JPEG.
-    expect(Buffer.from(asset.source as Uint8Array).includes('jbrd')).toBe(true)
+  test('transcodes JPEGs at distance 0 without loss, but without their metadata', async () => {
+    const {assets} = await runBuild('import url from \'./tagged.jpg\' with {format: \'jxl\', distance: \'0\'}\nconsole.log(url)\n')
+    const bytes = assets.find(output => output.fileName.endsWith('.jxl'))!.source as Uint8Array
+    expect(isBareCodestream(bytes)).toBe(true)
+    expect(Buffer.from(bytes).includes(secret)).toBe(false)
+    const encoded = join(root, 'transcoded.jxl')
+    const reference = join(root, 'reference.jxl')
+    await fs.outputFile(encoded, bytes)
+    // What cjxl makes of the JPEG when it keeps everything.
+    await Bun.$`cjxl ${join(root, 'tagged.jpg')} ${reference} --effort 3 --lossless_jpeg 1`.quiet()
+    const difference = await Bun.$`magick compare -metric AE ${encoded} ${reference} null:`.nothrow().quiet()
+    expect(difference.stderr.toString().trim()).toStartWith('0')
+    // cjxl moves the orientation from the Exif into the image header.
+    const orientation = await Bun.$`magick identify -format %[orientation] ${encoded}`.quiet().text()
+    expect(orientation.trim()).toBe('RightTop')
+  })
+  test('strips metadata from encoded images and turns them upright', async () => {
+    const {assets} = await runBuild('import url from \'./tagged.jpg\' with {format: \'jxl\'}\nconsole.log(url)\n')
+    const bytes = assets.find(output => output.fileName.endsWith('.jxl'))!.source as Uint8Array
+    expect(isBareCodestream(bytes)).toBe(true)
+    expect(Buffer.from(bytes).includes(secret)).toBe(false)
+    expect(await size(bytes)).toBe('120x60')
   })
   test('ignores other formats', async () => {
     const {assets} = await runBuild('import url from \'./wide.png\' with {format: \'avif\'}\nconsole.log(url)\n')

@@ -46,10 +46,12 @@ Any other attribute fails the build. Only static imports and re-exports are cove
 ImageMagick decodes the first frame of the image, scales it down if it exceeds a limit, rotates it upright and pipes it to cjxl as an uncompressed PNG. The scaling averages in linear light at 16 bits with a sharpened Lanczos, so that thin highlights keep their brightness, and goes straight to the size that fits both limits, rounded down:
 
 ```sh
-magick input[0] -depth 16 -colorspace RGB -filter LanczosSharp -distort Resize 3840x2160! -colorspace sRGB -depth 8 -auto-orient png:- | cjxl - --effort 10 --brotli_effort 11 --distance 3 output.jxl
+magick input[0] -depth 16 -colorspace RGB -filter LanczosSharp -distort Resize 3840x2160! -colorspace sRGB -depth 8 -auto-orient png:- | cjxl - --effort 10 --brotli_effort 11 -x strip=exif -x strip=xmp -x strip=jumbf --distance 3 output.jxl
 ```
 
-A JPEG at distance 0 that fits the limits skips ImageMagick, so that cjxl transcodes it without loss and keeps what it needs to restore the original JPEG.
+A JPEG at distance 0 that fits the limits skips ImageMagick, so that cjxl transcodes it without losing a pixel. It drops what it would need to restore the JPEG file itself, as that includes the metadata.
+
+Every image loses its metadata: Exif, XMP and JUMBF, like camera details, dates, locations and editing history. Only what changes how it looks stays: its pixels, its color profile and its orientation, which cjxl moves from the Exif into the image header. Images without metadata come out as a bare codestream without the JXL container around it.
 
 Encoded images are cached by a hash of their source’s contents and their encoding, so they are only encoded again once either changes.
 
