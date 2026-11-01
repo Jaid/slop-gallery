@@ -54,6 +54,8 @@ export default class Sandbox extends World<Cell> {
   // Artworks hang on any of the Cell’s walls, and lost ones return to the spawn.
   override readonly placement: FloorPlanPlacementSpace
   override readonly Scene = scene
+  // No voxel indirect light: the Cell is lit by its own lamps alone.
+  override readonly voxelIndirectLight = false
 
   /** @param itemIds the object ids of the items on the Cell’s pedestals, a repeated one for each further item of its kind, those `?item` names by default */
   constructor(itemIds: ReadonlyArray<string> = readItems()) {
