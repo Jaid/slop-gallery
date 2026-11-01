@@ -30,6 +30,9 @@ function simulate(mass: number, miss = false, fixture = chandelierPhysics, {cano
   world.createCollider(RAPIER.ColliderDesc.cylinder((fixture.anchor[1] - 0.05) / 2, 0.022).setTranslation(0, (fixture.anchor[1] + 0.15) / 2, 0).setMass(fixture.stemMass), body)
   if (rod > 0) {
     world.createCollider(RAPIER.ColliderDesc.cylinder((rod - 0.1) / 2, chandelierRod.radius).setTranslation(0, chandelierCanopyTop + (rod - 0.1) / 2, 0).setMass(fixture.rodMass), body)
+    for (const {radius, y} of geometry.knops) {
+      world.createCollider(RAPIER.ColliderDesc.ball(radius).setTranslation(0, y, 0).setMass(fixture.knopMass), body)
+    }
   }
   for (const vertices of geometry.armColliders) {
     world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!.setMass(fixture.armMass).setRestitution(0.15), body)
@@ -90,6 +93,7 @@ describe('suspended Sienna chandelier', () => {
       hubMass: 2,
       stemMass: 0.35,
       rodMass: 0,
+      knopMass: 0,
       ringMass: 0.025,
       pendantMass: 0.1,
     })

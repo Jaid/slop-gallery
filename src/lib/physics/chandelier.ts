@@ -9,6 +9,8 @@ export const chandelierPhysics = {
   stemMass: 0.25,
   /** the brass rod a fixture may hang from instead of a canopy fixed to the ceiling, light like the stem, so the fixture swings much as it does from the canopy */
   rodMass: 0.25,
+  /** each of the turnings along such a rod */
+  knopMass: 0.06,
   ringMass: 0.02,
   pendantMass: 0.08,
 }
@@ -16,7 +18,7 @@ export const chandelierPhysics = {
 /** the ceiling the chandelier is made to hang from, as high as the Sienna’s: its canopy sits right under it, so under a higher ceiling the fixture hangs that much higher */
 export const chandelierCeiling = 5.8
 
-/** the top of the canopy over the fixture, where a rod it hangs from leaves it */
+/** the top of the canopy over the fixture, which a rod it hangs from instead starts from */
 export const chandelierCanopyTop = chandelierPhysics.anchor[1] + 0.08
 
 /** the brass rod a fixture may hang from: its radius and the ball at its top, round the point it swings about */

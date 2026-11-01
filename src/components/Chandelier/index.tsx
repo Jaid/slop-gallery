@@ -14,7 +14,7 @@ import {useLamp} from '#src/lib/rendering/lamps.ts'
 
 /**
  * The Sienna’s swinging chandelier, hanging from the ceiling over its parent’s origin, which carries the lamp with the global id `lamp` along.
- * It swings under its canopy, which sits fixed right under the ceiling, or, hung from a rod, about the ball at the rod’s top, canopy and rod and all.
+ * It swings under its canopy, which sits fixed right under the ceiling, or, hung from a rod with turnings along it instead, about the ball at the rod’s top, rod and all.
  */
 export default function Chandelier({lamp: lampId, rod = 0}: {
   /** the global id of the room’s lamp the fixture carries, which hangs below its metalwork at rest, see `chandelierLampY` */
@@ -28,7 +28,6 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
   useSphericalJoint(anchor, fixture, [[0, 0, 0], pivot])
   const brass = useDisposable(useMemo(() => new BrassMaterial, []))
   const geometry = useDisposable(useMemo(() => new ChandelierGeometry({rod}), [rod]))
-  const canopy = <mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' />
   const source = useRef<Object3D>(null)
   const lamp = useLamp(lampId)
   useFrame(() => {
@@ -40,7 +39,7 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
   })
   return <group name={lampId} position={[0, chandelierPhysics.height, 0]}>
     <RigidBody colliders={false} position={pivot} type='fixed' ref={anchor} />
-    <Branch not={rod > 0}>{canopy}</Branch>
+    <Branch not={rod > 0}><mesh castShadow geometry={geometry.canopy} material={brass} name='chandelier-canopy' /></Branch>
     <RigidBody additionalSolverIterations={8} angularDamping={chandelierPhysics.angularDamping} canSleep={false} ccd colliders={false} linearDamping={chandelierPhysics.linearDamping} ref={fixture}>
       <BallCollider args={[0.21]} mass={chandelierPhysics.hubMass} />
       <BallCollider args={[0.12]} mass={chandelierPhysics.pendantMass} position={[0, -0.38, 0]} />
@@ -49,7 +48,7 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
       <Branch if={rod > 0.2}><CylinderCollider args={[(rod - 0.1) / 2, chandelierRod.radius]} mass={chandelierPhysics.rodMass} position={[0, chandelierCanopyTop + (rod - 0.1) / 2, 0]} /></Branch>
       {geometry.armColliders.map((vertices, i) => <ConvexHullCollider key={i} args={[vertices]} mass={chandelierPhysics.armMass} restitution={0.15} />)}
       {geometry.ringColliders.map((vertices, i) => <ConvexHullCollider key={`ring-${i}`} args={[vertices]} mass={chandelierPhysics.ringMass} restitution={0.15} />)}
-      <Branch if={rod > 0}>{canopy}</Branch>
+      {geometry.knops.map(({radius, y}) => <BallCollider key={y} args={[radius]} mass={chandelierPhysics.knopMass} position={[0, y, 0]} />)}
       <mesh castShadow geometry={geometry.brass} name='chandelier-brass'><primitive attach='material' object={brass} /></mesh>
       <mesh castShadow geometry={geometry.candles} name='chandelier-candles'><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
       <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
