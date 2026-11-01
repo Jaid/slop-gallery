@@ -26,7 +26,7 @@ Automatic telemetry selects only counts, flags, state names and numeric player/a
 
 ## Victoria delivery
 
-Telemetry is opt-in in every build. Without `?telemetry=true`, the `telemetry` singleton is `null` and nothing is collected or sent. `?ai=false` disables AI, not telemetry.
+Telemetry is opt-in in every build. Without `?telemetry` (or `?telemetry=true`), the `telemetry` singleton is `null` and nothing is collected or sent. `?ai=false` disables AI, not telemetry.
 
 The browser sends straight to Victoria. There is no relay, Vite proxy or default endpoint. Pass a full ingestion URL per signal; a signal without one is not sent:
 
@@ -36,7 +36,7 @@ The browser sends straight to Victoria. There is no relay, Vite proxy or default
 | metrics | `metrics_ingestion_endpoint` | VictoriaMetrics JSON import | `https://metrics.example.com/api/v1/import` |
 | traces | `traces_ingestion_endpoint` | OTLP/HTTP JSON | `https://traces.example.com/insert/opentelemetry/v1/traces` |
 
-The endpoint parameters only apply together with `?telemetry=true`. Remember to URL-encode them. The ingestion hosts must accept unauthenticated POSTs and answer CORS preflights for the gallery origin. Native logs use `_msg`, `level` and flattened resource/attribute fields instead of OTLP’s `severity_text`. VictoriaLogs rejects OTLP JSON, so logs always use JSON lines. Metrics retain dotted names, while resource and measurement attributes become VictoriaMetrics labels. The Victoria client bounds request/item sizes, refuses redirects, omits browser credentials and keeps unload requests within its keepalive limit.
+The endpoint parameters only apply together with `?telemetry`. Remember to URL-encode them. The ingestion hosts must accept unauthenticated POSTs and answer CORS preflights for the gallery origin. Native logs use `_msg`, `level` and flattened resource/attribute fields instead of OTLP’s `severity_text`. VictoriaLogs rejects OTLP JSON, so logs always use JSON lines. Metrics retain dotted names, while resource and measurement attributes become VictoriaMetrics labels. The Victoria client bounds request/item sizes, refuses redirects, omits browser credentials and keeps unload requests within its keepalive limit.
 
 Native WebMCP `get_telemetry` returns the session ID plus `collectionStatus()` and `status()` from `victoria-browser-client`. This is read-only. Delivery is bounded and best-effort; HTTP acceptance is not a durable end-to-end storage guarantee.
 
@@ -74,7 +74,7 @@ The Victoria client schedules delivery every second while statistics still repor
 
 ### Manual comparison
 
-1. Reload with `?development=true&telemetry=true&graphics=heavy`.
+1. Reload with `?development&telemetry&graphics=heavy`.
 2. Enter and walk a repeatable route through the problematic rooms, including turns toward shadow-heavy interiors. Pause briefly in each room.
 3. Note any long freeze and its approximate time.
 4. Repeat with `graphics=fast`. Do not compare different rooms, pointer-lock states or output sizes as if only the profile changed.

@@ -11,6 +11,7 @@ import {readScale} from '../../src/lib/rendering/scale.ts'
 import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from '../../src/lib/roomAnnouncements.ts'
+import {readTelemetry} from '../../src/lib/telemetry/telemetryParameter.ts'
 
 describe('URL options', () => {
   test('?development is enabled by a bare or true flag only', () => {
@@ -18,6 +19,14 @@ describe('URL options', () => {
     expect(readDevelopmentMode('?development=true')).toBe(true)
     for (const search of ['', '?development=false', '?development=1', '?development=TRUE', '?dev=true']) {
       expect(readDevelopmentMode(search)).toBe(false)
+    }
+  })
+  test('?telemetry is enabled by a bare or true flag only', () => {
+    expect(readTelemetry('?telemetry')).toBe(true)
+    expect(readTelemetry('?telemetry=true')).toBe(true)
+    expect(readTelemetry('?graphics=fast&telemetry&logs_ingestion_endpoint=https://logs.test/insert/jsonline?_stream_fields=service.name')).toBe(true)
+    for (const search of ['', '?telemetry=false', '?telemetry=1', '?telemetry=TRUE']) {
+      expect(readTelemetry(search)).toBe(false)
     }
   })
   test('?flying only takes effect with ?development', () => {

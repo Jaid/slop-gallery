@@ -27,6 +27,7 @@ import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readStreamBudget} from './rendering/streamBudget.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from './roomAnnouncements.ts'
+import {readTelemetry} from './telemetry/telemetryParameter.ts'
 
 type Reader = (input: string) => unknown
 
@@ -70,7 +71,7 @@ const readers: Record<string, Reader> = {
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
   world: readWorld,
-  telemetry: input => searchParameter('telemetry')(input) === 'true',
+  telemetry: readTelemetry,
   logs_ingestion_endpoint: searchParameter('logs_ingestion_endpoint'),
   metrics_ingestion_endpoint: searchParameter('metrics_ingestion_endpoint'),
   traces_ingestion_endpoint: searchParameter('traces_ingestion_endpoint'),

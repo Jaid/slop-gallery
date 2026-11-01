@@ -1,9 +1,10 @@
 import type {Point3} from 'telemethree-ego'
 
 import SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
+import {readTelemetry} from './telemetryParameter.ts'
 
 const params = new URLSearchParams(typeof location === 'undefined' ? '' : location.search)
-export const telemetry = params.get('telemetry') === 'true' ? new SlopGalleryTelemetry({
+export const telemetry = readTelemetry() ? new SlopGalleryTelemetry({
   endpoints: {
     logs: params.get('logs_ingestion_endpoint') ?? undefined,
     metrics: params.get('metrics_ingestion_endpoint') ?? undefined,
