@@ -28,7 +28,7 @@ export default class PlayerSession {
   private pose: PlayerPose
 
   /** Keeps a player’s pose in the world, starting at its spawn. */
-  constructor(private readonly world: Pick<World, 'contains' | 'floorHeight' | 'spawn'>) {
+  constructor(private readonly world: Pick<World, 'contains' | 'spawn'>) {
     this.pose = copy(world.spawn)
   }
 
@@ -40,21 +40,11 @@ export default class PlayerSession {
   }
 
   restore(value: PlayerPose) {
-    const pose = validatePlayerPose(value, this.world)
-    this.pose = pose ? this.onFloor(pose) : copy(this.world.spawn)
+    this.pose = validatePlayerPose(value, this.world) ?? copy(this.world.spawn)
   }
 
   snapshot() {
     return copy(this.pose)
-  }
-
-  /** Puts feet that ended up below the floor under them back onto it, as a fall through a room that had not loaded yet left them. */
-  private onFloor(pose: PlayerPose): PlayerPose {
-    const floor = this.world.floorHeight(pose.position)
-    return pose.position[1] < floor ? {
-      ...pose,
-      position: [pose.position[0], floor + 0.04, pose.position[2]],
-    } : pose
   }
 }
 

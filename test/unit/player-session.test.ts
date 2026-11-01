@@ -17,21 +17,6 @@ describe('player session', () => {
       })).toBeNull()
     }
   })
-  test('a pose below the floor under it, as a fall through a room that had not loaded left it, restores on that floor', () => {
-    const session = new PlayerSession(slopGallery)
-    session.restore({
-      position: [14, -0.6, -18.4],
-      yaw: 0,
-      pitch: 0,
-    })
-    expect(session.snapshot().position).toEqual([14, 0.04, -18.4])
-    session.restore({
-      position: [14, 0.02, -18.4],
-      yaw: 0,
-      pitch: 0,
-    })
-    expect(session.snapshot().position).toEqual([14, 0.02, -18.4])
-  })
   test('invalid player poses are rejected and restore the spawn', () => {
     const session = new PlayerSession(slopGallery)
     for (const player of [
