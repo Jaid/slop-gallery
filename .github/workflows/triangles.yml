@@ -25,6 +25,7 @@ jobs:
     - name: installVulkanDriver
       run: sudo apt-get install --yes --no-install-recommends mesa-vulkan-drivers
     # Every room’s triangles, meshes and lights in heavy graphics, to the log and the job summary, loaded in the runner’s Chrome on its software Vulkan.
+    # The seed decides which default works hang in which slots at which size and which plants stand in the pots, so it is fixed to keep runs comparable.
     # Knottingham is left out, as some of its Knot shaders crash Chrome’s software GPU process.
     - name: analyzeWorlds
       shell: bash
@@ -34,7 +35,7 @@ jobs:
         # Chrome’s sandbox needs unprivileged user namespaces, which Ubuntu 24.04 restricts.
         sudo sysctl --write kernel.apparmor_restrict_unprivileged_userns=0
         analyze() {
-          bun scripts/analyzeWorld.ts --target dist --swiftshader --height 180 --format markdown "$@" | tee --append "$GITHUB_STEP_SUMMARY"
+          bun scripts/analyzeWorld.ts --target dist --swiftshader --height 180 --seed 1 --format markdown "$@" | tee --append "$GITHUB_STEP_SUMMARY"
         }
         analyze
         analyze --room cell

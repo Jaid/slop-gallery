@@ -277,7 +277,8 @@ test('the tables split static meshes from items, leave rooms without items out o
     },
     elsewhere: region([], [8], []),
     globalLights: region([], [], ['own', undefined]).lights,
-  }, 'Test', 'heavy')
+  }, 'Test', 'heavy', 1)
+  expect(markdown).toStartWith('## Test (heavy graphics, seed 1)\n')
   const section = (name: string) => markdown.split(`### ${name}`)[1].split('###')[0]
   expect(section('Static meshes')).toContain('| Salon | 20\u{202F}000 | 1 |\n| Hall | 12\u{202F}300 | 2 |\n| **Total** | 32\u{202F}300 | 3 |')
   expect(section('Static meshes')).not.toContain('Elsewhere')

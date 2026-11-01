@@ -26,7 +26,7 @@ const table = (headers: ReadonlyArray<string>, rows: ReadonlyArray<Row>, trailin
  * Markdown tables of a world’s analysis: the static meshes and the items, which can be picked up and carried into another room, by triangles, and the lights.
  * Rooms without items are left out of the items table, the passages, stairways and outdoors as Elsewhere wherever they hold anything.
  */
-export default function worldTables(analysis: WorldAnalysis, title: string, graphics: string) {
+export default function worldTables(analysis: WorldAnalysis, title: string, graphics: string, seed: number) {
   const regions: Array<[string, WorldRegion]> = Object.values(analysis.rooms).map(room => [room.title, room])
   const elsewhere: Array<[string, WorldRegion]> = [['Elsewhere', analysis.elsewhere]]
   const rows = (list: ReadonlyArray<[string, WorldRegion]>, keep: (region: WorldRegion) => boolean, values: (region: WorldRegion) => Array<number>) => list.filter(([, region]) => keep(region)).map(([name, region]) => ({
@@ -42,7 +42,7 @@ export default function worldTables(analysis: WorldAnalysis, title: string, grap
     values: lightValues({lights: analysis.globalLights}),
   }] : []
   return [
-    `## ${title} (${graphics} graphics)`,
+    `## ${title} (${graphics} graphics, seed ${seed})`,
     '',
     '### Static meshes',
     '',

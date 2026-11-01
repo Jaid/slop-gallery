@@ -48,4 +48,4 @@ await using gallery = await openHeadlessGallery(setup, {cacheDir: 'node_modules/
 // Rooms other than the start room still download and mount after the scene is ready.
 await waitForLoadingItems(gallery.page)
 const analysis = await callWebmcpTool(gallery.page, 'analyze_world') as WorldAnalysis
-console.log(format === 'markdown' ? worldTables(analysis, worlds[setup.world].title, values.graphics) : JSON.stringify(analysis, null, 2))
+console.log(format === 'markdown' ? worldTables(analysis, worlds[setup.world].title, values.graphics, setup.seed) : JSON.stringify(analysis, null, 2))
