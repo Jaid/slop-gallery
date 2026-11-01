@@ -8,7 +8,7 @@ import fs from 'fs-extra'
 import {build, createServer, parseSync} from 'vite'
 
 import {applyEdits, findImports} from '../src/imports.ts'
-import jxlPlugin, {virtualJxlPrefix} from '../src/main.ts'
+import jxlPlugin, {getTargetSize, virtualJxlPrefix} from '../src/main.ts'
 
 // A bare codestream or the ISO BMFF container around one.
 const isJxl = (bytes: Uint8Array) => bytes[0] === 0xFF && bytes[1] === 0x0A || Buffer.from(bytes.subarray(4, 8)).toString('latin1') === 'JXL '
@@ -89,6 +89,42 @@ describe('findImports', () => {
     expect(imports.map(({source}) => source)).toEqual(['./a.png'])
   })
 })
+describe('getTargetSize', () => {
+  test('fits the tighter of both limits, keeping the aspect ratio', () => {
+    expect(getTargetSize(200, 100, {maximumPixels: 5000})).toEqual({
+      width: 100,
+      height: 50,
+    })
+    expect(getTargetSize(200, 100, {
+      maximumLong: 80,
+      maximumPixels: 5000,
+    })).toEqual({
+      width: 80,
+      height: 40,
+    })
+    expect(getTargetSize(200, 100, {
+      maximumLong: 150,
+      maximumPixels: 5000,
+    })).toEqual({
+      width: 100,
+      height: 50,
+    })
+    expect(getTargetSize(5504, 3096, {maximumLong: 3840})).toEqual({
+      width: 3840,
+      height: 2160,
+    })
+    const {width, height} = getTargetSize(6000, 4000, {maximumPixels: 8_294_400})!
+    expect(width * height).toBeLessThanOrEqual(8_294_400)
+    expect(width / height).toBeCloseTo(1.5, 3)
+  })
+  test('leaves images alone that fit', () => {
+    expect(getTargetSize(200, 100, {})).toBeUndefined()
+    expect(getTargetSize(200, 100, {
+      maximumLong: 200,
+      maximumPixels: 20_000,
+    })).toBeUndefined()
+  })
+})
 describe('build', () => {
   test('encodes imports with format jxl and leaves the others alone', async () => {
     const {assets, chunk} = await runBuild('import encoded from \'./wide.png\' with {format: \'jxl\', maximumLong: \'50\', distance: \'2\'}\nimport plain from \'./wide.png\'\nimport full from \'./wide.png\' with {format: \'jxl\'}\nconsole.log(encoded, plain, full)\n')
@@ -105,8 +141,13 @@ describe('build', () => {
     expect(assets.some(asset => asset.fileName.endsWith('.png'))).toBe(true)
     expect(chunk.code).not.toContain(virtualJxlPrefix)
   })
+  test('scales images down to maximumPixels', async () => {
+    const {assets} = await runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumPixels: \'5000\'}\nimport both from \'./wide.png\' with {format: \'jxl\', maximumPixels: \'5000\', maximumLong: \'80\'}\nconsole.log(url, both)\n')
+    const dimensions = await Promise.all(assets.filter(asset => asset.fileName.endsWith('.jxl')).map(asset => size(asset.source as Uint8Array)))
+    expect(dimensions.toSorted()).toEqual(['100x50', '80x40'])
+  })
   test('never scales images up', async () => {
-    const {assets} = await runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumLong: \'4000\'}\nconsole.log(url)\n')
+    const {assets} = await runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumLong: \'4000\', maximumPixels: \'1000000\'}\nconsole.log(url)\n')
     expect(await size(assets.find(asset => asset.fileName.endsWith('.jxl'))!.source as Uint8Array)).toBe('200x100')
   })
   test('transcodes JPEGs at distance 0 without loss', async () => {
@@ -141,6 +182,7 @@ describe('build', () => {
   test('rejects unknown and invalid attributes', async () => {
     await expect(runBuild('import url from \'./wide.png\' with {format: \'jxl\', quality: \'90\'}\nconsole.log(url)\n')).rejects.toThrow('unknown attribute quality')
     await expect(runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumLong: \'0\'}\nconsole.log(url)\n')).rejects.toThrow('maximumLong')
+    await expect(runBuild('import url from \'./wide.png\' with {format: \'jxl\', maximumPixels: \'1e6\'}\nconsole.log(url)\n')).rejects.toThrow('maximumPixels')
     await expect(runBuild('import url from \'./wide.png\' with {format: \'jxl\', distance: \'26\'}\nconsole.log(url)\n')).rejects.toThrow('distance')
   })
 })

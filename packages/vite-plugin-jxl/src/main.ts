@@ -11,7 +11,7 @@ import {applyEdits, findImports} from './imports.ts'
 import JxlEncoder from './JxlEncoder.ts'
 
 export type {JxlEncoderOptions, JxlEncoding} from './JxlEncoder.ts'
-export {default as JxlEncoder} from './JxlEncoder.ts'
+export {getTargetSize, default as JxlEncoder} from './JxlEncoder.ts'
 
 export type JxlPluginOptions = {
   /** cjxl’s executable, `cjxl` from the PATH by default */
@@ -28,6 +28,8 @@ export type JxlPluginOptions = {
   magickPath?: string
   /** the longest side of imports without a `maximumLong` attribute, unlimited by default */
   maximumLong?: number
+  /** the pixel count of imports without a `maximumPixels` attribute, unlimited by default */
+  maximumPixels?: number
 }
 
 /** the import attributes the plugin reads */
@@ -37,11 +39,13 @@ export type JxlImportAttributes = {
   format?: 'jxl'
   /** the length in pixels the longer side is scaled down to if it is longer */
   maximumLong?: `${number}`
+  /** the number of pixels the image is scaled down to if it has more, keeping its aspect ratio */
+  maximumPixels?: `${number}`
 }
 
 export const virtualJxlPrefix = 'virtual:jxl?'
 const resolvedVirtualJxlPrefix = `\0${virtualJxlPrefix}`
-const attributeNames = new Set(['distance', 'format', 'maximumLong'])
+const attributeNames = new Set(['distance', 'format', 'maximumLong', 'maximumPixels'])
 const scriptPattern = /\.[cm]?[jt]sx?(?:\?|$)/u
 // Everything ImageMagick reads that an import of an image could name.
 const imagePattern = /\.(?:apng|avif|bmp|gif|heic|heif|jfif|jpe?g|jxl|png|psd|qoi|tga|tiff?|webp)$/iu
@@ -54,12 +58,12 @@ const parseDistance = (value: string | undefined, fallback: number) => {
   }
   return distance
 }
-const parseMaximumLong = (value: string | undefined, fallback: number | undefined) => {
+const parseLimit = (name: string, value: string | undefined, fallback: number | undefined) => {
   if (value === undefined) {
     return fallback
   }
   if (!/^[1-9]\d*$/u.test(value)) {
-    throw new Error(`The attribute maximumLong must be a whole number of pixels, not ${JSON.stringify(value)}.`)
+    throw new Error(`The attribute ${name} must be a whole number of pixels, not ${JSON.stringify(value)}.`)
   }
   return Number(value)
 }
@@ -79,9 +83,11 @@ export default function jxlPlugin(options: JxlPluginOptions = {}): Plugin {
     throw new Error(`The effort must be a whole number from 1 to 11, not ${effort}.`)
   }
   const defaultDistance = parseDistance(undefined, options.distance ?? 1)
-  const defaultMaximumLong = options.maximumLong
-  if (defaultMaximumLong !== undefined && (!Number.isInteger(defaultMaximumLong) || defaultMaximumLong < 1)) {
-    throw new Error(`The maximumLong option must be a whole number of pixels, not ${defaultMaximumLong}.`)
+  for (const name of ['maximumLong', 'maximumPixels'] as const) {
+    const limit = options[name]
+    if (limit !== undefined && (!Number.isInteger(limit) || limit < 1)) {
+      throw new Error(`The ${name} option must be a whole number of pixels, not ${limit}.`)
+    }
   }
   const isIncluded = options.include ? createFilter(options.include) : undefined
   let config: ResolvedConfig
@@ -132,11 +138,12 @@ export default function jxlPlugin(options: JxlPluginOptions = {}): Plugin {
           if (unknown) {
             this.error(`The JXL import ${source} in ${id} has the unknown attribute ${unknown}; it only takes ${[...attributeNames].join(', ')}.`)
           }
-          const {distance, maximumLong} = (() => {
+          const {distance, maximumLong, maximumPixels} = (() => {
             try {
               return {
                 distance: parseDistance(attributes.distance, defaultDistance),
-                maximumLong: parseMaximumLong(attributes.maximumLong, defaultMaximumLong),
+                maximumLong: parseLimit('maximumLong', attributes.maximumLong, options.maximumLong),
+                maximumPixels: parseLimit('maximumPixels', attributes.maximumPixels, options.maximumPixels),
               }
             } catch (error) {
               this.error(`The JXL import ${source} in ${id} is invalid: ${Error.isError(error) ? error.message : String(error)}`)
@@ -146,6 +153,7 @@ export default function jxlPlugin(options: JxlPluginOptions = {}): Plugin {
             file: normalizePath(resolved.id),
             distance: String(distance),
             ...maximumLong === undefined ? {} : {maximumLong: String(maximumLong)},
+            ...maximumPixels === undefined ? {} : {maximumPixels: String(maximumPixels)},
           })
           return {
             start: moduleImport.start,
@@ -182,10 +190,12 @@ export default function jxlPlugin(options: JxlPluginOptions = {}): Plugin {
           this.error(`The JXL module ${id} names no file.`)
         }
         const maximumLong = query.get('maximumLong')
+        const maximumPixels = query.get('maximumPixels')
         const encoding: JxlEncoding = {
           distance: Number(query.get('distance')),
           effort,
           ...maximumLong ? {maximumLong: Number(maximumLong)} : {},
+          ...maximumPixels ? {maximumPixels: Number(maximumPixels)} : {},
         }
         this.addWatchFile(file)
         const output = await encoder.encode(file, encoding)

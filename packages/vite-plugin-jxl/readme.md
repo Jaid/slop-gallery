@@ -24,7 +24,10 @@ Import attributes are string-valued, so numbers are written as strings. The acce
 
 - `format: 'jxl'` – encodes the image; imports with any other format are left to other plugins
 - `distance: string` – Butteraugli distance from `'0'` (lossless) to `'25'`, defaults to the `distance` option
-- `maximumLong: string` – the length in pixels the longer side is scaled down to if it is longer, defaults to the `maximumLong` option; images are never scaled up
+- `maximumLong: string` – the length in pixels the longer side is scaled down to if it is longer, defaults to the `maximumLong` option
+- `maximumPixels: string` – the number of pixels the image is scaled down to if it has more, keeping its aspect ratio, defaults to the `maximumPixels` option
+
+With both limits, the tighter one wins. Images are never scaled up.
 
 Any other attribute fails the build. Only static imports and re-exports are covered, not dynamic `import()`.
 
@@ -32,6 +35,7 @@ Any other attribute fails the build. Only static imports and re-exports are cove
 
 - `distance?: number` – defaults to `1`
 - `maximumLong?: number` – unlimited by default
+- `maximumPixels?: number` – unlimited by default
 - `effort?: number` – cjxl’s effort from 1 to 11, defaults to `10`; 11 passes `--allow_expert_options`
 - `include?: FilterPattern` – image files whose imports are encoded even without `format: 'jxl'`, as in `include: /\.png$/u`, none by default; their imports may still carry `distance` and `maximumLong`
 - `folder?: string` – the cache, relative to the Vite root, defaults to `temp/vite-plugin-jxl`
@@ -39,13 +43,13 @@ Any other attribute fails the build. Only static imports and re-exports are cove
 
 ## Encoding
 
-ImageMagick decodes the first frame of the image, rotates it upright and scales it down if needed, then pipes it to cjxl as an uncompressed PNG:
+ImageMagick decodes the first frame of the image, scales it down if it exceeds a limit, rotates it upright and pipes it to cjxl as an uncompressed PNG. The scaling averages in linear light at 16 bits with a sharpened Lanczos, so that thin highlights keep their brightness, and goes straight to the size that fits both limits, rounded down:
 
 ```sh
-magick input[0] -auto-orient -resize 3840x3840> png:- | cjxl - --effort 10 --brotli_effort 11 --distance 3 output.jxl
+magick input[0] -depth 16 -colorspace RGB -filter LanczosSharp -distort Resize 3840x2160! -colorspace sRGB -depth 8 -auto-orient png:- | cjxl - --effort 10 --brotli_effort 11 --distance 3 output.jxl
 ```
 
-A JPEG at distance 0 without `maximumLong` skips ImageMagick, so that cjxl transcodes it without loss and keeps what it needs to restore the original JPEG.
+A JPEG at distance 0 that fits the limits skips ImageMagick, so that cjxl transcodes it without loss and keeps what it needs to restore the original JPEG.
 
 Encoded images are cached by a hash of their source’s contents and their encoding, so they are only encoded again once either changes.
 
