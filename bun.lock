@@ -44,6 +44,7 @@
         "use-pause-menu": "workspace:*",
         "victoria-browser-client": "0.3.0",
         "vite-plugin-import-voice-sample": "workspace:*",
+        "vite-plugin-jxl": "workspace:*",
         "vite-plugin-jxl-headers": "workspace:*",
         "voice-sample-store": "workspace:*",
         "webgpu-capture-bridge": "workspace:*",
@@ -521,6 +522,19 @@
       },
       "devDependencies": {
         "@types/fs-extra": "11.0.4",
+      },
+    },
+    "packages/vite-plugin-jxl": {
+      "name": "vite-plugin-jxl",
+      "version": "0.1.0",
+      "dependencies": {
+        "fs-extra": "11.4.1",
+      },
+      "devDependencies": {
+        "@types/fs-extra": "11.0.4",
+      },
+      "peerDependencies": {
+        "vite": "^8.3.5",
       },
     },
     "packages/vite-plugin-jxl-headers": {
@@ -1835,6 +1849,8 @@
     "vite-plugin-browserslist-target": ["vite-plugin-browserslist-target@workspace:packages/vite-plugin-browserslist-target"],
 
     "vite-plugin-import-voice-sample": ["vite-plugin-import-voice-sample@workspace:packages/vite-plugin-import-voice-sample"],
+
+    "vite-plugin-jxl": ["vite-plugin-jxl@workspace:packages/vite-plugin-jxl"],
 
     "vite-plugin-jxl-headers": ["vite-plugin-jxl-headers@workspace:packages/vite-plugin-jxl-headers"],
 
