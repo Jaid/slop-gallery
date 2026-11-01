@@ -111,21 +111,26 @@ export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish 
   }), [floorReflections, grazingStrength, origin, strength, tile]))
 }
 
-/**
- * The Arena’s shell around a rectangular floor plan, without lights: its marble on a dark slab, its velvet walls with black lacquered trim and its dark plaster ceiling, with colliders for the floor and the ceiling.
- */
-export default function ArenaShell({center, floorOrigin, height, polish, size, surfaces, tile, walls}: ArenaShellProps) {
+/** The Arena’s floor over a rectangular floor plan: its marble on a dark slab, with the slab’s collider. */
+export function ArenaFloor({center, origin, polish, size, tile}: {
+  /** the middle of the floor plan, in world meters */
+  center: Point
+  /** a corner of the floor’s tile grid, in world meters */
+  origin: Point
+  /** how clearly the marble mirrors the room, faintly by default */
+  polish?: ArenaPolish
+  size: FloorSize
+  /** edge length of the floor’s marble tiles */
+  tile: number
+}) {
   const [x, z] = center
   const [width, depth] = size
   const slab = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.24, depth, 2, 0.035), [width, depth]))
-  const ceiling = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.18, depth, 2, 0.045), [width, depth]))
-  const marble = useArenaMarble(floorOrigin, tile, polish)
+  const marble = useArenaMarble(origin, tile, polish)
   const reflection = marble.reflectionTarget
   return <>
-    {walls.map(wall => <WallSurface key={wall.id} material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} surfaceRoom='vesper' wall={wall} />)}
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, 0.12, depth / 2]} position={[x, -0.12, z]} />
-      <CuboidCollider args={[width / 2, 0.09, depth / 2]} position={[x, height, z]} />
     </RigidBody>
     <mesh castShadow geometry={slab} name='arena-floor-slab' position={[x, -0.12, z]} receiveShadow>
       <meshStandardNodeMaterial color='#23201d' roughness={0.8} />
@@ -134,6 +139,22 @@ export default function ArenaShell({center, floorOrigin, height, polish, size, s
       <planeGeometry args={[width, depth]} />
       <Branch if={reflection}><primitive object={reflection!} /></Branch>
     </mesh>
+  </>
+}
+
+/**
+ * The Arena’s shell around a rectangular floor plan, without lights: its marble on a dark slab, its velvet walls with black lacquered trim and its dark plaster ceiling, with colliders for the floor and the ceiling.
+ */
+export default function ArenaShell({center, floorOrigin, height, polish, size, surfaces, tile, walls}: ArenaShellProps) {
+  const [x, z] = center
+  const [width, depth] = size
+  const ceiling = useDisposable(useMemo(() => new RoundedBoxGeometry(width, 0.18, depth, 2, 0.045), [width, depth]))
+  return <>
+    {walls.map(wall => <WallSurface key={wall.id} material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} surfaceRoom='vesper' wall={wall} />)}
+    <ArenaFloor center={center} origin={floorOrigin} polish={polish} size={size} tile={tile} />
+    <RigidBody colliders={false} type='fixed'>
+      <CuboidCollider args={[width / 2, 0.09, depth / 2]} position={[x, height, z]} />
+    </RigidBody>
     <mesh castShadow geometry={ceiling} material={surfaces.ceiling} name='arena-ceiling' position={[x, height, z]} receiveShadow />
   </>
 }
