@@ -56,10 +56,43 @@ index 7c8d2322834904c1247c79cda31beff8e2bfc497..9ff6caa46c9c5967890a4f93d1920b0a
  
  		// percentage-closer filtering using cube texture sampling
 diff --git a/build/three.webgpu.js b/build/three.webgpu.js
-index f8fc49fe7df98cbac4609603a1f2a2c6aea79675..e5159499ac3e6468e3aae8752c0521b193b4527d 100644
+index f8fc49fe7df98cbac4609603a1f2a2c6aea79675..ba03569dfdca88ed40eea0b9cc937dcf12e44cf0 100644
 --- a/build/three.webgpu.js
 +++ b/build/three.webgpu.js
-@@ -49262,16 +49262,45 @@ class WebGPUBackend extends Backend {
+@@ -10933,12 +10933,13 @@ class Background extends DataMap {
+ 				let viewProj = cameraProjectionMatrix.mul( vec4( viewPosition.xyz, 1.0 ) );
+ 
+ 				// force background to far plane so it does not occlude objects
+-				viewProj = viewProj.setZ( viewProj.w );
++				viewProj = viewProj.setZ( renderer.reversedDepthBuffer ? 0 : viewProj.w );
+ 
+ 				const nodeMaterial = new NodeMaterial();
+ 				nodeMaterial.name = 'Background.material';
+ 				nodeMaterial.side = BackSide;
+-				nodeMaterial.depthTest = false;
++				// Depth tested at the far plane and drawn after the opaque objects, its fragments only run where nothing covers it. A logarithmic depth buffer gets the depth from the fragment, so the background goes under everything instead.
++				nodeMaterial.depthTest = renderer.logarithmicDepthBuffer !== true;
+ 				nodeMaterial.depthWrite = false;
+ 				nodeMaterial.allowOverride = false;
+ 				nodeMaterial.fog = false;
+@@ -10977,7 +10978,15 @@ class Background extends DataMap {
+ 
+ 			}
+ 
+-			renderList.unshift( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++			if ( backgroundMesh.material.depthTest === true ) {
++
++				renderList.push( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++
++			} else {
++
++				renderList.unshift( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++
++			}
+ 
+ 		} else {
+ 
+@@ -49262,16 +49271,45 @@ class WebGPUBackend extends Backend {
  
  		let descriptors = renderTargetData.descriptors;
  
@@ -165,6 +198,43 @@ index 7c6423152fbd88d1efc2d7f79db344d4315603eb..07a410a5ffb28da48e48637b4b4a23e2
 +			this._frameId = frame.frameId;
  
  		}
+ 
+diff --git a/src/renderers/common/Background.js b/src/renderers/common/Background.js
+index 65bf6e475fc04af176f206cbf9b9a9748c9f5dd7..b87a3985dad7fc4ce70e6f09668a06587cf48291 100644
+--- a/src/renderers/common/Background.js
++++ b/src/renderers/common/Background.js
+@@ -114,12 +114,13 @@ class Background extends DataMap {
+ 				let viewProj = cameraProjectionMatrix.mul( vec4( viewPosition.xyz, 1.0 ) );
+ 
+ 				// force background to far plane so it does not occlude objects
+-				viewProj = viewProj.setZ( viewProj.w );
++				viewProj = viewProj.setZ( renderer.reversedDepthBuffer ? 0 : viewProj.w );
+ 
+ 				const nodeMaterial = new NodeMaterial();
+ 				nodeMaterial.name = 'Background.material';
+ 				nodeMaterial.side = BackSide;
+-				nodeMaterial.depthTest = false;
++				// Depth tested at the far plane and drawn after the opaque objects, its fragments only run where nothing covers it. A logarithmic depth buffer gets the depth from the fragment, so the background goes under everything instead.
++				nodeMaterial.depthTest = renderer.logarithmicDepthBuffer !== true;
+ 				nodeMaterial.depthWrite = false;
+ 				nodeMaterial.allowOverride = false;
+ 				nodeMaterial.fog = false;
+@@ -158,7 +159,15 @@ class Background extends DataMap {
+ 
+ 			}
+ 
+-			renderList.unshift( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++			if ( backgroundMesh.material.depthTest === true ) {
++
++				renderList.push( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++
++			} else {
++
++				renderList.unshift( backgroundMesh, backgroundMesh.geometry, backgroundMesh.material, 0, 0, null, null );
++
++			}
+ 
+ 		} else {
  
 diff --git a/src/renderers/webgpu/WebGPUBackend.js b/src/renderers/webgpu/WebGPUBackend.js
 index 719d67abe3986ca058794b63a441ce66bedde891..daab082f1f9bcf8fa54f82e818c27954b65190d7 100644
