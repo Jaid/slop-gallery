@@ -22,7 +22,7 @@ export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          u
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
                           mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8; 100 in cinematic graphics, whose first frame of everything at once loses the GPU device at 2160p
-  --swiftshader           renders on Chrome’s software Vulkan instead of a GPU, for machines without one like CI runners; slow, but enough to load and analyze the scene
+  --swiftshader           renders on Chrome’s software Vulkan instead of a GPU, for machines without one like CI runners, which also need a system Vulkan driver like Mesa’s (mesa-vulkan-drivers on Ubuntu); slow, but enough to load and analyze the scene
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
   --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
@@ -155,7 +155,7 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     viewport: resolveSize(values, defaultHeight),
   }
 }
-/** Without these, headless Chrome on a machine without a GPU hands out a fallback adapter whose canvas can’t present, which loses the device on the first frame. */
+/** Without these, headless Chrome on a machine without a GPU hands out a fallback adapter whose canvas can’t present, which loses the device on the first frame. ANGLE’s Vulkan backend additionally needs the surface extensions of a system Vulkan driver, without which the GPU process exits. */
 const swiftshaderArgs = ['--use-angle=vulkan', '--use-vulkan=swiftshader', '--enable-unsafe-swiftshader']
 /** Starts a private Vite dev server, or serves the static target, and resolves with the page URL. Dispose it to stop the server. */
 export const serveGallery = async (setup: GallerySetup, options: {

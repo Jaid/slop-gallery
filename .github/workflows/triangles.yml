@@ -21,6 +21,9 @@ jobs:
     # The production build, as the dev server’s first visit reoptimizes dependencies while rooms load, which silently leaves rooms out
     - name: build
       run: bun run build
+    # Chrome’s software rendering needs the surface extensions of a system Vulkan driver.
+    - name: installVulkanDriver
+      run: sudo apt-get install --yes --no-install-recommends mesa-vulkan-drivers
     # Every room’s triangles, meshes and lights in heavy graphics, to the log and the job summary, loaded in the runner’s Chrome on its software Vulkan.
     # Knottingham is left out, as some of its Knot shaders crash Chrome’s software GPU process.
     - name: analyzeWorlds
