@@ -22,6 +22,7 @@ export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          u
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
                           mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8; 100 in cinematic graphics, whose first frame of everything at once loses the GPU device at 2160p
+  --swiftshader           renders on Chrome’s software Vulkan instead of a GPU, for machines without one like CI runners; slow, but enough to load and analyze the scene
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
   --<parameter> <value>   mirrors ?<parameter>=<value> for every other URL query parameter the app reads, e.g. --show_wireframe true or --anti_aliasing false:
@@ -37,6 +38,7 @@ export const galleryOptions = {
     default: '1',
   },
   stream_budget: {type: 'string'},
+  swiftshader: {type: 'boolean'},
   target: {type: 'string'},
   width: {type: 'string'},
   height: {type: 'string'},
@@ -46,6 +48,7 @@ export type GalleryValues = Partial<Record<string, boolean | string>> & {
   height?: string
   seed: string
   stream_budget?: string
+  swiftshader?: boolean
   target?: string
   width?: string
 }
@@ -143,6 +146,7 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     }
   }
   return {
+    swiftshader: values.swiftshader === true,
     target,
     /** the world the page opens, which --room or a world’s own parameters choose */
     world: readWorld(`?${search}`),
@@ -151,6 +155,8 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     viewport: resolveSize(values, defaultHeight),
   }
 }
+/** Without these, headless Chrome on a machine without a GPU hands out a fallback adapter whose canvas can’t present, which loses the device on the first frame. */
+const swiftshaderArgs = ['--use-angle=vulkan', '--use-vulkan=swiftshader', '--enable-unsafe-swiftshader']
 /** Starts a private Vite dev server, or serves the static target, and resolves with the page URL. Dispose it to stop the server. */
 export const serveGallery = async (setup: GallerySetup, options: {
   /** Vite cache directory; a running dev server may share the default cache, and concurrent dependency optimization would invalidate each other’s chunks */
@@ -260,8 +266,8 @@ export const openHeadlessGallery = async (setup: GallerySetup, options: {
         ...setup.viewport,
         deviceScaleFactor: 1,
       },
-      // WebMCP lets scripts call the app’s own tools, see callWebmcpTool from capture-session/script.
-      args: ['--enable-unsafe-webgpu', '--enable-features=WebMCP'],
+      // WebMCP lets scripts call the app’s own tools, see callWebmcpTool from capture-session/script. Chrome only keeps the last --enable-features.
+      args: ['--enable-unsafe-webgpu', `--enable-features=${setup.swiftshader ? 'WebMCP,Vulkan' : 'WebMCP'}`, ...setup.swiftshader ? swiftshaderArgs : []],
     })
     const page = await browser.newPage()
     watchPage(page)
