@@ -108,7 +108,7 @@ r3fStaticRendering({
 
 Either feature can be set to `false` or `{enabled: false}`. Minimum thresholds must be integers of at least two. `include` takes globs relative to the project root, RegExps, predicates receiving normalized absolute filenames and `{glob, scope}` objects, alone or as an array; a region’s scope path names the components and other declarations around it, like `Gallery`, without a callee such as `map` (see `vite-plugin-bake-core`). `exclude` accepts a RegExp or a predicate. The default transforms project-root `.tsx`/`.jsx` files outside `node_modules`.
 
-`r3f-static-rendering.json` reports source regions, retained plan count, successful transformations and skipped candidates with reasons. Source paths/diagnostics are potentially publishable source information; set `report: false` when that is undesirable. Plan imports are tree-shakeable, and unused plans disappear with their consumers. Watch builds start with fresh analysis and track referenced source/re-export files. High-resolution source maps accompany changes.
+With `report: true`, `r3f-static-rendering.json` reports source regions, retained plan count, successful transformations and skipped candidates with reasons. It is off by default, since source paths and diagnostics would be published with the build output; `onDiagnostic` receives the diagnostics without emitting a file. Plan imports are tree-shakeable, and unused plans disappear with their consumers. Watch builds start with fresh analysis and track referenced source/re-export files. High-resolution source maps accompany changes.
 
 ## Tests
 

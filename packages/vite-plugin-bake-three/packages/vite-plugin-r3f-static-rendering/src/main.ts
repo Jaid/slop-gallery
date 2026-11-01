@@ -94,7 +94,7 @@ export default function r3fStaticRendering(options: R3fStaticRenderingOptions = 
     generateBundle(_options, bundle) {
       const retained = new Set(Object.values(bundle).flatMap(output => (output.type === 'chunk' ? Object.keys(output.modules).filter(id => id.startsWith(`\0${prefix}`)) : [])))
       const optimized = diagnostics.filter(item => item.status === 'optimized')
-      if (options.report !== false) {
+      if (options.report === true) {
         this.emitFile({
           type: 'asset',
           fileName: 'r3f-static-rendering.json',

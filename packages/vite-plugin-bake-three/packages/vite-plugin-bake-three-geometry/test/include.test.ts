@@ -28,6 +28,7 @@ const buildWith = async (include: Array<IncludeFilter>) => {
       plugins: [bakeGeometry({
         minimumBytes: 0,
         include,
+        report: true,
       })],
       build: {
         write: false,

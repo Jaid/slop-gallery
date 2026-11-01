@@ -282,7 +282,7 @@ export default function createBakePlugin(adapter: BakeAdapter, options: BakeOpti
         }
       }
       const baked = diagnostics.filter(item => item.status === 'baked')
-      if (options.report !== false) {
+      if (options.report === true) {
         this.emitFile({
           type: 'asset',
           fileName: `bake-${adapter.name}.json`,

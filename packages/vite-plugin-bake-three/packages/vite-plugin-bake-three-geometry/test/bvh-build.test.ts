@@ -116,6 +116,7 @@ test.each([
       plugins: [bakeThreeGeometry({
         meshBvh,
         minimumBytes: 0,
+        report: true,
       })],
       build: {
         write: false,

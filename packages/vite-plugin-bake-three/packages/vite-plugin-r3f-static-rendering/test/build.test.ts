@@ -22,7 +22,7 @@ test('real Vite build links executable plans, uses fresh instances, and keeps bu
       configFile: false,
       root: directory,
       logLevel: 'silent',
-      plugins: [r3fStaticRendering()],
+      plugins: [r3fStaticRendering({report: true})],
       build: {
         write: false,
         target: 'esnext',
@@ -116,7 +116,7 @@ test('Vite drops plans when their only component is tree-shaken', async () => {
       configFile: false,
       root: directory,
       logLevel: 'silent',
-      plugins: [r3fStaticRendering()],
+      plugins: [r3fStaticRendering({report: true})],
       build: {
         write: false,
         target: 'esnext',

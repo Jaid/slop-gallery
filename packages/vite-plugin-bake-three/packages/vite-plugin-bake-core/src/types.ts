@@ -122,7 +122,7 @@ export type BakeOptions = {
   /** Ignore small snapshots for which an extra request is unlikely to pay for itself. */
   minimumBytes?: number
   onDiagnostic?: (diagnostic: BakeDiagnostic) => void
-  /** Emit a machine-readable report with successful recipes and skipped resource candidates. */
+  /** Emit a machine-readable report with successful recipes and skipped resource candidates; off by default. */
   report?: boolean
   /** Maximum execution time of one closed recipe, in milliseconds. */
   timeoutMs?: number

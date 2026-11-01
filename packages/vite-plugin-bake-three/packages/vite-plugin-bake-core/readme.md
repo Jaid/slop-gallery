@@ -64,7 +64,7 @@ include: [
 ],
 ```
 
-A candidate’s scope path joins the names around it with slashes, outermost first: the functions, classes, methods, properties and variables it sits in, then its own name, which a definition declares and a call takes from its callee. `function antechamberDomeGeometry()` is `antechamberDomeGeometry`, the `new SphereGeometry()` inside it `antechamberDomeGeometry/SphereGeometry`, `geometry = new TorusKnotGeometry()` in `class Sculpture` is `Sculpture/geometry/TorusKnotGeometry` and a call at module level, like `cutArchitectures(walls)`, just its callee’s name. Every diagnostic in the report carries its `scope`, so patterns can be read off a previous build. As in paths, `*` stays within one name and `**` spans several, so `Sculpture/**` selects everything in the class but not the class itself; `Sculpture{,/**}` selects both.
+A candidate’s scope path joins the names around it with slashes, outermost first: the functions, classes, methods, properties and variables it sits in, then its own name, which a definition declares and a call takes from its callee. `function antechamberDomeGeometry()` is `antechamberDomeGeometry`, the `new SphereGeometry()` inside it `antechamberDomeGeometry/SphereGeometry`, `geometry = new TorusKnotGeometry()` in `class Sculpture` is `Sculpture/geometry/TorusKnotGeometry` and a call at module level, like `cutArchitectures(walls)`, just its callee’s name. Every diagnostic in the report (`report: true`) carries its `scope`, so patterns can be read off a previous build. As in paths, `*` stays within one name and `**` spans several, so `Sculpture/**` selects everything in the class but not the class itself; `Sculpture{,/**}` selects both.
 
 A whole-file filter wins over scoped filters for the same file. Files no filter matches aren’t analyzed at all, which is where most of a build’s baking time goes, so narrow filters also make builds faster. A call into a definition that is included in its own module defers to it; a call into one whose scope is left out bakes at the call site if the call itself is included. `exclude` removes files after `include` and is tested like a RegExp or predicate filter.
 
@@ -84,7 +84,7 @@ Each generated module awaits its own download, so modules in one chunk would fet
 
 Each plugin instance has separate build state. Watch builds start fresh, and referenced source/re-export files are watched. Artifacts deduplicate by content hash and can be cached by the serving infrastructure. There is no persistent evaluation cache.
 
-`bake-<adapter-name>.json` is enabled by default and contains relative source paths and truncated source expressions, not just aggregate counts. Set `report: false` when publishing those diagnostics is undesirable, and consume `onDiagnostic` during the build instead.
+`report: true` emits `bake-<adapter-name>.json` into the build output, with relative source paths and truncated source expressions, not just aggregate counts. It is off by default, since the output usually gets published; `onDiagnostic` receives the same diagnostics during the build without emitting anything.
 
 The timeout bounds JavaScript execution of a recipe; it is not a memory sandbox or a reliable interruption boundary for every native library call. Artifact and canvas size limits constrain supported outputs, not all possible temporary allocations inside trusted native code.
 

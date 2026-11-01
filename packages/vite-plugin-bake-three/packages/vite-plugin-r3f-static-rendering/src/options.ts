@@ -17,6 +17,7 @@ export type R3fStaticRenderingOptions = {
   maxPlanBytes?: number
   onDiagnostic?: (diagnostic: StaticDiagnostic) => void
   renderBundles?: RenderBundlesOptions | false
+  /** Emit r3f-static-rendering.json with source regions, retained plans, transformations and skipped candidates; off by default. */
   report?: boolean
   /** Module specifier used by generated client code for the StaticScene runtime. */
   runtimeModule?: string
