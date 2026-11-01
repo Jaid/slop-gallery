@@ -29,6 +29,12 @@ test('model and narration preferences remain configurable through URL parameters
     eager_audio: true,
   })
 })
+test('the narrator character is only set by a non-blank ?narrator_character, so the seed picks it otherwise', () => {
+  expect(readAiSettings('').narrator_character).toBeUndefined()
+  expect(readAiSettings('?narrator_character=').narrator_character).toBeUndefined()
+  expect(readAiSettings('?narrator_character=%20').narrator_character).toBeUndefined()
+  expect(readAiSettings('?narrator_character=calm').narrator_character).toBe('calm')
+})
 test('?ai_tier appends OpenRouter’s routing variant, and nothing without a valid tier', () => {
   expect(readAiSettings('').ai_tier).toBeUndefined()
   expect(readAiSettings('?ai_tier=flex').ai_tier).toBe('flex')

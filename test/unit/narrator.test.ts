@@ -6,8 +6,10 @@ import {narrationState, Narrator} from 'use-narrator/core'
 
 import {FakePlayback, flush} from '../../packages/use-narrator/packages/use-audio-queue/test/helpers.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
+import {narratorCharacter} from '../../src/lib/audio/narratorCharacter.ts'
 import PortraitNarration from '../../src/lib/audio/PortraitNarration.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
+import {environmentSeed} from '../../src/lib/gameSeed.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 type SpeechRequestBody = {
@@ -116,8 +118,9 @@ test('TTS keeps character steering out of speech and caches successful generated
   const [url, request] = fetchSpy.mock.calls[0]
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
   const body = JSON.parse(request!.body as string) as SpeechRequestBody
-  expect(body.input).not.toContain(settings.narrator_character)
-  expect(body.instructions).toBe(settings.narrator_character)
+  const character = narratorCharacter(environmentSeed)
+  expect(body.input).not.toContain(character)
+  expect(body.instructions).toBe(character)
   expect(body.response_format).toBe('pcm')
   expect(recordings[0]).toBeInstanceOf(Blob)
   players[0].end()

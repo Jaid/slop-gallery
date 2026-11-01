@@ -20,7 +20,8 @@ const defaults = {
   image_model: 'google/gemini-nano-banana-2.1',
   audio_model: 'google/gemini-3.8-flash-tts',
   narrator_voice: 'Algenib',
-  narrator_character: 'art gallery narrator – witty, wise, sarcastic, calm',
+  /** the narrator’s delivery instructions, sent verbatim; without them, the environment seed picks the narrator’s traits */
+  narrator_character: undefined as string | undefined,
   eager_audio: false,
 }
 const normalizeBoolean = (fallback: boolean) => (value: unknown) => {
@@ -41,7 +42,7 @@ const aiSettingsSchema = optis({
     image_model: normalizeString(defaults.image_model),
     audio_model: normalizeString(defaults.audio_model),
     narrator_voice: normalizeString(defaults.narrator_voice),
-    narrator_character: normalizeString(defaults.narrator_character),
+    narrator_character: (value: unknown) => (typeof value === 'string' && value.trim() ? value : undefined),
     eager_audio: normalizeBoolean(defaults.eager_audio),
   },
 })

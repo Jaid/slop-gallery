@@ -1,5 +1,6 @@
 import {expect, test} from 'bun:test'
 
+import {narratorCharacter} from '../../src/lib/audio/narratorCharacter.ts'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
@@ -88,6 +89,23 @@ test('the Halloween Orb’s prompt names 5 of its adjectives, the same for the s
   expect(distinct.size).toBe(5)
   const prompts = new Set(Array.from({length: 50}, (_, seed) => halloweenOrb.prompt(seed)))
   expect(prompts.size).toBeGreaterThan(10)
+})
+test('the narrator’s character names 2 to 5 traits in their order, one noun and maybe a suffix, the same for the same seed', () => {
+  const traits = ['calm', 'knowledgeable', 'lively', 'witty', 'sarcastic', 'humorous', 'self-deprecating']
+  const pattern = /^(?<traits>[\w-]+(?: [\w-]+)*?) (?:art gallery director|commentary|narration|narrator)(?: (?:easily hooking the listener|easy to listen to|hooking the listeners|pleasant to listen to))?$/u
+  expect(narratorCharacter(1)).toBe(narratorCharacter(1))
+  const counts = new Set<number>
+  for (let seed = 0; seed < 200; seed++) {
+    const groups = pattern.exec(narratorCharacter(seed))!.groups!
+    const picked = groups.traits.split(' ')
+    expect(picked.length).toBeGreaterThanOrEqual(2)
+    expect(picked.length).toBeLessThanOrEqual(5)
+    expect(picked).toEqual(traits.filter(trait => picked.includes(trait)))
+    counts.add(picked.length)
+  }
+  expect(counts).toEqual(new Set([2, 3, 4, 5]))
+  const characters = new Set(Array.from({length: 50}, (_, seed) => narratorCharacter(seed)))
+  expect(characters.size).toBeGreaterThan(40)
 })
 test('every pot placement can grow every plant, and seed 1 stays put', () => {
   for (const placement of potPlacements) {
