@@ -1,4 +1,4 @@
-import galleryWallpaper from '#root/assets/wallpaper.jxl' with {distance: '3', format: 'jxl', maximumLong: '3840'}
+import wallpaper from '#root/assets/wallpaper.jxl' with {distance: '5', format: 'jxl', maximumLong: '3840'}
 
 /** the ids of every world, which also name their telemetry service */
 export const worldIds = ['gallery', 'knottingham', 'sandbox'] as const
@@ -11,7 +11,7 @@ export type WorldInfo = {
   tagline: string
   title: string
   /** the image behind the loading screen’s title: its URL in the page, its file where Bun imports the catalog, like Vite’s config */
-  wallpaper?: string
+  wallpaper: string
 }
 
 export const worlds = {
@@ -20,19 +20,21 @@ export const worlds = {
     storageKey: 'slop-gallery',
     tagline: 'Good taste. Questionable art.',
     enterLabel: 'Enter gallery',
-    wallpaper: galleryWallpaper,
+    wallpaper,
   },
   knottingham: {
     title: 'Knottingham',
     storageKey: 'knot-gallery',
     tagline: 'Light, motion and impossible materials.',
     enterLabel: 'Enter Knottingham',
+    wallpaper,
   },
   sandbox: {
     title: 'Sandbox',
     storageKey: 'sandbox',
     tagline: 'One empty room to try things in.',
     enterLabel: 'Enter sandbox',
+    wallpaper,
   },
 } as const satisfies Record<WorldId, WorldInfo>
 

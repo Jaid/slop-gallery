@@ -1,24 +1,24 @@
 import type {Artwork} from '#src/lib/gallery/types.ts'
 
-import breadImage from '#root/assets/art/bread.jxl'
-import catImage from '#root/assets/art/cat.jxl'
-import dogImage from '#root/assets/art/dog.jxl'
-import duckImage from '#root/assets/art/duck.jxl'
-import frogImage from '#root/assets/art/frog.jxl'
-import fruitImage from '#root/assets/art/fruit.jxl'
-import ghostsImage from '#root/assets/art/ghosts.jxl'
-import gleanersImage from '#root/assets/art/gleaners.jxl'
-import gnomesImage from '#root/assets/art/gnomes.jxl'
-import gooseImage from '#root/assets/art/goose.jxl'
-import jatteImage from '#root/assets/art/jatte.jxl'
-import lobsterImage from '#root/assets/art/lobster.jxl'
-import orangeImage from '#root/assets/art/orange.jxl'
-import pigeonImage from '#root/assets/art/pigeon.jxl'
-import toastImage from '#root/assets/art/toast.jxl'
-import treeImage from '#root/assets/art/tree.jxl'
-import venusImage from '#root/assets/art/venus.jxl'
-import waveImage from '#root/assets/art/wave.jxl'
-import wolfImage from '#root/assets/art/wolf.jxl'
+import breadImage from '#root/assets/art/bread.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import catImage from '#root/assets/art/cat.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import dogImage from '#root/assets/art/dog.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import duckImage from '#root/assets/art/duck.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import frogImage from '#root/assets/art/frog.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import fruitImage from '#root/assets/art/fruit.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import ghostsImage from '#root/assets/art/ghosts.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import gleanersImage from '#root/assets/art/gleaners.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import gnomesImage from '#root/assets/art/gnomes.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import gooseImage from '#root/assets/art/goose.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import jatteImage from '#root/assets/art/jatte.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import lobsterImage from '#root/assets/art/lobster.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import orangeImage from '#root/assets/art/orange.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import pigeonImage from '#root/assets/art/pigeon.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import toastImage from '#root/assets/art/toast.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import treeImage from '#root/assets/art/tree.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import venusImage from '#root/assets/art/venus.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import waveImage from '#root/assets/art/wave.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
+import wolfImage from '#root/assets/art/wolf.jxl' with {distance: '3', format: 'jxl', maximumLong: '2048'}
 import breadNarration from '#root/assets/audio/bread.opus'
 import catNarration from '#root/assets/audio/cat.opus'
 import dogNarration from '#root/assets/audio/dog.opus'
