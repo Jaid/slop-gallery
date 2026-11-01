@@ -11,6 +11,9 @@ export const chandelierPhysics = {
   pendantMass: 0.08,
 }
 
+/** the ceiling the chandelier is made to hang from, as high as the Sienna’s: its canopy sits right under it, so under a higher ceiling the fixture hangs that much higher */
+export const chandelierCeiling = 5.8
+
 /** the height of the chandelier’s lamp above the floor while it hangs at rest, below the metalwork, so the fixture cannot shadow its own source */
 export const chandelierLampY = chandelierPhysics.height - 0.5
 

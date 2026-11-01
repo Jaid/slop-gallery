@@ -1,0 +1,171 @@
+import type {RoundVestibule} from '#src/lib/gallery/roundVestibule.ts'
+import type {FloorSize} from '../base/Room.ts'
+
+import {chandelierCeiling} from '#src/lib/physics/chandelier.ts'
+
+/** a round space of the Cell beyond its north wall */
+export type CellSpace = RoundVestibule & {
+  /** its wall’s id within the room, which the arch opening onto it from the vestibule is named after */
+  name: string
+}
+/** a pedestal carrying one item */
+export type CellPedestal = {
+  /** the middle of its foot, relative to the room’s origin */
+  position: readonly [x: number, z: number]
+  /** its turn about y, which faces one of its sides toward the middle of the space it stands in, or toward the arch where it stands in the middle itself */
+  rotation: number
+}
+/** how the space beyond the north wall is laid out, by the number of items */
+export type CellPlan = 'alcoves' | 'closed' | 'rotunda' | 'single'
+
+/** edge length of the floor’s marble tiles, which run whole from wall to wall along both axes */
+const tile = 0.5
+/** wider than deep, the arch in the middle of its long north wall */
+const size: FloorSize = [18, 14]
+const height = 6
+const northZ = -size[1] / 2
+/** every arch beyond the north wall, and the one through it, which a door closes while the Cell has no items */
+const arch = {
+  width: 3,
+  height: 4.2,
+  profile: 'arch',
+} as const satisfies RoundVestibule['arch']
+/** the vestibule’s, round a lone item or the arches into the alcoves */
+const vestibuleRadius = 4
+/** an alcove’s, which leaves 2 m to walk round its pedestal */
+const alcoveRadius = 2.6
+/** where the alcoves open round the vestibule’s center, from world x toward world z: fanned out across from the arch, from the left to the right as seen through it */
+const alcoveAngles: Partial<Record<number, ReadonlyArray<number>>> = {
+  2: [-0.75 * Math.PI, -0.25 * Math.PI],
+  3: [-5 / 6 * Math.PI, -0.5 * Math.PI, -Math.PI / 6],
+}
+/** how far apart neighboring pedestals of a rotunda stand at least, middle to middle */
+const ringSpacing = 2.6
+/** the rotunda’s pedestals stand no nearer to its middle, which keeps room to walk under the chandelier */
+const ringMinimum = 2.4
+/** from the rotunda’s ring of pedestals out to its wall, room enough to walk round them */
+const ringClearance = 2.4
+/** the vestibule chandelier’s lamp in a vestibule of the default radius, which a larger rotunda scales up */
+const vestibuleLamp = {
+  strength: 40,
+  range: 10,
+}
+/** The turn about y that faces a pedestal at `from` toward `to`. */
+const facing = ([x, z]: readonly [number, number], [toX, toZ]: readonly [number, number]) => Math.atan2(toX - x, toZ - z) + 0
+const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
+/** The plan for as many items. */
+function planFor(itemCount: number): CellPlan {
+  if (itemCount < 2) {
+    return itemCount ? 'single' : 'closed'
+  }
+  return alcoveAngles[itemCount] ? 'alcoves' : 'rotunda'
+}
+
+/**
+ * The Cell’s floor plan, its size fixed, and what lies beyond its north wall, which follows the number of items it holds, each on a pedestal of its own:
+ *
+ * - none: the arch through the north wall stays shut by a door
+ * - one: a round vestibule with the pedestal in its middle
+ * - two or three: the vestibule as a hub with an arch into a small round alcove for each, fanned out across from the arch
+ * - four and more: the vestibule as a rotunda, as large as a ring of their pedestals round its chandelier takes, the ring open toward the arch
+ */
+export default class CellLayout {
+  /** the small round rooms off the vestibule, one for each item, when there are two or three */
+  readonly alcoves: ReadonlyArray<CellSpace>
+  /** the arch through the north wall and every arch beyond it, as it opens straight across */
+  readonly arch = arch
+  /** how much higher the chandeliers hang than from the ceiling they are made for, so they hang right under the Cell’s */
+  readonly chandelierLift = round(height - chandelierCeiling)
+  /** edge length of the floor’s marble tiles, which run whole from wall to wall */
+  readonly floorTile = tile
+  /** how high the ceilings hang, over the Cell and everything beyond it alike */
+  readonly height = height
+  /** the z of the north wall’s center line, relative to the room’s origin */
+  readonly northZ = northZ
+  /** a pedestal for every item, in their order */
+  readonly pedestals: ReadonlyArray<CellPedestal>
+  readonly plan: CellPlan
+  readonly size = size
+  /** the round room beyond the north wall’s arch, or undefined while a door closes it */
+  readonly vestibule: CellSpace | undefined
+  /** how brightly the vestibule’s chandelier shines and how far: further in a larger rotunda, a little brighter for its larger walls */
+  readonly vestibuleLamp: typeof vestibuleLamp
+
+  constructor(readonly itemCount: number) {
+    if (!Number.isSafeInteger(itemCount) || itemCount < 0) {
+      throw new RangeError(`The Cell holds a whole number of items, not ${itemCount}.`)
+    }
+    this.plan = planFor(itemCount)
+    this.vestibuleLamp = vestibuleLamp
+    if (this.plan === 'closed') {
+      this.vestibule = undefined
+      this.alcoves = []
+      this.pedestals = []
+      return
+    }
+    if (this.plan === 'rotunda') {
+      // As many slots round the ring as items and one more, the one in front of the arch left free to walk in by.
+      const slots = itemCount + 1
+      const ring = Math.max(ringMinimum, ringSpacing / 2 / Math.sin(Math.PI / slots))
+      const radius = ring + ringClearance
+      const center = [0, northZ - radius] as const
+      this.vestibule = this.space('vestibule', center, radius, [['cell', Math.PI / 2]])
+      this.alcoves = []
+      this.pedestals = Array.from({length: itemCount}, (_, index) => {
+        const angle = Math.PI / 2 + (index + 1) * Math.PI * 2 / slots
+        const position = [round(center[0] + Math.cos(angle) * ring), round(center[1] + Math.sin(angle) * ring)] as const
+        return {
+          position,
+          rotation: facing(position, center),
+        }
+      })
+      const scale = radius / vestibuleRadius
+      this.vestibuleLamp = {
+        strength: round(vestibuleLamp.strength * scale ** 2),
+        range: round(vestibuleLamp.range * scale),
+      }
+      return
+    }
+    const center = [0, northZ - vestibuleRadius] as const
+    if (this.plan === 'single') {
+      this.vestibule = this.space('vestibule', center, vestibuleRadius, [['cell', Math.PI / 2]])
+      this.alcoves = []
+      this.pedestals = [{
+        position: center,
+        rotation: 0,
+      }]
+      return
+    }
+    const angles = alcoveAngles[itemCount]!
+    const names = angles.map((_, index) => `alcove_${index}`)
+    this.vestibule = this.space('vestibule', center, vestibuleRadius, [['cell', Math.PI / 2], ...angles.map((angle, index) => [names[index], angle] as const)])
+    // Each alcove’s wall touches the vestibule’s back to back where the arch between them opens.
+    this.alcoves = angles.map((angle, index) => {
+      const distance = vestibuleRadius + alcoveRadius
+      const middle = [round(center[0] + Math.cos(angle) * distance), round(center[1] + Math.sin(angle) * distance)] as const
+      return this.space(names[index], middle, alcoveRadius, [['vestibule', angle + Math.PI]])
+    })
+    this.pedestals = this.alcoves.map(alcove => ({
+      position: alcove.center,
+      rotation: facing(alcove.center, center),
+    }))
+  }
+
+  /** the vestibule and its alcoves: every round space beyond the north wall, none while it is closed */
+  get spaces(): ReadonlyArray<CellSpace> {
+    return this.vestibule ? [this.vestibule, ...this.alcoves] : []
+  }
+
+  private space(name: string, center: readonly [number, number], radius: number, arches: ReadonlyArray<readonly [name: string, angle: number]>): CellSpace {
+    return {
+      name,
+      center,
+      radius,
+      arch,
+      arches: arches.map(([archName, angle]) => ({
+        name: archName,
+        angle,
+      })),
+    }
+  }
+}

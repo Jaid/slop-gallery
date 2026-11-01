@@ -58,18 +58,18 @@ export function roundVestibuleWall(vestibule: RoundVestibule, origin: Vec3, heig
   }
 }
 
-/** Whether the point, relative to the vestibule’s center, lies under one of its arches, between its jambs from its center out to the plane touching its wall at the arch’s middle. */
-const underArch = (vestibule: RoundVestibule, x: number, z: number, arch: VestibuleArch) => {
+/** Whether the point, relative to the vestibule’s center, lies under one of its arches, at least `margin` meters from its jambs, from its center out to `margin` meters beyond the plane touching its wall at the arch’s middle, where whatever it opens onto takes over. */
+const underArch = (vestibule: RoundVestibule, x: number, z: number, arch: VestibuleArch, margin: number) => {
   const along = x * Math.cos(arch.angle) + z * Math.sin(arch.angle)
   const across = z * Math.cos(arch.angle) - x * Math.sin(arch.angle)
-  return along >= 0 && along <= vestibule.radius + 1e-6 && Math.abs(across) <= vestibule.arch.width / 2 + 1e-6
+  return along >= 0 && along <= vestibule.radius + margin + 1e-6 && Math.abs(across) <= vestibule.arch.width / 2 - margin + 1e-6
 }
 
-/** Whether the point lies on the vestibule’s floor: within its round wall’s center line, or on under one of its arches to the plane touching the wall there. */
-export function insideRoundVestibule(vestibule: RoundVestibule, x: number, z: number) {
+/** Whether the point lies on the vestibule’s floor, at least `margin` meters from its walls’ center lines: within its round wall, or on under one of its arches to the plane touching the wall there. */
+export function insideRoundVestibule(vestibule: RoundVestibule, x: number, z: number, margin = 0) {
   const dx = x - vestibule.center[0]
   const dz = z - vestibule.center[1]
-  return Math.hypot(dx, dz) <= vestibule.radius + 1e-6 || vestibule.arches.some(arch => underArch(vestibule, dx, dz, arch))
+  return Math.hypot(dx, dz) <= vestibule.radius - margin + 1e-6 || vestibule.arches.some(arch => underArch(vestibule, dx, dz, arch, margin))
 }
 
 /**

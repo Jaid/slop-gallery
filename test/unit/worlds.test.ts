@@ -10,13 +10,13 @@ import {knotGalleryBounds} from '../../src/lib/gallery/knotGallery.ts'
 import PlayerSession from '../../src/lib/gallery/PlayerSession.ts'
 import {asPortrait} from '../../src/lib/placement/portraitSlots.ts'
 import {placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
-import {cellVestibule} from '../../src/rooms/cell/Cell.ts'
 import world from '../../src/worlds/current.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import galleryWalls from '../../src/worlds/gallery/walls.ts'
 import {defaultWorld, knottinghamParameters, readWorld, selectWorld, worldIds, worlds} from '../../src/worlds/index.ts'
 import knottingham from '../../src/worlds/knottingham/index.ts'
 import sandbox from '../../src/worlds/sandbox/index.ts'
+import Sandbox from '../../src/worlds/sandbox/Sandbox.ts'
 
 const root = resolve(import.meta.dir, '../..')
 /** how many of the items come in each ratio */
@@ -99,46 +99,60 @@ describe('worlds', () => {
     expect(knottingham.roomAt([0, 0, knotGalleryBounds.northZ - 5])).toBeUndefined()
     expect(knottingham.placement.contains(knottingham.placement.recoveryPosition)).toBe(true)
   })
-  test('the Sandbox is a single room, the Cell, which holds its spawn and is sealed by the Arena’s walls, its north wall opening into its round vestibule', () => {
+  test('the Sandbox is a single room, the Cell, 18 × 14 m and 6 m high, which holds its spawn and is sealed by the Arena’s walls, a door shutting its north wall’s arch without ?item', () => {
+    expect(sandbox.items).toEqual([])
     expect(sandbox.rooms.map(room => room.id)).toEqual(['cell'])
     const cell = sandbox.room('cell')
     expect(cell.title).toBe('Cell')
+    expect(cell.size).toEqual([18, 14])
+    expect(cell.height).toBe(6)
+    expect(cell.room.layout.plan).toBe('closed')
     expect(sandbox.artworks).toBe(slopGallery.artworks)
-    expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule_chandelier'])
+    expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier'])
     expect(sandbox.roomAt(sandbox.spawn.position)).toBe(cell)
     expect(sandbox.contains(sandbox.spawn.position)).toBe(true)
     expect(sandbox.contains([0, 1, cell.size[1]])).toBe(false)
     expect(sandbox.floorHeight(sandbox.spawn.position)).toBe(0)
     expect(sandbox.placement.contains(sandbox.placement.recoveryPosition)).toBe(true)
-    expect(sandbox.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-vestibule', 'cell-west'])
+    expect(sandbox.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-west'])
     for (const wall of sandbox.walls) {
       expect(wall.height).toBe(cell.height)
     }
-    // The only opening is the arch between the room and its vestibule.
+    // The only opening is the arch the door fills, and nothing lies behind it.
     const holes = sandbox.walls.flatMap(wall => (wall.holes ?? []).map(hole => `${wall.id}/${hole.name}`))
-    expect(holes).toEqual(['cell-north/vestibule', 'cell-vestibule/cell'])
+    expect(holes).toEqual(['cell-north/door'])
     const [x, , z] = sandbox.spawn.position
     const [width, depth] = cell.size
+    expect(sandbox.contains([0, 1, -depth / 2 - 1])).toBe(false)
+    expect(sandbox.placement.contains([0, 1, -depth / 2 - 0.1])).toBe(false)
     expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeGreaterThan(width / 2 - x - wallFace)
     expect(sandbox.wallDistance([x, 1, z], [1, 0, 0])).toBeLessThan(width / 2 - x + 0.1)
     expect(sandbox.wallDistance([4, 1, z], [0, 0, -1])).toBeLessThan(z + depth / 2 + 0.1)
-    // Straight through the arch, across the vestibule to the far side of its wall.
-    const [vestibuleX, vestibuleZ] = cellVestibule.center
-    expect(sandbox.wallDistance([vestibuleX, 1, z], [0, 0, -1])).toBeGreaterThan(z - vestibuleZ + cellVestibule.radius - wallFace)
     expect(sandbox.wallDistance([x, cell.height + 1, z], [1, 0, 0])).toBe(Infinity)
   })
-  test('the Cell’s vestibule is part of it, reached through the arch alone', () => {
-    const cell = sandbox.room('cell')
-    const [vestibuleX, vestibuleZ] = cellVestibule.center
+  test('with a single item, the Cell’s north wall opens into a round vestibule, part of it and reached through the arch alone', () => {
+    const single = new Sandbox(['prop-orb-halloween'])
+    const cell = single.room('cell')
+    const vestibule = cell.room.layout.vestibule!
+    expect(cell.room.layout.plan).toBe('single')
+    expect(single.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-vestibule_chandelier'])
+    expect(single.walls.map(wall => wall.id).toSorted()).toEqual(['cell-east', 'cell-north', 'cell-south', 'cell-vestibule', 'cell-west'])
+    const holes = single.walls.flatMap(wall => (wall.holes ?? []).map(hole => `${wall.id}/${hole.name}`))
+    expect(holes).toEqual(['cell-north/vestibule', 'cell-vestibule/cell'])
+    const [vestibuleX, vestibuleZ] = vestibule.center
     const northZ = -cell.size[1] / 2
-    const half = cellVestibule.arch.width / 2
-    expect(sandbox.roomAt([vestibuleX, 1, vestibuleZ])).toBe(cell)
-    expect(sandbox.contains([vestibuleX + 2, 1, vestibuleZ])).toBe(true)
-    expect(sandbox.contains([vestibuleX + cellVestibule.radius, 1, vestibuleZ])).toBe(false)
-    expect(sandbox.contains([vestibuleX, 1, northZ])).toBe(true)
-    expect(sandbox.placement.contains([vestibuleX + half - 0.1, 1, northZ - 0.1])).toBe(true)
-    expect(sandbox.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
-    expect(sandbox.placement.contains([vestibuleX, 1, vestibuleZ - cellVestibule.radius - 0.1])).toBe(false)
+    const half = vestibule.arch.width / 2
+    expect(vestibuleZ + vestibule.radius).toBe(northZ)
+    expect(single.roomAt([vestibuleX, 1, vestibuleZ])).toBe(cell)
+    expect(single.contains([vestibuleX + 2, 1, vestibuleZ])).toBe(true)
+    expect(single.contains([vestibuleX + vestibule.radius, 1, vestibuleZ])).toBe(false)
+    expect(single.contains([vestibuleX, 1, northZ])).toBe(true)
+    expect(single.placement.contains([vestibuleX + half - 0.1, 1, northZ - 0.1])).toBe(true)
+    expect(single.placement.contains([vestibuleX + half + 0.3, 1, northZ - 0.1])).toBe(false)
+    expect(single.placement.contains([vestibuleX, 1, vestibuleZ - vestibule.radius - 0.1])).toBe(false)
+    // Straight through the arch, across the vestibule to the far side of its wall.
+    const [, , z] = single.spawn.position
+    expect(single.wallDistance([vestibuleX, 1, z], [0, 0, -1])).toBeGreaterThan(z - vestibuleZ + vestibule.radius - wallFace)
   })
   test('the Sandbox’s walls have portrait slots, at most one for every default work of each ratio, every one a valid hanging spot with all the others filled', () => {
     const slots = sandbox.portraitSlots()

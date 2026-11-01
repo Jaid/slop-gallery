@@ -12,20 +12,27 @@ import Orb from '#component/Orb'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {halloweenOrb, horrorOrb, orbRadius, spookOrb} from '#src/lib/gallery/orbs/index.ts'
+import {orbRadius} from '#src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
-import {cellVestibule} from '#src/rooms/cell/Cell.ts'
+import {mergeParts} from '#src/lib/geometry.ts'
+import CellDoor from '#src/rooms/cell/components/CellDoor/index.tsx'
 import sandbox from '#src/worlds/sandbox/index.ts'
 
 const cell = sandbox.room('cell')
-const {floorTile} = cell.room
+const {layout} = cell.room
+const {chandelierLift, floorTile, vestibule} = layout
 const [width, depth] = cell.size
 const [x, z] = cell.center
 const walls = sandbox.walls.filter(wall => wall.room === cell.id)
-const vestibuleWall = walls.find(wall => wall.id === cell.room.globalId('vestibule'))!
-const [vestibuleX, , vestibuleZ] = cell.toWorld([cellVestibule.center[0], 0, cellVestibule.center[1]])
+const northWall = walls.find(wall => wall.id === cell.room.globalId('north'))!
+const door = northWall.holes?.find(hole => hole.name === 'door')
+/** where a point of the floor plan, relative to the room’s origin, lies in the world */
+const worldPoint = ([pointX, pointZ]: readonly [number, number]) => {
+  const [worldX, , worldZ] = cell.toWorld([pointX, 0, pointZ])
+  return [worldX, worldZ] as const
+}
 // Whole tiles from the north-west corner, which the walls then meet at a tile’s edge all the way round.
 const floorOrigin = [x - width / 2, z - depth / 2] as const
 /** Polished hard like the Cinnabar’s terrazzo, so the chandelier and the velvet mirror clearly in it. */
@@ -35,74 +42,85 @@ const polish: ArenaPolish = {
 }
 const slabThickness = 0.24
 const circleSegments = 96
-/** The orbs in a row across the pedestal’s cap, left to right as seen through the arch, a hand’s width apart. */
-const pedestalOrbs = [spookOrb, halloweenOrb, horrorOrb]
-const orbSpacing = orbRadius * 2 + 0.1
 
-/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the three orbs on a pedestal under a second one, lit besides by the Arena’s studio fill from no visible source. */
+/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, lit besides by the Arena’s studio fill from no visible source, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
-  const pedestal = usePedestal()
   return <group name='cell'>
     <ambientLight intensity={0.45} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={1.3} />
     {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
     <ShadowPool />
     <ArenaShell center={cell.center} floorOrigin={floorOrigin} height={cell.height} polish={polish} size={cell.size} surfaces={surfaces} tile={floorTile} walls={walls} />
-    <group position={[x, 0, z]}>
+    <group position={[x, chandelierLift, z]}>
       <Chandelier lamp={cell.room.globalId('chandelier')} />
     </group>
-    <Vestibule surfaces={surfaces} />
-    <group position={[vestibuleX, 0, vestibuleZ]}>
-      <Chandelier lamp={cell.room.globalId('vestibule_chandelier')} />
-    </group>
-    <Pedestal {...pedestal} position={[vestibuleX, 0, vestibuleZ]} />
-    {pedestalOrbs.map((orb, index) => <Orb key={orb.id} orb={orb} position={[vestibuleX + (index - 1) * orbSpacing, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />)}
+    <Branch if={door} else={<Vestibule surfaces={surfaces} />}><CellDoor hole={door!} surfaces={surfaces} wall={northWall} /></Branch>
   </group>
 }
 
-/** The round vestibule north of the room: the Arena’s marble on its floor and out under its arch, its plaster ceiling and the velvet reveal that lines the arch out to the room’s north wall. */
+/** Every round space beyond the north wall: the Arena’s marble on their floors and out under their arches, their plaster ceilings, the velvet reveals that line the arches out to the walls they open through, the vestibule’s chandelier and the items on their pedestals. */
 function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
   const marble = useArenaMarble(floorOrigin, floorTile, polish)
+  const pedestal = usePedestal()
   const parts = useDisposable(useMemo(() => {
-    const slab = new ExtrudeGeometry(roundVestibuleFloorShape(cellVestibule), {
-      depth: slabThickness,
-      bevelEnabled: false,
-      curveSegments: circleSegments,
-    })
-    // Its top as high as the room’s marble, so both mirror in one plane.
-    slab.rotateX(-Math.PI / 2).translate(0, 0.001 - slabThickness, 0)
-    const ceiling = new CylinderGeometry(cellVestibule.radius, cellVestibule.radius, 0.18, circleSegments)
-    const reveals = vestibuleWall.holes!.map(hole => roundRevealGeometry(vestibuleWall, hole, cellVestibule.arch))
+    const slab = mergeParts(layout.spaces.map(space => {
+      const geometry = new ExtrudeGeometry(roundVestibuleFloorShape(space), {
+        depth: slabThickness,
+        bevelEnabled: false,
+        curveSegments: circleSegments,
+      })
+      // Its top as high as the room’s marble, so all of them mirror in one plane.
+      const [spaceX, spaceZ] = worldPoint(space.center)
+      return geometry.rotateX(-Math.PI / 2).translate(spaceX, 0.001 - slabThickness, spaceZ)
+    }))
+    const ceiling = mergeParts(layout.spaces.map(space => {
+      const [spaceX, spaceZ] = worldPoint(space.center)
+      const disk = new CylinderGeometry(space.radius, space.radius, 0.18, circleSegments)
+      return disk.translate(spaceX, cell.height, spaceZ)
+    }))
+    // Every arch through a round wall, lined out to the plane where the wall it opens onto touches it.
+    const reveals = mergeParts(layout.spaces.flatMap(space => {
+      const wall = walls.find(candidate => candidate.id === cell.room.globalId(space.name))!
+      return wall.holes!.map(hole => roundRevealGeometry(wall, hole, layout.arch).rotateY(wall.rotation).translate(...wall.center))
+    }))
     return {
       slab,
       ceiling,
       reveals,
       floorCollision: colliderGeometry(slab),
-      revealCollision: reveals.map(colliderGeometry),
+      revealCollision: colliderGeometry(reveals),
       dispose() {
-        for (const geometry of [slab, ceiling, ...reveals]) {
+        for (const geometry of [slab, ceiling, reveals]) {
           geometry.dispose()
         }
       },
     }
   }, []))
-  return <>
-    <group name='cell-vestibule' position={[vestibuleX, 0, vestibuleZ]}>
-      <RigidBody colliders={false} type='fixed'>
-        <TrimeshCollider args={parts.floorCollision} />
-        <CylinderCollider args={[0.09, cellVestibule.radius]} position={[0, cell.height, 0]} />
-        <mesh geometry={parts.slab} material={marble} name='cell-vestibule-floor' receiveShadow />
-      </RigidBody>
-      <Branch if={marble.reflectionTarget}><group position={[0, 0.001, 0]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={marble.reflectionTarget!} /></group></Branch>
-      <mesh castShadow geometry={parts.ceiling} material={surfaces.ceiling} name='cell-vestibule-ceiling' position={[0, cell.height, 0]} receiveShadow />
+  const [vestibuleX, vestibuleZ] = worldPoint(vestibule!.center)
+  return <group name='cell-vestibule'>
+    <RigidBody colliders={false} type='fixed'>
+      <TrimeshCollider args={parts.floorCollision} />
+      <TrimeshCollider args={parts.revealCollision} />
+      {layout.spaces.map(space => {
+        const [spaceX, spaceZ] = worldPoint(space.center)
+        return <CylinderCollider key={space.name} args={[0.09, space.radius]} position={[spaceX, cell.height, spaceZ]} />
+      })}
+    </RigidBody>
+    <mesh geometry={parts.slab} material={marble} name='cell-vestibule-floor' receiveShadow />
+    <Branch if={marble.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={marble.reflectionTarget!} /></group></Branch>
+    <mesh castShadow geometry={parts.ceiling} material={surfaces.ceiling} name='cell-vestibule-ceiling' receiveShadow />
+    <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
+    <group position={[vestibuleX, chandelierLift, vestibuleZ]}>
+      <Chandelier lamp={cell.room.globalId('vestibule_chandelier')} />
     </group>
-    {/* In the round wall’s own frame, as the reveals are built. */}
-    <group name='cell-vestibule-reveals' position={vestibuleWall.center} rotation={[0, vestibuleWall.rotation, 0]}>
-      <RigidBody colliders={false} type='fixed'>
-        {parts.revealCollision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
-        {parts.reveals.map((geometry, i) => <mesh key={i} castShadow geometry={geometry} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />)}
-      </RigidBody>
-    </group>
-  </>
+    {sandbox.items.map((orb, index) => {
+      const {position, rotation} = layout.pedestals[index]
+      const [pedestalX, pedestalZ] = worldPoint(position)
+      return <group key={orb.id}>
+        <Pedestal {...pedestal} position={[pedestalX, 0, pedestalZ]} rotation={rotation} />
+        <Orb orb={orb} position={[pedestalX, pedestalHeight + orbRadius + 0.005, pedestalZ]} />
+      </group>
+    })}
+  </group>
 }

@@ -38,11 +38,14 @@ export type WallReservation = WallOpening & {
 }
 
 export type Wall = {
+  /** how high the default baseboard’s two plain bands reach, 0.44 m unless the wall says otherwise; a {@link baseboardSection} sets its own */
   baseboardHeight?: number
   /** How far the baseboard’s ends slant back where they differ from `miters`: square where the other wall of the corner is opened down to the floor right at it, so this baseboard runs on into whatever continues past the opening. */
   baseboardMiters?: readonly [number, number]
   /** Floor contact in local coordinates; repeated u coordinates split the trim at a vertical jump. */
   baseboardProfile?: Array<readonly [number, number]>
+  /** a molded baseboard instead of the two plain bands: its cross-section as points of how far it stands out of the wall’s center line at which height over the floor, from its toe on the floor up to where its top meets the wall’s face; only along a level floor, without a {@link baseboardProfile} */
+  baseboardSection?: ReadonlyArray<readonly [front: number, y: number]>
   center: Vec3
   /** whether the wall carries a cornice along its top when trimmed, true by default */
   cornice?: boolean

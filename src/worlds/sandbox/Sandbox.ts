@@ -1,38 +1,57 @@
+import type {Orb} from '#src/lib/gallery/orbs/index.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 
 import {lazy} from 'react'
 
+import {orbs} from '#src/lib/gallery/orbs/index.ts'
 import {FloorPlanPlacementSpace} from '#src/lib/placement/FloorPlanPlacementSpace.ts'
 import Cell from '#src/rooms/cell/Cell.ts'
+import CellLayout from '#src/rooms/cell/CellLayout.ts'
 import artworks from '#src/worlds/gallery/artworks.ts'
 
 import World from '../base/World.ts'
 import {worlds} from '../index.ts'
+import {readItems} from './items.ts'
 
 const minimap = lazy(() => import('#component/SandboxMinimap'))
 const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx'))
 /** how far the player’s body keeps its middle from the walls */
 const bodyRadius = 0.6
+/** everything `?item` can put on a pedestal, by its object id */
+const placeable: ReadonlyMap<string, Orb> = new Map(orbs.map(orb => [orb.propId, orb]))
+/** Every item with one of the object ids, in their order, or an error naming the unknown ones. */
+function resolveItems(ids: ReadonlyArray<string>) {
+  const unknown = ids.filter(id => !placeable.has(id))
+  if (unknown.length) {
+    throw new Error(`Unknown Sandbox item URL selection: ${unknown.join(', ')}. Known items: ${placeable.keys().toArray().join(', ')}`)
+  }
+  return ids.map(id => placeable.get(id)!)
+}
 
-/** A world to try things in: a single room, the Cell, with nothing in it but three orbs and a few of the gallery’s default works on its side walls. */
+/** A world to try things in: a single room, the Cell, with a few of the gallery’s default works on its walls and nothing else but the items the URL puts on pedestals beyond its north wall. */
 export default class Sandbox extends World<Cell> {
-  // The gallery’s default works, of which the Cell’s six slots take as many as fit, drawn by the seed.
+  // The gallery’s default works, of which the Cell’s slots take as many as fit, drawn by the seed.
   override readonly artworks = artworks
   override readonly defaultRoom = 'cell'
   override readonly id = 'sandbox'
+  /** what stands on the Cell’s pedestals, one each, in their order: the items `?item` names */
+  readonly items: ReadonlyArray<Orb>
   override readonly Minimap = minimap
-  // Artworks hang on any of the Cell’s four walls, and lost ones return to the spawn.
+  // Artworks hang on any of the Cell’s walls, and lost ones return to the spawn.
   override readonly placement: FloorPlanPlacementSpace
   override readonly Scene = scene
 
-  constructor() {
-    super(worlds.sandbox, [[new Cell, [0, 0, 0]]])
+  /** @param itemIds the object ids of the items on the Cell’s pedestals, those `?item` names by default */
+  constructor(itemIds: ReadonlyArray<string> = readItems()) {
+    const items = resolveItems(itemIds)
+    super(worlds.sandbox, [[new Cell(new CellLayout(items.length)), [0, 0, 0]]])
+    this.items = items
     const cell = this.room('cell')
     const [x, , z] = this.spawn.position
     this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.height, [x, 1, z])
   }
 
-  /** Anywhere on the floor of the Cell or its vestibule a body fits, from the floor up to the ceiling. */
+  /** Anywhere on the floor of the Cell or the spaces beyond its north wall a body fits, from the floor up to the ceiling. */
   override contains(position: Vec3) {
     const cell = this.room('cell')
     const [, y] = position
@@ -44,7 +63,7 @@ export default class Sandbox extends World<Cell> {
     return 0
   }
 
-  /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself, and on through the arch. */
+  /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself, and on through the arches. */
   override wallDistance(origin: Vec3, direction: Vec3) {
     const hit = this.placement.findPlacement(origin, direction, 0, 0, [])
     return hit ? Math.hypot(...hit.position.map((value, index) => value - origin[index]) as Vec3) + 0.3 : Infinity

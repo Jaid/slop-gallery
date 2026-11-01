@@ -1,7 +1,7 @@
 import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 
 import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
-import {mergeVertices} from 'three/addons/utils/BufferGeometryUtils.js'
+import {mergeVertices, toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
 import {openingArc} from '../placement/wallGeometry.ts'
@@ -11,6 +11,8 @@ import {bendGeometry, curveSegments as bendSegments, sliceAlongX} from './Curved
 export {wallFace, wallOpeningTrim, wallTop} from './architectureDimensions.ts'
 
 const curveSegments = 64
+/** a molded baseboard’s faces bend smoothly round its curves, but break at sharper turns than this, like those at its fillets */
+const baseboardCrease = Math.PI / 6
 /** how far a straight edge of a curved wall’s face may stand off its curve, in meters: an edge of length l on radius r stands l² / 8r off */
 const bendTolerance = 0.0005
 /** The opening’s outline in the wall’s plane, `padding` meters further out around its sides and top, like its casing, from `bottom` up. */
@@ -86,6 +88,15 @@ function cutArchitecture(wall: Wall) {
   }
   if (wall.curveRadius && wall.slope) {
     throw new RangeError('Curved walls cannot rake; their baseboards can follow a sloping floor instead.')
+  }
+  const baseboardSection = wall.baseboardSection
+  if (baseboardSection) {
+    const [first] = baseboardSection
+    const last = baseboardSection.at(-1)
+    const descends = (y: number, index: number) => index > 0 && y < baseboardSection[index - 1][1]
+    if (wall.baseboardProfile || wall.slope || baseboardSection.length < 2 || first[1] !== 0 || last?.[0] !== wallFace || !(last[1] > 0) || baseboardSection.some(([front, y], index) => !Number.isFinite(front + y) || front < wallFace || descends(y, index))) {
+      throw new RangeError('A baseboard’s section runs along a level floor, from its toe on the floor up to the wall’s face, never inside the wall or downward.')
+    }
   }
   const box = (width: number, height: number, depth: number, x: number, y: number, z: number) => {
     const bendableBlock = new BoxGeometry(width, height, depth, wall.curveRadius ? bendSegments(width, wall.curveRadius) : 1)
@@ -171,13 +182,37 @@ function cutArchitecture(wall: Wall) {
       })
       return brush(extrude(shapes, front - wallFace, wallFace))
     }
+    /** The baseboard swept along the wall through its {@link Wall.baseboardSection}, between its wall face and the toe and top that meet it. */
+    const sectionBand = (points: NonNullable<Wall['baseboardSection']>) => {
+      const shape = new Shape
+      shape.moveTo(wallFace, 0)
+      for (const [front, y] of points) {
+        shape.lineTo(front, y)
+      }
+      shape.closePath()
+      // Swept along z, then turned so that it runs along x, the section’s x standing out of the wall.
+      const swept = new ExtrudeGeometry(shape, {
+        depth: wall.width,
+        bevelEnabled: false,
+        steps: wall.curveRadius ? bendSegments(wall.width, wall.curveRadius) : 1,
+        curveSegments: 1,
+      })
+      swept.rotateY(-Math.PI / 2).translate(wall.width / 2, 0, 0)
+      miter(swept, wall.baseboardMiters ?? wall.miters)
+      // Smoothed in centimeters, as the normal utility welds positions closer than 0.01 units, which would merge the section’s small steps.
+      const smooth = toCreasedNormals(swept.scale(100, 100, 100), baseboardCrease).scale(0.01, 0.01, 0.01)
+      swept.dispose()
+      return brush(smooth)
+    }
     const trim: Array<BufferGeometry> = []
     if (wall.trimStyle !== 'none') {
-      let molding = baseboardBand(0, baseboardHeight - 0.06, 0.2)
+      let molding = baseboardSection ? sectionBand(baseboardSection) : baseboardBand(0, baseboardHeight - 0.06, 0.2)
       const join = (part: Brush) => {
         molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
       }
-      join(baseboardBand(baseboardHeight - 0.06, 0.06, 0.25))
+      if (!baseboardSection) {
+        join(baseboardBand(baseboardHeight - 0.06, 0.06, 0.25))
+      }
       for (const hole of holes) {
         if (hole.casing === false) {
           continue
@@ -271,7 +306,7 @@ export function createArchitectureGeometry(wall: Wall) {
   return withDisposal(cutArchitecture(wall))
 }
 
-const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.miters ?? null, wall.baseboardMiters ?? null])
+const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? 0.44, wall.baseboardSection ?? null, wall.miters ?? null, wall.baseboardMiters ?? null])
 /** Cuts each distinct layout among `walls` once. Called at module level on fixed walls, the build bakes the result for {@link provideArchitecture}. */
 export function cutArchitectures(walls: ReadonlyArray<Wall>) {
   const cuts = new Map<string, ArchitectureParts>

@@ -20,7 +20,7 @@ function trimKey(wall: Wall) {
   if (wall.trimStyle === 'none' || wall.baseboardProfile || wall.slope || wall.curveRadius) {
     return
   }
-  return JSON.stringify([wall.center[1], wall.height, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.baseboardHeight ?? 0.44])
+  return JSON.stringify([wall.center[1], wall.height, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.baseboardHeight ?? 0.44, wall.baseboardSection ?? null])
 }
 const tolerance = 1e-6
 /**

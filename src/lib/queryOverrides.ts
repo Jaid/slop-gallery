@@ -1,4 +1,5 @@
 import {readWorld} from '#src/worlds/index.ts'
+import {readItems} from '#src/worlds/sandbox/items.ts'
 
 import {readAiSettings} from './ai/settings.ts'
 import {readShowAmbienceEmitters} from './audio/ambience/ambienceEmitters.ts'
@@ -48,6 +49,8 @@ const readers: Record<string, Reader> = {
   frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
+  // A list, which compares by its ids, joined as the query gives them.
+  item: input => readItems(input).join(','),
   knot_rotation: readKnotRotation,
   near: readNear,
   pmrem: readPmrem,
