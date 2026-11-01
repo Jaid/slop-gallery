@@ -90,19 +90,30 @@ test('the Halloween Orb’s prompt names 5 of its adjectives, the same for the s
   const prompts = new Set(Array.from({length: 50}, (_, seed) => halloweenOrb.prompt(seed)))
   expect(prompts.size).toBeGreaterThan(10)
 })
-test('the narrator’s character names 2 to 5 traits in their order, one noun and maybe a suffix, the same for the same seed', () => {
+test('the narrator’s character names 2 to 5 traits in their order, never two synonyms, one noun and maybe a suffix, the same for the same seed', () => {
   const pattern = /^(?<traits>[\w-]+(?: [\w-]+)*?) (?:art gallery director|commentary|narration|narrator)(?: (?:easily hooking the listener|easy to listen to|hooking the listeners|pleasant to listen to))?$/u
+  const entryOf = (trait: string) => narratorTraits.findIndex(entry => (typeof entry === 'string' ? entry === trait : entry.includes(trait)))
   expect(narratorCharacter(1)).toBe(narratorCharacter(1))
   const counts = new Set<number>
-  for (let seed = 0; seed < 200; seed++) {
+  const named = new Set<string>
+  for (let seed = 0; seed < 500; seed++) {
     const groups = pattern.exec(narratorCharacter(seed))!.groups!
     const picked = groups.traits.split(' ')
     expect(picked.length).toBeGreaterThanOrEqual(2)
     expect(picked.length).toBeLessThanOrEqual(5)
-    expect(picked).toEqual(narratorTraits.filter(trait => picked.includes(trait)))
+    const entries = picked.map(entryOf)
+    expect(entries).not.toContain(-1)
+    // strictly rising entries keep the list’s order and rule out two synonyms of the same entry
+    expect(entries).toEqual(entries.toSorted((a, b) => a - b))
+    const distinct = new Set(entries)
+    expect(distinct.size).toBe(entries.length)
     counts.add(picked.length)
+    for (const trait of picked) {
+      named.add(trait)
+    }
   }
   expect(counts).toEqual(new Set([2, 3, 4, 5]))
+  expect(named).toEqual(new Set(narratorTraits.flat()))
   const characters = new Set(Array.from({length: 50}, (_, seed) => narratorCharacter(seed)))
   expect(characters.size).toBeGreaterThan(40)
 })

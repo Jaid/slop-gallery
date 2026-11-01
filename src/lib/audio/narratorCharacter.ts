@@ -1,28 +1,24 @@
 import {environmentPick, environmentRoll, environmentSample} from '../environmentSeed.ts'
 
-/** ordered from quiet and controlled to playful and energetic, so neighboring traits in an instruction belong together */
-export const narratorTraits = [
+/**
+ * ordered from quiet and controlled to playful and energetic, so neighboring traits in an instruction belong together
+ * Synonyms share an entry, of which an instruction names at most one.
+ */
+export const narratorTraits: ReadonlyArray<ReadonlyArray<string> | string> = [
   // composure
-  'calm',
-  'composed',
+  ['calm', 'composed'],
   // authority
-  'knowledgeable',
-  'erudite',
-  'articulate',
-  'eloquent',
+  ['knowledgeable', 'erudite'],
+  ['articulate', 'eloquent'],
   // understated humor
-  'dry',
-  'deadpan',
+  ['dry', 'deadpan'],
   'wry',
-  'witty',
+  ['witty', 'humorous'],
   // sharp humor
-  'sarcastic',
-  'sardonic',
+  ['sarcastic', 'sardonic'],
   'self-deprecating',
   // playful humor
-  'humorous',
-  'cheeky',
-  'mischievous',
+  ['cheeky', 'mischievous'],
   'conspiratorial',
   // energy
   'lively',
@@ -33,7 +29,8 @@ const narratorSuffixes = ['', 'pleasant to listen to', 'easy to listen to', 'hoo
 /** the narrator’s delivery instructions for the speech model in the environment of `seed`: 2 to 5 of its traits in their listed order, one noun and an optional suffix */
 export function narratorCharacter(seed: number) {
   const count = 2 + Math.floor(environmentRoll(seed, 'narrator-character:count') * 4)
-  const traits = environmentSample(seed, 'narrator-character:traits', narratorTraits, count)
+  const entries = environmentSample(seed, 'narrator-character:traits', narratorTraits, count)
+  const traits = entries.map(entry => (typeof entry === 'string' ? entry : environmentPick(seed, `narrator-character:synonym:${entry[0]}`, entry)))
   const noun = environmentPick(seed, 'narrator-character:noun', narratorNouns)
   const suffix = environmentPick(seed, 'narrator-character:suffix', narratorSuffixes)
   return [...traits, noun, suffix].filter(Boolean).join(' ')
