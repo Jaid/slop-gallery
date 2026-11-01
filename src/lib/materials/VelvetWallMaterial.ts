@@ -1,7 +1,7 @@
 import type {Wall} from '../placement/wallGeometry.ts'
 import type {Node, Object3D} from 'three/webgpu'
 
-import {atan, color, float, fract, max, mix, mx_noise_float, normalViewGeometry, normalWorldGeometry, positionViewDirection, positionWorld, select, uniform, vec3} from 'three/tsl'
+import {atan, color, float, fract, max, mix, mx_noise_float, normalViewGeometry, normalWorldGeometry, positionViewDirection, positionWorld, select, uniform, vec2, vec3} from 'three/tsl'
 import {MeshPhysicalNodeMaterial, Vector4} from 'three/webgpu'
 
 import {heightNormal, visibleDetail} from './filters.ts'
@@ -61,7 +61,7 @@ const noise = (x: Float, y: Float, seed: Float) => mx_noise_float(vec3(x, y, see
  *
  * The pile was pressed flat in drifting, folded patches, which read lighter and shinier than the upright pile around them. Within them it lies in small clumps of short strokes that lean one way in one patch and another way in the next, so the fabric shimmers patch by patch. Over that runs the nap, brushed downward in long strokes that bend gently, and a fine grain of tufts and fibers. The fibers scatter a soft sheen at grazing angles instead of a mirror highlight, so the fabric glows where light washes across it.
  *
- * The pattern is mapped along whichever wall it covers, by world position, so a single material serves every wall and the pattern only changes where two walls meet in a corner. Round walls get it laid out along their arc instead, so it runs on unbroken however they turn. Every feature fades to its average while its period still spans a few pixels, so the grain never sparkles.
+ * The pattern is mapped along whichever wall it covers, by world position, so a single material serves every wall and the pattern only changes where two walls meet in a corner. Round walls get it laid out along their arc instead, so it runs on unbroken however they turn, all but the reveals of their openings, which stand across the arc. Every feature fades to its average while its period still spans a few pixels, so the grain never sparkles.
  */
 export default class VelvetWallMaterial extends MeshPhysicalNodeMaterial {
   constructor({seed = 0, style = oxbloodVelvet}: {
@@ -80,9 +80,12 @@ export default class VelvetWallMaterial extends MeshPhysicalNodeMaterial {
     const normal = normalWorldGeometry
     // Along the wall, whichever axis it runs on, or round a round wall’s arc, and up.
     const ring = uniform(new Vector4).onObjectUpdate(({object}) => ringOf(object))
-    const turn = atan(positionWorld.z.sub(ring.y), positionWorld.x.sub(ring.x)).sub(ring.w).div(Math.PI * 2)
+    const fromMiddle = vec2(positionWorld.x.sub(ring.x), positionWorld.z.sub(ring.y)).toVar('velvetFromMiddle')
+    const turn = atan(fromMiddle.y, fromMiddle.x).sub(ring.w).div(Math.PI * 2)
     const arc = fract(turn).mul(ring.z.mul(Math.PI * 2))
-    const u = select(ring.z.greaterThan(0), arc, select(normal.x.abs().greaterThan(normal.z.abs()), positionWorld.z, positionWorld.x)).toVar('velvetU')
+    // The arc stands still through the reveal of an opening in a round wall, whose faces run straight out of the ring: it is laid out like a flat wall’s, as the lining beyond it is.
+    const roundFace = ring.z.greaterThan(0).and(fromMiddle.normalize().dot(normal.xz).abs().greaterThan(0.5))
+    const u = select(roundFace, arc, select(normal.x.abs().greaterThan(normal.z.abs()), positionWorld.z, positionWorld.x)).toVar('velvetU')
     const y = positionWorld.y.toVar('velvetY')
     const footprint = max(u.fwidth(), y.fwidth()).toVar('velvetFootprint')
     const s = float(seed * 17.3 + 3.1)
