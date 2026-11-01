@@ -17,6 +17,8 @@ import {propObjects} from '../Scene/GrabbableProp.tsx'
 
 type Satellite = {
   body: RapierRigidBody
+  /** whether the fusion used it up, which leaves it to vanish with its prop */
+  consumed?: boolean
   /** the group inside its rigid body’s object, which the fusion moves */
   group: Object3D
   id: string
@@ -65,7 +67,7 @@ const tumbleAxis = (id: string) => {
 
 /**
  * The work and what was thrown into it while they orbit a fusion’s portal. The fusion moves each by the group inside its rigid body’s object, whose body is out of the physics meanwhile, and hands it back when it is done with it.
- * The work returns to its wall when the fusion fails or is aborted and flips out of the portal as the result otherwise; a loose work thrown into it is spat out on failure and consumed on success; a prop is always spat back out.
+ * The work returns to its wall when the fusion fails or is aborted and flips out of the portal as the result otherwise; a loose work thrown into it is spat out on failure and consumed on success; a prop is spat back out, unless a success consumes it, like an orb.
  */
 export default class Satellites {
   /** where each satellite is in the world this frame, by its orbit’s index, for the siphons; empty once it is handed back */
@@ -80,6 +82,10 @@ export default class Satellites {
   /** Hands back whatever is still held: the work snaps back to its wall, the rest drops where it is. */
   dispose() {
     for (const satellite of this.list ?? []) {
+      // Gone with its prop, invisible in the portal’s middle until then.
+      if (satellite.consumed) {
+        continue
+      }
       if (satellite.released === undefined && satellite.kind !== 'work') {
         this.handBack(satellite, [0, 0, 0], [0, 0, 0])
       }
@@ -98,6 +104,9 @@ export default class Satellites {
     const {frame, outcome, timing} = fusion
     this.list ??= this.seize()
     for (const satellite of this.list) {
+      if (satellite.consumed) {
+        continue
+      }
       if (satellite.kind === 'portrait' && portraitObjects.get(satellite.id)?.group !== satellite.group) {
         // The result replaced it.
         satellite.released ??= elapsed
@@ -108,6 +117,9 @@ export default class Satellites {
         continue
       }
       satellitePose(frame, timing, satellite.orbit, elapsed, outcome, satellite.pose)
+      if (fusion.canceledAt !== undefined && elapsed >= fusion.canceledAt) {
+        this.jolt(satellite, elapsed - fusion.canceledAt)
+      }
       if (outcome?.kind === 'failure' && satellite.kind !== 'work' && elapsed >= outcome.at + fizzleRelease * timing.fizzle) {
         // Spat out of the dying portal to its side, and up a little.
         this.place(satellite)
@@ -125,6 +137,12 @@ export default class Satellites {
           satellite.released = elapsed
           satellite.releasedScale = 0
           satellite.group.scale.setScalar(0)
+          continue
+        }
+        if (satellite.kind === 'prop' && fusion.spec.partner.consumed) {
+          // It spiraled into the portal for good and leaves the world, which the director has taken it out of.
+          satellite.consumed = true
+          this.centers[satellite.orbit.index] = undefined
           continue
         }
         if (satellite.kind === 'prop' && elapsed >= fusion.emergedAt + spitDelay) {
@@ -154,6 +172,15 @@ export default class Satellites {
     if (portraitObjects.get(satellite.id)?.group === satellite.group) {
       handBack(satellite.body, satellite.group, velocity, spin)
     }
+  }
+
+  /** Knocks the satellite out from the portal and shakes it, `since` seconds after the player broke the fusion off, which dies down within a second. */
+  private jolt({orbit, pose}: Satellite, since: number) {
+    // out by up to 7 cm, an eighth of a second after
+    const knock = 1.44 * since * Math.exp(-since * 8)
+    const shake = 0.05 * Math.exp(-since * 5)
+    offset.subVectors(pose.position, offset.fromArray(this.fusion.frame.center)).normalize()
+    pose.position.addScaledVector(offset, knock).add(offset.set(Math.sin(since * 61 + orbit.index * 2), Math.sin(since * 53 + orbit.index), Math.sin(since * 67 + orbit.index * 3)).multiplyScalar(shake))
   }
 
   /** Whether the result’s body has left the work’s spot on the wall for the portal. */

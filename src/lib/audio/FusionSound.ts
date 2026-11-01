@@ -65,11 +65,13 @@ function impulse(context: BaseAudioContext) {
 }
 
 /**
- * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: its intro’s own, a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every ingredient that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles.
+ * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: its intro’s own, a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every ingredient that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles, after a crack and a screech if the player broke it off.
  * Everything rings in a short, bright reverb. It plays on the sound engine’s effects master, which the mute covers.
  */
 export default class FusionSound {
   private beds?: Beds
+  /** whether the player broke the fusion off */
+  private broken = false
   private readonly bus: GainNode
   private readonly context: BaseAudioContext
   private readonly panner: PannerNode
@@ -206,6 +208,39 @@ export default class FusionSound {
     this.beds = this.startBeds(now)
   }
 
+  /** The player broke the fusion off: a crack like breaking glass, a jarring screech sliding down over a dull thud, and the hum lurching flat, where it wavers until the portal fizzles. */
+  recoil() {
+    if (this.stopped) {
+      return
+    }
+    const now = this.context.currentTime
+    this.hiss(now, 0.14, {
+      filter: 'highpass',
+      frequency: 3500,
+      end: 900,
+      volume: 0.14,
+      attack: 0.001,
+    })
+    this.tone(now, 0.3, {
+      frequency: 110,
+      end: 38,
+      volume: 0.15,
+      attack: 0.002,
+    })
+    // Two tones a little apart grate against each other.
+    for (const frequency of [1240, 1318]) {
+      this.tone(now + 0.01, 0.55, {
+        frequency,
+        end: frequency * 0.4,
+        volume: 0.018,
+        attack: 0.004,
+        type: 'sawtooth',
+        vibrato: [35, 17],
+      })
+    }
+    this.broken = true
+  }
+
   /** Stops every sound, fading out over `fade` seconds, and releases the nodes. */
   stop(fade = 0.3) {
     if (this.stopped) {
@@ -254,7 +289,8 @@ export default class FusionSound {
     const level = Math.min(energy, 2)
     beds.hum.gain.setTargetAtTime(level, now, 0.08)
     beds.humFilter.frequency.setTargetAtTime(300 + level * 500, now, 0.08)
-    const cents = 1200 * Math.log2(1 + Math.max(0, spin - 1.6) * 0.035)
+    // Broken off, it sags by a minor third and wavers.
+    const cents = 1200 * Math.log2(1 + Math.max(0, spin - 1.6) * 0.035) + (this.broken ? -300 + 45 * Math.sin(now * 14) : 0)
     for (const tone of beds.humTones) {
       tone.detune.setTargetAtTime(cents, now, 0.1)
     }

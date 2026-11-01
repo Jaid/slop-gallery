@@ -178,6 +178,7 @@ export default class GalleryDirector {
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
       await this.fuse(a, fusion, (signal, aspect) => this.generateMerge(a.source, b.source, signal, aspect), current, {
+        canceled: 'You canceled the fusion. Both originals are still here.',
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame.`,
         failure: 'The fusion did not finish. Both originals are still here. Check the image model or try again.',
         remove: second,
@@ -194,7 +195,7 @@ export default class GalleryDirector {
     }
   }
 
-  /** Merges the hung work `portrait` with a studio photograph of the thrown `item` or, for an orb, reworks it by the orb’s prompt. The item stays in the room. */
+  /** Merges the hung work `portrait` with a studio photograph of the thrown `item` or, for an orb, reworks it by the orb’s prompt. The item stays in the room, except for an orb, which a success uses up. */
   async mergeItem(portrait: string, item: ThrownItem) {
     if (this.controller.signal.aborted) {
       return
@@ -218,6 +219,7 @@ export default class GalleryDirector {
       partner: {
         kind: 'prop',
         id: item.id,
+        consumed: orb,
       },
       ingredients: [a.source],
       color: orb ? item.color : undefined,
@@ -232,11 +234,15 @@ export default class GalleryDirector {
     notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${orb ? 'tint' : 'collage'} is taking shape. No AI and no upload.`)
     try {
       const failure = 'The fusion did not finish. The original is still here. Check the image model or try again.'
+      const canceled = 'You canceled the fusion. The original is still here.'
       await (orb ? this.fuse(a, fusion, (signal, aspect) => this.generateOrbMerge(a.source, item, signal, aspect), current, {
+        canceled,
+        consume: item.id,
         description: `“${a.title}” caught the ${item.title} and was never quite the same.`,
         failure,
         locally: `Tinted by hand in the ${item.title}’s glow.`,
       }) : this.fuse(a, fusion, async (signal, aspect) => this.generateMerge(a.source, await photograph!, signal, aspect), current, {
+        canceled,
         description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
         failure,
       }))
@@ -260,22 +266,45 @@ export default class GalleryDirector {
   }
 
   /**
-   * Generates the new image of the hung work `a` with `make` while `fusion` shows it and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove`.
-   * The result flips out of the portal as a loose work once the fusion’s climax is over; a failure shows once the fusion fizzled out.
+   * Generates the new image of the hung work `a` with `make` while `fusion` shows it and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove` and using up the prop `consume`.
+   * The result flips out of the portal as a loose work once the fusion’s climax is over; a failure shows once the fusion fizzled out, like one the player broke off by jumping into its portal, which gives up on the image at once.
    * Its frame takes the shape of the image, whatever the model made of the shape it was asked for, at the area of `a`’s frame.
    */
-  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
+  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {canceled, consume, description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
+    /** the notice right as the player breaks the fusion off */
+    canceled: string
+    /** the id of a prop the success uses up */
+    consume?: string
     description: string
     failure: string
     /** how the description tells a merge made without AI */
     locally?: string
     remove?: string
   }) {
+    // The fizzle the player saw coming on breaking the fusion off goes without a notice of its own.
+    const failed = async () => {
+      if (current()) {
+        await fusion.fail()
+        if (current() && !fusion.signal.aborted) {
+          notify(failure)
+        }
+      }
+    }
+    // Broken off, the fusion tells so at once and stops waiting, even for a merge that doesn’t listen to the signal.
+    const broken = Promise.withResolvers<never>()
+    const breakOff = () => {
+      if (current()) {
+        notify(canceled)
+      }
+      broken.reject(fusion.signal.reason)
+    }
+    fusion.signal.addEventListener('abort', breakOff, {once: true})
     let merged: Pick<Portrait, 'height' | 'width'> & {image: Blob}
     try {
       // Image models take 15–40 s for most merges, but now and then over 100 s.
+      const signal = AbortSignal.any([this.controller.signal, fusion.signal, AbortSignal.timeout(180_000)])
       const generate = async (span?: Span) => {
-        const {image, width, height} = await make(AbortSignal.any([this.controller.signal, AbortSignal.timeout(180_000)]), a.width / a.height)
+        const {image, width, height} = await make(signal, a.width / a.height)
         span?.setAttributes({
           width,
           height,
@@ -286,17 +315,12 @@ export default class GalleryDirector {
           ...imageSize(width, height, a.width * a.height * 10_000),
         }
       }
-      merged = await (telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {
+      merged = await Promise.race([telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {
         mode: this.settings.ai && this.key ? 'ai' : 'local',
         aspect: a.width / a.height,
-      }}) : generate())
+      }}) : generate(), broken.promise])
     } catch {
-      if (current()) {
-        await fusion.fail()
-        if (current()) {
-          notify(failure)
-        }
-      }
+      await failed()
       return
     }
     if (!current()) {
@@ -304,6 +328,11 @@ export default class GalleryDirector {
     }
     await fusion.succeed(merged.image)
     if (!current()) {
+      return
+    }
+    // Broken off while the result was still being decoded.
+    if (fusion.outcome?.kind !== 'success') {
+      await failed()
       return
     }
     const mergedAt = new Date
@@ -338,10 +367,12 @@ export default class GalleryDirector {
       notify(failure)
       return
     }
-    useGallery.setState({
+    // A prop the success uses up is gone, unless the player caught it again before the portal took hold of it.
+    useGallery.setState(({consumed}) => ({
       held,
       placement,
-    })
+      consumed: consume && held !== consume ? [...consumed, consume] : consumed,
+    }))
     fusion.emerge()
     notify('Something wonderfully unexpected.')
     void this.flavor(result).catch(() => notify('The label could not be prepared.'))

@@ -1,5 +1,5 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
-import type {FusionSpec} from '../../src/lib/gallery/fusion/Fusion.ts'
+import type {FusionOptions, FusionSpec} from '../../src/lib/gallery/fusion/Fusion.ts'
 import type {FusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
 import type {Portrait, ThrownOrb} from '../../src/lib/gallery/types.ts'
 
@@ -44,12 +44,16 @@ class TestDirector extends GalleryDirector {
   /** the shape the image model was asked for */
   aspect: number | undefined
   flavorResult = Promise.withResolvers<Partial<Portrait>>()
+  /** keeps a result ready to show, like the gallery’s texture cache */
+  hold: FusionOptions['hold']
   opened: Array<Fusion> = []
   partial: ((partial: Partial<Portrait>) => void) | undefined
   received: Array<Portrait['source']> = []
   result = Promise.withResolvers<Blob>()
   /** the pixel size of the result */
   resultSize = [1024, 1024]
+  /** what the merge was told to give up by */
+  signal: AbortSignal | undefined
   constructor(settings: AiSettings, key: string, private timing = instant) {
     super(settings, key)
   }
@@ -57,13 +61,15 @@ class TestDirector extends GalleryDirector {
     this.partial = partial
     return this.flavorResult.promise
   }
-  protected override generateMerge(first: Portrait['source'], second: Portrait['source'], _signal: AbortSignal, aspect: number) {
+  protected override generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
     this.received = [first, second]
+    this.signal = signal
     this.aspect = aspect
     return this.sized()
   }
-  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, _signal: AbortSignal, aspect: number) {
+  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number) {
     this.received = [work, orb.prompt]
+    this.signal = signal
     this.aspect = aspect
     return this.sized()
   }
@@ -75,6 +81,7 @@ class TestDirector extends GalleryDirector {
         sides: [3, 3],
       }),
       timing: this.timing,
+      hold: this.hold,
     })
     this.opened.push(fusion)
     return fusion
@@ -434,6 +441,106 @@ test('a failure shows once the fusion fizzled out after its minimum, then releas
     director.dispose()
   }
 })
+test('jumping into the portal breaks the fusion off with a notice at once, gives up on the image and fails like a merge that went wrong', async () => {
+  const director = new TestDirector(defaults, 'test', brief)
+  try {
+    const job = director.merge('a', 'b')
+    await sleep(0.03)
+    const [fusion] = director.opened
+    expect(fusion.cancel()).toBe(true)
+    expect(director.signal?.aborted).toBe(true)
+    expect(useGallery.getState().notice).toBe('You canceled the fusion. Both originals are still here.')
+    expect(fusion.outcome).toEqual({
+      kind: 'failure',
+      at: brief.minimum,
+    })
+    // The image model never answers, and the fusion doesn’t wait for it.
+    await job
+    expect(fusion.closed).toBe(true)
+    expect(fusion.elapsed()).toBeGreaterThanOrEqual(brief.minimum + brief.fizzle)
+    expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
+    expect(useGallery.getState().portraits.some(p => p.merging || p.reserved)).toBe(false)
+    expect(useGallery.getState().notice).toBe('You canceled the fusion. Both originals are still here.')
+  } finally {
+    director.dispose()
+  }
+})
+test('broken off while its result is being made ready, the fusion keeps the original instead', async () => {
+  const director = new TestDirector({
+    ...defaults,
+    ai: false,
+  }, '', brief)
+  try {
+    director.hold = () => ({
+      ready: sleep(0.06),
+      release: () => {},
+    })
+    const job = director.merge('a', 'b')
+    director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+    await sleep(0.03)
+    const [fusion] = director.opened
+    // The image is in, but not decoded yet.
+    expect(fusion.outcome).toBeUndefined()
+    expect(fusion.cancel()).toBe(true)
+    await job
+    expect(fusion.emergedAt).toBeUndefined()
+    expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
+  } finally {
+    director.dispose()
+  }
+})
+const testOrb: ThrownOrb = {
+  id: 'prop-orb-test',
+  title: 'Test Orb',
+  color: '#8a3cff',
+  photo: '/orbs/test.jxl',
+  prompt: 'Make it spooky.',
+  snapshot: () => Promise.reject(new Error('An orb is never photographed on a throw.')),
+}
+test('a success uses up a thrown orb, but not one the player caught again, nor anything else thrown', async () => {
+  for (const [item, held, consumed] of [[testOrb, null, ['prop-orb-test']], [testOrb, 'prop-orb-test', []], [apple, null, []]] as const) {
+    useGallery.setState({
+      consumed: [],
+      held,
+    })
+    useGallery.getState().update('a', {hung: true})
+    const director = new TestDirector({
+      ...defaults,
+      ai: false,
+    }, '')
+    try {
+      const job = director.mergeItem('a', item)
+      expect(director.opened.at(-1)!.spec.partner).toEqual({
+        kind: 'prop',
+        id: item.id,
+        consumed: item === testOrb,
+      })
+      director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+      await job
+      expect(useGallery.getState().consumed).toEqual(consumed)
+    } finally {
+      director.dispose()
+    }
+  }
+})
+for (const ending of ['failed', 'broken off']) {
+  test(`a ${ending} fusion leaves the orb in the world`, async () => {
+    const director = new TestDirector(defaults, 'test', brief)
+    try {
+      const job = director.mergeItem('a', testOrb)
+      if (ending === 'failed') {
+        director.result.reject(new Error('Provider unavailable'))
+      } else {
+        director.opened[0].cancel()
+      }
+      await job
+      expect(useGallery.getState().consumed).toEqual([])
+      expect(useGallery.getState().portraits[0].source).toBe(a)
+    } finally {
+      director.dispose()
+    }
+  })
+}
 test('disposing the director closes its fusions at once', async () => {
   const director = new TestDirector(defaults, 'test', brief)
   const job = director.merge('a', 'b')

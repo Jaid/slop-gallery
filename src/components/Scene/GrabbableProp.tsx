@@ -8,6 +8,7 @@ import type {Group, Object3D} from 'three/webgpu'
 
 import {useFrame} from '@react-three/fiber'
 import {RigidBody, useRapier} from '@react-three/rapier'
+import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 import {Box3, Vector3} from 'three/webgpu'
 
@@ -98,8 +99,15 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
 
 /**
  * A prop the player can pick up, carry, drop and throw. Carried, it is out of the physics altogether: its body stays disabled where it was picked up, and its inner group floats in front of the camera, so nothing bumps into it on the way. Letting go puts the body where it fits along the line from the player to the prop.
+ * Once a fusion used it up, like an orb, it is gone.
  */
-export default function GrabbableProp({id, title, mood, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject, ...props}: GrabbablePropProps) {
+export default function GrabbableProp(props: GrabbablePropProps) {
+  const consumed = useGallery(s => s.consumed.includes(props.id))
+  return <Branch not={consumed}><PresentProp {...props} /></Branch>
+}
+
+/** The prop while it is still in the world. */
+function PresentProp({id, title, mood, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)

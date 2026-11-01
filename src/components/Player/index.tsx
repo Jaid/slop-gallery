@@ -149,7 +149,9 @@ export default function Player() {
       setFov(camera, heldCamera.current.fov)
     }
     const {x, y, z} = state.position
-    bodyPose.center = [x, y + (state.crouching ? defaultEgoOptions.crouchHeight : defaultEgoOptions.height) / 2, z]
+    bodyPose.height = state.crouching ? defaultEgoOptions.crouchHeight : defaultEgoOptions.height
+    bodyPose.center = [x, y + bodyPose.height / 2, z]
+    bodyPose.grounded = state.grounded
     if (!cameraPose.focused) {
       angles.setFromQuaternion(camera.quaternion, 'YXZ')
       playerSession.capture({

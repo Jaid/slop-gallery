@@ -23,9 +23,12 @@ export const cameraPose = {
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
   direction: [-Math.sin(playerSpawn.yaw) * Math.cos(playerSpawn.pitch), Math.sin(playerSpawn.pitch), -Math.cos(playerSpawn.yaw) * Math.cos(playerSpawn.pitch)] as Vec3,
 }
-/** the middle of the player’s capsule, which decides the room the player is in */
+/** the player’s capsule: its middle, which decides the room the player is in, its height, standing or crouching, and whether it stands on something */
 export const bodyPose = {
   center: [playerSpawn.position[0], playerSpawn.position[1] + defaultEgoOptions.height / 2, playerSpawn.position[2]] as Vec3,
+  grounded: true,
+  height: defaultEgoOptions.height,
+  radius: defaultEgoOptions.radius,
 }
 export function setCameraFocused(focused: boolean) {
   cameraPose.focused = focused

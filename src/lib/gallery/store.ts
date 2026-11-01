@@ -18,6 +18,8 @@ type State = {
   apiKey: string
   /** replaces the collection */
   commit: (portraits: Array<Portrait>) => void
+  /** the ids of the props fusions used up, like orbs, which have left the world for good */
+  consumed: ReadonlyArray<string>
   dragging: boolean
   held: string | null
   importFiles: ((files: Array<File>, target?: {
@@ -49,6 +51,7 @@ export const useGallery = create<State>((set, get) => ({
   active: null,
   activeLabel: null,
   held: null,
+  consumed: [],
   locked: false,
   ready: false,
   dragging: false,

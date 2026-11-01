@@ -2,12 +2,14 @@ import type {Portrait} from '../types.ts'
 import type {PortalFrame} from './portalFrame.ts'
 import type {FusionTiming} from './timing.ts'
 
-import {fusionTiming} from './timing.ts'
+import {fusionTiming, nextTurn} from './timing.ts'
 
 /** what was thrown into the hung work */
 export type FusionPartner = {
+  /** for a prop, whether a success uses it up, like an orb, instead of spitting it back out */
+  consumed?: boolean
   id: string
-  /** a loose work, which the result replaces along with the hung one; or a prop, which the portal spits back out */
+  /** a loose work, which the result replaces along with the hung one; or a prop, which the portal spits back out unless it is consumed */
   kind: 'portrait' | 'prop'
 }
 export type FusionSpec = {
@@ -48,6 +50,8 @@ let opened = 0
  * Its own clock is `performance.now()`, which the renderer and the virtual clock of the film script follow too.
  */
 export default class Fusion {
+  /** seconds into the fusion that the player broke it off, by jumping into its portal */
+  canceledAt?: number
   /** whether the portal has closed and the fusion is over */
   closed = false
   /** seconds into the fusion that the result flipped out of the portal */
@@ -58,9 +62,12 @@ export default class Fusion {
   outcome?: FusionOutcome
   /** the merged image, once it is in */
   result?: Blob
+  /** aborted once the player breaks the fusion off, which the merge it shows gives up on */
+  readonly signal: AbortSignal
   readonly spec: FusionSpec
   readonly startedAt = performance.now()
   readonly timing: FusionTiming
+  private readonly canceller = new AbortController
   private readonly hold?: FusionOptions['hold']
   private readonly holds: Array<ImageHold> = []
   private readonly onClose?: FusionOptions['onClose']
@@ -69,6 +76,7 @@ export default class Fusion {
 
   constructor(spec: FusionSpec, {frame, hold, onClose, timing = fusionTiming}: FusionOptions) {
     this.spec = spec
+    this.signal = this.canceller.signal
     this.frame = frame
     this.timing = timing
     this.hold = hold
@@ -94,6 +102,21 @@ export default class Fusion {
     }
   }
 
+  /**
+   * Breaks the fusion off while it still brews, as the player does by jumping into its portal: the portal recoils at once, {@link signal} tells the merge to give up, and the fusion fails like a merge that went wrong as the next turn of the ingredients begins, no sooner than the end of its intro.
+   * Returns whether it broke off, which it no longer does once its outcome is in.
+   */
+  cancel() {
+    if (this.settled()) {
+      return false
+    }
+    const elapsed = this.elapsed()
+    this.canceledAt = elapsed
+    this.canceller.abort(new DOMException('The player broke the fusion off.', 'AbortError'))
+    this.failAt(Math.max(nextTurn(elapsed, this.timing), this.timing.minimum)).catch(() => this.close())
+    return true
+  }
+
   /** seconds since the fusion started */
   elapsed(now = performance.now()) {
     return (now - this.startedAt) / 1000
@@ -109,17 +132,16 @@ export default class Fusion {
     this.closeAt(emergedAt + this.timing.afterglow).catch(() => this.close())
   }
 
-  /** Shows the failure, no sooner than the minimum: the portal fizzles out, the work flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back. */
+  /** Shows the failure, no sooner than the minimum: the portal fizzles out, the work flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */
   async fail() {
+    if (this.outcome?.kind === 'failure') {
+      await this.over.promise
+      return
+    }
     if (this.settled()) {
       return
     }
-    const at = Math.max(this.elapsed(), this.timing.minimum)
-    this.outcome = {
-      kind: 'failure',
-      at,
-    }
-    await this.closeAt(at + this.timing.fizzle)
+    await this.failAt(Math.max(this.elapsed(), this.timing.minimum))
   }
 
   /** Ends the fusion once its director is done with it. One whose result flipped out keeps glowing until its afterglow is over; any other is aborted. */
@@ -179,6 +201,15 @@ export default class Fusion {
   private async closeAt(seconds: number) {
     await this.reach(seconds)
     this.close()
+  }
+
+  /** Fails `at` seconds into the fusion and closes once it fizzled out. */
+  private async failAt(at: number) {
+    this.outcome = {
+      kind: 'failure',
+      at,
+    }
+    await this.closeAt(at + this.timing.fizzle)
   }
 
   /** Resolves once the fusion is `seconds` old or over. */

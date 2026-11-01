@@ -47,6 +47,8 @@ export default class PortalShow {
   }
   private readonly palette: PortalPalette
   private phase = 0
+  /** whether the recoil of a fusion the player broke off has sounded */
+  private recoiled = false
   private readonly satellites: Satellites
   private sound?: FusionSound
   private stage: Stage = 'brewing'
@@ -84,7 +86,7 @@ export default class PortalShow {
     const {frame, outcome, timing} = fusion
     const delta = this.last === undefined ? 0 : clamp(elapsed - this.last, 0, 0.1)
     this.last = elapsed
-    const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, fusion.spec.ingredients.length)
+    const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, fusion.spec.ingredients.length, fusion.canceledAt)
     this.phase = (this.phase + envelope.spin * delta) % (Math.PI * 2000)
     // Colors die down to embers while it fizzles.
     this.paint.core.lerpColors(this.palette.core, this.embers.core, envelope.embers)
@@ -147,10 +149,14 @@ export default class PortalShow {
     } : undefined
   }
 
-  /** Plays the sound of whatever began since the last frame: a new ingredient, the climax, the result or the fizzle. */
+  /** Plays the sound of whatever began since the last frame: a new ingredient, the recoil of a fusion the player broke off, the climax, the result or the fizzle. */
   private cue(elapsed: number, turn: number | undefined) {
     const {fusion, sound} = this
     const {outcome, timing} = fusion
+    if (fusion.canceledAt !== undefined && !this.recoiled) {
+      this.recoiled = true
+      sound?.recoil()
+    }
     let stage: Stage = 'brewing'
     if (fusion.emergedAt !== undefined) {
       stage = 'emerged'

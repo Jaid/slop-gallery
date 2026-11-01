@@ -28,6 +28,15 @@ export type PortalSurroundings = {
   sides: readonly [left: number, right: number]
 }
 
+/** an upright capsule, like the player’s body */
+export type UprightCapsule = {
+  /** its middle */
+  center: Vec3
+  /** from its bottom to its top */
+  height: number
+  radius: number
+}
+
 /** the largest side an orbiting work shrinks to, in meters */
 export const satelliteSize = 0.8
 /** the radius of the portal’s glowing disc, in meters */
@@ -53,4 +62,11 @@ export function portalFrame(work: Pick<Portrait, 'position' | 'rotation'>, {floo
       tilt: 0.72,
     },
   }
+}
+
+/** Whether the capsule reaches into the portal’s disc, which faces the camera and so counts as a ball. */
+export function touchesPortal(frame: PortalFrame, {center, height, radius}: UprightCapsule) {
+  const half = Math.max(0, height / 2 - radius)
+  const nearest = clamp(frame.center[1], center[1] - half, center[1] + half)
+  return Math.hypot(frame.center[0] - center[0], frame.center[1] - nearest, frame.center[2] - center[2]) < frame.radius + radius
 }

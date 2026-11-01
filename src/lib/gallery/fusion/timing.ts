@@ -40,6 +40,14 @@ export function clarityBetween(elapsed: number, from: number, to: number) {
   return Math.min(clamp(progress / surfacing, 0, 1), clamp((1 - progress) / surfacing, 0, 1))
 }
 
+/** Seconds into a fusion that the next turn of the ingredients begins, `elapsed` seconds in, the end of the intro while it plays: the beat of the loop on which a fusion the player broke off fizzles. */
+export function nextTurn(elapsed: number, {ingredient, intro}: Pick<FusionTiming, 'ingredient' | 'intro'> = fusionTiming) {
+  if (elapsed <= intro || ingredient <= 0) {
+    return Math.max(elapsed, intro)
+  }
+  return intro + Math.ceil((elapsed - intro) / ingredient) * ingredient
+}
+
 /** The ingredient the portal shows `elapsed` seconds into a fusion of `count` ingredients and how clearly, once its intro is over; the intro shows its own. */
 export function ingredientAt(elapsed: number, count: number, {ingredient, intro}: Pick<FusionTiming, 'ingredient' | 'intro'> = fusionTiming) {
   if (elapsed < intro || count === 0 || ingredient <= 0) {

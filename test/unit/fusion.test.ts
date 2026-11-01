@@ -8,8 +8,8 @@ import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {beats, introSeconds, introSiphon, slurp} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
-import {portalFrame, satelliteSize} from '../../src/lib/gallery/fusion/portalFrame.ts'
-import {fusionTiming, ingredientAt, introTurns} from '../../src/lib/gallery/fusion/timing.ts'
+import {portalFrame, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
+import {fusionTiming, ingredientAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
   id: 'work',
@@ -283,5 +283,80 @@ describe('fusion', () => {
     expect(fusion.elapsed()).toBeLessThan(timing.minimum)
     fusion.addIngredient('late.jxl')
     expect(fusion.spec.ingredients).toEqual(['work.jxl'])
+  })
+  test('breaking it off aborts its signal at once and fails it as the next turn of the ingredients begins, which fail() then waits for', async () => {
+    const fusion = new Fusion(spec(), {
+      frame,
+      timing,
+    })
+    await new Promise(resolve => setTimeout(resolve, (timing.intro + timing.ingredient * 1.4) * 1000))
+    expect(fusion.cancel()).toBe(true)
+    expect(fusion.signal.aborted).toBe(true)
+    expect(fusion.canceledAt).toBeGreaterThan(timing.intro + timing.ingredient)
+    expect(fusion.outcome?.kind).toBe('failure')
+    expect(fusion.outcome!.at).toBeCloseTo(timing.intro + timing.ingredient * Math.ceil((fusion.canceledAt! - timing.intro) / timing.ingredient), 9)
+    expect(fusion.cancel()).toBe(false)
+    await fusion.fail()
+    expect(fusion.closed).toBe(true)
+    expect(fusion.elapsed()).toBeGreaterThanOrEqual(fusion.outcome!.at + timing.fizzle)
+  })
+  test('once its outcome is in, it can no longer be broken off', async () => {
+    const fusion = new Fusion(spec(), {
+      frame,
+      timing,
+    })
+    const job = fusion.succeed(new Blob(['result']))
+    expect(fusion.cancel()).toBe(false)
+    expect(fusion.signal.aborted).toBe(false)
+    await job
+    expect(fusion.outcome?.kind).toBe('success')
+    fusion.abort()
+  })
+})
+describe('breaking off', () => {
+  test('waits for the end of the intro, then for the next turn of the ingredients', () => {
+    const {intro, ingredient} = fusionTiming
+    expect(nextTurn(0.5)).toBe(intro)
+    expect(nextTurn(intro)).toBe(intro)
+    expect(nextTurn(intro + 0.1)).toBeCloseTo(intro + ingredient, 9)
+    expect(nextTurn(intro + ingredient * 2.5)).toBeCloseTo(intro + ingredient * 3, 9)
+  })
+  test('makes the portal recoil at once with a blaze, a shockwave and sparks, then flicker on charred until it fizzles', () => {
+    const elapsed = fusionTiming.intro + fusionTiming.ingredient * 0.6
+    const failure = {
+      kind: 'failure' as const,
+      at: nextTurn(elapsed),
+    }
+    const calm = portalEnvelope(elapsed, failure, undefined, fusionTiming, 2)
+    const recoil = portalEnvelope(elapsed, failure, undefined, fusionTiming, 2, elapsed)
+    expect(recoil.flash).toBeGreaterThan(1)
+    expect(recoil.pulse).toBe(0)
+    expect(recoil.pulseStrength).toBeGreaterThan(1.5)
+    expect(recoil.burst).toBe(0)
+    expect(recoil.embers).toBeGreaterThan(0.5)
+    expect(recoil.light).toBeGreaterThan(calm.light + 50)
+    const charred = portalEnvelope(elapsed + 0.55, failure, undefined, fusionTiming, 2, elapsed)
+    expect(elapsed + 0.55).toBeLessThan(failure.at)
+    expect(charred.flash).toBeLessThan(0.01)
+    expect(charred.embers).toBeCloseTo(0.3, 1)
+    // Before it was broken off, nothing changes.
+    expect(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, 2, elapsed)).toEqual(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, 2))
+    expect(portalEnvelope(failure.at + fusionTiming.fizzle, failure, undefined, fusionTiming, 2, elapsed).size).toBe(0)
+  })
+  test('a body reaches into the portal when its capsule comes within the disc', () => {
+    const [x, y, z] = frame.center
+    const body = (center: [number, number, number], height = 1.7) => touchesPortal(frame, {
+      center,
+      height,
+      radius: 0.3,
+    })
+    // Standing right under a portal at its highest, the head just reaches it; jumping, the body does from the side too.
+    expect(frame.center[1]).toBe(2.05)
+    expect(body([x, 0.85, z])).toBe(true)
+    expect(body([x, y - 1, z])).toBe(true)
+    expect(body([x + 0.7, y, z])).toBe(true)
+    expect(body([x + 0.75, y, z])).toBe(false)
+    expect(body([x, y - 1.6, z])).toBe(false)
+    expect(body([x, y - 1, z + 1])).toBe(false)
   })
 })
