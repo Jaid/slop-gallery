@@ -91,8 +91,8 @@ export function useArenaSurfaces(): ArenaSurfaces {
   }
 }
 
-/** The Arena’s floor: polished cream and Nero Marquina marble in a checkerboard, on the tile grid from `origin`, mirroring the room in heavy mode. Every floor in a plane of its own needs one of its own, holding its reflection target; given that plane’s world height as `level`, parts rising off it, like ramps, stop mirroring. */
-export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish = faintPolish, level?: number) {
+/** The Arena’s floor: polished cream and Nero Marquina marble in a checkerboard, on the tile grid from `origin`, mirroring the room in heavy mode. Every floor in a plane of its own needs one of its own, holding its reflection target. */
+export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish = faintPolish) {
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   const {strength, grazingStrength} = polish
   return useDisposable(useMemo(() => new CheckeredMarbleFloorMaterial({
@@ -100,7 +100,6 @@ export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish 
     directSpecular: 0.1,
     drift: true,
     grazingStrength,
-    level,
     light: cremaMarfil,
     loss: 0,
     origin,
@@ -109,7 +108,7 @@ export function useArenaMarble(origin: Point, tile: number, polish: ArenaPolish 
     seed: 3,
     strength,
     tile,
-  }), [floorReflections, grazingStrength, level, origin, strength, tile]))
+  }), [floorReflections, grazingStrength, origin, strength, tile]))
 }
 
 /** The Arena’s floor over a rectangular floor plan: its marble on a dark slab, with the slab’s collider. */

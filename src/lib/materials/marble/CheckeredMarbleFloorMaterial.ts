@@ -19,8 +19,6 @@ export type CheckeredMarbleFloorOptions = {
   gaussianBlur?: number
   /** extra share of the mirror at grazing angles */
   grazingStrength?: number
-  /** the world height of the plane the floor mirrors in, if parts of it rise off that plane, like a ramp: their mirror fades out within a few centimeters, since it would show the room as mirrored in the plane rather than in them */
-  level?: number
   /** cut of the tiles whose column and row add up to an even number, including the one at `origin` */
   light?: MarbleStyle
   /** mip level the mirror is read at, 0 being its full resolution */
@@ -65,7 +63,7 @@ export function checkeredTile(x: number, z: number, {origin, tile}: Pick<Checker
  */
 export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
   readonly directSpecular: number
-  constructor({dark = portoro, directSpecular = 1, drift = false, gaussianBlur = 0, grazingStrength = 0.6, level, light = calacatta, loss = 1.5, origin, reflections = true, roughness = 0.1, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
+  constructor({dark = portoro, directSpecular = 1, drift = false, gaussianBlur = 0, grazingStrength = 0.6, light = calacatta, loss = 1.5, origin, reflections = true, roughness = 0.1, seed = 0, strength = 0.1, tile}: CheckeredMarbleFloorOptions) {
     if (!(tile > 0)) {
       throw new RangeError('Marble tiles need a positive size.')
     }
@@ -99,7 +97,6 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
     const grout = line(edge, groutHalfWidth).toVar('marbleFloorGrout')
     // Only the top face mirrors the room and shows the pattern.
     const top = normalWorldGeometry.y.step(0.5)
-    const inPlane = level === undefined ? float(1) : positionWorld.y.sub(level).abs().smoothstep(0.005, 0.05).oneMinus()
     const finish = reflections ? roughness : 0.3
     super(null, {
       color: '#ffffff',
@@ -110,7 +107,7 @@ export default class CheckeredMarbleFloorMaterial extends FloorMaterial {
         // Polished, but not glass: the lamps and frames mirror crisply, with a slight bloom.
         gaussianBlur,
         loss,
-        mask: grout.oneMinus().mul(top).mul(inPlane),
+        mask: grout.oneMinus().mul(top),
       } : undefined,
     })
     // Tiles are sorted by tone, but each is a shade off its neighbors.

@@ -64,20 +64,19 @@ export default class Sandbox extends World<Cell> {
     this.items = items
     const cell = this.room('cell')
     const [x, , z] = this.spawn.position
-    this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.height, [x, 1, z], position => this.floorHeight(position))
+    this.placement = new FloorPlanPlacementSpace(this.walls, (pointX, pointZ) => cell.room.floorContains(cell.toLocal([pointX, 0, pointZ])), cell.height, [x, 1, z])
   }
 
-  /** Anywhere on the floor of the Cell or the spaces beyond its north wall a body fits, from the floor up to the ceiling. */
+  /** Anywhere on the floor of the Cell or the round room beyond its north wall a body fits, from the floor up to the ceiling. */
   override contains(position: Vec3) {
     const cell = this.room('cell')
     const [, y] = position
-    return y >= this.floorHeight(position) - 0.2 && y < cell.height && cell.room.floorContains(cell.toLocal(position), bodyRadius)
+    return y >= -0.2 && y < cell.height && cell.room.floorContains(cell.toLocal(position), bodyRadius)
   }
 
-  /** The Cell’s floor: level in its hall, down a ramp through the arch in its north wall and sunken a little in the round spaces beyond. */
-  override floorHeight(position: Vec3) {
-    const cell = this.room('cell')
-    return cell.toWorld([0, cell.room.floorHeight(cell.toLocal(position)), 0])[1]
+  /** The Cell’s floor is level everywhere, so every floor mirrors in one plane. */
+  override floorHeight(_position: Vec3) {
+    return 0
   }
 
   /** How far a ray from the origin travels until it meets a wall, a little farther than the wall itself, and on through the arches. */

@@ -36,13 +36,12 @@ export const cellCoffers = {
     depth: 0.045,
   },
 } as const
-/** The round spaces’ ceilings: a gilt ring in from the wall, and in each alcove’s middle a rosette over its item, where the vestibule’s LED panel hangs instead. */
+/** The round room’s ceiling: a gilt ring in from the wall, round the LED panel in its middle. */
 export const cellRoundCeiling = {
   ring: {
     inset: 0.75,
     tube: 0.025,
   },
-  rosette: 0.45,
 } as const
 /** how far the hall’s walls’ cornice stands out of their center lines, which frames the coffers all round */
 const corniceFront = Math.max(...corniceBands.map(band => band.front))
@@ -97,7 +96,7 @@ function filletFrame(x: number, z: number) {
 }
 
 /**
- * The Cell’s ceilings, relative to its origin, by material: the hall’s slab, whose underside forms the coffers’ fields, and the round spaces’ slabs, the beams of the hall’s coffers and every bit of gilding on both.
+ * The Cell’s ceilings, relative to its origin, by material: the hall’s slab, whose underside forms the coffers’ fields, and the round room’s slab, the beams of the hall’s coffers and every bit of gilding on both.
  */
 export default class CellCeilingGeometry {
   /** the beams running along x, from wall to wall */
@@ -106,20 +105,18 @@ export default class CellCeilingGeometry {
    * the beams running along z, between those along x and on into the walls, laid along local x: the mesh turns them a quarter about y, which carries local x to world −z and local z to world x, so a material whose grain follows local x follows them too
    */
   readonly crossBeams: BufferGeometry
-  /** the coffers’ fillets, the ceiling rose and the round ceilings’ rings and the alcoves’ rosettes */
+  /** the coffers’ fillets, the ceiling rose and the round ceiling’s ring */
   readonly gilt: BufferGeometry
   readonly hall: BufferGeometry
-  /** the round spaces’ slabs, empty while a door closes the arch */
+  /** the round room’s slab, empty while a door closes the arch */
   readonly rounds: BufferGeometry
 
-  constructor({alcoves, height, size: [width, depth], vestibule}: {
-    /** the small round rooms off the vestibule */
-    alcoves: ReadonlyArray<Pick<RoundVestibule, 'center' | 'radius'>>
+  constructor({height, size: [width, depth], vestibule}: {
     /** how high the ceilings hang over the floor, the middle of their slabs */
     height: number
     /** the hall’s floor plan, centered on the origin */
     size: readonly [width: number, depth: number]
-    /** the round room beyond the hall’s north wall, if it opens there */
+    /** the round room beyond the hall’s north wall, if the arch opens there */
     vestibule?: Pick<RoundVestibule, 'center' | 'radius'>
   }) {
     const underside = height - cellCeilingSlab / 2
@@ -140,8 +137,6 @@ export default class CellCeilingGeometry {
     const pieces = Array.from({length: stops.length / 2}, (_, index) => [stops[index * 2], stops[index * 2 + 1]] as const)
     this.crossBeams = mergeParts(alongX.beams.flatMap(x => pieces.map(([from, to]) => beamPiece(to - from, -(from + to) / 2, x))))
     const frame = filletFrame(alongX.field - fillet.inset * 2, alongZ.field - fillet.inset * 2)
-    // Facing down, the rosettes’ bosses hang from the ceiling and their rings sink halfway into it.
-    const roundRosette = rosette(cellRoundCeiling.rosette).rotateX(Math.PI)
     const gilt: Array<BufferGeometry> = []
     for (const x of alongX.middles) {
       for (const z of alongZ.middles) {
@@ -150,22 +145,17 @@ export default class CellCeilingGeometry {
     }
     const disk = new CylinderGeometry(rose.radius, rose.radius, rose.depth, 48)
     gilt.push(disk.translate(0, underside - rose.depth / 2, 0), rosette(rose.size, {boss: false}).rotateX(Math.PI).translate(0, underside, 0))
-    const rounds: Array<BufferGeometry> = []
-    for (const space of vestibule ? [vestibule, ...alcoves] : alcoves) {
-      const {center: [x, z], radius} = space
-      const slab = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
+    frame.dispose()
+    if (vestibule) {
+      const {center: [x, z], radius} = vestibule
       const ring = new TorusGeometry(radius - cellRoundCeiling.ring.inset, cellRoundCeiling.ring.tube, 8, roundSegments)
-      rounds.push(slab.translate(x, height, z))
       gilt.push(ring.rotateX(Math.PI / 2).translate(x, underside, z))
-      if (space !== vestibule) {
-        gilt.push(roundRosette.clone().translate(x, underside, z))
-      }
-    }
-    for (const template of [frame, roundRosette]) {
-      template.dispose()
+      const slab = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
+      this.rounds = slab.translate(x, height, z)
+    } else {
+      this.rounds = new BufferGeometry
     }
     this.gilt = mergeParts(gilt)
-    this.rounds = rounds.length ? mergeParts(rounds) : new BufferGeometry
   }
 
   dispose() {
