@@ -1,0 +1,37 @@
+name: triangles
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+jobs:
+  triangles:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: checkout
+      uses: actions/checkout@v7.0.1
+    - name: setupBun
+      uses: oven-sh/setup-bun@v2.2.0
+      with:
+        bun-version: 1.4.4
+    - name: setupMediaTools
+      uses: ./.github/actions/setupMediaTools
+    - name: install
+      run: bun install --frozen-lockfile
+    # The production build, as the dev server’s first visit reoptimizes dependencies while rooms load, which silently leaves rooms out
+    - name: build
+      run: bun run build
+    # Every room’s triangles, meshes and lights in heavy graphics, to the log and the job summary, loaded in the runner’s Chrome on its software Vulkan.
+    # Knottingham is left out, as some of its Knot shaders crash Chrome’s software GPU process.
+    - name: analyzeWorlds
+      shell: bash
+      env:
+        BROWSER: /usr/bin/google-chrome
+      run: |
+        # Chrome’s sandbox needs unprivileged user namespaces, which Ubuntu 24.04 restricts.
+        sudo sysctl --write kernel.apparmor_restrict_unprivileged_userns=0
+        analyze() {
+          bun scripts/analyzeWorld.ts --target dist --swiftshader --height 180 --format markdown "$@" | tee --append "$GITHUB_STEP_SUMMARY"
+        }
+        analyze
+        analyze --room cell
