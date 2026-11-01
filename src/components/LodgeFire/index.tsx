@@ -16,7 +16,7 @@ import FireSparks from '#src/lib/gallery/fireplace/FireSparks.ts'
 import FlameGeometry from '#src/lib/gallery/fireplace/FlameGeometry.ts'
 import fireFlicker from '#src/lib/gallery/fireplace/flicker.ts'
 import LogGeometry from '#src/lib/gallery/fireplace/LogGeometry.ts'
-import CharredLogMaterial from '#src/lib/materials/CharredLogMaterial.ts'
+import {createCharredLogMaterial} from '#src/lib/materials/CharredLogMaterial.ts'
 import EmberBedMaterial from '#src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '#src/lib/materials/FlameMaterial.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
@@ -61,7 +61,7 @@ function LiveFire() {
   const pile = useDisposable(useMemo(() => {
     const parts = fire.pile.map(({shape, inward}) => ({
       geometry: new LogGeometry(shape),
-      material: new CharredLogMaterial(inward, shape.length / 2, shape.radiusBottom),
+      material: createCharredLogMaterial(inward, shape.length / 2, shape.radiusBottom),
     }))
     return {
       parts,

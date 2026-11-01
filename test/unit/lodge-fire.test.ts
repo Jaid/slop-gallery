@@ -1,4 +1,4 @@
-import type {BufferAttribute, InterleavedBufferAttribute} from 'three/webgpu'
+import type {BufferAttribute, InterleavedBufferAttribute, MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {expect, spyOn, test} from 'bun:test'
 
@@ -10,7 +10,7 @@ import FireSparks, {fireSparks} from '../../src/lib/gallery/fireplace/FireSparks
 import FlameGeometry, {fireFlames} from '../../src/lib/gallery/fireplace/FlameGeometry.ts'
 import fireFlicker from '../../src/lib/gallery/fireplace/flicker.ts'
 import LogGeometry from '../../src/lib/gallery/fireplace/LogGeometry.ts'
-import CharredLogMaterial from '../../src/lib/materials/CharredLogMaterial.ts'
+import {createCharredLogMaterial} from '../../src/lib/materials/CharredLogMaterial.ts'
 import EmberBedMaterial from '../../src/lib/materials/EmberBedMaterial.ts'
 import FlameMaterial from '../../src/lib/materials/FlameMaterial.ts'
 
@@ -148,7 +148,8 @@ test('the firelight flickers within a narrow, never-dark band', () => {
 test('fire materials glow without lighting, and flames are additive light that never writes depth', () => {
   const flame = new FlameMaterial
   const bed = new EmberBedMaterial(fire.embers.size)
-  const log = new CharredLogMaterial(1, 0.8, 0.18)
+  const log = createCharredLogMaterial(1, 0.8, 0.18)
+  const logNodes = log.nodeMaterial as MeshStandardNodeMaterial
   try {
     expect(flame.blending).toBe(AdditiveBlending)
     expect(flame.transparent).toBe(true)
@@ -161,12 +162,32 @@ test('fire materials glow without lighting, and flames are additive light that n
     expect(bed.depthWrite).toBe(false)
     expect(bed.emissiveNode).not.toBeNull()
     expect(bed.opacityNode).not.toBeNull()
-    expect(log.emissiveNode).not.toBeNull()
-    expect(log.normalNode).not.toBeNull()
+    expect(logNodes.emissiveNode).not.toBeNull()
+    expect(logNodes.normalNode).not.toBeNull()
   } finally {
     flame.dispose()
     bed.dispose()
     log.dispose()
+  }
+})
+test('every charred log shares one shader build and keeps its own direction and size', () => {
+  const logs = fire.pile.map(({inward, shape}) => createCharredLogMaterial(inward, shape.length / 2, shape.radiusBottom))
+  try {
+    const nodeMaterials = new Set(logs.map(log => log.nodeMaterial))
+    const programs = new Set(logs.map(log => log.customProgramCacheKey()))
+    expect(nodeMaterials.size).toBe(1)
+    expect(programs.size).toBe(1)
+    for (const [index, {inward, shape}] of fire.pile.entries()) {
+      expect(logs[index]).toMatchObject({
+        halfLength: shape.length / 2,
+        inward,
+        radius: shape.radiusBottom,
+      })
+    }
+  } finally {
+    for (const log of logs) {
+      log.dispose()
+    }
   }
 })
 test('instanced coals and sparks dispose their own geometry and material', () => {
