@@ -2,17 +2,18 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 
+import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
+
 import {architectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellRoundCeiling, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
+import CellCeilingGeometry, {cellCeilingSlab, cellCoffers, cellLedY, cofferLine} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
-import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
+import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
-import {siennaWainscot, siennaWainscotPanel} from '../../src/lib/gallery/siennaWainscot.ts'
-import {aimThrower} from '../../src/lib/gallery/SpotlightThrowerGeometry.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
+import Cell, {alcoveLight, cellLed} from '../../src/rooms/cell/Cell.ts'
 import CellLayout from '../../src/rooms/cell/CellLayout.ts'
 import cellMap from '../../src/rooms/cell/map.ts'
 import RoomMap from '../../src/rooms/lib/RoomMap.ts'
@@ -23,28 +24,6 @@ const ids = orbs.map(orb => orb.propId)
 /** the footprint of a pedestal, which no other may come closer to, middle to middle, than its diagonal */
 const pedestalDiagonal = 1.16 * Math.SQRT2
 const distance = ([ax, az]: readonly [number, number], [bx, bz]: readonly [number, number]) => Math.hypot(ax - bx, az - bz)
-/** Checks that every thrower of the layout hangs from its ceiling inside a space of it, clear of its wall, and aims at the middle of an orb in its holder on a pedestal, from above at a slant, its light shining from in front of it toward that orb. */
-function expectThrowersOver(layout: CellLayout) {
-  for (const {ceiling, target} of layout.throwers) {
-    const [x, y, z] = ceiling
-    expect(y).toBe(layout.height)
-    expect(layout.spaces.some(space => distance([x, z], space.center) <= space.radius - 0.45)).toBe(true)
-    expect(layout.pedestals.some(({position}) => distance(position, [target[0], target[2]]) < 1e-9)).toBe(true)
-    expect(target[1]).toBeCloseTo(pedestalHeight + orbSeat, 9)
-    const reach = distance([x, z], [target[0], target[2]])
-    expect(reach).toBeGreaterThan(1.5)
-    expect(reach).toBeLessThan(3)
-    const {pivot, source, tilt} = aimThrower(ceiling, target)
-    expect(tilt).toBeGreaterThan(Math.PI / 4)
-    expect(tilt).toBeLessThan(Math.PI * 0.4)
-    const along = (point: Vec3) => point.map((value, index) => value - pivot[index])
-    const [sx, sy, sz] = along(source)
-    const [tx, ty, tz] = along(target)
-    // On the line from the pivot to the target, a little way along it.
-    expect(Math.hypot(sy * tz - sz * ty, sz * tx - sx * tz, sx * ty - sy * tx)).toBeLessThan(1e-9)
-    expect(sx * tx + sy * ty + sz * tz).toBeGreaterThan(0)
-  }
-}
 describe('?item', () => {
   test('names the Sandbox’s items by their object ids, comma-separated, trimmed and in their order, each once', () => {
     expect(readItems('http://localhost/')).toEqual([])
@@ -70,6 +49,14 @@ describe('?item', () => {
     expect(sandbox.room('cell').room.layout.pedestals).toHaveLength(2)
     expect(() => new Sandbox(['prop-orb-spook', 'prop-orb-pumpkin'])).toThrow('Unknown Sandbox item URL selection: prop-orb-pumpkin.')
   })
+})
+test('every orb brings a JPEG XL photograph of itself for the portal of its merges, in its own folder', async () => {
+  for (const orb of orbs) {
+    expect(orb.photo.replaceAll('\\', '/')).toEndWith(`/orbs/${orb.id}/photo.jxl`)
+    const bytes = await Bun.file(orb.photo).bytes()
+    // A bare JPEG XL codestream.
+    expect([...bytes.subarray(0, 2)]).toEqual([0xFF, 0x0A])
+  }
 })
 describe('the Cell’s layout', () => {
   test('follows the number of items: a door for none, a vestibule for one, alcoves for two or three, a rotunda for more', () => {
@@ -103,39 +90,26 @@ describe('the Cell’s layout', () => {
       rotation: 0,
     }])
   })
-  test('lights a lone item with two throwers, from the front, mirrored to the left and the right of the arch, and none while the door is shut', () => {
-    const closed = new CellLayout(0)
-    expect(closed.throwers).toEqual([])
-    const layout = new CellLayout(1)
-    expect(layout.throwers).toHaveLength(2)
-    expectThrowersOver(layout)
-    const [left, right] = layout.throwers.map(thrower => thrower.ceiling)
-    const [x, z] = layout.vestibule!.center
-    expect(left[0] - x).toBeCloseTo(x - right[0], 9)
-    expect(left[0]).toBeLessThan(x)
-    expect(left[2]).toBeCloseTo(right[2], 9)
-    // Toward the arch, in front of the item.
-    expect(left[2]).toBeGreaterThan(z)
-  })
-  test('softens the dark round the throwers’ pools with a faint point light halfway between them, shadowless, and none while the door is shut', () => {
+  test('lights the vestibule with an LED panel in the middle of its ceiling and every alcove with a shadowless light high over its item, and none of them while the door is shut', () => {
     const closed = new Sandbox([])
-    expect(closed.lamps().some(lamp => lamp.id === 'cell-thrower_fill')).toBe(false)
-    for (const count of [1, 2, 3]) {
-      const sandbox = new Sandbox(ids.slice(0, count))
-      const {layout} = sandbox.room('cell').room
-      const lamps = sandbox.lamps()
-      const fill = lamps.find(lamp => lamp.id === 'cell-thrower_fill')!
-      expect(fill.kind ?? 'point').toBe('point')
-      expect(fill.shadow ?? false).toBe(false)
-      const pivots = layout.throwers.map(({ceiling, target}) => aimThrower(ceiling, target).pivot)
-      for (const axis of [0, 1, 2]) {
-        expect(fill.position[axis]).toBeCloseTo(pivots.reduce((sum, pivot) => sum + pivot[axis], 0) / pivots.length, 9)
+    expect(closed.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier'])
+    for (const count of [1, 2, 3, 6]) {
+      const {layout, lamps} = new Cell(new CellLayout(count))
+      const led = lamps.get('led')!
+      const [x, z] = layout.vestibule!.center
+      expect(led.position).toEqual([x, cellLedY(layout.height) - cellLed.drop, z])
+      expect(led.shadow ?? false).toBe(false)
+      expect(led.kind ?? 'point').toBe('point')
+      // It reaches across the whole vestibule, however large.
+      expect(led.range!).toBeGreaterThanOrEqual(layout.vestibule!.radius * 2)
+      expect(lamps.keys().filter(id => id.startsWith('alcove_')).toArray()).toEqual(layout.alcoves.map((_, index) => `alcove_${index}_light`))
+      for (const [index, alcove] of layout.alcoves.entries()) {
+        const light = lamps.get(`alcove_${index}_light`)!
+        expect(light.position).toEqual([alcove.center[0], layout.height - alcoveLight.drop, alcove.center[1]])
+        expect(light.shadow ?? false).toBe(false)
+        expect(light.range!).toBeGreaterThan(alcove.radius)
       }
-      const throwers = lamps.filter(lamp => /^cell-thrower_\d+$/u.test(lamp.id))
-      expect(throwers).toHaveLength(layout.throwers.length)
-      for (const thrower of throwers) {
-        expect(fill.strength!).toBeLessThan(thrower.strength! / 2)
-      }
+      expect(lamps.values().filter(lamp => lamp.kind === 'spot').toArray()).toEqual([])
     }
   })
   for (const count of [2, 3]) {
@@ -146,15 +120,7 @@ describe('the Cell’s layout', () => {
       expect(vestibule.arches.map(arch => arch.name)).toEqual(['cell', ...layout.alcoves.map(alcove => alcove.name)])
       const sandbox = new Sandbox(ids.slice(0, count))
       const cell = sandbox.room('cell')
-      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', ...layout.alcoves.map((_, index) => `cell-thrower_${index}`), 'cell-thrower_fill'])
-      expectThrowersOver(layout)
-      // Each inside its alcove’s arch, aimed at the alcove’s own item.
-      for (const [index, {ceiling, target}] of layout.throwers.entries()) {
-        const alcove = layout.alcoves[index]
-        expect([target[0], target[2]]).toEqual([...alcove.center])
-        expect(distance([ceiling[0], ceiling[2]], alcove.center)).toBeLessThan(alcove.radius)
-        expect(distance([ceiling[0], ceiling[2]], vestibule.center)).toBeLessThan(distance(alcove.center, vestibule.center))
-      }
+      expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier', 'cell-led', ...layout.alcoves.map((_, index) => `cell-alcove_${index}_light`)])
       const xs = layout.alcoves.map(alcove => alcove.center[0])
       expect(xs).toEqual(xs.toSorted((a, b) => a - b))
       for (const [index, alcove] of layout.alcoves.entries()) {
@@ -184,17 +150,12 @@ describe('the Cell’s layout', () => {
     })
   }
   for (const count of [4, 5, 6, 8, 12]) {
-    test(`rings ${count} items round the rotunda’s middle, wide enough to walk between, round and behind them, the ring open toward the arch, each lit by a thrower hanging toward the middle`, () => {
+    test(`rings ${count} items round the rotunda’s middle, wide enough to walk between, round and behind them, the ring open toward the arch`, () => {
       const layout = new CellLayout(count)
       const vestibule = layout.vestibule!
       expect(layout.alcoves).toEqual([])
       expect(vestibule.center[1] + vestibule.radius).toBeCloseTo(layout.northZ, 9)
       expect(vestibule.radius).toBeGreaterThan(4)
-      expectThrowersOver(layout)
-      expect(layout.throwers.map(({target}) => [target[0], target[2]])).toEqual(layout.pedestals.map(({position}) => [...position]))
-      for (const [index, {ceiling}] of layout.throwers.entries()) {
-        expect(distance([ceiling[0], ceiling[2]], vestibule.center)).toBeLessThan(distance(layout.pedestals[index].position, vestibule.center))
-      }
       const ring = distance(layout.pedestals[0].position, vestibule.center)
       expect(ring).toBeGreaterThanOrEqual(2.4 - 1e-9)
       expect(vestibule.radius - ring).toBeCloseTo(2.4, 6)
@@ -234,15 +195,13 @@ describe('the Cell’s layout', () => {
   })
 })
 describe('the Cell’s trim and door', () => {
-  test('runs a low molded baseboard along the round spaces’ walls, which stands out of the face less than the old bands, and the Sienna’s tall one along the hall’s under its wainscot', () => {
+  test('runs a low molded baseboard along the round spaces’ walls, which stands out of the face less than the old bands, and the Sienna’s tall one along the hall’s, the velvet lining the arch through the north one', () => {
     const [toe] = cellBaseboard
     const top = cellBaseboard.at(-1)!
     expect(toe).toEqual([toe[0], 0])
     expect(top[0]).toBe(wallFace)
     expect(top[1]).toBeLessThan(0.25)
     expect(Math.max(...cellBaseboard.map(([front]) => front))).toBeLessThan(0.2)
-    const {frame} = siennaWainscotPanel
-    const frameBottom = frame.y - frame.size[1] / 2
     for (const count of [0, 1, 3]) {
       const sandbox = new Sandbox(ids.slice(0, count))
       const round = sandbox.walls.filter(wall => wall.curveRadius)
@@ -254,23 +213,36 @@ describe('the Cell’s trim and door', () => {
       }
       for (const wall of hall) {
         expect(wall.baseboardSection).toBeUndefined()
-        const [trim] = architectureGeometry(wall).trim
+        const {surface, trim: [trim]} = architectureGeometry(wall)
         trim.computeBoundingBox()
-        // The wainscot’s frames stand right on it, apart from the plinth blocks the casing of an opening stands on.
+        // The Sienna’s two plain bands, apart from the plinth blocks the casing of an opening stands on.
         if (!wall.holes?.length) {
-          expect(trim.boundingBox!.max.y).toBeLessThanOrEqual(frameBottom)
-          expect(trim.boundingBox!.max.y).toBeGreaterThan(frameBottom - 0.02)
+          expect(trim.boundingBox!.max.y).toBeCloseTo(0.44, 6)
+          continue
         }
-        // Panels all along it, clear of the arch.
-        const panels = siennaWainscot(wall)
-        expect(panels.length).toBeGreaterThanOrEqual(wall.holes?.length ? 6 : 7)
-        for (const hole of wall.holes ?? []) {
-          for (const u of panels) {
-            expect(Math.abs(u - hole.u)).toBeGreaterThanOrEqual(hole.width / 2 + siennaWainscotPanel.width / 2)
+        // The arch’s reveal, all of it inside the opening and across from the wall’s faces, takes the second material.
+        const lined = withOpeningReveals(surface, wall)
+        try {
+          const [faces, reveals] = lined.groups
+          expect(faces.start).toBe(0)
+          expect(reveals.start).toBe(faces.count)
+          expect(faces.count + reveals.count).toBe(lined.index!.count)
+          expect(reveals.count).toBeGreaterThan(0)
+          const [hole] = wall.holes
+          const position = lined.getAttribute('position')
+          for (let index = reveals.start; index < reveals.start + reveals.count; index++) {
+            const corner = lined.index!.getX(index)
+            expect(Math.abs(position.getX(corner) - hole.u)).toBeLessThanOrEqual(hole.width / 2 + 0.01)
+            expect(position.getY(corner)).toBeLessThanOrEqual(hole.height + 0.01)
           }
+        } finally {
+          lined.dispose()
         }
       }
     }
+    const lone = new Sandbox(ids.slice(0, 1))
+    const ring = lone.walls.find(wall => wall.curveRadius)!
+    expect(() => withOpeningReveals(architectureGeometry(ring).surface, ring)).toThrow(RangeError)
   })
   test('refuses baseboard sections that sink into the wall, run downward or end off its face', () => {
     const sandbox = new Sandbox([])
@@ -335,7 +307,7 @@ describe('the Cell’s ceilings', () => {
     expect(Math.abs(x - z) / x).toBeLessThan(0.02)
   })
   for (const count of [0, 1, 2, 3, 4, 6, 12]) {
-    test(`hangs every beam and bit of gilding under its slab, high over the arches, and rings the round ceilings clear of the throwers, with ${count} items`, () => {
+    test(`hangs every beam and bit of gilding under its slab, high over the arches, the LED panel in the middle of the vestibule’s, with ${count} items`, () => {
       const layout = new CellLayout(count)
       const geometry = new CellCeilingGeometry(layout)
       try {
@@ -366,13 +338,9 @@ describe('the Cell’s ceilings', () => {
         } else {
           expect(geometry.rounds.getAttribute('position')).toBeUndefined()
         }
-        // Every thrower’s stem leaves the ceiling clear of each round ceiling’s ring and of its rosette, whose petals reach 0.92 × its size from the middle.
-        for (const {ceiling: [x, , z]} of layout.throwers) {
-          for (const space of layout.spaces) {
-            const reach = distance([x, z], space.center)
-            expect(Math.abs(reach - (space.radius - cellRoundCeiling.ring.inset))).toBeGreaterThan(cellRoundCeiling.ring.tube + 0.15)
-            expect(reach).toBeGreaterThan(cellRoundCeiling.rosette * 0.92 + 0.03)
-          }
+        // The panel’s housing reaches 5 mm into the slab, over the vestibule’s middle, where no rosette hangs.
+        if (layout.vestibule) {
+          expect(cellLedY(layout.height) + knotLightHousingY + knotLightHousingSize[1] / 2).toBeCloseTo(underside + 0.005, 9)
         }
       } finally {
         geometry.dispose()

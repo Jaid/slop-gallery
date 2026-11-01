@@ -1,5 +1,6 @@
 import type {RoundVestibule} from './roundVestibule.ts'
 
+import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightPanels.ts'
 import {RoundedBoxGeometry} from 'three/addons/geometries/RoundedBoxGeometry.js'
 import {BufferGeometry, CylinderGeometry, ExtrudeGeometry, Path, Shape, TorusGeometry} from 'three/webgpu'
 
@@ -10,8 +11,8 @@ import rosette from './rosette.ts'
 /** how thick the ceilings’ slabs are, centered on the ceiling height */
 export const cellCeilingSlab = 0.18
 /**
- * The hall’s coffered ceiling, in meters: a grid of walnut beams, a gilt fillet round the field of every coffer and a gilt rosette in its middle.
- * Both counts are odd, so a coffer lies in the middle of the hall, where a ceiling rose round the chandelier’s canopy takes the rosette’s place.
+ * The hall’s coffered ceiling, in meters: a grid of walnut beams and a gilt fillet round the field of every coffer.
+ * Both counts are odd, so a coffer lies in the middle of the hall, which a ceiling rose round the chandelier’s canopy adorns.
  */
 export const cellCoffers = {
   /** how many coffers run across the hall along x and along z */
@@ -28,7 +29,6 @@ export const cellCoffers = {
     depth: 0.008,
     bevel: 0.004,
   },
-  rosette: 0.32,
   /** the ceiling rose: a disk deep enough to close the gap over the canopy, which hangs a few centimeters under the ceiling, ringed by a rosette without a boss */
   rose: {
     size: 0.8,
@@ -36,7 +36,7 @@ export const cellCoffers = {
     depth: 0.045,
   },
 } as const
-/** The round spaces’ ceilings: a gilt ring in from the wall, clear of every thrower, and a rosette in the middle, over a lone item or within the throwers round a rotunda’s middle. */
+/** The round spaces’ ceilings: a gilt ring in from the wall, and in each alcove’s middle a rosette over its item, where the vestibule’s LED panel hangs instead. */
 export const cellRoundCeiling = {
   ring: {
     inset: 0.75,
@@ -47,6 +47,11 @@ export const cellRoundCeiling = {
 /** how far the hall’s walls’ cornice stands out of their center lines, which frames the coffers all round */
 const corniceFront = Math.max(...corniceBands.map(band => band.front))
 const roundSegments = 96
+
+/** How high the origin of the LED panel in the middle of the vestibule’s ceiling hangs under a ceiling `height` high; like the Banquet’s, the top of its housing sits 5 mm into the slab, so no light leaks between them. */
+export function cellLedY(height: number) {
+  return height - cellCeilingSlab / 2 + 0.005 - knotLightHousingY - knotLightHousingSize[1] / 2
+}
 
 /**
  * The coffers along a side of the hall `length` long, `count` of them, every one as wide between the beams or the cornice round it: their clear width, their middles and the middles of the beams between them, relative to the hall’s middle.
@@ -101,19 +106,21 @@ export default class CellCeilingGeometry {
    * the beams running along z, between those along x and on into the walls, laid along local x: the mesh turns them a quarter about y, which carries local x to world −z and local z to world x, so a material whose grain follows local x follows them too
    */
   readonly crossBeams: BufferGeometry
-  /** the coffers’ fillets and rosettes, the ceiling rose and the round ceilings’ rings and rosettes */
+  /** the coffers’ fillets, the ceiling rose and the round ceilings’ rings and the alcoves’ rosettes */
   readonly gilt: BufferGeometry
   readonly hall: BufferGeometry
   /** the round spaces’ slabs, empty while a door closes the arch */
   readonly rounds: BufferGeometry
 
-  constructor({height, size: [width, depth], spaces}: {
+  constructor({alcoves, height, size: [width, depth], vestibule}: {
+    /** the small round rooms off the vestibule */
+    alcoves: ReadonlyArray<Pick<RoundVestibule, 'center' | 'radius'>>
     /** how high the ceilings hang over the floor, the middle of their slabs */
     height: number
     /** the hall’s floor plan, centered on the origin */
     size: readonly [width: number, depth: number]
-    /** every round space beyond the hall’s north wall */
-    spaces: ReadonlyArray<Pick<RoundVestibule, 'center' | 'radius'>>
+    /** the round room beyond the hall’s north wall, if it opens there */
+    vestibule?: Pick<RoundVestibule, 'center' | 'radius'>
   }) {
     const underside = height - cellCeilingSlab / 2
     const {beam, count: [countX, countZ], fillet, rose} = cellCoffers
@@ -134,27 +141,27 @@ export default class CellCeilingGeometry {
     this.crossBeams = mergeParts(alongX.beams.flatMap(x => pieces.map(([from, to]) => beamPiece(to - from, -(from + to) / 2, x))))
     const frame = filletFrame(alongX.field - fillet.inset * 2, alongZ.field - fillet.inset * 2)
     // Facing down, the rosettes’ bosses hang from the ceiling and their rings sink halfway into it.
-    const cofferRosette = rosette(cellCoffers.rosette).rotateX(Math.PI)
     const roundRosette = rosette(cellRoundCeiling.rosette).rotateX(Math.PI)
     const gilt: Array<BufferGeometry> = []
-    for (const [indexX, x] of alongX.middles.entries()) {
-      for (const [indexZ, z] of alongZ.middles.entries()) {
+    for (const x of alongX.middles) {
+      for (const z of alongZ.middles) {
         gilt.push(frame.clone().translate(x, underside, z))
-        if (indexX !== (countX - 1) / 2 || indexZ !== (countZ - 1) / 2) {
-          gilt.push(cofferRosette.clone().translate(x, underside, z))
-        }
       }
     }
     const disk = new CylinderGeometry(rose.radius, rose.radius, rose.depth, 48)
     gilt.push(disk.translate(0, underside - rose.depth / 2, 0), rosette(rose.size, {boss: false}).rotateX(Math.PI).translate(0, underside, 0))
     const rounds: Array<BufferGeometry> = []
-    for (const {center: [x, z], radius} of spaces) {
+    for (const space of vestibule ? [vestibule, ...alcoves] : alcoves) {
+      const {center: [x, z], radius} = space
       const slab = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
       const ring = new TorusGeometry(radius - cellRoundCeiling.ring.inset, cellRoundCeiling.ring.tube, 8, roundSegments)
       rounds.push(slab.translate(x, height, z))
-      gilt.push(ring.rotateX(Math.PI / 2).translate(x, underside, z), roundRosette.clone().translate(x, underside, z))
+      gilt.push(ring.rotateX(Math.PI / 2).translate(x, underside, z))
+      if (space !== vestibule) {
+        gilt.push(roundRosette.clone().translate(x, underside, z))
+      }
     }
-    for (const template of [frame, cofferRosette, roundRosette]) {
+    for (const template of [frame, roundRosette]) {
       template.dispose()
     }
     this.gilt = mergeParts(gilt)

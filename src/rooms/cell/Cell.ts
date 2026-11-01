@@ -5,8 +5,8 @@ import type {Box3} from 'three/webgpu'
 
 import {Geofence} from 'geofency'
 
+import {cellLedY} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import {insideRoundVestibule, roundVestibuleWall} from '#src/lib/gallery/roundVestibule.ts'
-import {aimThrower} from '#src/lib/gallery/SpotlightThrowerGeometry.ts'
 import {chandelierLampY} from '#src/lib/physics/chandelier.ts'
 
 import Room from '../base/Room.ts'
@@ -17,27 +17,24 @@ import cellBaseboard from './baseboard.ts'
 import cellMap from './map.ts'
 import slots from './slots.ts'
 
-/** the light over an item: a white cone from each of its throwers, as wide as a pedestal’s cap where it reaches the item, its edge soft, which share the strength between them */
-export const throwerSpot = {
-  kind: 'spot',
-  angle: 0.2,
-  penumbra: 0.55,
-  strength: 80,
-  tint: '#ffffff',
-  range: 9,
+/** the lamp under the LED panel in the middle of the vestibule’s ceiling, like the Banquet’s under each of its panes: a white wash without a shadow, fading gently, its light this far under the panel */
+export const cellLed = {
+  strength: 36,
+  tint: '#eee3ff',
   decay: 1.5,
+  drop: 0.32,
 } as const
-/** a faint light from no visible source between the throwers, which softens the dark round their pools without a shadow of its own */
-export const throwerFill = {
-  strength: 10,
-  tint: '#ffffff',
-  range: 10,
+/** a light from no visible source in each alcove, high over its item, which lights it without a shadow */
+export const alcoveLight = {
+  strength: 16,
+  tint: '#eee3ff',
+  range: 6,
   decay: 1.5,
+  /** how far under the ceiling it shines from */
+  drop: 1.4,
 } as const
-/** the most throwers whose light casts shadows */
-const maxShadowedThrowers = 4
 
-/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered and paneled like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, its layout lays out a pedestal for every item it holds in round spaces upholstered in the Arena’s velvet, each lit by spotlight throwers, or a door closes the arch while it holds none. */
+/** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, its layout lays out a pedestal for every item it holds in round spaces upholstered in the Arena’s velvet, lit by an LED panel in the vestibule’s ceiling and a light in each alcove, or a door closes the arch while it holds none. */
 export default class Cell extends Room {
   override readonly air: Array<Box3>
   override readonly color = '#5d242b'
@@ -68,26 +65,22 @@ export default class Cell extends Room {
         shadow: true,
       },
     }
-    // As bright on every item, however many throwers light it.
-    const share = layout.pedestals.length / layout.throwers.length
-    for (const [index, {ceiling, target}] of layout.throwers.entries()) {
-      // From just in front of the thrower’s lens, a tight pool round the item and its pedestal’s cap.
-      lamps[`thrower_${index}`] = {
-        position: aimThrower(ceiling, target).source,
-        target,
-        ...throwerSpot,
-        strength: throwerSpot.strength * share,
-        // Every spot that casts a shadow costs every lit material a lights node of its own, so a rotunda’s many leave theirs out.
-        shadow: layout.throwers.length <= maxShadowedThrowers ? 'heavy' : false,
+    if (vestibule) {
+      const [x, z] = vestibule.center
+      lamps.led = {
+        position: [x, cellLedY(height) - cellLed.drop, z],
+        strength: cellLed.strength,
+        tint: cellLed.tint,
+        // Across the whole vestibule, however large a rotunda grows.
+        range: Math.max(8, vestibule.radius * 2),
+        decay: cellLed.decay,
       }
     }
-    if (layout.throwers.length) {
-      // As high as their pivots, in the middle between them.
-      const pivots = layout.throwers.map(({ceiling, target}) => aimThrower(ceiling, target).pivot)
-      const middle = (axis: number) => pivots.reduce((sum, pivot) => sum + pivot[axis], 0) / pivots.length
-      lamps.thrower_fill = {
-        position: [middle(0), middle(1), middle(2)],
-        ...throwerFill,
+    for (const [index, {center: [x, z]}] of layout.alcoves.entries()) {
+      const {drop, ...light} = alcoveLight
+      lamps[`alcove_${index}_light`] = {
+        position: [x, height - drop, z],
+        ...light,
       }
     }
     // The arch through the north wall opens into the vestibule, or a door that stays shut fills it.
@@ -96,7 +89,7 @@ export default class Cell extends Room {
       u: vestibule?.center[0] ?? 0,
     }
     const walls: Record<string, RoomWall> = {
-      // Four plain walls, which artworks may hang on, with the Sienna’s tall baseboard under its wainscot.
+      // Four plain walls, which artworks may hang on, with the Sienna’s tall baseboard.
       north: planWall(size, 'north', height, {holes: vestibule ? {vestibule: opening} : {door: opening}}),
       east: planWall(size, 'east', height),
       south: planWall(size, 'south', height),

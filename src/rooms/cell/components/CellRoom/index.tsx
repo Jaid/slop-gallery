@@ -3,32 +3,31 @@ import type {ArenaPolish, ArenaSurfaces} from '#component/ArenaShell'
 import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
-import {Fragment, useMemo} from 'react'
+import {useMemo} from 'react'
 import {ExtrudeGeometry} from 'three/webgpu'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import {ArenaFloor, useArenaSurfaces} from '#component/ArenaShell'
+import CeilingLeds from '#component/CeilingLeds'
 import Chandelier from '#component/Chandelier'
 import Orb from '#component/Orb'
 import OrbHolder, {useOrbHolder} from '#component/OrbHolder'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
-import SiennaWainscot from '#component/SiennaWainscot'
-import SpotlightThrower, {useSpotlightThrower} from '#component/SpotlightThrower'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
+import {cellLedY} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
-import {siennaWainscotFields} from '#src/lib/gallery/siennaWainscot.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import WoodFloorMaterial from '#src/lib/materials/WoodFloorMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import {throwerSpot} from '#src/rooms/cell/Cell.ts'
+import {cellLed} from '#src/rooms/cell/Cell.ts'
 import CellCeiling from '#src/rooms/cell/components/CellCeiling/index.tsx'
 import CellDoor from '#src/rooms/cell/components/CellDoor/index.tsx'
 import sandbox from '#src/worlds/sandbox/index.ts'
@@ -40,7 +39,7 @@ const [width, depth] = cell.size
 const [x, z] = cell.center
 const roundWallIds = new Set(layout.spaces.map(space => cell.room.globalId(space.name)))
 const walls = sandbox.walls.filter(wall => wall.room === cell.id)
-/** the hall’s four walls, papered like the Sienna’s */
+/** the hall’s four walls, papered like the Sienna’s, the velvet of the spaces beyond lining the arch through the north one */
 const hallWalls = walls.filter(wall => !roundWallIds.has(wall.id))
 /** the round walls of the spaces beyond the north wall, upholstered in the Arena’s velvet */
 const roundWalls = walls.filter(wall => roundWallIds.has(wall.id))
@@ -53,33 +52,42 @@ const worldPoint = ([pointX, pointZ]: readonly [number, number]) => {
 }
 // Whole tiles from the north-west corner, which the walls then meet at a tile’s edge all the way round.
 const floorOrigin = [x - width / 2, z - depth / 2] as const
-/** Polished hard like the Cinnabar’s terrazzo, so the chandelier and the walls mirror clearly in it. */
+/** Polished enough that the chandelier and the walls mirror in it, more faintly than in the Cinnabar’s terrazzo. */
 const polish: ArenaPolish = {
-  strength: 0.4,
-  grazingStrength: 0.2,
+  strength: 0.2,
+  grazingStrength: 0.1,
 }
 const slabThickness = 0.24
 const circleSegments = 96
+/** the Banquet’s LED panel in the middle of the vestibule’s ceiling and the lamp under it, which flickers and dies with it */
+const led = vestibule && {
+  lamps: [{
+    id: cell.room.globalId('led'),
+    strength: cellLed.strength,
+  }],
+  slots: [{
+    id: 'vestibule',
+    position: cell.toWorld([vestibule.center[0], cellLedY(layout.height), vestibule.center[1]]),
+    row: 0,
+    slot: 0,
+  }],
+}
 /** how far one repeat of the wood’s texture reaches along x and z, as the Vesper’s floor spreads its 3 × 3 repeats over 12 × 24 m */
 const woodRepeat = [4, 8] as const
 
-/** The Sandbox’s one room: a hall with the Arena’s marble underfoot, papered and paneled like the Sienna under a coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, dim enough that the items’ throwers stand out, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
+/** The Sandbox’s one room: a hall with the Arena’s marble underfoot, papered like the Sienna under a coffered ceiling and the Sienna’s chandelier, lit besides by a faint studio fill from no visible source, and beyond its north wall the spaces with the items on their pedestals, or the door that closes it while there are none. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
-  // The Sienna’s damask over its wainscot, their baseboards, casings, cornice, frames and rails in one varnished timber, which the ceiling’s beams share.
+  // The Sienna’s damask, its baseboards, casings and cornice in one varnished timber, which the ceiling’s beams share.
   const damask = useDisposable(useMemo(() => new DamaskWallpaperMaterial, []))
   const joinery = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'x'}), []))
-  const fields = useDisposable(useMemo(() => new JoineryWoodMaterial(siennaWainscotFields), []))
   return <group name='cell'>
     <ambientLight intensity={0.15} />
     <hemisphereLight color='#e1edff' groundColor='#80705d' intensity={0.45} />
     {/* Each chandelier’s lamp borrows one of its slots for its shadow. */}
     <ShadowPool />
     <ArenaFloor center={cell.center} origin={floorOrigin} polish={polish} size={cell.size} tile={floorTile} />
-    {hallWalls.map(wall => <Fragment key={wall.id}>
-      <WallSurface material={joinery} plaster={surfaces.plaster} surfaceMaterial={damask} wall={wall} />
-      <SiennaWainscot field={fields} frame={joinery} wall={wall} />
-    </Fragment>)}
+    {hallWalls.map(wall => <WallSurface key={wall.id} material={joinery} plaster={surfaces.plaster} revealMaterial={wall === northWall ? surfaces.velvet : undefined} surfaceMaterial={damask} wall={wall} />)}
     <CellCeiling beams={joinery} />
     <group position={[x, chandelierLift, z]}>
       <Chandelier lamp={cell.room.globalId('chandelier')} />
@@ -88,7 +96,7 @@ export default function CellRoom() {
   </group>
 }
 
-/** Every round space beyond the north wall: the Vesper’s varnished wood on their floors and out under their arches, the Arena’s velvet on their walls and on the reveals that line the arches out to the walls they open through, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap under the spotlight throwers aimed at it. */
+/** Every round space beyond the north wall: the Vesper’s varnished wood on their floors and out under their arches, the Arena’s velvet on their walls and on the reveals that line the arches out to the walls they open through, the Banquet’s LED panel in the middle of the vestibule’s ceiling, and the items on their pedestals, every orb resting in a holder on its pedestal’s cap. */
 function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
   const {floorReflections, surfaceAnisotropy} = useGraphicsModeValue(getGraphicsProfile)
   const wood = useDisposable(useMemo(() => {
@@ -99,7 +107,6 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
   const floor = useDisposable(useMemo(() => new WoodFloorMaterial(wood, floorReflections), [floorReflections, wood]))
   const pedestal = usePedestal()
   const holder = useOrbHolder()
-  const thrower = useSpotlightThrower()
   const parts = useDisposable(useMemo(() => {
     const slab = mergeParts(layout.spaces.map(space => {
       const geometry = new ExtrudeGeometry(roundVestibuleFloorShape(space), {
@@ -144,7 +151,7 @@ function Vestibule({surfaces}: {surfaces: ArenaSurfaces}) {
     <mesh geometry={parts.slab} material={floor} name='cell-vestibule-floor' receiveShadow />
     <Branch if={floor.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={floor.reflectionTarget!} /></group></Branch>
     <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
-    {layout.throwers.map(({ceiling, target}) => <SpotlightThrower key={ceiling.join()} {...thrower} ceiling={cell.toWorld(ceiling)} target={cell.toWorld(target)} tint={throwerSpot.tint} />)}
+    <CeilingLeds lamps={led!.lamps} name='cell-vestibule' slots={led!.slots} />
     {sandbox.items.map((orb, index) => {
       const {position, rotation} = layout.pedestals[index]
       const [pedestalX, pedestalZ] = worldPoint(position)
