@@ -87,13 +87,17 @@ const led = vestibule && {
 /** how far one repeat of the wood’s texture reaches along x and z, as the Vesper’s floor spreads its 3 × 3 repeats over 12 × 24 m */
 const woodRepeat = [4, 8] as const
 /**
- * the walnut threshold board under the arch through the north wall, where the hall’s wood meets the vestibule’s marble: from the vestibule’s face of its round wall out to the front of the arch’s casing on the hall’s side, between the jambs and a little into them
+ * the walnut threshold saddle across the arch through the north wall, over the seam on its center line where the hall’s wood meets the passage’s marble: as deep as the arch’s casing stands out of the wall, between the sides of the opening, its long edges sloping down in an ogee to a crowned top
  */
 const threshold = {
-  height: 0.018,
-  radius: 0.006,
-  back: -wallFace,
-  front: openingCasingFronts.classic,
+  depth: openingCasingFronts.classic - wallFace,
+  height: 0.028,
+  /** how much higher the middle of its top stands than its edges */
+  crown: 0.004,
+  /** how far in from either long edge its slopes reach */
+  slope: 0.05,
+  /** how high its long edges stand over the floor */
+  lip: 0.004,
 }
 /** the top of every floor, a millimeter over its slab, all in one plane, which the floors’ shared mirror reflects the room in */
 const floorY = 0.001
@@ -212,7 +216,23 @@ function Vestibule({joinery, surfaces}: {
     ])
     // The round wall’s arch, lined out through the passage to the north wall’s center line, where the north wall’s own reveal takes over: like every wall, it only lines its opening from there to its face.
     const reveal = roundRevealGeometry(roundWall!, roundWall!.holes!.find(hole => hole.name === 'cell')!, vestibule!.arch, passage).rotateY(roundWall!.rotation).translate(...roundWall!.center)
-    const board = new RoundedBoxGeometry(arch!.width + 0.02, threshold.height, threshold.front - threshold.back, 2, threshold.radius)
+    // Its section across the seam, extruded along the opening and turned so the extrusion runs along the wall’s x, centered on the seam.
+    const {crown, height, lip, slope} = threshold
+    const half = threshold.depth / 2
+    const section = new Shape
+    section.moveTo(-half, 0)
+    section.lineTo(-half, lip)
+    section.bezierCurveTo(-half + slope * 0.55, lip, -half + slope * 0.45, height, -half + slope, height)
+    section.quadraticCurveTo(0, height + crown * 2, half - slope, height)
+    section.bezierCurveTo(half - slope * 0.45, height, half - slope * 0.55, lip, half, lip)
+    section.lineTo(half, 0)
+    section.closePath()
+    const saddle = new ExtrudeGeometry(section, {
+      depth: arch!.width,
+      bevelEnabled: false,
+      curveSegments: 12,
+    })
+    const board = saddle.rotateY(Math.PI / 2).translate(-arch!.width / 2, 0, 0)
     return {
       slab,
       reveal,
@@ -235,9 +255,9 @@ function Vestibule({joinery, surfaces}: {
     {/* Lying on both floors across the seam where they meet, along the north wall’s center line. */}
     <group position={northWall.center} rotation={[0, northWall.rotation, 0]}>
       <RigidBody colliders={false} type='fixed'>
-        <CuboidCollider args={[(arch!.width + 0.02) / 2, threshold.height / 2, (threshold.front - threshold.back) / 2]} position={[arch!.u, floorY + threshold.height / 2, (threshold.front + threshold.back) / 2]} />
+        <CuboidCollider args={[arch!.width / 2, threshold.height / 2, threshold.depth / 2]} position={[arch!.u, floorY + threshold.height / 2, 0]} />
       </RigidBody>
-      <mesh castShadow geometry={parts.board} material={joinery} name='cell-threshold' position={[arch!.u, floorY + threshold.height / 2, (threshold.front + threshold.back) / 2]} receiveShadow />
+      <mesh castShadow geometry={parts.board} material={joinery} name='cell-threshold' position={[arch!.u, floorY, 0]} receiveShadow />
     </group>
     <WallSurface material={surfaces.trim} plaster={surfaces.plaster} surfaceMaterial={surfaces.velvet} wall={roundWall!} />
     <mesh geometry={parts.slab} material={floor} name='cell-vestibule-floor' receiveShadow />
