@@ -1,5 +1,4 @@
 import type {PlankOptions} from '../materials/PlankMaterial.ts'
-import type {Wall} from '../placement/wallGeometry.ts'
 import type {FloorRectangle} from './floors.ts'
 import type {PendantMount} from './pendants/CeilingProbe.ts'
 
@@ -76,12 +75,6 @@ export function siennaCeilingBeamY(height: number) {
  */
 export function siennaCeilingBeamOffsets(roomWidth: number, count = siennaCeilingBeam.count) {
   return Array.from({length: count}, (_, i) => (i + 0.5) * roomWidth / count - roomWidth / 2)
-}
-
-/** Centers of the 2 m wainscot panels along a wall, as many as fit, centered on it, skipping any that would run into an opening. */
-export function siennaWainscot(wall: Pick<Wall, 'holes' | 'width'>) {
-  const count = Math.floor(wall.width / 2)
-  return Array.from({length: count}, (_, i) => (i - (count - 1) / 2) * 2).filter(u => !wall.holes?.some(hole => Math.abs(u - hole.u) < hole.width / 2 + 1))
 }
 
 /** Narrow, dark-stained boards between the joists. */

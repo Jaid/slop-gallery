@@ -8,9 +8,10 @@ import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Chandelier from '#component/Chandelier'
 import PendantLamps from '#component/PendantLamps'
+import SiennaWainscot from '#component/SiennaWainscot'
 import Box from '#src/components/Scene/primitives.tsx'
 import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
-import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern, siennaWainscot} from '#src/lib/gallery/sienna.ts'
+import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern} from '#src/lib/gallery/sienna.ts'
 import PersianRugMaterial from '#src/lib/materials/PersianRugMaterial.ts'
 import PlankFloorMaterial from '#src/lib/materials/PlankFloorMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
@@ -70,12 +71,6 @@ export default function SiennaRoom({joinery}: {
       {siennaCeilingBeamOffsets(vestibuleWidth, 2).map(x => <Box key={x} material={joinery.z} name='sienna-vestibule-ceiling-beam' position={[x, siennaCeilingBeamY(siennaVestibule.height), 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, vestibuleDepth]} />)}
     </group>
     <PendantLamps body={passageLantern} glow={passageLanternGlow} mounts={vestibuleMounts} name='sienna-vestibule-pendant' />
-    {slopGallery.walls.filter(wall => wall.room === 'sienna').map(wall => <group key={wall.id} position={wall.center} rotation={[0, wall.rotation, 0]}>
-      {siennaWainscot(wall).map(u => <group key={u} position={[u, 0, 0]}>
-        <Box material={joinery.x} name='sienna-wainscot-frame' position={[0, 0.92, 0.125]} size={[2, 0.94, 0.025]} />
-        <Box material={joinery.panel} name='sienna-wainscot-panel' position={[0, 0.92, 0.145]} size={[1.55, 0.65, 0.025]} />
-        <Box material={joinery.x} name='sienna-wainscot-rail' position={[0, 1.42, 0.145]} size={[2, 0.045, 0.09]} />
-      </group>)}
-    </group>)}
+    {slopGallery.walls.filter(wall => wall.room === 'sienna').map(wall => <SiennaWainscot key={wall.id} field={joinery.panel} frame={joinery.x} wall={wall} />)}
   </>
 }

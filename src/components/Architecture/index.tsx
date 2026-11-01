@@ -13,6 +13,7 @@ import World from '#component/World'
 import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {cutArchitectures, provideArchitecture} from '#src/lib/gallery/architecture.ts'
+import {siennaWainscotFields} from '#src/lib/gallery/siennaWainscot.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import BanquetMaterials from '#src/lib/materials/BanquetMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
@@ -71,15 +72,7 @@ export default function Architecture() {
     // The joists are left in their oiled, unvarnished state.
     roughness: 0.66,
   }), []))
-  // The wainscot’s raised fields are a shade darker than their frames, so the paneling reads in depth.
-  const joineryPanel = useDisposable(useMemo(() => new JoineryWoodMaterial({
-    colors: {
-      dark: '#1f0f07',
-      light: '#432613',
-      ring: '#120803',
-    },
-    seed: 3,
-  }), []))
+  const joineryPanel = useDisposable(useMemo(() => new JoineryWoodMaterial(siennaWainscotFields), []))
   const joinery = useMemo(() => ({
     panel: joineryPanel,
     x: joineryX,
