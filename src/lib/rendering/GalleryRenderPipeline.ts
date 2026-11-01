@@ -27,7 +27,7 @@ import {gradeMood} from './moodGrade.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
 
-/** the most rows ambient occlusion and the floor reflection render at; at Cinematic’s 2× a 4320p snap would need 8640 rows of each and runs a 16 GB GPU out of memory, while 4320p at 1× already supersamples a 2160p image */
+/** the most rows ambient occlusion, the screen-space indirect light and the floor reflection render at; at Cinematic’s 2× a 4320p snap would need 8640 rows of each and runs a 16 GB GPU out of memory, while 4320p at 1× already supersamples a 2160p image */
 const maxEffectRows = 4320
 const drawingBufferSize = new Vector2
 const capResolutionScale = (renderer: Renderer, scale: number) => Math.min(scale, maxEffectRows / renderer.getDrawingBufferSize(drawingBufferSize).height)
@@ -165,6 +165,12 @@ export default class GalleryRenderPipeline extends RenderPipeline {
         if (settings.screenSpaceIndirectLight) {
           // The light the lit scene bounces onto nearby surfaces, tinted by their diffuse color. Its temporal noise resolves in TRAA.
           const indirect = own(ssgi(scenePass.getTextureNode('output'), depth, normal, camera))
+          // Like the ambient occlusion, it sizes its target each frame from the drawing buffer.
+          const updateIndirect = indirect.updateBefore.bind(indirect)
+          indirect.updateBefore = frame => {
+            indirect.resolutionScale = capResolutionScale(renderer, settings.screenSpaceIndirectLightResolutionScale)
+            return updateIndirect(frame)
+          }
           set(indirect.sliceCount, 'screenSpaceIndirectLightSlices')
           set(indirect.stepCount, 'screenSpaceIndirectLightSteps')
           set(indirect.giIntensity, 'screenSpaceIndirectLightIntensity')

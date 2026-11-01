@@ -156,6 +156,7 @@ const sections: Array<Section> = [
     title: 'Screen-space indirect light',
     toggle: 'screenSpaceIndirectLight',
     controls: [
+      select('screenSpaceIndirectLightResolutionScale', 'Resolution', scales([0.5, 0.75, 1, 1.5, 2])),
       range('screenSpaceIndirectLightIntensity', 'Intensity', 0, 16, 0.5),
       range('screenSpaceIndirectLightRadius', 'Radius', 1, 32, 1),
       range('screenSpaceIndirectLightSlices', 'Slices', 1, 4, 1),

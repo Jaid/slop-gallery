@@ -78,6 +78,7 @@ type SsgiSettings = Pick<RenderPipelineSettings, | 'screenSpaceIndirectLightAmbi
   | 'screenSpaceIndirectLightExpFactor'
   | 'screenSpaceIndirectLightIntensity'
   | 'screenSpaceIndirectLightRadius'
+  | 'screenSpaceIndirectLightResolutionScale'
   | 'screenSpaceIndirectLightSlices'
   | 'screenSpaceIndirectLightSteps'
   | 'screenSpaceIndirectLightTemporalFiltering'
@@ -178,6 +179,7 @@ const cinematicProfile: GraphicsProfile = {
     screenSpaceIndirectLightExpFactor: 2,
     screenSpaceIndirectLightIntensity: 5,
     screenSpaceIndirectLightRadius: 32,
+    screenSpaceIndirectLightResolutionScale: 1,
     screenSpaceIndirectLightSlices: 4,
     screenSpaceIndirectLightSteps: 32,
     screenSpaceIndirectLightTemporalFiltering: true,

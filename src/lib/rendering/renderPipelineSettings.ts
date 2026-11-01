@@ -58,6 +58,8 @@ export type RenderPipelineSettings = {
   screenSpaceIndirectLightExpFactor: number
   screenSpaceIndirectLightIntensity: number
   screenSpaceIndirectLightRadius: number
+  /** screen-space indirect light pixels per output pixel along each axis */
+  screenSpaceIndirectLightResolutionScale: number
   screenSpaceIndirectLightSlices: number
   screenSpaceIndirectLightSteps: number
   screenSpaceIndirectLightTemporalFiltering: boolean
@@ -95,7 +97,7 @@ export type RenderPipelineSettings = {
 export type RenderPipelineSetting = keyof RenderPipelineSettings
 
 /** the settings that change which passes the pipeline has or how they are set up, so changing one builds it anew; every other setting is a uniform that can change live. A new sun filter builds a new sun, which the passes that march its shadow map have to pick up. */
-export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'mirrorReflections', 'reflectionResolutionScale', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'screenSpaceReflections', 'sunShadowSamples', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
+export const renderPipelineStructure = ['ambientOcclusion', 'ambientOcclusionResolutionScale', 'ambientOcclusionTemporalFiltering', 'antiAliasing', 'bloom', 'contactShadowDenoise', 'contactShadowResolutionScale', 'contactShadows', 'dither', 'mirrorReflections', 'reflectionResolutionScale', 'screenSpaceIndirectLight', 'screenSpaceIndirectLightResolutionScale', 'screenSpaceIndirectLightTemporalFiltering', 'screenSpaceReflectionResolutionScale', 'screenSpaceReflections', 'sunShadowSamples', 'volumetricLight', 'volumetricLightBlur', 'volumetricLightResolutionScale', 'voxelIndirectLight', 'voxelIndirectLightResolution'] as const satisfies Array<RenderPipelineSetting>
 
 export type RenderPipelineStructure = Pick<RenderPipelineSettings, typeof renderPipelineStructure[number]>
 
@@ -144,6 +146,7 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     screenSpaceIndirectLightExpFactor: 2,
     screenSpaceIndirectLightIntensity: 4,
     screenSpaceIndirectLightRadius: 12,
+    screenSpaceIndirectLightResolutionScale: 1,
     screenSpaceIndirectLightSlices: 3,
     screenSpaceIndirectLightSteps: 16,
     screenSpaceIndirectLightTemporalFiltering: antiAliasing === 'traa',
