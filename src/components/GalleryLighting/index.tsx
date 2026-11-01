@@ -16,7 +16,7 @@ import {getDefaultCustomGraphics, useCustomGraphics} from '#src/lib/rendering/cu
 import {getGraphicsProfile, getSunShadowSettings} from '#src/lib/rendering/graphicsMode.ts'
 import {lampOf} from '#src/lib/rendering/lamps.ts'
 import {isShadowSlot, lightActive, lightGain, lightShadow, useLightEdits} from '#src/lib/rendering/lightLevels.ts'
-import {getShadowProps} from '#src/lib/rendering/shadowFilters.ts'
+import {getShadowProps} from '#src/lib/rendering/shadowFilterNodes.ts'
 import {shadowPool} from '#src/lib/rendering/shadowPool.ts'
 import StainedGlassShadowNode from '#src/lib/rendering/StainedGlassShadowNode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'

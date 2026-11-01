@@ -56,6 +56,14 @@ bun test/browser/run.ts brushedMetal.ts --standalone
 ```
 
 This detached HDR fixture uses the real frame, bent rail and sign geometry with UVs removed, in 24 views/scales and without scene lights or a scene environment. It rejects non-finite pixels, black sectors, overly bright broad reflections and missing light/dark structure. It also compares ordinary and rotated instanced supports and checks that moving a support does not move its local grain. The shader uses a static procedural studio environment, not live reflections. Knottingham keeps its existing flat-color support fallback in fast graphics; the benches and Oculus railings use the shared steel in both modes.
+For the gallery’s point light shadow filters (heavy’s 4 and cinematic’s 16 lookups instead of three’s 5):
+
+```sh
+bun test/browser/run.ts pointShadowSeams.ts --standalone
+```
+
+This standalone fixture lights a closed, double-sided room with a single shadow-casting point light, so every surface sees the light and the shadowed render must match the same render at shadow intensity 0. It compares the darkened fraction against three’s own filter. Before the filters compared each lookup against the depth of its own cube face (three’s r187 fix for point shadow seams), they darkened about three times as much of the room, along the seams between the cube’s faces.
+
 For the studio that photographs thrown props for the merge with a hung work:
 
 ```sh
