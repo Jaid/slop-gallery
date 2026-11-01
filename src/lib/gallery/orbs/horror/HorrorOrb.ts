@@ -3,7 +3,8 @@ import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial
 import EyeOrbMaterial from '#src/lib/materials/orb/EyeOrbMaterial.ts'
 import {horrorMood} from '#src/lib/moods/index.ts'
 
-import Orb from './base/Orb.ts'
+import Orb from '../base/Orb.ts'
+import photo from './photo.jxl'
 
 /** A bloodshot eye bleeding into its liquid. It corrupts a work into something disturbing. */
 export default class HorrorOrb extends Orb {
@@ -35,6 +36,7 @@ export default class HorrorOrb extends Orb {
   readonly color = '#a8060f'
   readonly id = 'horror'
   readonly mood = horrorMood
+  readonly photo = photo
   readonly premise = 'This picture is in a horror game – suddenly turned into a corrupted version.'
   readonly title = 'Horror Orb'
 

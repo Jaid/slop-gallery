@@ -16,6 +16,7 @@ export default function Orb({orb, position}: {
   const material = useDisposable(useMemo(() => orb.createMaterial({radius: orbRadius}), [orb]))
   const spell = useMemo(() => ({
     color: orb.color,
+    photo: orb.photo,
     prompt: orb.prompt(environmentSeed),
   }), [orb])
   return <GrabbableProp id={orb.propId} colliders='ball' mood={orb.mood} orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>

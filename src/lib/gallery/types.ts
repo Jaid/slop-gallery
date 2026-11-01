@@ -35,10 +35,12 @@ export type ThrownObject = {
   snapshot: () => Promise<Blob>
   title: string
 }
-/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself; its photograph only shows in the merge’s portal */
+/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself; only the merge’s portal shows a photograph of it, one made in advance */
 export type ThrownOrb = ThrownObject & {
   /** the orb’s glow, which tints the work instead when the merge is made locally, without AI, and the portal of the merge */
   color: string
+  /** the URL of the photograph the merge’s portal shows */
+  photo: string
   /** the whole instruction the image model gets along with the work, sent verbatim */
   prompt: string
 }

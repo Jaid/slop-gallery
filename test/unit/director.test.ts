@@ -121,8 +121,9 @@ for (const partner of ['work', 'orb']) {
         id: 'prop-orb-test',
         title: 'Test Orb',
         color: '#8a3cff',
+        photo: '/orbs/test.jxl',
         prompt: 'Make it spooky.',
-        snapshot: () => Promise.resolve(new Blob(['orb'], {type: 'image/webp'})),
+        snapshot: () => Promise.reject(new Error('An orb is never photographed on a throw.')),
       }) : director.merge('a', 'b')
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
@@ -292,28 +293,34 @@ test('a failing photograph releases the work', async () => {
   })
   director.dispose()
 })
-test('a thrown orb reworks the hung work by its prompt instead of a photograph', async () => {
+test('a thrown orb reworks the hung work by its prompt instead of a photograph, and its portal shows the photograph made of it in advance', async () => {
   const director = new TestDirector({
     ...defaults,
     ai: false,
   }, '')
   try {
-    const photograph = new Blob(['orb'], {type: 'image/webp'})
+    const photograph = '/orbs/test.jxl'
+    let snapshots = 0
     const job = director.mergeItem('a', {
       id: 'prop-orb-test',
       title: 'Test Orb',
       color: '#8a3cff',
+      photo: photograph,
       prompt: 'Make it spooky.',
-      snapshot: () => Promise.resolve(photograph),
+      snapshot: () => {
+        snapshots++
+        return Promise.resolve(new Blob(['orb'], {type: 'image/webp'}))
+      },
     })
     expect(useGallery.getState().portraits[0].merging).toBe(true)
     await Promise.resolve()
     expect(director.received).toEqual([a, 'Make it spooky.'])
-    // The orb’s photograph only surfaces in the portal, tinted in its glow.
+    // The orb’s photograph only surfaces in the portal, tinted in its glow, and the studio never photographs it.
     expect(director.opened[0].spec).toMatchObject({
       color: '#8a3cff',
       ingredients: [a, photograph],
     })
+    expect(snapshots).toBe(0)
     const merged = new Blob(['spooky'], {type: 'image/webp'})
     director.result.resolve(merged)
     await job

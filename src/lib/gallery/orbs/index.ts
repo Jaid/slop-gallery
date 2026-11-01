@@ -1,6 +1,6 @@
-import HalloweenOrb from './HalloweenOrb.ts'
-import HorrorOrb from './HorrorOrb.ts'
-import SpookOrb from './SpookOrb.ts'
+import HalloweenOrb from './halloween/HalloweenOrb.ts'
+import HorrorOrb from './horror/HorrorOrb.ts'
+import SpookOrb from './spook/SpookOrb.ts'
 
 /** the radius of every orb’s ball, in meters */
 export const orbRadius = 0.14

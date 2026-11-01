@@ -6,7 +6,7 @@ import {environmentPick, environmentSample} from '../../../environmentSeed.ts'
 
 /**
  * A kind of orb: a glass ball filled with a scene of its own, which reworks a work it is thrown into by its prompt instead of merging it with a photograph of itself.
- * Its prop is `prop-orb-<id>`.
+ * Its prop is `prop-orb-<id>`, and it lives in a folder of its own with its photograph.
  */
 export default abstract class Orb {
   /** how many of its adjectives a prompt may name, one of which the environment seed picks */
@@ -23,6 +23,8 @@ export default abstract class Orb {
   abstract readonly id: string
   /** what comes over the world while the player holds the orb */
   abstract readonly mood: Mood
+  /** the URL of a photograph of it, taken in the studio a thrown prop is photographed in, which the portal of its merge shows; made in advance, as its glass takes seconds to compile for the studio */
+  abstract readonly photo: string
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
   abstract readonly title: string

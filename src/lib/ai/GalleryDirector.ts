@@ -222,9 +222,13 @@ export default class GalleryDirector {
       ingredients: [a.source],
       color: orb ? item.color : undefined,
     })
-    // An orb’s photograph only shows in the portal; anything else’s is what the work merges with.
-    const photograph = item.snapshot()
-    void photograph.then(image => fusion.addIngredient(image), () => {})
+    // An orb’s photograph only shows in the portal, and was taken in advance; anything else is photographed now, which is what the work merges with.
+    const photograph = orb ? undefined : item.snapshot()
+    if (photograph) {
+      void photograph.then(image => fusion.addIngredient(image), () => {})
+    } else if (orb) {
+      fusion.addIngredient(item.photo)
+    }
     notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${orb ? 'tint' : 'collage'} is taking shape. No AI and no upload.`)
     try {
       const failure = 'The fusion did not finish. The original is still here. Check the image model or try again.'
@@ -232,7 +236,7 @@ export default class GalleryDirector {
         description: `“${a.title}” caught the ${item.title} and was never quite the same.`,
         failure,
         locally: `Tinted by hand in the ${item.title}’s glow.`,
-      }) : this.fuse(a, fusion, async (signal, aspect) => this.generateMerge(a.source, await photograph, signal, aspect), current, {
+      }) : this.fuse(a, fusion, async (signal, aspect) => this.generateMerge(a.source, await photograph!, signal, aspect), current, {
         description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
         failure,
       }))

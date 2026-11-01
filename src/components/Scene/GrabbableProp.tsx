@@ -87,7 +87,7 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   /** what comes over the world while the player holds the prop */
   mood?: Mood
   /** For orbs: what a work struck by the prop is reworked by, instead of merging it with a studio photograph of the prop. */
-  orb?: Pick<ThrownOrb, 'color' | 'prompt'>
+  orb?: Pick<ThrownOrb, 'color' | 'photo' | 'prompt'>
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3

@@ -3,7 +3,8 @@ import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial
 import BatsOrbMaterial from '#src/lib/materials/orb/BatsOrbMaterial.ts'
 import {halloweenMood} from '#src/lib/moods/index.ts'
 
-import Orb from './base/Orb.ts'
+import Orb from '../base/Orb.ts'
+import photo from './photo.jxl'
 
 /** Bats circling a harvest moon in orange haze. It dresses a work up for Halloween, festive rather than frightening. */
 export default class HalloweenOrb extends Orb {
@@ -34,6 +35,7 @@ export default class HalloweenOrb extends Orb {
   readonly color = '#ff7b1c'
   readonly id = 'halloween'
   readonly mood = halloweenMood
+  readonly photo = photo
   readonly premise = 'This picture is in a game – and tonight is Halloween, so it gets dressed up for the holiday.'
   readonly title = 'Halloween Orb'
 

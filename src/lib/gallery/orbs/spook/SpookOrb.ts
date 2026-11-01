@@ -3,7 +3,8 @@ import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial
 import GhostsOrbMaterial from '#src/lib/materials/orb/GhostsOrbMaterial.ts'
 import {spookMood} from '#src/lib/moods/index.ts'
 
-import Orb from './base/Orb.ts'
+import Orb from '../base/Orb.ts'
+import photo from './photo.jxl'
 
 /** Blinking ghosts drifting through green mist. It lets something supernatural slip into a work. */
 export default class SpookOrb extends Orb {
@@ -30,6 +31,7 @@ export default class SpookOrb extends Orb {
   readonly color = '#3fd98a'
   readonly id = 'spook'
   readonly mood = spookMood
+  readonly photo = photo
   readonly premise = 'This picture is in a ghost story – something otherworldly has slipped into it.'
   readonly title = 'Spook Orb'
 
