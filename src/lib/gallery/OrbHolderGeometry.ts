@@ -2,7 +2,7 @@ import type {BufferGeometry} from 'three/webgpu'
 
 import {ParametricGeometry} from 'three/addons/geometries/ParametricGeometry.js'
 import {toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js'
-import {CatmullRomCurve3, ExtrudeGeometry, LatheGeometry, Shape, SphereGeometry, TorusGeometry, TubeGeometry, Vector2, Vector3} from 'three/webgpu'
+import {ExtrudeGeometry, LatheGeometry, Shape, SphereGeometry, TorusGeometry, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
 import {orbRadius} from './orbs/index.ts'
@@ -10,7 +10,7 @@ import {orbRadius} from './orbs/index.ts'
 /** a point in a plane: of a turned outline, its radius and height, or of a flat one, across and up */
 type Point = readonly [x: number, y: number]
 
-/** the beaded band the cup stands on, raised over the cap on the feet: its underside, the beads along its bottom and top edges and the frieze between them */
+/** the beaded band the cup stands on, raised over the cap on the feet: its underside, the beads along its bottom and top edges and the plain frieze between them */
 const band = {
   bottom: 0.034,
   beadRadius: 0.005,
@@ -32,14 +32,6 @@ const lip = {
   radius: 0.108,
   tube: 0.0075,
   y: 0.124,
-}
-/** the running scroll round the frieze: as many waves, each curling into a spiral */
-const scroll = {
-  count: 48,
-  spiralRadius: 0.0037,
-  /** how often each spiral winds round */
-  turns: 1.25,
-  tube: 0.0011,
 }
 /** the scrolled feet under the band, one under the middle of each of the pedestal’s faces */
 const feet = {
@@ -97,39 +89,6 @@ function cupWall() {
   wall.dispose()
   return smooth
 }
-/** The running scroll round the frieze, running to the right as seen from outside: from under one spiral, a wave rises to the next one’s crest and curls over forward, down and in round it. */
-function runningScroll() {
-  const radius = band.frieze + scroll.tube * 0.6
-  const middle = (band.bottom + band.top) / 2
-  const pitch = Math.PI * 2 * radius / scroll.count
-  /** a point along a spiral round `center`, `s` from its crest, where it is widest, to its eye, winding clockwise */
-  const spiral = (center: number, s: number) => {
-    const angle = Math.PI / 2 - s * scroll.turns * Math.PI * 2
-    const size = scroll.spiralRadius * (1 - 0.7 * s)
-    return [center + Math.cos(angle) * size, middle + Math.sin(angle) * size] as const
-  }
-  // where a spiral’s arm first passes under its eye, which the wave toward the next one leaves from, touching it
-  const trough = 0.5 / scroll.turns
-  const waves: Array<BufferGeometry> = []
-  for (let index = 0; index < scroll.count; index++) {
-    const from = spiral(index * pitch, trough)
-    const center = (index + 1) * pitch
-    const to = spiral(center, 0)
-    const points: Array<readonly [number, number]> = []
-    for (let step = 0; step < 8; step++) {
-      // A smooth step across, level at both ends, from under one spiral up to the next one’s crest.
-      const t = step / 8
-      const ease = t * t * (3 - 2 * t)
-      points.push([from[0] + (to[0] - from[0]) * t, from[1] + (to[1] - from[1]) * ease])
-    }
-    for (let step = 0; step <= 16; step++) {
-      points.push(spiral(center, step / 16))
-    }
-    const curve = new CatmullRomCurve3(points.map(([u, y]) => new Vector3(Math.sin(u / radius) * radius, y, Math.cos(u / radius) * radius)))
-    waves.push(new TubeGeometry(curve, 28, scroll.tube, 4, false))
-  }
-  return waves
-}
 /** An acanthus leaf’s outline, `width` across its foot and `height` up to its tip, its edges lobed three times on either side. */
 function leafShape(width: number, height: number) {
   const half = width / 2
@@ -164,7 +123,7 @@ function leafShape(width: number, height: number) {
   }
   return shape
 }
-/** One scrolled foot, standing out along x: a bracket bending out from under the band to a round toe, a curling volute on either side of it and an acanthus leaf rising over the band. */
+/** One scrolled foot, standing out along x: a bracket bending out from under the band to a round toe, and an acanthus leaf rising over the band. */
 function foot(): Array<BufferGeometry> {
   const outline = new Shape
   outline.moveTo(0.09, 0.042)
@@ -189,15 +148,6 @@ function foot(): Array<BufferGeometry> {
     bracket.translate(0, 0, -feet.depth / 2),
     toe.scale(1.2, 0.8, 1.1).translate(0.143, 0.0088, 0),
   ]
-  for (const side of [-1, 1]) {
-    // Open toward the bracket, curling out and down from it.
-    const volute = new TorusGeometry(0.0075, 0.0028, 8, 24, Math.PI * 1.5)
-    volute.rotateZ(Math.PI / 4).rotateY(Math.PI / 2)
-    if (side < 0) {
-      volute.rotateX(Math.PI)
-    }
-    parts.push(volute.translate(0.128, 0.014, side * 0.016))
-  }
   // Its back on the frieze, its face standing just out of the beads.
   const leaf = new ExtrudeGeometry(leafShape(0.028, 0.03), {
     depth: 0.006,
@@ -214,7 +164,7 @@ function foot(): Array<BufferGeometry> {
 /**
  * A stand for an orb on a pedestal’s cap, cast in dark metal like a fortune teller’s crystal ball stand, the y axis up through its middle from the cap.
  *
- * A gadrooned cup with a rolled lip, which the orb rests in, stands on a band beaded along both edges with a running scroll between them, raised on four scrolled feet with acanthus leaves, one under the middle of each of the pedestal’s faces.
+ * A gadrooned cup with a rolled lip, which the orb rests in, stands on a band beaded along both edges, raised on four scrolled feet with acanthus leaves, one under the middle of each of the pedestal’s faces.
  */
 export default class OrbHolderGeometry {
   /** the stand turned smooth, without its lobes, feet and ornament, where the orb and everything thrown at it touch it */
@@ -230,7 +180,6 @@ export default class OrbHolderGeometry {
       lipRoll.rotateX(Math.PI / 2).translate(0, lip.y, 0),
       // From the lip down to the middle, so the bowl faces up and in.
       inside,
-      ...runningScroll(),
     ]
     for (let index = 0; index < feet.count; index++) {
       parts.push(...foot().map(part => part.rotateY(index * Math.PI * 2 / feet.count)))
