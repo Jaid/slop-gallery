@@ -17,14 +17,15 @@ import cellBaseboard from './baseboard.ts'
 import cellMap from './map.ts'
 import slots from './slots.ts'
 
-/** the light over an item: a warm white cone from each of its throwers, as wide as a pedestal’s cap where it reaches the item, its edge soft, which share the strength between them */
+/** the light over an item: a white cone from each of its throwers, as wide as a pedestal’s cap where it reaches the item, its edge soft, which share the strength between them */
 export const throwerSpot = {
   kind: 'spot',
   angle: 0.2,
   penumbra: 0.55,
-  strength: 140,
-  tint: '#fff2e0',
+  strength: 80,
+  tint: '#ffffff',
   range: 9,
+  decay: 1.5,
 } as const
 /** the most throwers whose light casts shadows */
 const maxShadowedThrowers = 4
