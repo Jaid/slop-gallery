@@ -5,9 +5,9 @@ import {useFrame} from '@react-three/fiber'
 import {BallCollider, ConvexHullCollider, CylinderCollider, RigidBody, useSphericalJoint} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
+import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
 import {chandelierLampY, chandelierPhysics, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 
@@ -19,11 +19,7 @@ export default function Chandelier({lamp: lampId}: {
   const anchor = useRef<RapierRigidBody>(null!)
   const fixture = useRef<RapierRigidBody>(null!)
   useSphericalJoint(anchor, fixture, [[0, 0, 0], chandelierPhysics.anchor])
-  const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#bd924c',
-    metalness: 0.88,
-    roughness: 0.2,
-  }), []))
+  const brass = useDisposable(useMemo(() => new BrassMaterial, []))
   const geometry = useDisposable(useMemo(() => new ChandelierGeometry, []))
   const source = useRef<Object3D>(null)
   const lamp = useLamp(lampId)
