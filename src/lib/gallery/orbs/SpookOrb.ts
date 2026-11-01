@@ -6,7 +6,25 @@ import Orb from './base/Orb.ts'
 
 /** Blinking ghosts drifting through green mist. It lets something supernatural slip into a work. */
 export default class SpookOrb extends Orb {
-  readonly adjectives = ['spooky', 'ghostly', 'spectral', 'haunted', 'ethereal', 'phantasmal', 'otherworldly', 'possessed', 'whispering', 'misty', 'wraithlike', 'mysterious', 'enchanted', 'cursed', 'occult', 'bewitched', 'shadowy', 'uncanny', 'restless', 'glowing', 'poltergeist-ridden', 'séance-like']
+  readonly adjectives = [
+    // presence
+    'spooky',
+    ['ghostly', 'spectral', 'phantasmal', 'wraithlike'],
+    ['ethereal', 'otherworldly'],
+    ['haunted', 'poltergeist-ridden'],
+    'restless',
+    'whispering',
+    // atmosphere
+    'misty',
+    'shadowy',
+    'glowing',
+    ['mysterious', 'uncanny'],
+    // magic
+    ['enchanted', 'bewitched'],
+    'cursed',
+    ['occult', 'séance-like'],
+    'possessed',
+  ]
   readonly change = 'add something supernatural that makes it'
   readonly color = '#3fd98a'
   readonly id = 'spook'

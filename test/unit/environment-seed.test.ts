@@ -80,21 +80,35 @@ test('samples pick distinct items in list order, the same for the same seed and 
   expect(() => environmentSample(1, 'letters', items, 9)).toThrow()
 })
 for (const orb of orbs) {
-  test(`the ${orb.title}’s prompt names 5 different adjectives of its own, the same for the same seed`, () => {
-    const pool = new Set(orb.adjectives)
-    expect(pool.size).toBe(orb.adjectives.length)
-    const prompt = orb.prompt(1)
-    expect(orb.prompt(1)).toBe(prompt)
-    expect(prompt.startsWith(orb.premise)).toBe(true)
-    expect(prompt.endsWith('.')).toBe(true)
-    const list = prompt.slice(prompt.indexOf(orb.change) + orb.change.length + 1, -1)
-    const adjectives = list.replace(' or ', ', ').split(', ')
-    expect(adjectives).toHaveLength(5)
-    const named = new Set(adjectives)
-    expect(named.size).toBe(5)
-    expect(named.isSubsetOf(pool)).toBe(true)
+  test(`the ${orb.title}’s prompt names 3 to 5 of its adjectives in their order, never two synonyms, the same for the same seed`, () => {
+    const pool = orb.adjectives.flat()
+    const distinctPool = new Set(pool)
+    expect(distinctPool.size).toBe(pool.length)
+    const entryOf = (adjective: string) => orb.adjectives.findIndex(entry => (typeof entry === 'string' ? entry === adjective : entry.includes(adjective)))
+    expect(orb.prompt(1)).toBe(orb.prompt(1))
+    const counts = new Set<number>
+    const named = new Set<string>
+    for (let seed = 0; seed < 500; seed++) {
+      const prompt = orb.prompt(seed)
+      expect(prompt.startsWith(orb.premise)).toBe(true)
+      expect(prompt.endsWith('.')).toBe(true)
+      const list = prompt.slice(prompt.indexOf(orb.change) + orb.change.length + 1, -1)
+      const adjectives = list.replace(' or ', ', ').split(', ')
+      const entries = adjectives.map(entryOf)
+      expect(entries).not.toContain(-1)
+      // strictly rising entries keep the list’s order and rule out two synonyms of the same entry
+      expect(entries).toEqual(entries.toSorted((a, b) => a - b))
+      const distinct = new Set(entries)
+      expect(distinct.size).toBe(entries.length)
+      counts.add(adjectives.length)
+      for (const adjective of adjectives) {
+        named.add(adjective)
+      }
+    }
+    expect(counts).toEqual(new Set([3, 4, 5]))
+    expect(named).toEqual(distinctPool)
     const prompts = new Set(Array.from({length: 50}, (_, seed) => orb.prompt(seed)))
-    expect(prompts.size).toBeGreaterThan(10)
+    expect(prompts.size).toBeGreaterThan(40)
   })
 }
 test('the orbs’ props are told apart by their ids', () => {

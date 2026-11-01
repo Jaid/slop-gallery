@@ -6,7 +6,30 @@ import Orb from './base/Orb.ts'
 
 /** A bloodshot eye bleeding into its liquid. It corrupts a work into something disturbing. */
 export default class HorrorOrb extends Orb {
-  readonly adjectives = ['unsettling', 'creepy', 'eerie', 'disturbing', 'nightmarish', 'uncanny', 'haunting', 'grotesque', 'paranormal', 'liminal', 'distorted', 'sinister', 'delirious', 'shocking', 'macabre', 'morbid', 'gory', 'bloodstained', 'decaying', 'putrid', 'deranged', 'twisted', 'menacing', 'feverish', 'visceral', 'unhinged', 'claustrophobic', 'dread-filled']
+  readonly adjectives = [
+    // unease
+    ['unsettling', 'disturbing'],
+    ['creepy', 'eerie'],
+    ['uncanny', 'liminal'],
+    'haunting',
+    'paranormal',
+    // threat
+    ['sinister', 'menacing'],
+    ['nightmarish', 'dread-filled'],
+    'claustrophobic',
+    // madness
+    ['delirious', 'feverish'],
+    ['deranged', 'unhinged'],
+    ['distorted', 'twisted'],
+    // shock
+    'shocking',
+    ['macabre', 'morbid'],
+    'grotesque',
+    // decay
+    ['decaying', 'putrid'],
+    // blood
+    ['gory', 'bloodstained', 'visceral'],
+  ]
   readonly change = 'provide traits that make it'
   readonly color = '#a8060f'
   readonly id = 'horror'

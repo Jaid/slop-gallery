@@ -6,7 +6,29 @@ import Orb from './base/Orb.ts'
 
 /** Bats circling a harvest moon in orange haze. It dresses a work up for Halloween, festive rather than frightening. */
 export default class HalloweenOrb extends Orb {
-  readonly adjectives = ['festive', 'playful', 'cozy', 'whimsical', 'cheerful', 'mischievous', 'autumnal', 'candlelit', 'lantern-lit', 'moonlit', 'cobwebbed', 'pumpkin-filled', 'candy-strewn', 'costumed', 'witchy', 'bat-garlanded', 'orange-and-black', 'harvest-themed', 'party-ready', 'spooky-cute', 'trick-or-treat-ready', 'misty']
+  readonly adjectives = [
+    // mood
+    ['festive', 'party-ready'],
+    ['cheerful', 'playful'],
+    'cozy',
+    ['whimsical', 'spooky-cute'],
+    'mischievous',
+    // season
+    ['autumnal', 'harvest-themed'],
+    'orange-and-black',
+    // light
+    ['candlelit', 'lantern-lit'],
+    'moonlit',
+    'misty',
+    // decoration
+    'cobwebbed',
+    'pumpkin-filled',
+    'bat-garlanded',
+    'candy-strewn',
+    // costumes
+    ['costumed', 'trick-or-treat-ready'],
+    'witchy',
+  ]
   readonly change = 'add casual Halloween decoration that makes it'
   readonly color = '#ff7b1c'
   readonly id = 'halloween'
