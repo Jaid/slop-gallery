@@ -1,0 +1,73 @@
+$text: #f7f3ea
+$spoken: #ffd23f
+
+.container
+  position: absolute
+  bottom: 100px
+  left: 50%
+  display: grid
+  justify-items: center
+  align-items: end
+  width: min(960px, calc(100% - 2rem))
+  color: $text
+  font-size: clamp(1.25rem, 0.9rem + 1vw, 2rem)
+  line-height: 1.25em
+  text-align: center
+  text-wrap: balance
+  text-shadow: 0 0 0.1em black, 0 0 0.3em black
+  pointer-events: none
+  translate: -50% 0
+  transition: opacity 450ms ease-in
+  &[data-ended='true']
+    opacity: 0
+
+.group
+  grid-area: 1 / 1
+  margin: 0
+  padding: 0.3em 1.6em
+  &[data-group='current'] .word
+    // Each word’s delay comes inline, so the sentence rises word after word.
+    animation: enter 520ms cubic-bezier(0.2, 0.8, 0.3, 1) backwards
+  &[data-group='leaving']
+    animation: leave 260ms ease-in forwards
+
+.word
+  position: relative
+  display: inline-block
+  transition: color 180ms ease-out
+  &[data-state='spoken']
+    color: $spoken
+
+.letter
+  transition: color 70ms linear
+
+// Only within the current word: spoken words are yellow as a whole, and upcoming ones stay white even with stale letter marks after a seek.
+.word[data-state='current'] .letter[data-spoken]
+  color: $spoken
+
+// Without letter timings, a yellow copy of the current word lies on top and the paint loop reveals it from the left with a hard edge. A fill clipped to the text itself would lose its shadow.
+.fill
+  position: absolute
+  inset: 0
+  color: $spoken
+  text-shadow: none
+  clip-path: inset(0 100% 0 0)
+  pointer-events: none
+  .word:not([data-state='current']) > &
+    visibility: hidden
+
+// Native speech only reports which word it reached, so its fill eases in over a fixed time.
+.container[data-timeline='false'] .fill
+  transition: clip-path 450ms ease-out
+
+@keyframes enter
+  from
+    opacity: 0
+    filter: blur(4px)
+    translate: 0 0.45em
+
+@keyframes leave
+  to
+    opacity: 0
+    filter: blur(4px)
+    translate: 0 -0.45em
