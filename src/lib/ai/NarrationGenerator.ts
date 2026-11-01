@@ -20,17 +20,8 @@ export default class NarrationGenerator extends ExternalGenerator {
         voice: this.voice,
         input,
         response_format: format,
-        ...character || providerOptions ? {
-          provider: {
-            options: {
-              ...character ? {
-                openai: {instructions: character},
-                google: {instructions: character},
-              } : {},
-              ...providerOptions,
-            },
-          },
-        } : {},
+        ...character ? {instructions: character} : {},
+        ...providerOptions ? {provider: {options: providerOptions}} : {},
       }),
     })
     if (!response.ok) {

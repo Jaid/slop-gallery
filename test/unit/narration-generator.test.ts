@@ -23,6 +23,18 @@ test('Grok Iris uses English provider options and preserves the declared PCM sam
   const waveHeader = new DataView(await blob.arrayBuffer())
   expect(waveHeader.getUint32(24, true)).toBe(48_000)
 })
+test('the narrator character goes out as top-level delivery instructions', async () => {
+  fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Int16Array(100), {headers: {'content-type': 'audio/pcm'}}))
+  const geminiNarrator = new NarrationGenerator('test-key', 'google/gemini-3.8-flash-tts', 'Algenib')
+  await geminiNarrator.generate('GLM 5.3', {character: 'calm'})
+  expect(JSON.parse(fetchSpy.mock.calls[0][1]!.body as string)).toEqual({
+    model: 'google/gemini-3.8-flash-tts',
+    voice: 'Algenib',
+    input: 'GLM 5.3',
+    response_format: 'pcm',
+    instructions: 'calm',
+  })
+})
 test('stereo PCM cannot silently become a mono file at the wrong speed', async () => {
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(new Int16Array(100), {headers: {'content-type': 'audio/pcm;rate=24000;channels=2'}}))
   const grokNarrator = new NarrationGenerator('test-key', 'x-ai/grok-voice-tts-1.0', 'iris')
