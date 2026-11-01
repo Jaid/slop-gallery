@@ -12,7 +12,7 @@ import samplePortraits from './fixtures/portraits.ts'
 
 type SpeechRequestBody = {
   input: string
-  provider: {options: {google: {instructions: string}}}
+  instructions: string
   response_format: string
 }
 
@@ -117,7 +117,7 @@ test('TTS keeps character steering out of speech and caches successful generated
   expect(url).toBe('https://openrouter.ai/api/v1/audio/speech')
   const body = JSON.parse(request!.body as string) as SpeechRequestBody
   expect(body.input).not.toContain(settings.narrator_character)
-  expect(body.provider.options.google.instructions).toBe(settings.narrator_character)
+  expect(body.instructions).toBe(settings.narrator_character)
   expect(body.response_format).toBe('pcm')
   expect(recordings[0]).toBeInstanceOf(Blob)
   players[0].end()
