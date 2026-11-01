@@ -24,7 +24,7 @@ The Rapier preset uses `includeDependenciesRecursively: false`, which requires `
 
 The main, workspace and vendor groups only take the modules the entries import statically, through Rolldown’s built-in `$initial` tag. Modules only a dynamic import reaches stay out of them, so they keep loading on demand in chunks of their own, like a whole world of a game or one material of a catalog; dependencies matched by the Monaco, Rapier, Three.js or React preset still join that preset’s chunk.
 
-Existing chunk groups and code-splitting thresholds are retained. Explicit `codeSplitting: false` is respected. When a consumer supplies `chunkFileNames`, only a dynamic entry named `rapier` is renamed to `rapier-entry.js`; other chunks retain the consumer’s naming rule.
+Existing chunk groups and code-splitting thresholds are retained. Explicit `codeSplitting: false` is respected. When a consumer supplies `chunkFileNames`, a dynamic entry named `rapier` goes by `rapier-entry` in the consumer’s naming rule, so `[name].js` names it `rapier-entry.js` instead of letting it clash with the `rapier` group’s chunk; patterns without `[name]`, like `[hash:8].js`, stay as they are.
 
 ## Vite
 

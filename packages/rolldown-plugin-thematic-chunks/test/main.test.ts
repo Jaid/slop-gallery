@@ -77,7 +77,7 @@ test('monaco preset captures the editor packages from dependencies or workspaces
   expect(matches.test('/repo/packages/monacozen/src/main.ts')).toBe(true)
   expect(matches.test('/repo/node_modules/react/index.js')).toBe(false)
 })
-test('owns the Rapier dynamic-entry filename without taking over consumer naming', () => {
+test('names the Rapier dynamic entry rapier-entry through consumer naming functions', () => {
   const {chunkFileNames} = configureOutput({chunkFileNames: chunk => `consumer-${chunk.name}.js`})
   if (typeof chunkFileNames !== 'function') {
     throw new TypeError('Expected a chunk filename function.')
@@ -85,7 +85,7 @@ test('owns the Rapier dynamic-entry filename without taking over consumer naming
   expect(chunkFileNames({
     name: 'rapier',
     isDynamicEntry: true,
-  } as never)).toBe('rapier-entry.js')
+  } as never)).toBe('consumer-rapier-entry.js')
   expect(chunkFileNames({
     name: 'rapier',
     isDynamicEntry: false,
@@ -95,7 +95,7 @@ test('owns the Rapier dynamic-entry filename without taking over consumer naming
     isDynamicEntry: true,
   } as never)).toBe('consumer-other.js')
 })
-test('preserves string filename patterns for other chunks', () => {
+test('preserves string filename patterns, with rapier-entry as the Rapier dynamic entry’s name', () => {
   const {chunkFileNames} = configureOutput({chunkFileNames: 'chunks/[name]-[hash].js'})
   if (typeof chunkFileNames !== 'function') {
     throw new TypeError('Expected a chunk filename function.')
@@ -103,11 +103,21 @@ test('preserves string filename patterns for other chunks', () => {
   expect(chunkFileNames({
     name: 'rapier',
     isDynamicEntry: true,
-  } as never)).toBe('rapier-entry.js')
+  } as never)).toBe('chunks/rapier-entry-[hash].js')
   expect(chunkFileNames({
     name: 'other',
     isDynamicEntry: true,
   } as never)).toBe('chunks/[name]-[hash].js')
+})
+test('leaves content-hashed patterns without a name alone', () => {
+  const {chunkFileNames} = configureOutput({chunkFileNames: '[hash:8].js'})
+  if (typeof chunkFileNames !== 'function') {
+    throw new TypeError('Expected a chunk filename function.')
+  }
+  expect(chunkFileNames({
+    name: 'rapier',
+    isDynamicEntry: true,
+  } as never)).toBe('[hash:8].js')
 })
 for (const backend of ['Rolldown', 'Vite'] as const) {
   test(`${backend} emits only occupied groups and monaco wins overlapping groups`, async () => {

@@ -2,6 +2,8 @@ import type {CodeSplittingGroup, Plugin} from 'rolldown'
 
 /** only takes modules the entries import statically, so that code behind a dynamic import keeps loading on demand in chunks of its own */
 const initial = ['$initial'] satisfies CodeSplittingGroup['tags']
+/** the name a dynamic entry of Rapier’s goes by in the consumer’s chunk file names */
+const rapierEntryName = 'rapier-entry'
 
 export const thematicChunkPresets = {
   monaco: {
@@ -60,13 +62,15 @@ export default function thematicChunks(): Plugin {
         },
         ...chunkFileNames === undefined ? {} : {
           chunkFileNames: chunkInfo => {
-            if (chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry) {
-              return 'rapier-entry.js'
-            }
+            // A dynamic entry of Rapier’s would take the name of the rapier group’s chunk, so it goes by rapier-entry in the consumer’s pattern.
+            const renamed = chunkInfo.name === 'rapier' && chunkInfo.isDynamicEntry
             if (typeof chunkFileNames === 'function') {
-              return chunkFileNames(chunkInfo)
+              return chunkFileNames(renamed ? {
+                ...chunkInfo,
+                name: rapierEntryName,
+              } : chunkInfo)
             }
-            return chunkFileNames
+            return renamed ? chunkFileNames.replaceAll('[name]', () => rapierEntryName) : chunkFileNames
           },
         },
       }
