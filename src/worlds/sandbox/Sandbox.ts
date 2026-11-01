@@ -17,15 +17,29 @@ const minimap = lazy(() => import('#component/SandboxMinimap'))
 const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx'))
 /** how far the player’s body keeps its middle from the walls */
 const bodyRadius = 0.6
+/** an item on one of the Cell’s pedestals */
+export type SandboxItem = {
+  /** its prop’s id, unique in the world: the orb’s own prop id for the first of its kind, numbered from 2 for every further one, like `prop-orb-spook-2` */
+  id: string
+  orb: Orb
+}
 /** everything `?item` can put on a pedestal, by its object id */
 const placeable: ReadonlyMap<string, Orb> = new Map(orbs.map(orb => [orb.propId, orb]))
-/** Every item with one of the object ids, in their order, or an error naming the unknown ones. */
-function resolveItems(ids: ReadonlyArray<string>) {
-  const unknown = ids.filter(id => !placeable.has(id))
+/** An item for each of the object ids, in their order, as many of a kind as its id is named, or an error naming the unknown ones. */
+function resolveItems(ids: ReadonlyArray<string>): ReadonlyArray<SandboxItem> {
+  const unknown = [...new Set(ids.filter(id => !placeable.has(id)))]
   if (unknown.length) {
     throw new Error(`Unknown Sandbox item URL selection: ${unknown.join(', ')}. Known items: ${placeable.keys().toArray().join(', ')}`)
   }
-  return ids.map(id => placeable.get(id)!)
+  const counts = new Map<string, number>
+  return ids.map(id => {
+    const count = (counts.get(id) ?? 0) + 1
+    counts.set(id, count)
+    return {
+      id: count === 1 ? id : `${id}-${count}`,
+      orb: placeable.get(id)!,
+    }
+  })
 }
 
 /** A world to try things in: a single room, the Cell, with a few of the gallery’s default works on its walls and nothing else but the items the URL puts on pedestals beyond its north wall. */
@@ -35,13 +49,13 @@ export default class Sandbox extends World<Cell> {
   override readonly defaultRoom = 'cell'
   override readonly id = 'sandbox'
   /** what stands on the Cell’s pedestals, one each, in their order: the items `?item` names */
-  readonly items: ReadonlyArray<Orb>
+  readonly items: ReadonlyArray<SandboxItem>
   override readonly Minimap = minimap
   // Artworks hang on any of the Cell’s walls, and lost ones return to the spawn.
   override readonly placement: FloorPlanPlacementSpace
   override readonly Scene = scene
 
-  /** @param itemIds the object ids of the items on the Cell’s pedestals, those `?item` names by default */
+  /** @param itemIds the object ids of the items on the Cell’s pedestals, a repeated one for each further item of its kind, those `?item` names by default */
   constructor(itemIds: ReadonlyArray<string> = readItems()) {
     const items = resolveItems(itemIds)
     super(worlds.sandbox, [[new Cell(new CellLayout(items.length)), [0, 0, 0]]])

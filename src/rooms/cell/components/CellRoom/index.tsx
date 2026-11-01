@@ -209,13 +209,13 @@ function Vestibule({joinery, surfaces}: {
     <Branch if={floor.reflectionTarget}><group position={[vestibuleX, 0.001, vestibuleZ]} rotation={[-Math.PI / 2, 0, 0]}><primitive object={floor.reflectionTarget!} /></group></Branch>
     <mesh castShadow geometry={parts.reveals} material={surfaces.velvet} name='cell-vestibule-reveal' receiveShadow />
     <CeilingLeds lamps={led!.lamps} name='cell-vestibule' slots={led!.slots} />
-    {sandbox.items.map((orb, index) => {
+    {sandbox.items.map(({id, orb}, index) => {
       const {position, rotation} = layout.pedestals[index]
       const [pedestalX, pedestalZ] = worldPoint(position)
-      return <group key={orb.id}>
+      return <group key={id}>
         <Pedestal {...pedestal} position={[pedestalX, 0, pedestalZ]} rotation={rotation}><OrbHolder {...holder} /></Pedestal>
         {/* Let down onto the holder’s lip from just over it. */}
-        <Orb orb={orb} position={[pedestalX, pedestalHeight + orbSeat + 0.002, pedestalZ]} />
+        <Orb id={id} orb={orb} position={[pedestalX, pedestalHeight + orbSeat + 0.002, pedestalZ]} />
       </group>
     })}
   </group>

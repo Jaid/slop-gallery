@@ -25,11 +25,11 @@ const ids = orbs.map(orb => orb.propId)
 const pedestalDiagonal = 1.16 * Math.SQRT2
 const distance = ([ax, az]: readonly [number, number], [bx, bz]: readonly [number, number]) => Math.hypot(ax - bx, az - bz)
 describe('?item', () => {
-  test('names the Sandbox’s items by their object ids, comma-separated, trimmed and in their order, each once', () => {
+  test('names the Sandbox’s items by their object ids, comma-separated, trimmed and in their order, as often as each is named', () => {
     expect(readItems('http://localhost/')).toEqual([])
     expect(readItems('?item=prop-orb-spook')).toEqual(['prop-orb-spook'])
     expect(readItems('?item=prop-orb-spook,prop-orb-halloween')).toEqual(['prop-orb-spook', 'prop-orb-halloween'])
-    expect(readItems('?item=%20b%20,,a,b,')).toEqual(['b', 'a'])
+    expect(readItems('?item=%20b%20,,a,b,')).toEqual(['b', 'a', 'b'])
   })
   test('also come as a list in the packed permalink state, which overrides the query’s', () => {
     const data = Buffer.from(JSON.stringify({item: ['prop-orb-horror', 'prop-orb-spook']})).toBase64()
@@ -42,9 +42,20 @@ describe('?item', () => {
   })
   test('puts every orb it names on a pedestal of its own, in their order, and refuses ids it doesn’t know', () => {
     const sandbox = new Sandbox(['prop-orb-horror', 'prop-orb-spook'])
-    expect(sandbox.items.map(orb => orb.propId)).toEqual(['prop-orb-horror', 'prop-orb-spook'])
+    expect(sandbox.items.map(item => item.id)).toEqual(['prop-orb-horror', 'prop-orb-spook'])
+    expect(sandbox.items.map(item => item.orb.propId)).toEqual(['prop-orb-horror', 'prop-orb-spook'])
     expect(sandbox.room('cell').room.layout.pedestals).toHaveLength(2)
-    expect(() => new Sandbox(['prop-orb-spook', 'prop-orb-pumpkin'])).toThrow('Unknown Sandbox item URL selection: prop-orb-pumpkin.')
+    expect(() => new Sandbox(['prop-orb-spook', 'prop-orb-pumpkin', 'prop-orb-pumpkin'])).toThrow('Unknown Sandbox item URL selection: prop-orb-pumpkin.')
+  })
+  test('puts a repeated orb on a pedestal of its own each time, every one a prop with an id of its own', () => {
+    const spook = orbs.find(orb => orb.id === 'spook')!
+    const sandbox = new Sandbox(readItems('?item=prop-orb-spook,prop-orb-horror,prop-orb-spook,prop-orb-spook'))
+    expect(sandbox.items.map(item => item.id)).toEqual(['prop-orb-spook', 'prop-orb-horror', 'prop-orb-spook-2', 'prop-orb-spook-3'])
+    expect(sandbox.items.filter(item => item.orb === spook)).toHaveLength(3)
+    expect(sandbox.room('cell').room.layout.pedestals).toHaveLength(4)
+    const triple = new Sandbox(readItems('?item=prop-orb-spook,prop-orb-spook,prop-orb-spook'))
+    expect(triple.room('cell').room.layout.plan).toBe('alcoves')
+    expect(triple.room('cell').room.layout.pedestals).toHaveLength(3)
   })
 })
 test('every orb brings a JPEG XL photograph of itself for the portal of its merges, in its own folder', async () => {
