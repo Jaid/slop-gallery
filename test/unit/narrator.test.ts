@@ -6,7 +6,7 @@ import {narrationState, Narrator} from 'use-narrator/core'
 
 import {FakePlayback, flush} from '../../packages/use-narrator/packages/use-audio-queue/test/helpers.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
-import {narratorCharacter} from '../../src/lib/audio/narratorCharacter.ts'
+import {narratorCharacter, narratorVoice} from '../../src/lib/audio/narratorCharacter.ts'
 import PortraitNarration from '../../src/lib/audio/PortraitNarration.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {environmentSeed} from '../../src/lib/gameSeed.ts'
@@ -16,6 +16,7 @@ type SpeechRequestBody = {
   input: string
   instructions: string
   response_format: string
+  voice: string
 }
 
 const settings: AiSettings = readAiSettings()
@@ -121,6 +122,7 @@ test('TTS keeps character steering out of speech and caches successful generated
   const character = narratorCharacter(environmentSeed)
   expect(body.input).not.toContain(character)
   expect(body.instructions).toBe(character)
+  expect(body.voice).toBe(narratorVoice(environmentSeed))
   expect(body.response_format).toBe('pcm')
   expect(recordings[0]).toBeInstanceOf(Blob)
   players[0].end()

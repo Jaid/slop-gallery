@@ -29,6 +29,11 @@ test('model and narration preferences remain configurable through URL parameters
     eager_audio: true,
   })
 })
+test('the narrator voice is only set by a non-blank ?narrator_voice, so the seed picks it otherwise', () => {
+  expect(readAiSettings('').narrator_voice).toBeUndefined()
+  expect(readAiSettings('?narrator_voice=').narrator_voice).toBeUndefined()
+  expect(readAiSettings('?narrator_voice=Puck').narrator_voice).toBe('Puck')
+})
 test('the narrator character is only set by a non-blank ?narrator_character, so the seed picks it otherwise', () => {
   expect(readAiSettings('').narrator_character).toBeUndefined()
   expect(readAiSettings('?narrator_character=').narrator_character).toBeUndefined()

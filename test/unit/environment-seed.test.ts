@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {narratorCharacter, narratorTraits} from '../../src/lib/audio/narratorCharacter.ts'
+import {narratorCharacter, narratorTraits, narratorVoice, narratorVoices} from '../../src/lib/audio/narratorCharacter.ts'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
@@ -127,6 +127,11 @@ test('the narrator’s character names 2 to 5 traits in their order, never two s
   expect(named).toEqual(new Set(narratorTraits.flat()))
   const characters = new Set(Array.from({length: 50}, (_, seed) => narratorCharacter(seed)))
   expect(characters.size).toBeGreaterThan(40)
+})
+test('the seed picks every narrator voice, the same for the same seed', () => {
+  expect(narratorVoice(1)).toBe(narratorVoice(1))
+  const voices = new Set(Array.from({length: 200}, (_, seed) => narratorVoice(seed)))
+  expect(voices).toEqual(new Set(narratorVoices))
 })
 test('every pot placement can grow every plant, and seed 1 stays put', () => {
   for (const placement of potPlacements) {

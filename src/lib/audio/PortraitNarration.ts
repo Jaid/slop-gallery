@@ -12,7 +12,7 @@ import {useGallery} from '../gallery/store.ts'
 import {environmentSeed} from '../gameSeed.ts'
 import {intro} from './intro.ts'
 import {narrator} from './narration.ts'
-import {narratorCharacter} from './narratorCharacter.ts'
+import {narratorCharacter, narratorVoice} from './narratorCharacter.ts'
 
 type Story = Pick<Portrait, 'description' | 'id' | 'title'> & Partial<Pick<Portrait, 'merging' | 'narration' | 'pending' | 'source'>>
 type Request = {
@@ -63,7 +63,7 @@ export default class PortraitNarration {
   private unsubscribe: () => void
 
   constructor(private readonly settings: AiSettings, private readonly key: string, private readonly target: Narrator = narrator) {
-    const generator = new NarrationGenerator(key, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice)
+    const generator = new NarrationGenerator(key, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice ?? narratorVoice(environmentSeed))
     const character = settings.narrator_character ?? narratorCharacter(environmentSeed)
     this.cache = new SpeechCache((speech, signal) => generator.generate(speech.text, {
       signal: AbortSignal.any([signal, AbortSignal.timeout(90_000)]),

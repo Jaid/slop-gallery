@@ -23,6 +23,8 @@ export const narratorTraits: ReadonlyArray<ReadonlyArray<string> | string> = [
   // energy
   'lively',
 ]
+/** Gemini TTS voices the narrator speaks with */
+export const narratorVoices = ['Alnilam', 'Iapetus', 'Rasalgethi', 'Sadaltager', 'Umbriel', 'Zubenelgenubi']
 const narratorNouns = ['narration', 'narrator', 'commentary', 'art gallery director']
 const narratorSuffixes = ['', 'pleasant to listen to', 'easy to listen to', 'hooking the listeners', 'easily hooking the listener']
 
@@ -34,4 +36,9 @@ export function narratorCharacter(seed: number) {
   const noun = environmentPick(seed, 'narrator-character:noun', narratorNouns)
   const suffix = environmentPick(seed, 'narrator-character:suffix', narratorSuffixes)
   return [...traits, noun, suffix].filter(Boolean).join(' ')
+}
+
+/** the narrator’s voice in the environment of `seed` */
+export function narratorVoice(seed: number) {
+  return environmentPick(seed, 'narrator-voice', narratorVoices)
 }
