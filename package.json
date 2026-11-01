@@ -67,7 +67,6 @@
     "telemethree-ego": "workspace:*",
     "telemethree-pause-menu": "workspace:*",
     "three": "0.187.0",
-    "three-async-materials": "workspace:*",
     "three-bvh-csg": "0.0.18",
     "three-fiber-game": "workspace:*",
     "three-mesh-bvh": "0.9.17",

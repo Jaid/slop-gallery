@@ -40,7 +40,10 @@ export const knottinghamScene = (graphics: 'cinematic' | 'heavy'): KnotScene => 
     initScript: installVirtualClock,
   })
   const {page} = gallery
-  const center = await page.evaluate((id: string) => globalThis.slopGallery!.snapshot!().props.find(prop => prop.id === id)?.visualPosition, `prop-knot-${item.id}`)
+  // The knot only enters once its shader has arrived, which can be after the loading screen.
+  const center = await page.waitForFunction((id: string) => globalThis.slopGallery!.snapshot!().props.find(prop => prop.id === id)?.visualPosition, {timeout: 120_000}, `prop-knot-${item.id}`).then(handle => handle.jsonValue()).catch((error: unknown) => {
+    throw new Error(`Knottingham did not exhibit ${item.id}.`, {cause: error})
+  })
   if (!center) {
     throw new Error(`Knottingham did not exhibit ${item.id}.`)
   }

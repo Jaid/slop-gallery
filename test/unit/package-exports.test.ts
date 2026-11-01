@@ -12,7 +12,6 @@ import fs from 'fs-extra'
 import * as telemetry from 'telemethree'
 import * as egoTelemetry from 'telemethree-ego'
 import * as pauseTelemetry from 'telemethree-pause-menu'
-import * as asyncMaterials from 'three-async-materials'
 import * as game from 'three-fiber-game'
 import * as graphics from 'use-graphics-mode'
 import * as pause from 'use-pause-menu'
@@ -20,7 +19,7 @@ import * as pauseCore from 'use-pause-menu/core'
 import * as capture from 'webgpu-capture-bridge'
 
 test('primary package exports have one canonical default and no named alias', () => {
-  for (const [module, name] of [[asyncMaterials, 'AsyncMaterials'], [lifetime, 'RetainedLifetime'], [lifetimeReact, 'useDisposable'], [canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsMode'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
+  for (const [module, name] of [[lifetime, 'RetainedLifetime'], [lifetimeReact, 'useDisposable'], [canvases, 'ReadbackCanvas'], [canvasTextures, 'renderCanvasTexture'], [canvasReact, 'useCanvasTexture'], [ego, 'EgoPlayer'], [egoTelemetry, 'EgoTelemetry'], [pauseTelemetry, 'PauseMenuTelemetry'], [game, 'Game'], [graphics, 'useGraphicsMode'], [pause, 'usePauseMenu'], [pauseCore, 'PauseMenu'], [capture, 'WebgpuCapture']] as const) {
     expect(module.default).toBeFunction()
     expect(Object.hasOwn(module, name)).toBe(false)
   }

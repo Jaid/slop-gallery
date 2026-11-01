@@ -1,17 +1,25 @@
-import type {KnotId, KnotMaterialModule} from '../src/types.ts'
+import type {KnotId, KnotMaterialModule, PlaceholderShading} from '../src/types.ts'
 
 import {describe, expect, test} from 'bun:test'
 import {dirname, resolve} from 'node:path'
 import {fileURLToPath, pathToFileURL} from 'node:url'
 
 import fs from 'fs-extra'
-import {Color, MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
+import {MeshPhysicalNodeMaterial, Texture} from 'three/webgpu'
 
-import createPlaceholderMaterial, {placeholderPresets} from '../src/createPlaceholderMaterial.ts'
 import {entries, KnotCandidate, knotCandidates, knots, knotsById} from '../src/main.ts'
 import rarities from '../src/rarities.ts'
 
 const root = fileURLToPath(new URL('../src', import.meta.url))
+const placeholderShadings = {
+  fabric: true,
+  ghost: true,
+  glass: true,
+  liquid: true,
+  metal: true,
+  smooth: true,
+  stone: true,
+} satisfies Record<PlaceholderShading, true>
 const source = (file: string) => fs.readFile(resolve(root, file), 'utf8')
 const tsFiles = async () => {
   const tsFileGlob = new Bun.Glob('**/*.ts')
@@ -51,7 +59,7 @@ describe('flat knot catalogue', () => {
       expect(flavors.has(entry.flavorText)).toBe(false)
       flavors.add(entry.flavorText)
       expect(entry.placeholder.color).toMatch(/^#[\da-f]{6}$/iu)
-      expect(Object.hasOwn(placeholderPresets, entry.placeholder.shading)).toBe(true)
+      expect(Object.hasOwn(placeholderShadings, entry.placeholder.shading)).toBe(true)
       expect(entry.author.model.title.trim().length).toBeGreaterThan(0)
       expect('rarity' in data, entry.id).toBe(false)
     }
@@ -117,54 +125,6 @@ describe('flat knot catalogue', () => {
           expect(helperCandidate).toBe(knotsById.get(entryId)!.candidateId)
         }
       }
-    }
-  })
-})
-describe('placeholder presets', () => {
-  test('all seven presets preserve color and can render without constructing an entry material', () => {
-    const environment = new Texture
-    try {
-      for (const shading of Object.keys(placeholderPresets) as Array<keyof typeof placeholderPresets>) {
-        for (const heavy of [false, true]) {
-          const material = createPlaceholderMaterial({
-            color: '#d45e91',
-            shading,
-          }, heavy, heavy ? environment : undefined)
-          try {
-            const expectedColor = new Color('#d45e91')
-            expect(material.color.getHexString()).toBe(expectedColor.getHexString())
-            expect(material.isMeshStandardNodeMaterial).toBe(true)
-            expect(material instanceof MeshPhysicalNodeMaterial).toBe(heavy)
-            expect(material.envMap).toBe(heavy ? environment : null)
-            if (shading === 'ghost') {
-              expect(material.transparent).toBe(true)
-              expect(material.opacity).toBe(0.34)
-            }
-            if (shading === 'metal') {
-              expect(material.metalness).toBe(0.9)
-            }
-            if (shading === 'stone') {
-              expect(material.flatShading).toBe(true)
-            }
-            if (material instanceof MeshPhysicalNodeMaterial) {
-              if (shading === 'glass') {
-                expect(material.transmission).toBe(0.86)
-                expect(material.transparent).toBe(false)
-              }
-              if (shading === 'fabric') {
-                expect(material.sheen).toBe(1)
-              }
-              if (shading === 'liquid') {
-                expect(material.clearcoat).toBe(1)
-              }
-            }
-          } finally {
-            material.dispose()
-          }
-        }
-      }
-    } finally {
-      environment.dispose()
     }
   })
 })

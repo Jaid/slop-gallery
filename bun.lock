@@ -35,7 +35,6 @@
         "telemethree-ego": "workspace:*",
         "telemethree-pause-menu": "workspace:*",
         "three": "0.187.0",
-        "three-async-materials": "workspace:*",
         "three-bvh-csg": "0.0.18",
         "three-fiber-game": "workspace:*",
         "three-mesh-bvh": "0.9.17",
@@ -180,7 +179,6 @@
       "version": "0.1.0",
       "dependencies": {
         "math": "0.1.0",
-        "three-async-materials": "workspace:*",
         "three-mesh-bvh": "0.9.17",
       },
       "devDependencies": {
@@ -318,13 +316,6 @@
       "optionalPeers": [
         "react",
       ],
-    },
-    "packages/three-async-materials": {
-      "name": "three-async-materials",
-      "version": "0.1.0",
-      "peerDependencies": {
-        "three": "^0.187.0",
-      },
     },
     "packages/three-fiber-game": {
       "name": "three-fiber-game",
@@ -1750,8 +1741,6 @@
     "terser": ["terser@5.51.2", "", { "dependencies": { "@jridgewell/source-map": "^0.3.3", "acorn": "^8.15.0", "commander": "^2.20.0", "source-map-support": "~0.5.20" }, "bin": { "terser": "bin/terser" } }, "sha512-bWnjSNscmuI+GJze6ZupnHP8G/cTcsJF+bXCeQknk2SHQsgbNJnLrqiH9jZ2W4STPVXH2mDKKRX3iwPhc9Cn/Q=="],
 
     "three": ["three@0.187.0", "", {}, "sha512-Qiu7R+Cmh8CstZsY1uJOSWnVlfo7ZtNLV7mF8Jltk3LB3AtDu9cRZlcnRKkAk8Y4z6KKw35z7Y7Urd7jWY8etA=="],
-
-    "three-async-materials": ["three-async-materials@workspace:packages/three-async-materials"],
 
     "three-bvh-csg": ["three-bvh-csg@0.0.18", "", { "peerDependencies": { "three": ">=0.179.0", "three-mesh-bvh": ">=0.9.7" } }, "sha512-M3GCZMmGFgASGuDf+YMamM83nVlD/vdwzVHcYbFxgW+g1S7/nKPiuY00YVHOMbjmJPh8mLevGZL65ItHUuGt2w=="],
 

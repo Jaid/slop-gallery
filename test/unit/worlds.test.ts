@@ -261,12 +261,6 @@ test('the page never imports a world itself, which only loads once its URL chose
   expect(worldModules.filter(file => imported.has(resolve(root, file)))).toEqual([])
   expect(imported.has(resolve(root, 'src/worlds/current.ts'))).toBe(true)
 })
-test('the gallery’s showcased Knots load their full materials without Knottingham’s placeholders and warmup', () => {
-  const imported = staticImports(['src/components/KnotShowcase/index.tsx'])
-  expect(imported.has(resolve(root, 'packages/knot-materials/src/knotMaterials/DirectKnotMaterials.ts'))).toBe(true)
-  expect(imported.has(resolve(root, 'packages/knot-materials/src/knotMaterials/ProgressiveKnotMaterials.ts'))).toBe(false)
-  expect(imported.has(resolve(root, 'packages/knot-materials/src/createPlaceholderMaterial.ts'))).toBe(false)
-})
 test('Knottingham’s Arena holds its lobby, spectation and exhibition, without gallery props', async () => {
   const result = await Bun.build({
     entrypoints: [resolve(root, 'src/rooms/arena/components/ArenaRoom/index.tsx')],

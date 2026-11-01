@@ -1,16 +1,14 @@
 import type {KnotEntry} from 'knot-materials'
 
-import {useThree} from '@react-three/fiber'
 import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {special, unknown} from 'knot-materials'
 import {knotExhibition, knotFloatHeight, knotRarityMode} from 'knot-materials/exhibition.ts'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
-import ProgressiveKnotMaterials from 'knot-materials/knotMaterials/ProgressiveKnotMaterials.ts'
+import DirectKnotMaterials from 'knot-materials/knotMaterials/DirectKnotMaterials.ts'
 import loadKnotMaterial from 'knot-materials/materials.ts'
 import {knotSign, knotSignPosition} from 'knot-materials/signs.ts'
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
-import useGraphicsMode from 'use-graphics-mode'
 
 import InteractiveObject from '#component/InteractiveObject'
 import KnotLabels from '#component/KnotLabels'
@@ -24,6 +22,8 @@ import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
 import {knotRarityEditor} from '#src/worlds/knottingham/rarity.ts'
 
 const isRotating = readKnotRotation()
+/** A core sits inside its shell, which takes every hit. */
+const ignoreRaycast = () => {}
 const baseRadius = (() => {
   const geometry = createKnotGeometry()
   geometry.computeBoundingSphere()
@@ -53,10 +53,8 @@ const activateKnotSign = (entry: Pick<KnotEntry, 'id' | 'title'>) => {
   notify(`${entry.title}: ${rating}`)
 }
 
+/** The nameplates stand from the start, while each Knot only enters once its shader has arrived and then wears its full material right away, leaving it to the renderer to stream it in. */
 export default function KnotExhibition() {
-  const camera = useThree(state => state.camera)
-  const renderer = useThree(state => state.renderer)
-  const isHeavy = useGraphicsMode()
   const ratings = useSyncExternalStore(knotRarityEditor.subscribe, knotRarityEditor.getSnapshot, knotRarityEditor.getSnapshot)
   const rotation = useMemo(() => new KnotRotation, [])
   useBeforePhysicsStep(world => {
@@ -86,13 +84,19 @@ export default function KnotExhibition() {
       }
     }
   }, [rotation])
-  const materials = useDisposable(useMemo(() => new ProgressiveKnotMaterials(renderer, camera, knotExhibition, loadKnotMaterial, isHeavy, getPmremEnvironment()), [camera, isHeavy, renderer]))
+  const materials = useDisposable(useMemo(() => new DirectKnotMaterials(knotExhibition, loadKnotMaterial, getPmremEnvironment()), []))
+  const worn = useSyncExternalStore(materials.subscribe, materials.getSnapshot, materials.getSnapshot)
   useEffect(() => trackLoadingItems(() => materials.pendingMaterials.map(id => `knot-material:${id}`)), [materials])
   const {resources} = materials
   return <group name='lobby-knot-exhibition'>
     <KnotLabels action={knotRarityMode === 'edit' ? 'Rate' : 'Listen'} ratings={ratings} signs={signs} onActivate={activateKnotSign} />
     {knotExhibition.map((finish, index) => {
+      const material = worn[index]
+      if (!material) {
+        return null
+      }
       const {geometry, colliderVertices} = resources.items[index]
+      const {coreMaterial} = material
       const id = `prop-knot-${finish.id}`
       const body = () => propObjects.get(id)?.body
       const outOfShowcase = () => {
@@ -110,8 +114,11 @@ export default function KnotExhibition() {
           }}
         />
         <InteractiveObject id={id} action='Listen' inspectable title={finish.title} onActivate={() => narrateModel(id)}>
-          <mesh castShadow material={materials.placeholderMaterials[index]} name={`knot-${finish.id}`} raycast={resources.raycast} receiveShadow ref={materials.refs[index]} onBeforeRender={materials.observers[index]}>
+          <mesh castShadow material={material} name={`knot-${finish.id}`} raycast={resources.raycast} receiveShadow>
             <primitive attach='geometry' object={geometry} />
+            {coreMaterial && <mesh castShadow material={coreMaterial} name={`knot-${finish.id}-core`} raycast={ignoreRaycast} receiveShadow>
+              <primitive attach='geometry' object={geometry} />
+            </mesh>}
           </mesh>
         </InteractiveObject>
       </GrabbableProp>

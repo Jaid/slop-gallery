@@ -18,20 +18,6 @@ bun test/browser/run.ts webgpuRenderTargetRecreation.ts
 
 Restart Vite first after changing a patched dependency so its optimized Three bundle includes the patch. The fixture renders to a detached RGBA16F target, forces `texture.needsUpdate` without changing target dimensions, renders again, and rejects any WebGPU validation error.
 
-For the reusable material queue in main MRT and reflection-style targets:
-
-```sh
-bun test/browser/run.ts ../../packages/three-async-materials/test/browser/materials.ts
-```
-
-For the same checks using the gallery’s real Captured Tempest material:
-
-```sh
-bun test/browser/run.ts progressiveMaterials.ts
-```
-
-The shared fixture lives in packages/three-async-materials/test/browser/materials.ts; the gallery wrapper supplies Captured Tempest shading. It renders placeholders while two native asynchronous material pipelines compile and checks that activation does not synchronously compile a full-material variant. It also checks WebGPU validation and deferred resource cleanup. Cached driver results are not cold-start benchmarks.
-
 For full-size nameplate atlas uploads, instanced UV row boundaries and late material invalidation:
 
 ```sh
@@ -62,7 +48,7 @@ For Knotty Prince’s solid felt core and unchanged frayed shell:
 bun test/browser/run.ts knottyPrince.ts
 ```
 
-The detached fixture reproduces the original alpha-cut slices, checks core coverage across 24 views and animation phases, verifies retained fuzz outside the core, and warms both materials atomically in the native WebGPU queue.
+The detached fixture reproduces the original alpha-cut slices, checks core coverage across 24 views and animation phases and verifies retained fuzz outside the core.
 For the shared satin stainless steel on the Lobby benches, Oculus railings and Knottingham nameplate supports:
 
 ```sh

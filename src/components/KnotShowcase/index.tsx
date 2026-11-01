@@ -25,7 +25,7 @@ const ignoreRaycast = () => {}
 
 /**
  * Knots the gallery showcases like Knottingham’s: each floats and turns until something knocks it out, only then can it be grabbed, and inspecting it announces its title and its model.
- * Their materials and the announcements only load with them. A Knot only enters once its shader has arrived and then wears its full material right away, without Knottingham’s placeholders, leaving it to the renderer to stream it in like the rest of the gallery.
+ * Their materials and the announcements only load with them. A Knot only enters once its shader has arrived and then wears its full material right away, leaving it to the renderer to stream it in like the rest of the gallery.
  * `knots` must keep its identity while it stays the same, since a new one builds every material anew.
  */
 export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKnot>}) {
