@@ -53,10 +53,10 @@ export default class Cell extends Room {
       // The Sienna’s, below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source; it swings along with it.
       chandelier: {
         position: [0, chandelierLampY + chandelierLift, 0],
-        strength: 45,
+        strength: 50,
         tint: '#ffd36c',
-        range: 15,
-        decay: 1.75,
+        range: 25,
+        decay: 1.5,
         shadow: true,
       },
     }
