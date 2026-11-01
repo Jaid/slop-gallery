@@ -92,9 +92,9 @@ export default class Cell extends Room {
       slots,
       lamps,
       walls,
-      // The night sky through the roof lights, and shafts of moonlight faint enough to leave the room dark: as dense as the tuning panel’s density 6 makes them.
+      // The night sky through the roof lights, and shafts of moonlight faint enough to leave the room dark.
       skybox: 'night',
-      volumetricSun: 0.075,
+      volumetricSun: 0.07,
     })
     this.floorTile = layout.floorTile
     this.height = height
