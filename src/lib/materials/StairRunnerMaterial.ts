@@ -181,6 +181,8 @@ export default class StairRunnerMaterial extends MeshPhysicalNodeMaterial {
     this.normalNode = cameraViewMatrix.mul(vec4(shaded, 0)).xyz.normalize()
     this.colorNode = mix(surface, brass, metal)
     this.metalnessNode = metal
+    // The pile scatters back toward the light and looks flatter than a Lambertian surface (EON); the wood stays Lambertian.
+    this.diffuseRoughnessNode = carpet
     this.roughnessNode = mix(mix(pores.mul(0.12).add(rings.mul(0.06)).add(0.4), wear.mul(-0.06).add(0.93), carpet), patina.mul(0.16).add(0.32), metal)
     // Velvet-like retroreflection of the pile, flattened where feet wear it down.
     this.sheenNode = wool.mul(1.6).mul(carpet.mul(metal.oneMinus()).mul(wear.mul(-0.4).add(1)))

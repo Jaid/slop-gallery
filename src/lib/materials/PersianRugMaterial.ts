@@ -37,6 +37,8 @@ export default class PersianRugMaterial extends MeshPhysicalNodeMaterial {
       throw new RangeError(`A rug needs to be wider than three times its ${rugBorder} m border.`)
     }
     super({
+      // Pile scatters back toward the light and looks flatter than a Lambertian surface (EON).
+      diffuseRoughness: 1,
       roughness: 0.95,
       envMapIntensity: 0.1,
     })

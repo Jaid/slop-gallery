@@ -26,6 +26,8 @@ const palette = {
 export default class RugMaterial extends MeshPhysicalNodeMaterial {
   constructor(readonly size: readonly [number, number]) {
     super({
+      // Pile scatters back toward the light and looks flatter than a Lambertian surface (EON).
+      diffuseRoughness: 1,
       roughness: 0.95,
       envMapIntensity: 0.1,
     })

@@ -69,6 +69,8 @@ export default class VelvetWallMaterial extends MeshPhysicalNodeMaterial {
     style?: VelvetStyle
   } = {}) {
     super({
+      // Pile scatters back toward the light and looks flatter than a Lambertian surface (EON).
+      diffuseRoughness: 1,
       envMapIntensity: 0.08,
       metalness: 0,
       roughness: 0.9,
