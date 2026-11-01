@@ -11,6 +11,7 @@ const bridge: WebmcpBridge = {
     rooms: {},
     elsewhere: {
       meshes: [],
+      items: [],
       lights: [],
     },
     globalLights: [],

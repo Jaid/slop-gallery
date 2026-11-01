@@ -9,7 +9,12 @@ export default class InstancedPropVisuals {
   private readonly objects: Array<Object3D | undefined> = []
   private readonly previous = new Matrix4
 
-  constructor(readonly meshes: ReadonlyArray<InstancedMesh>, readonly ids: ReadonlyArray<string>) {}
+  constructor(readonly meshes: ReadonlyArray<InstancedMesh>, readonly ids: ReadonlyArray<string>) {
+    // The prop each instance draws, so analyze_world counts the instances as items.
+    for (const mesh of meshes) {
+      mesh.userData.propIds = ids
+    }
+  }
 
   update(resolve: (id: string) => Object3D | undefined) {
     // One source transform feeds every visual layer of the same prop.

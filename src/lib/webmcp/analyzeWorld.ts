@@ -1,8 +1,10 @@
-import type {BufferAttribute, BufferGeometry, InstancedBufferGeometry, InstancedMesh, Light, Material, Mesh, Object3D, SpotLight} from 'three/webgpu'
+import type {BufferAttribute, BufferGeometry, InstancedBufferGeometry, InstancedMesh, Light, Material, Mesh, Object3D, PointLight, SpotLight} from 'three/webgpu'
 
 import {Box3, Matrix4, Vector3} from 'three/webgpu'
 
 import {lampOf} from '../rendering/lamps.ts'
+import {isShadowSlot} from '../rendering/lightLevels.ts'
+import {wantsShadow} from '../rendering/shadowPool.ts'
 
 /** an axis-aligned box in world meters, from the floor to the clear height of the space it covers */
 export type WorldBox = {
@@ -27,9 +29,17 @@ export type WorldMesh = {
   /** triangles drawn for these instances */
   triangles: number
 }
+/** something the player can pick up and carry into another room, like a prop or a portrait */
+export type WorldItem = {
+  /** its prop or portrait id */
+  id: string
+  /** meshes drawing it, each instanced batch it is part of counting once */
+  meshes: number
+  /** triangles drawn for it */
+  triangles: number
+}
 export type WorldLight = {
   angle?: number
-  castShadow: boolean
   color: string
   decay?: number
   distance?: number
@@ -37,6 +47,8 @@ export type WorldLight = {
   path: string
   penumbra?: number
   position: [number, number, number]
+  /** own where the light casts a shadow map of its own, pooled where it borrows one of the shadow pool’s while in view; left out without a shadow */
+  shadow?: 'own' | 'pooled'
   type: string
 }
 /** a light of another region that shines while the player stands in this room */
@@ -46,8 +58,10 @@ export type ForeignLight = {
   room?: string
 }
 export type WorldRegion = {
+  /** what can be picked up, by where it lies now, sorted by triangles, most first */
+  items: Array<WorldItem>
   lights: Array<WorldLight>
-  /** sorted by triangles, most first */
+  /** everything else, the static meshes, sorted by triangles, most first */
   meshes: Array<WorldMesh>
 }
 export type WorldAnalysis = {
@@ -126,12 +140,22 @@ const describeLight = (light: Light): WorldLight => {
       angle: round(spot.angle),
       penumbra: round(spot.penumbra),
     } : {},
-    castShadow: light.castShadow,
+    ...light.castShadow ? {shadow: 'own'} : ((light as PointLight).isPointLight && wantsShadow(light) ? {shadow: 'pooled'} : {}),
   }
 }
+/** the pickup the object belongs to: the nearest object above it, itself included, that sets `userData.pickup` */
+const pickupOf = (object: Object3D) => {
+  for (let current: Object3D | null = object; current; current = current.parent) {
+    if (current.userData.pickup) {
+      return current
+    }
+  }
+}
+const itemIdOf = (pickup: Object3D) => String(pickup.userData.propId ?? pickup.userData.portraitId ?? pathOf(pickup))
 
 /**
  * Sorts every visible mesh of the scene into the region holding most of its world bounding box, summed over all instances, and lists the other rooms it spills into.
+ * Pickups (`userData.pickup`) and the instances of batches drawing them (`userData.propIds`, the prop of every instance) are items instead, which count in the room holding their origin, as they can be carried anywhere.
  * Fences count with a meter below their floor and 20 cm above their top to spare. A mesh that meets no fence, like a crater floor, and every light go to the room whose
  * fence holds their center seen from above, the one nearest in height where several do. Counts follow the geometry’s draw range and instance count, not what culling
  * skips in a given frame.
@@ -140,8 +164,17 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
   scene.updateMatrixWorld()
   const regions = new Map<string | undefined, WorldRegion>([...rooms.map(room => room.id), undefined].map(id => [id, {
     meshes: [],
+    items: [],
     lights: [],
   }]))
+  /** by pickup, with the room holding its origin */
+  const items = new Map<Object3D, WorldItem & {room?: string}>
+  /** batches drawing pickups, resolved once every pickup is known */
+  const batches: Array<{
+    ids: ReadonlyArray<string>
+    mesh: InstancedMesh
+    triangles: number
+  }> = []
   const globalLights: Array<WorldLight> = []
   const placed: Array<ForeignLight & {rooms?: ReadonlyArray<string>}> = []
   const fences = rooms.map(room => ({
@@ -168,6 +201,19 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     return result?.id
   }
   scene.traverseVisible(object => {
+    // Parents come first, so every pickup is known before the meshes inside it.
+    if (object.userData.pickup) {
+      items.set(object, {
+        id: itemIdOf(object),
+        meshes: 0,
+        triangles: 0,
+        room: roomAt(object.getWorldPosition(center)),
+      })
+    }
+    // The shadow pool’s slots only stand in for other lights.
+    if ((object as Light).isLight && isShadowSlot(object)) {
+      return
+    }
     if ((object as Light).isLight) {
       const light = describeLight(object as Light)
       if (globalLightTypes.has(light.type)) {
@@ -175,14 +221,11 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
       } else {
         const room = roomAt(center.fromArray(light.position))
         regions.get(room)!.lights.push(light)
-        // The shadow pool’s slots only stand in for other lights.
-        if (!object.userData.shadowSlot) {
-          placed.push({
-            path: light.path,
-            ...room === undefined ? {} : {room},
-            rooms: lampOf(object as Light)?.rooms,
-          })
-        }
+        placed.push({
+          path: light.path,
+          ...room === undefined ? {} : {room},
+          rooms: lampOf(object as Light)?.rooms,
+        })
       }
       return
     }
@@ -196,6 +239,22 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
     }
     const instanced = (mesh as Partial<InstancedMesh>).isInstancedMesh ? mesh as InstancedMesh : undefined
     const instances = instanced?.count ?? 1
+    const pickup = pickupOf(mesh)
+    if (pickup) {
+      const item = items.get(pickup)!
+      item.meshes++
+      item.triangles += trianglesOf(geometry) * instances
+      return
+    }
+    const propIds = mesh.userData.propIds as ReadonlyArray<string> | undefined
+    if (instanced && propIds) {
+      batches.push({
+        ids: propIds.slice(0, instances),
+        mesh: instanced,
+        triangles: trianglesOf(geometry),
+      })
+      return
+    }
     const volumes = new Map<string | undefined, number>
     const add = (id: string | undefined, volume: number) => volumes.set(id, (volumes.get(id) ?? 0) + volume)
     for (let i = 0; i < instances; i++) {
@@ -243,8 +302,31 @@ export default function analyzeWorld(scene: Object3D, rooms: ReadonlyArray<World
       triangles: trianglesOf(geometry) * instances,
     })
   })
+  const byId = new Map(items.values().map(item => [item.id, item]))
+  for (const {ids, mesh, triangles} of batches) {
+    for (const [index, id] of ids.entries()) {
+      let item = byId.get(id)
+      // An instance whose prop isn’t in the scene still draws where it was last.
+      if (!item) {
+        mesh.getMatrixAt(index, instanceMatrix)
+        item = {
+          id,
+          meshes: 0,
+          triangles: 0,
+          room: roomAt(center.setFromMatrixPosition(matrix.multiplyMatrices(mesh.matrixWorld, instanceMatrix))),
+        }
+        byId.set(id, item)
+      }
+      item.meshes++
+      item.triangles += triangles
+    }
+  }
+  for (const {room, ...item} of byId.values()) {
+    regions.get(room)!.items.push(item)
+  }
   for (const region of regions.values()) {
     region.meshes.sort((a, b) => b.triangles - a.triangles)
+    region.items.sort((a, b) => b.triangles - a.triangles)
   }
   return {
     rooms: Object.fromEntries(rooms.map(({id, ...room}) => [id, {

@@ -2,12 +2,15 @@ import type {WorldRoom} from '../../src/lib/webmcp/analyzeWorld.ts'
 
 import {expect, test} from 'bun:test'
 
-import {AmbientLight, BoxGeometry, Group, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PointLight, Scene} from 'three/webgpu'
+import {AmbientLight, BoxGeometry, DirectionalLight, Group, InstancedMesh, Matrix4, Mesh, MeshBasicNodeMaterial, MeshStandardNodeMaterial, PointLight, Scene, SpotLight} from 'three/webgpu'
 
+import worldTables from '../../scripts/lib/worldTables.ts'
 import {lodgeBay} from '../../src/lib/gallery/lodge.ts'
 import {craterTerrain} from '../../src/lib/gallery/moonfall/CraterTerrain.ts'
 import {siennaVestibule} from '../../src/lib/gallery/sienna.ts'
+import InstancedPropVisuals from '../../src/lib/physics/InstancedPropVisuals.ts'
 import {registerLamp} from '../../src/lib/rendering/lamps.ts'
+import {ShadowPool} from '../../src/lib/rendering/shadowPool.ts'
 import analyzeWorld from '../../src/lib/webmcp/analyzeWorld.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
@@ -150,4 +153,136 @@ test('each room lists the lights of other regions its room lists leave on', () =
     },
     {path: 'passage'},
   ])
+})
+test('pickups and the batch instances drawing them are items of the room holding their origin, apart from the static meshes', () => {
+  const scene = new Scene
+  const geometry = new BoxGeometry
+  const material = new MeshStandardNodeMaterial
+  const pedestal = new Mesh(geometry, material)
+  pedestal.name = 'pedestal'
+  // Carried over the boundary, mostly into the east room, but its origin is still in the west.
+  const prop = new Group
+  prop.name = 'prop-orb'
+  prop.userData = {
+    pickup: true,
+    propId: 'prop-orb',
+  }
+  prop.position.set(4.5, 1, 0)
+  prop.add(new Mesh(geometry, material), new Mesh(geometry, material))
+  prop.children[1].position.x = 5
+  const portrait = new Group
+  portrait.userData = {
+    pickup: true,
+    portraitId: 'cat',
+  }
+  portrait.position.set(30, 1, 0)
+  portrait.add(new Mesh(geometry, material))
+  // A nameplate drawn by instanced batches, with an empty pickup that moves it; the second instance’s prop isn’t in the scene.
+  const sign = new Group
+  sign.userData = {
+    pickup: true,
+    propId: 'sign-a',
+  }
+  sign.position.set(10, 0, 0)
+  const faces = new InstancedMesh(geometry, material, 2)
+  const supports = new InstancedMesh(geometry, material, 2)
+  const instance = new Matrix4
+  for (const mesh of [faces, supports]) {
+    mesh.setMatrixAt(0, instance.makeTranslation(10, 0, 0))
+    mesh.setMatrixAt(1, instance.makeTranslation(0, 0, 0))
+  }
+  new InstancedPropVisuals([faces, supports], ['sign-a', 'sign-b'])
+  scene.add(pedestal, prop, portrait, sign, faces, supports)
+  const analysis = analyzeWorld(scene, [square('west', 0), square('east', 10)])
+  const {west, east} = analysis.rooms
+  expect(west.meshes.map(mesh => mesh.path)).toEqual(['pedestal'])
+  expect(east.meshes).toEqual([])
+  expect(west.items).toEqual([
+    {
+      id: 'prop-orb',
+      meshes: 2,
+      triangles: 24,
+    },
+    {
+      id: 'sign-b',
+      meshes: 2,
+      triangles: 24,
+    },
+  ])
+  expect(east.items).toEqual([{
+    id: 'sign-a',
+    meshes: 2,
+    triangles: 24,
+  }])
+  expect(analysis.elsewhere.items).toEqual([{
+    id: 'cat',
+    meshes: 1,
+    triangles: 12,
+  }])
+})
+test('lights tell a shadow map of their own from one borrowed from the shadow pool, whose slots are left out', () => {
+  const scene = new Scene
+  const plain = new PointLight
+  const pooled = new PointLight
+  pooled.userData.shadow = true
+  const spot = new SpotLight
+  spot.castShadow = true
+  const sun = new DirectionalLight
+  sun.castShadow = true
+  const pool = new ShadowPool(2)
+  scene.add(plain, pooled, spot, sun, ...pool.slots)
+  const analysis = analyzeWorld(scene, [square('west', 0)])
+  expect(analysis.rooms.west.lights.map(light => [light.type, light.shadow])).toEqual([['PointLight', undefined], ['PointLight', 'pooled'], ['SpotLight', 'own']])
+  expect(analysis.globalLights.map(light => [light.type, light.shadow])).toEqual([['DirectionalLight', 'own']])
+})
+/** a region of meshes, items and lights with these triangles and shadows */
+const region = (meshes: Array<number>, items: Array<number>, shadows: Array<'own' | 'pooled' | undefined>) => ({
+  meshes: meshes.map((triangles, index) => ({
+    path: `mesh-${index}`,
+    triangles,
+  })),
+  items: items.map((triangles, index) => ({
+    id: `item-${index}`,
+    meshes: 1,
+    triangles,
+  })),
+  lights: shadows.map(shadow => ({
+    type: 'PointLight',
+    path: 'lamp',
+    position: [0, 0, 0] as [number, number, number],
+    color: '#ffffff',
+    intensity: 1,
+    ...shadow ? {shadow} : {},
+  })),
+})
+test('the tables split static meshes from items, leave rooms without items out of theirs and count lamps and shadows', () => {
+  const fence = {
+    min: [0, 0, 0] as [number, number, number],
+    max: [1, 1, 1] as [number, number, number],
+  }
+  const markdown = worldTables({
+    rooms: {
+      hall: {
+        title: 'Hall',
+        fence,
+        ...region([12_000, 300], [], [undefined]),
+        foreignLights: [],
+      },
+      salon: {
+        title: 'Salon',
+        fence,
+        ...region([20_000], [100, 50], ['own', 'pooled', undefined]),
+        foreignLights: [],
+      },
+    },
+    elsewhere: region([], [8], []),
+    globalLights: region([], [], ['own', undefined]).lights,
+  }, 'Test', 'heavy')
+  const section = (name: string) => markdown.split(`### ${name}`)[1].split('###')[0]
+  expect(section('Static meshes')).toContain('| Salon | 20\u{202F}000 | 1 |\n| Hall | 12\u{202F}300 | 2 |\n| **Total** | 32\u{202F}300 | 3 |')
+  expect(section('Static meshes')).not.toContain('Elsewhere')
+  expect(section('Items')).toContain('| Salon | 150 | 2 |\n| Elsewhere | 8 | 1 |\n| **Total** | 158 | 3 |')
+  expect(section('Items')).not.toContain('Hall')
+  expect(section('Lights')).toContain('| Room | Lamps | Shadows |')
+  expect(section('Lights')).toContain('| Salon | 3 | 2 |\n| Hall | 1 | 0 |\n| Global | 2 | 1 |\n| **Total** | 6 | 3 |')
 })
