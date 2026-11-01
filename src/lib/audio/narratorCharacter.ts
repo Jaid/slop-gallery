@@ -1,6 +1,6 @@
 import {environmentPick, environmentRoll, environmentSample} from '../environmentSeed.ts'
 
-const narratorTraits = ['calm', 'knowledgeable', 'lively', 'witty', 'sarcastic', 'humorous', 'self-deprecating']
+export const narratorTraits = ['calm', 'knowledgeable', 'lively', 'witty', 'sarcastic', 'humorous', 'self-deprecating', 'wry', 'dry', 'deadpan', 'sardonic', 'cheeky', 'mischievous', 'conspiratorial', 'erudite', 'eloquent', 'articulate', 'composed']
 const narratorNouns = ['narration', 'narrator', 'commentary', 'art gallery director']
 const narratorSuffixes = ['', 'pleasant to listen to', 'easy to listen to', 'hooking the listeners', 'easily hooking the listener']
 

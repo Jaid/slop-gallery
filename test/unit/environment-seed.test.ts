@@ -1,6 +1,6 @@
 import {expect, test} from 'bun:test'
 
-import {narratorCharacter} from '../../src/lib/audio/narratorCharacter.ts'
+import {narratorCharacter, narratorTraits} from '../../src/lib/audio/narratorCharacter.ts'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
@@ -91,7 +91,6 @@ test('the Halloween Orb’s prompt names 5 of its adjectives, the same for the s
   expect(prompts.size).toBeGreaterThan(10)
 })
 test('the narrator’s character names 2 to 5 traits in their order, one noun and maybe a suffix, the same for the same seed', () => {
-  const traits = ['calm', 'knowledgeable', 'lively', 'witty', 'sarcastic', 'humorous', 'self-deprecating']
   const pattern = /^(?<traits>[\w-]+(?: [\w-]+)*?) (?:art gallery director|commentary|narration|narrator)(?: (?:easily hooking the listener|easy to listen to|hooking the listeners|pleasant to listen to))?$/u
   expect(narratorCharacter(1)).toBe(narratorCharacter(1))
   const counts = new Set<number>
@@ -100,7 +99,7 @@ test('the narrator’s character names 2 to 5 traits in their order, one noun an
     const picked = groups.traits.split(' ')
     expect(picked.length).toBeGreaterThanOrEqual(2)
     expect(picked.length).toBeLessThanOrEqual(5)
-    expect(picked).toEqual(traits.filter(trait => picked.includes(trait)))
+    expect(picked).toEqual(narratorTraits.filter(trait => picked.includes(trait)))
     counts.add(picked.length)
   }
   expect(counts).toEqual(new Set([2, 3, 4, 5]))
