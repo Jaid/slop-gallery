@@ -62,7 +62,7 @@ export default class Cell extends Room {
       chandelier: {
         position: [0, chandelierLampY + chandelierLift, 0],
         strength: 50,
-        tint: '#ffd36c',
+        tint: '#ffedc4',
         range: 25,
         decay: 1.5,
         shadow: true,
