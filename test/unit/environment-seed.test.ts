@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {narratorCharacter, narratorTraits} from '../../src/lib/audio/narratorCharacter.ts'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
-import {halloweenOrb} from '../../src/lib/gallery/orbs.ts'
+import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 
 test('?seed accepts unsigned 32-bit integers and ignores anything else', () => {
@@ -79,16 +79,27 @@ test('samples pick distinct items in list order, the same for the same seed and 
   expect(environmentSample(1, 'letters', items, 8)).toEqual(items)
   expect(() => environmentSample(1, 'letters', items, 9)).toThrow()
 })
-test('the Halloween Orb’s prompt names 5 of its adjectives, the same for the same seed', () => {
-  const prompt = halloweenOrb.prompt(1)
-  expect(halloweenOrb.prompt(1)).toBe(prompt)
-  const [, list] = /make it (.+)\.$/u.exec(prompt)!
-  const adjectives = list.replace(' or ', ', ').split(', ')
-  expect(adjectives).toHaveLength(5)
-  const distinct = new Set(adjectives)
-  expect(distinct.size).toBe(5)
-  const prompts = new Set(Array.from({length: 50}, (_, seed) => halloweenOrb.prompt(seed)))
-  expect(prompts.size).toBeGreaterThan(10)
+for (const orb of orbs) {
+  test(`the ${orb.title}’s prompt names 5 different adjectives of its own, the same for the same seed`, () => {
+    const pool = new Set(orb.adjectives)
+    expect(pool.size).toBe(orb.adjectives.length)
+    const prompt = orb.prompt(1)
+    expect(orb.prompt(1)).toBe(prompt)
+    expect(prompt.startsWith(orb.premise)).toBe(true)
+    expect(prompt.endsWith('.')).toBe(true)
+    const list = prompt.slice(prompt.indexOf(orb.change) + orb.change.length + 1, -1)
+    const adjectives = list.replace(' or ', ', ').split(', ')
+    expect(adjectives).toHaveLength(5)
+    const named = new Set(adjectives)
+    expect(named.size).toBe(5)
+    expect(named.isSubsetOf(pool)).toBe(true)
+    const prompts = new Set(Array.from({length: 50}, (_, seed) => orb.prompt(seed)))
+    expect(prompts.size).toBeGreaterThan(10)
+  })
+}
+test('the orbs’ props are told apart by their ids', () => {
+  const propIds = new Set(orbs.map(orb => orb.propId))
+  expect(propIds.size).toBe(orbs.length)
 })
 test('the narrator’s character names 2 to 5 traits in their order, never two synonyms, one noun and maybe a suffix, the same for the same seed', () => {
   const pattern = /^(?<traits>[\w-]+(?: [\w-]+)*?) (?:art gallery director|commentary|narration|narrator)(?: (?:easily hooking the listener|easy to listen to|hooking the listeners|pleasant to listen to))?$/u

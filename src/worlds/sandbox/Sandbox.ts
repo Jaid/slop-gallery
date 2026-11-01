@@ -14,7 +14,7 @@ const scene = lazy(() => import('#src/rooms/cell/components/CellRoom/index.tsx')
 /** how far the player’s body keeps its middle from the walls */
 const bodyRadius = 0.6
 
-/** A world to try things in: a single room, the Cell, with nothing in it but an orb and a few of the gallery’s default works on its side walls. */
+/** A world to try things in: a single room, the Cell, with nothing in it but three orbs and a few of the gallery’s default works on its side walls. */
 export default class Sandbox extends World<Cell> {
   // The gallery’s default works, of which the Cell’s six slots take as many as fit, drawn by the seed.
   override readonly artworks = artworks

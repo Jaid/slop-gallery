@@ -12,7 +12,7 @@ import Orb from '#component/Orb'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import ShadowPool from '#component/ShadowPool'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {halloweenOrb, orbRadius} from '#src/lib/gallery/orbs.ts'
+import {halloweenOrb, horrorOrb, orbRadius, spookOrb} from '#src/lib/gallery/orbs/index.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
@@ -35,8 +35,11 @@ const polish: ArenaPolish = {
 }
 const slabThickness = 0.24
 const circleSegments = 96
+/** The orbs in a row across the pedestal’s cap, left to right as seen through the arch, a hand’s width apart. */
+const pedestalOrbs = [spookOrb, halloweenOrb, horrorOrb]
+const orbSpacing = orbRadius * 2 + 0.1
 
-/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the Halloween Orb on a pedestal under a second one, lit besides by the Arena’s studio fill from no visible source. */
+/** The Sandbox’s one room: the Arena’s shell around the Cell’s floor plan under the Sienna’s chandelier, its round vestibule with the three orbs on a pedestal under a second one, lit besides by the Arena’s studio fill from no visible source. */
 export default function CellRoom() {
   const surfaces = useArenaSurfaces()
   const pedestal = usePedestal()
@@ -54,7 +57,7 @@ export default function CellRoom() {
       <Chandelier lamp={cell.room.globalId('vestibule_chandelier')} />
     </group>
     <Pedestal {...pedestal} position={[vestibuleX, 0, vestibuleZ]} />
-    <Orb orb={halloweenOrb} position={[vestibuleX, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />
+    {pedestalOrbs.map((orb, index) => <Orb key={orb.id} orb={orb} position={[vestibuleX + (index - 1) * orbSpacing, pedestalHeight + orbRadius + 0.005, vestibuleZ]} />)}
   </group>
 }
 
