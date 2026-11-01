@@ -167,6 +167,8 @@ export const serveGallery = async (setup: GallerySetup, options: {
   const server = await createServer({
     root: repositoryRoot,
     mode: 'development',
+    // Bun loads the config like `bun run vite` does; Vite’s own bundling loader fails on the world catalog’s JXL import.
+    configLoader: 'native',
     logLevel: 'error',
     cacheDir: options.cacheDir,
     server: {
