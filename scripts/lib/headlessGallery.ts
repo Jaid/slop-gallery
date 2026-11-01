@@ -9,12 +9,12 @@ import {createServer} from 'vite'
 import {maximumSeed, parseSeed} from '#src/lib/environmentSeed.ts'
 import {queryParameters} from '#src/lib/queryOverrides.ts'
 import {parseStreamBudget} from '#src/lib/rendering/streamBudget.ts'
-import {knottinghamParameters, readWorld} from '#src/worlds/index.ts'
+import {readWorld, worldParameters} from '#src/worlds/index.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
 const dedicatedQueryOptionNames = new Set(['graphics', 'seed', 'stream_budget'])
-// These have dedicated options with validation and defaults. Knottingham’s own parameters open it, like --world knottingham.
-const queryOptionNames = [...queryParameters.filter(key => !dedicatedQueryOptionNames.has(key)), ...knottinghamParameters].toSorted()
+// These have dedicated options with validation and defaults. A world’s own parameters open it, like --shots opens Knottingham and --item the Sandbox.
+const queryOptionNames = [...new Set([...queryParameters.filter(key => !dedicatedQueryOptionNames.has(key)), ...Object.values(worldParameters).flat()])].toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
 export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server

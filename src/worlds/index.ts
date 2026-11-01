@@ -34,18 +34,21 @@ export const worlds = {
   },
 } as const satisfies Record<WorldId, WorldInfo>
 
-/** the world a URL without a `?world` and without Knottingham’s parameters opens */
+/** the world a URL without a `?world` and without any world’s own parameters opens */
 export const defaultWorld = 'gallery' satisfies WorldId
 
-/** the URL parameters only Knottingham reads, which open it without a `?world` */
-export const knottinghamParameters = ['candidate', 'knot_id', 'model', 'shots', 'candidate_limit', 'candidate_order', 'rarity', 'rarity_filter'] as const
+/** the URL parameters only one world reads, by that world, which open it without a `?world`: Knottingham’s, like `?shots`, and the Sandbox’s `?item` */
+export const worldParameters = {
+  knottingham: ['candidate', 'knot_id', 'model', 'shots', 'candidate_limit', 'candidate_order', 'rarity', 'rarity_filter'],
+  sandbox: ['item'],
+} as const satisfies Partial<Record<WorldId, ReadonlyArray<string>>>
 
 /**
- * The world a URL query opens: the one `?world` names, otherwise Knottingham if any of its own parameters is given, otherwise the gallery.
+ * The world a URL query opens: the one `?world` names, otherwise the first whose own parameters, from `parameters`, it gives any of, otherwise the gallery.
  *
  * Self-contained, so the loading screen can run its source before any script loads.
  */
-export function selectWorld(search: string, parameters: ReadonlyArray<string> = knottinghamParameters): WorldId {
+export function selectWorld(search: string, parameters: Partial<Record<WorldId, ReadonlyArray<string>>> = worldParameters): WorldId {
   const query = new URLSearchParams(search)
   // The world ids once more, as the loading screen runs this function without the module around it.
   const known: ReadonlyArray<WorldId> = ['gallery', 'knottingham', 'sandbox']
@@ -53,7 +56,7 @@ export function selectWorld(search: string, parameters: ReadonlyArray<string> = 
   if (requested) {
     return requested
   }
-  return parameters.some(parameter => query.has(parameter)) ? 'knottingham' : 'gallery'
+  return known.find(id => parameters[id]?.some(parameter => query.has(parameter))) ?? 'gallery'
 }
 
 /** Read the world a URL opens, see {@link selectWorld}. */
