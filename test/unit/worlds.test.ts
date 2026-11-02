@@ -116,7 +116,7 @@ describe('worlds', () => {
     expect(knottingham.roomAt([0, 0, knotGalleryBounds.northZ - 5])).toBeUndefined()
     expect(knottingham.placement.contains(knottingham.placement.recoveryPosition)).toBe(true)
   })
-  test('the Sandbox is a single room, the Cell, 18 × 14 m and 6 m high, which holds its spawn and is sealed by the Arena’s walls, a door shutting its north wall’s arch without ?item', () => {
+  test('the Sandbox is a single room, the Cell, 18 × 10 m and 4 m high at its walls, which holds its spawn and is sealed by the Arena’s walls, a door shutting its north wall’s arch without ?item', () => {
     expect(sandbox.items).toEqual([])
     expect(sandbox.rooms.map(room => room.id)).toEqual(['cell'])
     // Lit by its own lamps alone, without voxel indirect light, which the other worlds keep.
@@ -124,8 +124,8 @@ describe('worlds', () => {
     expect([slopGallery.voxelIndirectLight, knottingham.voxelIndirectLight]).toEqual([true, true])
     const cell = sandbox.room('cell')
     expect(cell.title).toBe('Cell')
-    expect(cell.size).toEqual([18, 14])
-    expect(cell.height).toBe(6)
+    expect(cell.size).toEqual([18, 10])
+    expect(cell.height).toBe(4)
     expect(cell.room.layout.plan).toBe('closed')
     expect(sandbox.artworks).toBe(slopGallery.artworks)
     expect(sandbox.lamps().map(lamp => lamp.id)).toEqual(['cell-chandelier'])

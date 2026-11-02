@@ -8,7 +8,7 @@ import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightP
 import {DoubleSide, ExtrudeGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, PlaneGeometry, Quaternion, Raycaster, Shape, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {openingCasingFronts, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
+import {openingCasingFronts, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architectureDimensions.ts'
 import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, cellLedY, cellOculus, cellRidge, cellSkylights, cofferLine, isCellSkylight} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
@@ -16,7 +16,7 @@ import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
-import {chandelierCanopyTop, chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
+import {chandelierCanopyTop, chandelierLampY, chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
 import Cell, {cellLed} from '../../src/rooms/cell/Cell.ts'
@@ -115,7 +115,7 @@ describe('the Cell’s layout', () => {
       expect(lamps.keys().toArray()).toEqual(['chandelier', 'led'])
       const led = lamps.get('led')!
       const [x, z] = layout.vestibule!.center
-      expect(led.position).toEqual([x, cellLedY(layout.height) - cellLed.drop, z])
+      expect(led.position).toEqual([x, cellLedY(layout.roundHeight) - cellLed.drop, z])
       expect(led.shadow ?? false).toBe(false)
       expect(led.kind ?? 'point').toBe('point')
       // It reaches across the whole round room, however large.
@@ -168,7 +168,7 @@ describe('the Cell’s layout', () => {
   })
 })
 describe('the passage from the Cell’s hall to its round room', () => {
-  test('keeps every floor level in the hall’s plane, so all of them mirror in one, and stands the round wall on it as high as the hall’s', () => {
+  test('keeps every floor level in the hall’s plane, so all of them mirror in one, and stands the round wall on it higher than the hall’s', () => {
     for (const count of [1, 3]) {
       const sandbox = new Sandbox(ids.slice(0, count))
       const cell = sandbox.room('cell')
@@ -178,7 +178,9 @@ describe('the passage from the Cell’s hall to its round room', () => {
       const round = sandbox.walls.filter(wall => wall.curveRadius)
       expect(round.map(wall => wall.id)).toEqual(['cell-vestibule'])
       expect(round[0].center[1]).toBe(north.center[1])
-      expect(round[0].height).toBe(north.height)
+      expect(north.height).toBe(layout.height)
+      expect(round[0].height).toBe(layout.roundHeight)
+      expect(layout.roundHeight).toBeGreaterThan(layout.height)
       expect(round[0].holes!.map(hole => [hole.name, hole.height])).toEqual([['cell', layout.arch.height]])
       for (const z of [layout.northZ + 2, layout.northZ, layout.northZ - layout.passage / 2, vestibule.center[1]]) {
         const position = cell.toWorld([vestibule.center[0], 1, z])
@@ -425,21 +427,22 @@ describe('the Cell’s ceilings', () => {
   test('rise from the hall’s north and south walls to a ridge along its middle like a house’s roof, and hang level over the round room', () => {
     const layout = new CellLayout(1)
     const [width, depth] = layout.size
-    expect(layout.roofPitch).toBeCloseTo(Math.PI / 6, 9)
+    expect([layout.height, layout.ridgeHeight]).toEqual([4, 9])
     expect(layout.ridgeHeight).toBeCloseTo(layout.height + depth / 2 * Math.tan(layout.roofPitch), 9)
     expect(layout.ceilingAt(0, depth / 2)).toBeCloseTo(layout.height, 9)
     expect(layout.ceilingAt(width / 2, -depth / 2)).toBeCloseTo(layout.height, 9)
     expect(layout.ceilingAt(-3, 0)).toBeCloseTo(layout.ridgeHeight, 9)
     expect(layout.ceilingAt(4, 2)).toBeCloseTo(layout.ceilingAt(4, -2), 9)
     expect(layout.ceilingAt(0, 2) - layout.ceilingAt(0, 3)).toBeCloseTo(Math.tan(layout.roofPitch), 9)
-    expect(layout.ceilingAt(...layout.vestibule!.center)).toBe(layout.height)
+    expect(layout.ceilingAt(...layout.vestibule!.center)).toBe(layout.roundHeight)
     // The hall’s air reaches up to the ridge, and a body fits under the slopes but not through them.
     const sandbox = new Sandbox(ids.slice(0, 1))
     const cell = sandbox.room('cell')
     expect(cell.room.bounds.max.y).toBeCloseTo(layout.ridgeHeight, 9)
     expect(sandbox.contains(cell.toWorld([0, layout.ridgeHeight - 1, 0]))).toBe(true)
     expect(sandbox.contains(cell.toWorld([0, layout.ridgeHeight - 1, depth / 2 - 1]))).toBe(false)
-    expect(sandbox.contains(cell.toWorld([layout.vestibule!.center[0], layout.height + 0.5, layout.vestibule!.center[1]]))).toBe(false)
+    expect(sandbox.contains(cell.toWorld([layout.vestibule!.center[0], layout.roundHeight - 0.5, layout.vestibule!.center[1]]))).toBe(true)
+    expect(sandbox.contains(cell.toWorld([layout.vestibule!.center[0], layout.roundHeight + 0.5, layout.vestibule!.center[1]]))).toBe(false)
   })
   test('coffer both slopes in nearly square fields of equal size between the rafters and purlins, from the cornice at the eaves up to the ridge beam and from gable to gable', () => {
     const layout = new CellLayout(0)
@@ -462,7 +465,7 @@ describe('the Cell’s ceilings', () => {
       }
       return field
     })
-    expect(Math.abs(fields[0] - fields[1]) / fields[0]).toBeLessThan(0.02)
+    expect(Math.abs(fields[0] - fields[1]) / fields[0]).toBeLessThan(0.04)
   })
   test('glaze every coffer up both slopes but those along the gables, the eave and the ridge, open through the slab inside the gilt fillet and divided into panes by the sash’s bars', () => {
     const layout = new CellLayout(1)
@@ -649,6 +652,10 @@ describe('the Cell’s ceilings', () => {
         expect(beams.max.y).toBeCloseTo(0, 6)
         expect(beams.min.y).toBeCloseTo(-cellCoffers.beam.depth, 6)
         expect(beams.max.x).toBeCloseTo(width / 2, 6)
+        // A purlin along the eave closes the coffers’ lowest row, as the ridge beam closes their highest.
+        const alongSlope = cofferLine(geometry.length, cellCoffers.count[1], [cellRidge.width / 2 / Math.cos(layout.roofPitch), 0.34 / Math.cos(layout.roofPitch)])
+        expect(beams.max.z).toBeCloseTo(alongSlope.middles.at(-1)! + alongSlope.field / 2 + cellCoffers.beam.width, 6)
+        expect(beams.max.z).toBeLessThan(half)
         // Laid along x, the mesh turns them down the slope: local x becomes the slope’s −z and local z its x.
         const cross = geometry.crossBeams.boundingBox!
         expect(cross.min.x).toBeCloseTo(-half, 6)
@@ -681,8 +688,8 @@ describe('the Cell’s ceilings', () => {
           expect(normal.y).toBeCloseTo(-Math.cos(layout.roofPitch), 9)
           expect(Math.sign(normal.z)).toBe(-side)
         }
-        // Over the arch through the north wall everywhere.
-        expect(underside - cellCoffers.beam.depth).toBeGreaterThan(layout.arch.height + 1)
+        // Over the arch through the north wall and its casing everywhere.
+        expect(underside - cellCoffers.beam.depth).toBeGreaterThan(layout.arch.height + wallOpeningTrim + 0.2)
         for (const part of [geometry.ridge, geometry.plate, geometry.gables]) {
           part.computeBoundingBox()
         }
@@ -693,11 +700,12 @@ describe('the Cell’s ceilings', () => {
         const pivot = cellChandelierPivot(layout.ridgeHeight)
         expect(plate.max.y).toBeCloseTo(apex - cellRidge.depth + 0.002, 6)
         expect(plate.min.y).toBeCloseTo(pivot, 6)
-        // The rod reaches down from the ball to the canopy, which hangs where it would under a level ceiling, under the slabs where they meet the walls.
+        // The rod reaches down from the ball to the top of the fixture, which hangs its lamp under the tops of the walls, well over the visitors’ heads.
         const canopyTop = layout.chandelierLift + chandelierPhysics.height + chandelierCanopyTop
         expect(canopyTop + layout.chandelierRod).toBeCloseTo(pivot, 9)
-        expect(canopyTop).toBeLessThan(underside)
-        expect(canopyTop).toBeGreaterThan(underside - 0.1)
+        expect(layout.chandelierRod).toBeGreaterThan(1)
+        expect(layout.chandelierLift + chandelierLampY).toBeLessThan(underside)
+        expect(layout.chandelierLift + chandelierLampY).toBeGreaterThan(3)
         // As thick as the walls’ faces, from their tops up to the slopes, which cover their sloping edges.
         const gables = geometry.gables.boundingBox!
         expect(gables.min.x).toBeCloseTo(-width / 2, 6)
@@ -712,12 +720,13 @@ describe('the Cell’s ceilings', () => {
           expect(Math.abs(gablePosition.getX(index))).toBeGreaterThanOrEqual(width / 2 - wallFace - 1e-6)
         }
         if (layout.vestibule) {
+          const roundUnderside = layout.roundHeight - cellCeilingSlab / 2
           geometry.rounds.computeBoundingBox()
-          expect(geometry.rounds.boundingBox!.min.y).toBeCloseTo(underside, 6)
+          expect(geometry.rounds.boundingBox!.min.y).toBeCloseTo(roundUnderside, 6)
           geometry.roundGilt.computeBoundingBox()
-          expect(geometry.roundGilt.boundingBox!.max.y).toBeLessThan(underside + 0.03)
+          expect(geometry.roundGilt.boundingBox!.max.y).toBeLessThan(roundUnderside + 0.03)
           // The panel’s housing reaches 5 mm into the slab, over the round room’s middle.
-          expect(cellLedY(layout.height) + knotLightHousingY + knotLightHousingSize[1] / 2).toBeCloseTo(underside + 0.005, 9)
+          expect(cellLedY(layout.roundHeight) + knotLightHousingY + knotLightHousingSize[1] / 2).toBeCloseTo(roundUnderside + 0.005, 9)
         } else {
           expect(geometry.rounds.getAttribute('position')).toBeUndefined()
           expect(geometry.roundGilt.getAttribute('position')).toBeUndefined()

@@ -19,7 +19,7 @@ import slots from './slots.ts'
 
 /** the lamp under the LED panel in the middle of the vestibule’s ceiling, like the Banquet’s under each of its panes: a white wash without a shadow, fading gently, its light this far under the panel */
 export const cellLed = {
-  strength: 36,
+  strength: 30,
   tint: '#eee3ff',
   decay: 1.5,
   drop: 0.32,
@@ -38,13 +38,13 @@ export default class Cell extends Room {
   override readonly size: FloorSize
   // In front of the south wall, looking north through the arch at the items, or at the door.
   override readonly spawn: RoomSpawn = {
-    position: [0, 0.04, 4.5],
+    position: [0, 0.04, 2.5],
     yaw: 0,
     pitch: 0,
   }
 
   constructor(readonly layout: CellLayout) {
-    const {chandelierLift, height, northZ, passage, size, vestibule} = layout
+    const {chandelierLift, height, northZ, passage, roundHeight, size, vestibule} = layout
     const lamps: Record<string, Lamp> = {
       // The Sienna’s, below the swinging chandelier’s metalwork at rest, so the fixture can’t shadow its own source; it swings along with it.
       chandelier: {
@@ -59,7 +59,7 @@ export default class Cell extends Room {
     if (vestibule) {
       const [x, z] = vestibule.center
       lamps.led = {
-        position: [x, cellLedY(height) - cellLed.drop, z],
+        position: [x, cellLedY(roundHeight) - cellLed.drop, z],
         strength: cellLed.strength,
         tint: cellLed.tint,
         // Across the whole round room, however large a rotunda grows.
@@ -81,7 +81,7 @@ export default class Cell extends Room {
       // The round room’s velvet wall keeps the Arena’s low molded baseboard in black lacquer.
       ...vestibule ? {
         vestibule: {
-          ...roundVestibuleWall(vestibule, [0, 0, 0], height),
+          ...roundVestibuleWall(vestibule, [0, 0, 0], roundHeight),
           baseboardSection: cellBaseboard,
         },
       } : {},
@@ -104,7 +104,7 @@ export default class Cell extends Room {
       floorBox(size, 0, layout.ridgeHeight),
       ...vestibule ? [
         floorBox([layout.arch.width, passage], 0, height, [vestibule.center[0], northZ - passage / 2]),
-        floorBox([vestibule.radius * 2, vestibule.radius * 2], 0, height, vestibule.center),
+        floorBox([vestibule.radius * 2, vestibule.radius * 2], 0, roundHeight, vestibule.center),
       ] : [],
     ]
     // Its whole floor plan, the passage’s and the round room’s at every height, as they are all there is.

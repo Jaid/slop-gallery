@@ -79,7 +79,7 @@ const led = vestibule && {
   }],
   slots: [{
     id: 'vestibule',
-    position: cell.toWorld([vestibule.center[0], cellLedY(layout.height), vestibule.center[1]]),
+    position: cell.toWorld([vestibule.center[0], cellLedY(layout.roundHeight), vestibule.center[1]]),
     row: 0,
     slot: 0,
   }],

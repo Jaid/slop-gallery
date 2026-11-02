@@ -79,7 +79,7 @@ export default function CellCeiling({beams, paper}: {
       <CuboidCollider args={[width / 2, cellRidge.depth / 2, cellRidge.width / 2]} position={[0, layout.ridgeHeight - cellCeilingSlab / 2 - cellRidge.depth / 2, 0]} />
       <TrimeshCollider args={collision.gables} />
       {[-1, 1].map(side => <CylinderCollider key={side} args={[wallFace / 2, cellOculus.radius + 0.01]} position={[side * (width / 2 - wallFace / 2), oculusY, 0]} rotation={[0, 0, Math.PI / 2]} />)}
-      {vestibule && <CylinderCollider args={[cellCeilingSlab / 2, vestibule.radius]} position={[vestibule.center[0], layout.height, vestibule.center[1]]} />}
+      {vestibule && <CylinderCollider args={[cellCeilingSlab / 2, vestibule.radius]} position={[vestibule.center[0], layout.roundHeight, vestibule.center[1]]} />}
     </RigidBody>
     <mesh castShadow geometry={geometry.ridge} material={beams} name='cell-ceiling-ridge' receiveShadow />
     <mesh castShadow geometry={geometry.plate} material={brass} name='cell-chandelier-plate' receiveShadow />

@@ -2,7 +2,7 @@ import type {RoundVestibule} from '#src/lib/gallery/roundVestibule.ts'
 import type {FloorSize} from '../base/Room.ts'
 
 import {cellChandelierPivot} from '#src/lib/gallery/CellCeilingGeometry.ts'
-import {chandelierCanopyTop, chandelierCeiling, chandelierPhysics} from '#src/lib/physics/chandelier.ts'
+import {chandelierCanopyTop, chandelierPhysics} from '#src/lib/physics/chandelier.ts'
 
 /** a pedestal carrying one item */
 export type CellPedestal = {
@@ -17,22 +17,25 @@ export type CellPlan = 'closed' | 'rotunda' | 'single'
 /** edge length of the floor’s marble tiles, which run whole from wall to wall along both axes */
 const tile = 0.5
 /** wider than deep, the arch in the middle of its long north wall */
-const size: FloorSize = [18, 14]
-const height = 6
+const size: FloorSize = [18, 10]
+/** how high the hall’s ceiling hangs at its walls, along the middle of its slabs */
+const height = 4
+/** how high the round room’s level ceiling hangs, along the middle of its slab */
+const roundHeight = 5
 const northZ = -size[1] / 2
-/** the arch through the north wall, which a door closes while the Cell has no items */
+/** the arch through the north wall, which a door closes while the Cell has no items: its head under the casing’s clear of the cornice */
 const arch = {
-  width: 3,
-  height: 4.2,
+  width: 2.5,
+  height: 3.25,
   profile: 'arch',
 } as const satisfies RoundVestibule['arch']
-/** how steeply the hall’s gabled ceiling rises from its north and south walls to the ridge along its middle, like a house’s roof */
-const roofPitch = Math.PI / 6
 const round = (value: number) => Math.round(value * 1e9) / 1e9 + 0
-/** how high the hall’s ceiling rises at its ridge, along the middle of its slabs */
-const ridgeHeight = round(height + size[1] / 2 * Math.tan(roofPitch))
-/** how much higher the chandelier hangs than from the ceiling it is made for, so its canopy hangs right under the ceiling at the walls */
-const chandelierLift = round(height - chandelierCeiling)
+/** how high the hall’s gabled ceiling rises at its ridge along its middle, like a house’s roof, along the middle of its slabs */
+const ridgeHeight = 9
+/** how steeply the hall’s ceiling rises from its north and south walls to the ridge */
+const roofPitch = Math.atan((ridgeHeight - height) / (size[1] / 2))
+/** how much higher the chandelier hangs than the Sienna’s from the ceiling it is made for, its candles about as high as the top of the hall’s walls */
+const chandelierLift = 0.2
 /** how far the vestibule’s wall stands back from the north wall’s center line, which leaves a passage between them, lined like the arch */
 const passage = 0.5
 /** the vestibule’s round a lone item */
@@ -71,7 +74,7 @@ export default class CellLayout {
   readonly chandelierRod = round(cellChandelierPivot(ridgeHeight) - chandelierLift - chandelierPhysics.height - chandelierCanopyTop)
   /** edge length of the floor’s marble tiles, which run whole from wall to wall */
   readonly floorTile = tile
-  /** how high the ceilings hang at the walls, the middle of their slabs: over the round room all over and over the hall where its ceiling rises from the walls to its ridge */
+  /** how high the hall’s ceiling hangs at its walls, the middle of its slabs, where it starts rising to its ridge */
   readonly height = height
   /** the z of the north wall’s center line, relative to the room’s origin */
   readonly northZ = northZ
@@ -84,6 +87,8 @@ export default class CellLayout {
   readonly ridgeHeight = ridgeHeight
   /** how steeply the hall’s ceiling rises from its north and south walls to its ridge, in radians */
   readonly roofPitch = roofPitch
+  /** how high the level ceiling over the round room hangs, the middle of its slab, higher than the hall’s walls */
+  readonly roundHeight = roundHeight
   readonly size = size
   /** the round room beyond the north wall’s arch, a vestibule or a rotunda, or undefined while a door closes the arch */
   readonly vestibule: RoundVestibule | undefined
@@ -127,7 +132,7 @@ export default class CellLayout {
   ceilingAt(x: number, z: number) {
     const [width, depth] = size
     if (Math.abs(x) > width / 2 || Math.abs(z) > depth / 2) {
-      return height
+      return roundHeight
     }
     return round(height + (depth / 2 - Math.abs(z)) * Math.tan(roofPitch))
   }

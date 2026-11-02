@@ -21,7 +21,7 @@ export const cellCeilingSlab = 0.18
  */
 export const cellCoffers = {
   /** how many coffers run across the hall along x, and up each slope from the eave to the ridge */
-  count: [9, 4],
+  count: [11, 4],
   beam: {
     width: 0.2,
     depth: 0.2,
@@ -163,7 +163,7 @@ function filletFrame(x: number, z: number) {
  * Both slopes share one set of geometries in a slope’s own frame, which {@link slopes} place: x along the hall, z down the slope from the ridge to the eave, y out of the underside, which lies at y = 0.
  */
 export default class CellCeilingGeometry {
-  /** the purlins running along x, from gable to gable, between the coffers up a slope */
+  /** the purlins running along x, from gable to gable, between the coffers up a slope and along its eave, under the coffers’ lowest row and over the cornice */
   readonly beams: BufferGeometry
   /**
    * the rafters running down a slope, between the purlins, and one against each gable, laid along local x: the mesh turns them a quarter about y, which carries local x to the slope’s −z and local z to its x, so a material whose grain follows local x follows them too
@@ -202,11 +202,13 @@ export default class CellCeilingGeometry {
   /** the south and the north slope */
   readonly slopes: readonly [CellSlope, CellSlope]
 
-  constructor({height, roofPitch, size: [width, depth], vestibule}: {
-    /** how high the ceilings hang over the floor at the walls, the middle of their slabs */
+  constructor({height, roofPitch, roundHeight, size: [width, depth], vestibule}: {
+    /** how high the hall’s ceiling hangs over the floor at its walls, the middle of its slabs */
     height: number
     /** how steeply the hall’s ceiling rises from the north and south walls to its ridge, in radians */
     roofPitch: number
+    /** how high the round room’s level ceiling hangs over the floor, the middle of its slab */
+    roundHeight: number
     /** the hall’s floor plan, centered on the origin */
     size: readonly [width: number, depth: number]
     /** the round room beyond the hall’s north wall, if the arch opens there */
@@ -220,7 +222,10 @@ export default class CellCeilingGeometry {
     const half = this.length / 2
     // Up a slope from the cornice at the eave to the ridge beam, and across from the rafter against one gable to the one against the other.
     const alongX = cofferLine(width, countX, [wallFace + beam.width, wallFace + beam.width])
-    const alongSlope = cofferLine(this.length, countSlope, [cellRidge.width / 2 / Math.cos(roofPitch), corniceFront / Math.cos(roofPitch)])
+    const eaveMargin = corniceFront / Math.cos(roofPitch)
+    const alongSlope = cofferLine(this.length, countSlope, [cellRidge.width / 2 / Math.cos(roofPitch), eaveMargin])
+    // Between the coffers, and along the eave, where the coffers’ lowest row ends, so a beam closes every coffer as the ridge beam closes the highest row.
+    const purlins = [...alongSlope.beams, half - eaveMargin + beam.width / 2]
     /** A beam `length` meters long along x, hanging from the underside with its middle under `[x, z]`. */
     const beamPiece = (length: number, x: number, z: number) => {
       const piece = new RoundedBoxGeometry(length, beam.depth, beam.width, 1, beam.radius)
@@ -274,9 +279,9 @@ export default class CellCeilingGeometry {
       const pane = new PlaneGeometry(...opening)
       return pane.rotateX(Math.PI / 2).translate(x, glassY, z)
     }))
-    this.beams = mergeParts(alongSlope.beams.map(z => beamPiece(width, 0, z)))
+    this.beams = mergeParts(purlins.map(z => beamPiece(width, 0, z)))
     // Butting against the sides of the purlins, from the ridge beam down to the wall at the eave.
-    const stops = [-half, ...alongSlope.beams.flatMap(z => [z - beam.width / 2, z + beam.width / 2]), half]
+    const stops = [-half, ...purlins.flatMap(z => [z - beam.width / 2, z + beam.width / 2]), half]
     const pieces = Array.from({length: stops.length / 2}, (_, index) => [stops[index * 2], stops[index * 2 + 1]] as const)
     const rafters = [-(width / 2 - wallFace - beam.width / 2), ...alongX.beams, width / 2 - wallFace - beam.width / 2]
     this.crossBeams = mergeParts(rafters.flatMap(x => pieces.map(([from, to]) => beamPiece(to - from, -(from + to) / 2, x))))
@@ -359,9 +364,9 @@ export default class CellCeilingGeometry {
     if (vestibule) {
       const {center: [x, z], radius} = vestibule
       const ring = new TorusGeometry(radius - cellRoundCeiling.ring.inset, cellRoundCeiling.ring.tube, 8, roundSegments)
-      this.roundGilt = ring.rotateX(Math.PI / 2).translate(x, underside, z)
+      this.roundGilt = ring.rotateX(Math.PI / 2).translate(x, roundHeight - cellCeilingSlab / 2, z)
       const round = new CylinderGeometry(radius, radius, cellCeilingSlab, roundSegments)
-      this.rounds = round.translate(x, height, z)
+      this.rounds = round.translate(x, roundHeight, z)
     } else {
       this.roundGilt = new BufferGeometry
       this.rounds = new BufferGeometry
