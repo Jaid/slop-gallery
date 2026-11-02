@@ -116,7 +116,7 @@ describe('the Cell’s layout', () => {
       const led = lamps.get('led')!
       const [x, z] = layout.vestibule!.center
       expect(led.position).toEqual([x, cellLedY(layout.roundHeight) - cellLed.drop, z])
-      expect(led.shadow ?? false).toBe(false)
+      expect(led.shadow).toBe(true)
       expect(led.kind ?? 'point').toBe('point')
       // It reaches across the whole round room, however large.
       expect(led.range!).toBeGreaterThanOrEqual(layout.vestibule!.radius * 2)

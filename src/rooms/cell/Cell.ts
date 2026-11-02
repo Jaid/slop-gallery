@@ -17,7 +17,7 @@ import cellBaseboard, {cellBaseboardHeight} from './baseboard.ts'
 import cellMap from './map.ts'
 import slots from './slots.ts'
 
-/** the lamp under the LED panel in the middle of the vestibule’s ceiling, like the Banquet’s under each of its panes: a white wash without a shadow, fading gently, its light this far under the panel */
+/** the lamp under the LED panel in the middle of the vestibule’s ceiling, like the Banquet’s under each of its panes: a white wash fading gently, which throws the shadows of the columns and what they carry, its light this far under the panel */
 export const cellLed = {
   strength: 30,
   tint: '#eee3ff',
@@ -65,6 +65,7 @@ export default class Cell extends Room {
         // Across the whole round room, however large a rotunda grows.
         range: Math.max(8, vestibule.radius * 2),
         decay: cellLed.decay,
+        shadow: true,
       }
     }
     // The arch through the north wall opens onto the passage, or a door that stays shut fills it.
