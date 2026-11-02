@@ -64,7 +64,7 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
     {
       name: 'dump_portrait_slots',
       title: 'Dump portrait slots',
-      description: 'Return every portrait slot of the world with its ID, wall ID, ratio, priority for default works, frame width and height in meters, world-space frame center, rotation and whether its placard hangs above the frame. With ?edit_portrait_slots, this includes the edits made on this page. Worlds without slots return an empty array.',
+      description: 'Return every portrait slot of the world with its ID, wall ID, ratio, priority for default works, frame width and height in meters, world-space frame center, rotation, whether its placard hangs above the frame and the frame of its room, which its default work wears (left out for the default frame). With ?edit_portrait_slots, this includes the edits made on this page. Worlds without slots return an empty array.',
       read: () => getBridge().getPortraitSlots(),
     },
     {

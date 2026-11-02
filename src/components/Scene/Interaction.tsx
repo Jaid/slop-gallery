@@ -9,7 +9,8 @@ import {Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 import OrbitViewing from '#component/OrbitViewing'
 import PlacementPreview from '#component/PlacementPreview'
-import {useGallery} from '#src/lib/gallery.ts'
+import {portraitFrame} from '#src/lib/frames/index.ts'
+import {arrivalFrame, cameraPose, useGallery} from '#src/lib/gallery.ts'
 
 import useInteractionDiagnostics from './interaction/useInteractionDiagnostics.ts'
 import useInteractionEvents from './interaction/useInteractionEvents.ts'
@@ -28,6 +29,8 @@ export default function Interaction() {
   const held = useGallery(s => s.held)
   const artwork = useGallery(s => s.portraits.find(portrait => portrait.id === s.held))
   const dragging = useGallery(s => s.dragging)
+  // A dropped image wears the frame of the room it lands in, which changes along with the wall it would hang on.
+  const arriving = useGallery(s => (s.dragging && s.placement ? arrivalFrame(s.placement.position, cameraPose.position) : undefined))
   useInteractionEvents({
     camera,
     controls,
@@ -49,7 +52,7 @@ export default function Interaction() {
   return <>
     <OrbitViewing />
     <group visible={false} ref={ghost}>
-      <Branch some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
+      <Branch some={[artwork, dragging]} not={held?.startsWith('prop-')}><PlacementPreview key={artwork?.id ?? 'import'} creator={artwork?.creator} frame={portraitFrame(artwork ? artwork.frame : arriving)} height={artwork?.height ?? 2.4} pending={artwork?.pending} source={artwork?.source} title={artwork?.title} width={artwork?.width ?? 2.4} /></Branch>
     </group>
   </>
 }

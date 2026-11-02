@@ -98,6 +98,11 @@ export default abstract class World<Kind extends Room = Room> {
   /** The height of the walkable floor under the position. */
   abstract floorHeight(position: Vec3): number
 
+  /** The frame a work arriving at the position wears: the one of the room whose fence holds it, or undefined for the default frame, also outside of every fence. */
+  frameAt(position: Vec3) {
+    return this.roomAt(position)?.frame
+  }
+
   /** What the ground under the position sounds like in the room the player is in. */
   groundSurface(room: string, position: Vec3): GroundSurface {
     return this.roomById(room)?.groundSurface(position) ?? 'generic'

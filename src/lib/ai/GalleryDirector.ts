@@ -6,7 +6,7 @@ import type {AiSettings} from './settings.ts'
 import type {Span} from 'victoria-browser-client'
 
 import PortraitNarration from '../audio/PortraitNarration.ts'
-import {loadBlob, notify} from '../gallery/actions.ts'
+import {arrivalFrame, loadBlob, notify} from '../gallery/actions.ts'
 import {openFusion} from '../gallery/fusion/fusions.ts'
 import {compositeImages, encodeGeneratedImage, imageSize, tintImage} from '../gallery/ImageImporter.ts'
 import {validateImage} from '../gallery/imagePolicy.ts'
@@ -336,9 +336,12 @@ export default class GalleryDirector {
       return
     }
     const mergedAt = new Date
+    const launch = fusion.launch()
     const result: Portrait = {
       ...a,
-      ...fusion.launch(),
+      ...launch,
+      // A new work, framed by the room the portal releases it into.
+      frame: arrivalFrame(launch.position, a.position),
       source: merged.image,
       width: merged.width,
       height: merged.height,

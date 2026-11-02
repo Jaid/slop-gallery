@@ -1,3 +1,4 @@
+import type {PortraitFrameId} from '../frames/frameParameter.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 import type {NarrationTiming} from 'use-narrator/core'
 
@@ -11,6 +12,8 @@ export type Portrait = {
   creator: string
   description: string
   flavorJob?: symbol
+  /** the frame the work wears for good, the default frame if left out: a default work’s that of the room whose slot it was hung in, any other work’s that of the room it arrived in */
+  frame?: PortraitFrameId
   height: number
   hung: boolean
   id: string
@@ -60,6 +63,8 @@ export type Artwork = Pick<Portrait, 'creator' | 'description' | 'id' | 'narrati
 }
 /** a spot on a wall reserved for one default work of matching ratio; players rehang works by wall collisions instead */
 export type PortraitSlot = {
+  /** the frame of the slot’s room, which its work wears, the default frame if left out */
+  frame?: PortraitFrameId
   height: number
   id: string
   /** whether the slot hangs low and its work’s placard goes above the frame */

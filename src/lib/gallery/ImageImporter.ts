@@ -2,7 +2,7 @@ import type {Portrait, Vec3} from './types.ts'
 
 import world from '#src/worlds/current.ts'
 
-import {cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
+import {arrivalFrame, cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
 import {maximumPortraits, validateImage} from './imagePolicy.ts'
 import {useGallery} from './store.ts'
 
@@ -200,6 +200,8 @@ export default class ImageImporter {
             const distance = Math.min(1.6, Math.max(0.25, world.wallDistance(pose.position, pose.direction) - 0.35))
             p.position = [pose.position[0] + pose.direction[0] * distance, Math.max(world.placement.floorHeight([pose.position[0] + pose.direction[0] * distance, pose.position[1], pose.position[2] + pose.direction[2] * distance]) + 0.8, pose.position[1] + pose.direction[1] * distance + count * 0.15), pose.position[2] + pose.direction[2] * distance]
           }
+          // Where it hangs or lands decides its frame, which may be another room’s than the player’s, through a doorway.
+          p.frame = arrivalFrame(p.position, pose.position)
           s.add(p)
           count++
           this.onImport(p)

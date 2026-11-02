@@ -40,7 +40,7 @@ describe('placement preview', () => {
     })
   }
   test('validity changes the shared tint while the ants keep animating', () => {
-    const visual = new PreviewVisual(2.4, 1.8, null)
+    const visual = new PreviewVisual(2.4, 1.8, 0.09, null)
     try {
       expect(visual.tint.value.getHexString()).toBe('ff3b45')
       visual.update(true, 1 / 60)
@@ -61,7 +61,7 @@ describe('placement preview', () => {
     }
   })
   test('distant previews fade every shader layer without disappearing', () => {
-    const visual = new PreviewVisual(2, 2, null)
+    const visual = new PreviewVisual(2, 2, 0.09, null)
     try {
       visual.update(false, 1 / 60, false)
       expect(visual.opacity.value).toBe(0.18)
@@ -78,7 +78,7 @@ describe('placement preview', () => {
   })
   test('the preview sign outline matches the hung label dimensions and bottom', () => {
     for (const width of [0.3, 1.2, 2.4, 4]) {
-      const visual = new PreviewVisual(width, 2.4, null)
+      const visual = new PreviewVisual(width, 2.4, 0.09, null)
       try {
         const label = portraitLabelLayout(width, 2.4)
         visual.labelBorder.computeBoundingBox()
@@ -93,9 +93,22 @@ describe('placement preview', () => {
       }
     }
   })
+  test('the border runs 2 cm outside of the frame', () => {
+    for (const reach of [0.026, 0.09, 0.148]) {
+      const visual = new PreviewVisual(1.2, 0.8, reach, null)
+      try {
+        visual.border.computeBoundingBox()
+        const bounds = visual.border.boundingBox!
+        expect(bounds.max.x - bounds.min.x).toBeCloseTo(1.2 + reach * 2 + 0.04)
+        expect(bounds.max.y - bounds.min.y).toBeCloseTo(0.8 + reach * 2 + 0.04)
+      } finally {
+        visual.dispose()
+      }
+    }
+  })
   test('disposes its own resources without disposing the shared artwork texture', () => {
     const texture = new DataTexture(new Uint8Array(16), 2, 2)
-    const visual = new PreviewVisual(1, 2, texture)
+    const visual = new PreviewVisual(1, 2, 0.09, texture)
     const disposed: Array<string> = []
     visual.border.addEventListener('dispose', () => disposed.push('border'))
     visual.labelBorder.addEventListener('dispose', () => disposed.push('label border'))

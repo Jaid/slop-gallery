@@ -50,6 +50,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.origin[1]
   }
 
+  /** the frame the works wear that hang in the room’s slots or arrive in the room, or undefined for the default frame */
+  get frame() {
+    return this.room.frame
+  }
+
   /** the height of the ceiling over the floor of a room around a rectangular floor plan */
   get height(): Kind['height'] {
     return this.room.height
@@ -133,8 +138,9 @@ export default class PlacedRoom<Kind extends Room = Room> {
     })).toArray()
   }
 
-  /** The portrait slots with global ids in world meters, as the placement code takes them. */
+  /** The portrait slots with global ids in world meters, as the placement code takes them, each with the room’s frame. */
   slots(): Array<PortraitSlot> {
+    const {frame} = this.room
     return this.room.slots.entries().map(([id, {area, position, priority = 0, labelAbove, wallId, ...slot}]) => ({
       id: this.room.globalId(id),
       ...slot,
@@ -143,6 +149,7 @@ export default class PlacedRoom<Kind extends Room = Room> {
       ...slotFrame(slot.ratio, area),
       position: this.toWorld(position),
       ...labelAbove ? {labelAbove} : {},
+      ...frame ? {frame} : {},
     })).toArray()
   }
 

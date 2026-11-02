@@ -5,14 +5,16 @@ import type {Group} from 'three/webgpu'
 import {useFrame} from '@react-three/fiber'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
-import {useEffect, useRef} from 'react'
+import useDisposable from 'disposable-lifetime/react'
+import {useEffect, useMemo, useRef} from 'react'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
+import {frameBack} from '#src/lib/frames/base/PortraitFrame.ts'
+import {portraitFrame} from '#src/lib/frames/index.ts'
 import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
-import {portraitImageDepth} from '#src/lib/gallery/portraitOrbit.ts'
 import world from '#src/worlds/current.ts'
 
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
@@ -22,6 +24,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
+  const frame = portraitFrame(p.frame)
+  const geometry = useDisposable(useMemo(() => frame.createGeometry(w, h), [frame, w, h]))
   useEffect(() => {
     if (body.current && group.current) {
       portraitObjects.set(p.id, {
@@ -112,7 +116,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       })
     }}
   >
-    <CuboidCollider args={[(w + 0.18) / 2, (h + 0.18) / 2, 0.085]} mass={2} />
+    <CuboidCollider args={[w / 2 + frame.reach, h / 2 + frame.reach, frame.depth / 2]} mass={2} position={[0, 0, frameBack + frame.depth / 2]} />
     <group
       userData={{
         pickup: true,
@@ -120,13 +124,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       }} ref={group}
     >
       {/* Only a held work fades; hung ones stay opaque so the floor glass, which refracts opaque surfaces only, shows them in the room below. */}
-      <mesh castShadow name='portrait-frame' receiveShadow><boxGeometry args={[w + 0.18, h + 0.18, 0.16]} /><meshStandardNodeMaterial key={String(held)} color='#a5804b' metalness={0.75} opacity={held ? 0.3 : 1} roughness={0.32} transparent={held} /></mesh>
-      <mesh name='portrait-mat' position={[0, 0, 0.087]}><planeGeometry args={[w + 0.045, h + 0.045]} /><meshStandardNodeMaterial color='#29261d' /></mesh>
-      <mesh name='portrait-image' position={[0, 0, portraitImageDepth]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent={held} /></mesh>
-      {[-1, 1].map(side => <group key={side}>
-        <mesh name='portrait-fillet' position={[side * (w / 2 + 0.055), 0, 0.1]}><boxGeometry args={[0.022, h + 0.14, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
-        <mesh name='portrait-fillet' position={[0, side * (h / 2 + 0.055), 0.1]}><boxGeometry args={[w + 0.14, 0.022, 0.026]} /><meshStandardNodeMaterial color='#ddbc7c' metalness={0.6} roughness={0.3} /></mesh>
-      </group>)}
+      <mesh castShadow geometry={geometry} material={held ? frame.heldMaterial : frame.materials} name='portrait-frame' receiveShadow />
+      <mesh name='portrait-image' position={[0, 0, frame.imageDepth]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent={held} /></mesh>
       {/* The placard hides while the work orbits a fusion’s portal. */}
       <Branch if={p.hung && !p.merging}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
     </group>

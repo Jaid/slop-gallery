@@ -7,6 +7,7 @@ import type {Object3D} from 'three/webgpu'
 import {clamp} from 'math'
 import {Box3, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
+import {portraitFrame} from '#src/lib/frames/index.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {handBack} from '#src/lib/gallery/fusion/handBack.ts'
 import {fizzleRelease, satellitePose} from '#src/lib/gallery/fusion/orbit.ts'
@@ -236,7 +237,7 @@ export default class Satellites {
     }
     const portraitScale = (id: string) => {
       const portrait = portraits.find(candidate => candidate.id === id)
-      return portrait ? Math.min(1, satelliteSize / (Math.max(portrait.width, portrait.height) + 0.18)) : 1
+      return portrait ? Math.min(1, satelliteSize / (Math.max(portrait.width, portrait.height) + portraitFrame(portrait.frame).reach * 2)) : 1
     }
     const work = portraitObjects.get(spec.work.id)
     if (work) {

@@ -53,12 +53,13 @@ export default class PreviewVisual {
   readonly time = uniform(0)
   readonly tint = uniform(new Color)
 
-  constructor(width: number, height: number, artwork: Texture<{
+  /** The preview of a `width` × `height` work in a frame reaching `reach` out past its edges, which the border runs 2 cm outside of. */
+  constructor(width: number, height: number, reach: number, artwork: Texture<{
     height: number
     width: number
   }> | null) {
-    const outerWidth = width + 0.22
-    const outerHeight = height + 0.22
+    const outerWidth = width + reach * 2 + 0.04
+    const outerHeight = height + reach * 2 + 0.04
     this.border = previewBorderGeometry(outerWidth, outerHeight)
     const label = portraitLabelLayout(width, height)
     this.labelBorder = previewBorderGeometry(label.width, portraitLabel.height, 0.012)

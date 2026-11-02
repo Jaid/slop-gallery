@@ -7,6 +7,7 @@ import {readIntroNarration} from './audio/intro.ts'
 import {readCrosshair} from './crosshair.ts'
 import {readDevelopmentMode} from './developmentMode.ts'
 import {readSeedOverride} from './environmentSeed.ts'
+import {readFrame} from './frames/frameParameter.ts'
 import {readFrozenTime} from './frozenTime.ts'
 import {readPortraitSet} from './gallery/defaultPortraits.ts'
 import {readFlying} from './gallery/flyMode.ts'
@@ -50,6 +51,7 @@ const readers: Record<string, Reader> = {
   edit_portrait_slots: readPortraitSlotEditing,
   flying: readFlying,
   fov: readFov,
+  frame: readFrame,
   frozen_time: readFrozenTime,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,

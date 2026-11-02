@@ -151,24 +151,33 @@ export async function loadBlob(source: Blob | string) {
   return response.blob()
 }
 
+/** The frame of a work arriving at `position`, which `from` looks at: that of the room the work arrives in or, where that lies outside of every room, like beyond a wall, that of the room it was made from. */
+export function arrivalFrame(position: Vec3, from: Vec3) {
+  return world.roomAt(position) ? world.frameAt(position) : world.frameAt(from)
+}
+
+/** A new work 1.6 m in front of the pose, facing it, in the frame of the room it arrives in. */
 export function newPortrait(source: Blob, title: string, width: number, height: number, pose: {
   direction: Vec3
   position: Vec3
 } = cameraPose): Portrait {
   const d = pose.direction
   const p = pose.position
+  const position: Vec3 = [p[0] + d[0] * 1.6, Math.max(world.placement.floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6]
+  const frame = arrivalFrame(position, p)
   return {
     id: composeId(),
     title,
     creator: 'You · guest artist',
     description: 'A new arrival. Every collection starts with a little curiosity.',
     source,
-    position: [p[0] + d[0] * 1.6, Math.max(world.placement.floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6],
+    position,
     rotation: Math.atan2(-d[0], -d[2]),
     width,
     height,
     hung: false,
     imported: true,
+    ...frame ? {frame} : {},
   }
 }
 
