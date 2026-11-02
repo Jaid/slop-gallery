@@ -31,10 +31,10 @@ $spoken: #ffd23f
   &[data-group='leaving']
     animation: leave 260ms ease-in forwards
 
+// No color transition: a word turns spoken just when its fill or its letters have made it yellow, and fading its own color in from white would flash it white first.
 .word
   position: relative
   display: inline-block
-  transition: color 180ms ease-out
   &[data-state='spoken']
     color: $spoken
 

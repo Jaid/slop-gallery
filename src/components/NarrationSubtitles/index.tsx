@@ -19,7 +19,7 @@ type Props = {
 }
 
 /**
- * The narration’s text, one sentence (or a run of short ones) at a time. Spoken words turn yellow: letter by letter with character timings, otherwise the current word fills from left to right. The current word is scaled up without moving the others.
+ * The narration’s text, one sentence (or a run of short ones) at a time. Spoken words turn yellow: letter by letter with character timings, otherwise the current word fills from left to right.
  * Reads the playback position every frame and paints the words directly, so React only renders when the sentence changes.
  */
 export default function NarrationSubtitles({narration: {instanceId, status, text, timing}, progress: readProgress}: Props) {
@@ -115,7 +115,7 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
     </p>
   }
   return <section className={css.container} aria-label='Subtitles' data-ended={ended} data-letters={Boolean(letters)} data-testid='narration-subtitles' ref={container}>
-    {leaving !== undefined && leaving !== shown ? renderGroup(leaving, 'leaving') : null}
-    {renderGroup(shown, 'current')}
+    {/* One keyed list, so the sentence that starts leaving keeps its element and the colors the paint loop gave its words, instead of coming back white for a frame. */}
+    {(leaving !== undefined && leaving !== shown ? [leaving, shown] : [shown]).map(index => renderGroup(index, index === shown ? 'current' : 'leaving'))}
   </section>
 }
