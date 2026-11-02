@@ -13,7 +13,6 @@ type Range = {
 
 /** How long a word stays current after its end, so the highlight doesn’t flicker between words spoken in one breath. */
 const wordHold = 0.12
-
 /**
  * Splits a narration into what the subtitles show at once: one sentence at a time, or several short sentences in a row while they fit `maximumLength` characters together.
  * `words` are the text’s words, see `narrationWords`.
@@ -69,7 +68,7 @@ export function subtitleWordState(index: number, cursor: NarrationCursor, timing
 
 /**
  * When each character of the text starts being spoken, so the subtitles can turn it yellow, or `undefined` without a timing.
- * Words with character spans keep them, and their characters without one, like punctuation, start with the letter before them. Words without spread their characters over the word’s duration along the inverse of a sine ease-in-out: the yellow sets off quickly, lingers mid-word and hurries to the end.
+ * Words with character spans keep them, and their characters without one, like punctuation, start with the letter before them. Words without spread their characters evenly over the word’s duration.
  */
 export function letterStarts(timing: NarrationTiming | undefined, length: number): Float32Array | undefined {
   if (!timing) {
@@ -88,7 +87,7 @@ export function letterStarts(timing: NarrationTiming | undefined, length: number
     }
     const count = word.to - word.from
     for (let index = 0; index < count; index++) {
-      starts[word.from + index] = word.start + (word.end - word.start) * (1 - Math.cos(Math.PI * index / count)) / 2
+      starts[word.from + index] = word.start + (word.end - word.start) * index / count
     }
   }
   return starts

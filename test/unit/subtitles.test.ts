@@ -78,20 +78,14 @@ test('a word is current until shortly after its end, then spoken; the end of the
     progress: 1,
   }, undefined, false)).toBe('current')
 })
-test('letters of words without spans of their own are spread over the word, quick at its start and end and slowest in its middle', () => {
+test('letters of words without spans of their own are spread evenly over the word', () => {
   const starts = letterStarts({words: [{
     from: 0,
     to: 4,
     start: 1,
     end: 2,
   }]}, 4)!
-  expect(starts[0]).toBe(1)
-  expect(starts[1]).toBeCloseTo(1.146)
-  expect(starts[2]).toBeCloseTo(1.5)
-  expect(starts[3]).toBeCloseTo(1.854)
-  // Each letter in the middle takes longer than the first and the last, which lasts until the word’s end.
-  expect(starts[2] - starts[1]).toBeGreaterThan(starts[1] - starts[0])
-  expect(starts[2] - starts[1]).toBeGreaterThan(2 - starts[3])
+  expect([...starts]).toEqual([1, 1.25, 1.5, 1.75])
 })
 test('words keep their character spans while words without any are spread', () => {
   const text = 'ab cd'
