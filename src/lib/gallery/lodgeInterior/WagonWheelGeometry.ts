@@ -3,6 +3,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CylinderGeometry, SphereGeometry, TorusGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
+import {candleFlame} from '../../materials/CandleFlameMaterial.ts'
 import {place, rod} from './place.ts'
 
 /**
@@ -42,8 +43,15 @@ export default class WagonWheelGeometry {
       // Each candle has burned down a little differently.
       const candleHeight = 0.12 + i * 0.37 % 1 * 0.06
       wax.push(place(new CylinderGeometry(0.026, 0.028, candleHeight, 12), x, 0.07 + candleHeight / 2, z))
-      const flame = new SphereGeometry(0.016, 8, 6)
-      flames.push(place(flame.scale(1, 2.4, 1), x, 0.07 + candleHeight + 0.035, z))
+      flames.push(candleFlame({
+        radius: 0.016,
+        stretch: 2.4,
+        x,
+        y: 0.07 + candleHeight + 0.035 - 0.016 * 2.4,
+        z,
+        seed: i,
+        segments: [12, 10],
+      }))
     }
     // Three chains gather to a ring above the hub; a rod rises to the canopy.
     const gather = new Vector3(0, Math.min(0.55, drop - 0.25), 0)

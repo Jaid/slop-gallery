@@ -9,6 +9,7 @@ import {useMemo, useRef} from 'react'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
 import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
+import CandleFlameMaterial from '#src/lib/materials/CandleFlameMaterial.ts'
 import {chandelierCanopyTop, chandelierLampY, chandelierPhysics, chandelierRod, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 
@@ -27,6 +28,7 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
   const pivot: [number, number, number] = rod > 0 ? [0, chandelierCanopyTop + rod, 0] : chandelierPhysics.anchor
   useSphericalJoint(anchor, fixture, [[0, 0, 0], pivot])
   const brass = useDisposable(useMemo(() => new BrassMaterial, []))
+  const flame = useDisposable(useMemo(() => new CandleFlameMaterial, []))
   const geometry = useDisposable(useMemo(() => new ChandelierGeometry({rod}), [rod]))
   const source = useRef<Object3D>(null)
   const lamp = useLamp(lampId)
@@ -51,7 +53,7 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
       {geometry.knops.map(({radius, y}) => <BallCollider key={y} args={[radius]} mass={chandelierPhysics.knopMass} position={[0, y, 0]} />)}
       <mesh castShadow geometry={geometry.brass} name='chandelier-brass'><primitive attach='material' object={brass} /></mesh>
       <mesh castShadow geometry={geometry.candles} name='chandelier-candles'><meshStandardNodeMaterial color='#e7c991' roughness={0.65} /></mesh>
-      <mesh geometry={geometry.flames} name='chandelier-flames'><meshStandardNodeMaterial color='#fff0b6' emissive='#ffd36c' emissiveIntensity={4} toneMapped={false} /></mesh>
+      <mesh geometry={geometry.flames} material={flame} name='chandelier-flames' renderOrder={1} />
       <mesh geometry={geometry.pendant} name='chandelier-pendant'><primitive attach='material' object={brass} /></mesh>
       {/* The lamp hangs below the metalwork, so the fixture cannot shadow its own source. */}
       <object3D position={[0, chandelierLampY - chandelierPhysics.height, 0]} ref={source} />

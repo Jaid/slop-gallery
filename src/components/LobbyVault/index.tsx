@@ -11,6 +11,7 @@ import LobbyChandelierGeometry from '#src/lib/gallery/LobbyChandelierGeometry.ts
 import lobbyVault, {lobbyChandeliers} from '#src/lib/gallery/lobbyVault.ts'
 import LobbyVaultGeometry, {lobbyVaultCollision} from '#src/lib/gallery/LobbyVaultGeometry.ts'
 import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlasterMaterial.ts'
+import CandleFlameMaterial from '#src/lib/materials/CandleFlameMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import LimestoneMaterial from '#src/lib/materials/LimestoneMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
@@ -78,17 +79,12 @@ function LobbyChandeliers() {
     color: '#efe2c4',
     roughness: 0.6,
   }), []))
-  const flames = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#fff0b6',
-    emissive: '#ffd36c',
-    emissiveIntensity: 4,
-    toneMapped: false,
-  }), []))
+  const flames = useDisposable(useMemo(() => new CandleFlameMaterial, []))
   return <group name='lobby-chandeliers'>
     {lobbyChandeliers.offsets.map(z => <group key={z} name={`lobby-chandelier-${z}`} position={[0, lobbyChandeliers.y, z]}>
       <mesh geometry={geometry.gilt} material={gold} name='lobby-chandelier-gilt' />
       <mesh geometry={geometry.candles} material={candles} name='lobby-chandelier-candles' />
-      <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' />
+      <mesh geometry={geometry.flames} material={flames} name='lobby-chandelier-flames' renderOrder={1} />
     </group>)}
   </group>
 }

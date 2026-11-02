@@ -3,6 +3,7 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CylinderGeometry, QuadraticBezierCurve3, SphereGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
+import {candleFlame} from '../materials/CandleFlameMaterial.ts'
 
 /** One wheel ring of candles around the chandelier’s hub. */
 type Tier = {
@@ -120,8 +121,14 @@ export default class LobbyChandelierGeometry {
         gilt.push(drop.scale(0.85, 1.65, 0.85).translate(x, tier.y - 0.11, z))
         const candle = new CylinderGeometry(0.048, 0.055, 0.28, 8)
         candles.push(candle.translate(x, tier.y + 0.26, z))
-        const flame = new SphereGeometry(0.075, 6, 4)
-        flames.push(flame.scale(0.78, 1.55, 0.78).translate(x, tier.y + 0.47, z))
+        flames.push(candleFlame({
+          radius: 0.0585,
+          stretch: 1.99,
+          x,
+          y: tier.y + 0.47 - 0.075 * 1.55,
+          z,
+          seed: flames.length,
+        }))
       }
     }
     this.gilt = mergeParts(gilt)

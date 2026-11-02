@@ -4,6 +4,7 @@ import {Material, MeshStandardNodeMaterial, NodeMaterial} from 'three/webgpu'
 
 import lodge, {lodgeFloorPlanks} from '../gallery/lodge.ts'
 import lodgeInterior from '../gallery/lodgeInterior/layout.ts'
+import CandleFlameMaterial from './CandleFlameMaterial.ts'
 import FieldstoneMaterial from './FieldstoneMaterial.ts'
 import LeatherMaterial from './LeatherMaterial.ts'
 import {lightIndoors} from './lights/index.ts'
@@ -34,12 +35,7 @@ const ceilingPlanks: PlankOptions = {
 /** Every surface of the Lodge interior, created once and disposed together. */
 export default class LodgeMaterials {
   readonly ceiling = new PlankMaterial(ceilingPlanks)
-  readonly flame = new MeshStandardNodeMaterial({
-    color: '#fff0b6',
-    emissive: '#ffc96a',
-    emissiveIntensity: 4,
-    toneMapped: false,
-  })
+  readonly flame = new CandleFlameMaterial
   readonly floor = new PlankMaterial(lodgeFloorPlanks)
   readonly iron = new WroughtIronMaterial
   readonly leather = new LeatherMaterial

@@ -3,7 +3,10 @@ import type {BufferGeometry} from 'three/webgpu'
 import {CylinderGeometry, LatheGeometry, QuadraticBezierCurve3, SphereGeometry, SplineCurve, TorusGeometry, TubeGeometry, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
+import {candleFlame} from '../materials/CandleFlameMaterial.ts'
 import {chandelierCanopyTop, chandelierRod, chandelierStemCenter, chandelierStemHalfHeight} from '../physics/chandelier.ts'
+
+const up = new Vector3(0, 1, 0)
 
 /** a turned brass ornament on the rod, its outline from the middle of its foot up round its collars and swelling to the middle of its top, as radius and height over its foot, measured at `size` times its size */
 type Turning = {
@@ -101,8 +104,19 @@ export default class ChandelierGeometry {
       candles.push(candle.translate(1.25, 0.32, 0).rotateY(angle))
       // Separate convex arms leave the spaces between them open to thrown objects.
       this.armColliders.push(Float32Array.from([...brass.at(-2)!.getAttribute('position').array, ...brass.at(-1)!.getAttribute('position').array, ...candles.at(-1)!.getAttribute('position').array]))
-      const flame = new SphereGeometry(0.07, 12, 8)
-      flames.push(flame.scale(0.8, 1.5, 0.8).translate(1.25, 0.51, 0).rotateY(angle))
+      // The flame’s wick, turned round with its arm.
+      const wick = new Vector3(1.25, 0.51 - 0.07 * 1.5, 0)
+      wick.applyAxisAngle(up, angle)
+      flames.push(candleFlame({
+        radius: 0.056,
+        stretch: 1.875,
+        x: wick.x,
+        y: wick.y,
+        z: wick.z,
+        seed: flames.length,
+        // Within the fixture’s triangle budget; the teardrop still bends smoothly at this size.
+        segments: [12, 8],
+      }))
     }
     this.brass = mergeParts(brass)
     this.candles = mergeParts(candles)
