@@ -13,6 +13,7 @@ import ArchitecturalPlasterMaterial from '#src/lib/materials/ArchitecturalPlaste
 import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
 import ClearGlassMaterial from '#src/lib/materials/ClearGlassMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
+import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import sandbox from '#src/worlds/sandbox/index.ts'
 
 const cell = sandbox.room('cell')
@@ -23,13 +24,11 @@ const [width] = layout.size
 const oculusY = layout.height + cellOculus.rise
 
 /**
- * The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets and all but the outer ones glazed as roof lights, under a walnut ridge beam with the brass plate the chandelier hangs from, its gables papered like the walls and pierced by round windows, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, across the windows, the beams and the gables.
+ * The Cell’s ceilings: the hall’s gabled one, coffered up both slopes between walnut purlins and rafters, its fields framed by gilt fillets and all but the outer ones glazed as roof lights, under a walnut ridge beam with the brass plate the chandelier hangs from, its gables in walnut and pierced by round windows, and the round room’s level one in the same plaster with a gilt ring, with colliders under their slabs, across the windows, the beams and the gables.
  */
-export default function CellCeiling({beams, paper}: {
+export default function CellCeiling({beams}: {
   /** the wood of the beams and the roof lights’ sashes, its grain along each mesh’s x axis */
   beams: Material
-  /** the hall’s wallpaper, which the gables carry on up to the slopes */
-  paper: Material
 }) {
   const isHeavy = useGraphicsMode()
   const geometry = useDisposable(useMemo(() => new CellCeilingGeometry(layout), []))
@@ -45,6 +44,8 @@ export default function CellCeiling({beams, paper}: {
     roughness: 0.88,
   }), [isHeavy]))
   const brass = useDisposable(useMemo(() => new BrassMaterial, []))
+  // The beams’ walnut, its grain running level along the gables, from the hall’s north wall to its south wall.
+  const gableWood = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'z'}), []))
   const glass = useDisposable(useMemo(() => {
     const material = new ClearGlassMaterial({
       name: 'cell-skylight-glass',
@@ -83,7 +84,7 @@ export default function CellCeiling({beams, paper}: {
     </RigidBody>
     <mesh castShadow geometry={geometry.ridge} material={beams} name='cell-ceiling-ridge' receiveShadow />
     <mesh castShadow geometry={geometry.plate} material={brass} name='cell-chandelier-plate' receiveShadow />
-    <mesh castShadow geometry={geometry.gables} material={paper} name='cell-gables' receiveShadow />
+    <mesh castShadow geometry={geometry.gables} material={gableWood} name='cell-gables' receiveShadow />
     <mesh castShadow geometry={geometry.oculi} material={beams} name='cell-oculi' receiveShadow rotation={[0, Math.PI / 2, 0]} />
     <mesh geometry={geometry.oculusGilt} material={gold} name='cell-oculus-gilt' receiveShadow />
     <mesh geometry={geometry.oculusGlass} material={glass} name='cell-oculus-glass' />

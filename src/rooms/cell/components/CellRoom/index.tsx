@@ -121,7 +121,7 @@ export default function CellRoom() {
     <ShadowCaching />
     <HallFloor />
     {hallWalls.map(wall => <WallSurface key={wall.id} material={joinery} plaster={surfaces.plaster} revealMaterial={wall === northWall ? surfaces.velvet : undefined} surfaceMaterial={damask} wall={wall} />)}
-    <CellCeiling beams={joinery} paper={damask} />
+    <CellCeiling beams={joinery} />
     <group position={[x, chandelierLift, z]}>
       <Chandelier lamp={cell.room.globalId('chandelier')} rod={chandelierRod} />
     </group>

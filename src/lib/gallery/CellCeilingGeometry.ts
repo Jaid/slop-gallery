@@ -96,6 +96,10 @@ export const cellRoundCeiling = {
 } as const
 /** how far the hall’s walls’ cornice stands out of their center lines, which the coffers start beyond at the eaves */
 const corniceFront = Math.max(...corniceBands.map(band => band.front))
+/** how far under the top of the walls their cornice ends, which the gables stand on */
+const corniceTop = Math.min(...corniceBands.map(band => band.drop - band.height / 2))
+/** how far the gables’ wood stands out of the paper under it, which runs on up behind it */
+const gableProud = 0.002
 const roundSegments = 96
 
 /** How high the origin of the LED panel in the middle of the vestibule’s ceiling hangs under a ceiling `height` high; like the Banquet’s, the top of its housing sits 5 mm into the slab, so no light leaks between them. */
@@ -158,7 +162,7 @@ function filletFrame(x: number, z: number) {
 }
 
 /**
- * The Cell’s ceilings, relative to its origin, by material: the hall’s gabled ceiling rising from its north and south walls to a ridge along its middle like a house’s roof, coffered in walnut with gilt fillets up both slopes and glazed in all but the outer coffers, its gables papered like the walls under them, and the round room’s level slab with its gilt ring.
+ * The Cell’s ceilings, relative to its origin, by material: the hall’s gabled ceiling rising from its north and south walls to a ridge along its middle like a house’s roof, coffered in walnut with gilt fillets up both slopes and glazed in all but the outer coffers, its gables in walnut over the papered walls, and the round room’s level slab with its gilt ring.
  *
  * Both slopes share one set of geometries in a slope’s own frame, which {@link slopes} place: x along the hall, z down the slope from the ridge to the eave, y out of the underside, which lies at y = 0.
  */
@@ -169,7 +173,7 @@ export default class CellCeilingGeometry {
    * the rafters running down a slope, between the purlins, and one against each gable, laid along local x: the mesh turns them a quarter about y, which carries local x to the slope’s −z and local z to its x, so a material whose grain follows local x follows them too
    */
   readonly crossBeams: BufferGeometry
-  /** the triangles of the east and west walls between the top of the walls and the slopes, each pierced by its round window, in the Cell’s frame */
+  /** the triangles of the east and west walls between the top of their cornice and the slopes, each pierced by its round window, in the Cell’s frame */
   readonly gables: BufferGeometry
   /** the coffers’ fillets up a slope */
   readonly gilt: BufferGeometry
@@ -306,11 +310,13 @@ export default class CellCeilingGeometry {
     // Its top 2 mm into the beam.
     const plate = new CylinderGeometry(cellRidge.plate.radius, cellRidge.plate.radius, cellRidge.plate.depth + 0.002, 32)
     this.plate = plate.translate(0, cellChandelierPivot(apex + cellCeilingSlab / 2) + (cellRidge.plate.depth + 0.002) / 2, 0)
-    // From the top of the wall under it, as thick as the wall’s face, up to just under the slabs’ top, so the slabs cover its sloping edges.
+    // From the top of the cornice under it, which covers its foot, up to just under the slabs’ top, so the slabs cover its sloping edges; a little thicker than the wall’s face, so it stands just out of the paper that runs on up behind it.
     const gable = new Shape
-    gable.moveTo(-depth / 2, height)
+    gable.moveTo(-depth / 2, height - corniceTop)
+    gable.lineTo(depth / 2, height - corniceTop)
     gable.lineTo(depth / 2, height)
     gable.lineTo(0, height + rise)
+    gable.lineTo(-depth / 2, height)
     gable.closePath()
     // A centimeter wider than the casing’s lining, which covers its edge.
     const oculusY = height + cellOculus.rise
@@ -319,11 +325,11 @@ export default class CellCeilingGeometry {
     gable.holes.push(porthole)
     this.gables = mergeParts([-1, 1].map(side => {
       const triangle = new ExtrudeGeometry(gable, {
-        depth: wallFace,
+        depth: wallFace + gableProud,
         bevelEnabled: false,
       })
       // The shape’s x runs along z and its extrusion out of the room, toward the wall’s center line.
-      return triangle.rotateY(side * Math.PI / 2).translate(side * (width / 2 - wallFace), 0, 0)
+      return triangle.rotateY(side * Math.PI / 2).translate(side * (width / 2 - wallFace - gableProud), 0, 0)
     }))
     const {casing, radius: aperture, sash: wheel} = cellOculus
     // The casing’s section, its aperture out from the window’s axis and its distance in from the wall’s center line: out over the gable, round a groove for the bead and down the lining of the opening to the center line, so it faces out of the axis and into the room.

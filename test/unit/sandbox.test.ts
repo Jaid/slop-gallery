@@ -8,7 +8,7 @@ import {knotLightHousingSize, knotLightHousingY} from 'knot-materials/KnotLightP
 import {DoubleSide, ExtrudeGeometry, Group, Matrix4, Mesh, MeshBasicMaterial, PlaneGeometry, Quaternion, Raycaster, Shape, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry} from '../../src/lib/gallery/architecture.ts'
-import {openingCasingFronts, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architectureDimensions.ts'
+import {corniceBands, openingCasingFronts, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architectureDimensions.ts'
 import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, cellLedY, cellOculus, cellRidge, cellSkylights, cofferLine, isCellSkylight} from '../../src/lib/gallery/CellCeilingGeometry.ts'
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
@@ -708,18 +708,18 @@ describe('the Cell’s ceilings', () => {
         expect(layout.chandelierRod).toBeGreaterThan(1)
         expect(layout.chandelierLift + chandelierLampY).toBeLessThan(underside)
         expect(layout.chandelierLift + chandelierLampY).toBeGreaterThan(3)
-        // As thick as the walls’ faces, from their tops up to the slopes, which cover their sloping edges.
+        // Standing just out of the walls’ faces, from the top of their cornice up to the slopes, which cover their sloping edges.
         const gables = geometry.gables.boundingBox!
         expect(gables.min.x).toBeCloseTo(-width / 2, 6)
         expect(gables.max.x).toBeCloseTo(width / 2, 6)
         expect(gables.min.z).toBeCloseTo(-depth / 2, 6)
         expect(gables.max.z).toBeCloseTo(depth / 2, 6)
-        expect(gables.min.y).toBeCloseTo(layout.height, 6)
+        expect(gables.min.y).toBeCloseTo(layout.height - Math.min(...corniceBands.map(band => band.drop - band.height / 2)), 6)
         expect(gables.max.y).toBeGreaterThan(apex)
         expect(gables.max.y).toBeLessThan(apex + cellCeilingSlab / Math.cos(layout.roofPitch))
         const gablePosition = geometry.gables.getAttribute('position')
         for (let index = 0; index < gablePosition.count; index++) {
-          expect(Math.abs(gablePosition.getX(index))).toBeGreaterThanOrEqual(width / 2 - wallFace - 1e-6)
+          expect(Math.abs(gablePosition.getX(index))).toBeGreaterThanOrEqual(width / 2 - wallFace - 0.002 - 1e-6)
         }
         if (layout.vestibule) {
           const roundUnderside = layout.roundHeight - cellCeilingSlab / 2
