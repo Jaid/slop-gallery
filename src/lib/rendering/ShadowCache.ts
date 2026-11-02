@@ -24,6 +24,8 @@ type CasterState = {
   sphere: Sphere
 }
 type Change = {
+  /** whether the caster was out of sight before and after, where lamps don’t draw it */
+  hidden: boolean
   /** whether only its hiding changed, which directional lights don’t see */
   hiding: boolean
   sphere: Sphere
@@ -92,7 +94,7 @@ export class ShadowRefresher {
 /**
  * Keeps shadow maps until something changes in their light’s reach: a shadow caster that moves, appears or disappears, or the light itself moving.
  * Almost everything in the gallery stands still, so most lights render their shadow map once instead of every frame.
- * Directional lights shine from outside the culled rooms and draw hidden casters too, so hiding or showing a caster leaves their shadow maps alone.
+ * Directional lights shine from outside the culled rooms and draw hidden casters too, so hiding or showing a caster leaves their shadow maps alone. Lamps leave hidden casters out of their maps, so they only notice them coming into or going out of sight.
  */
 export default class ShadowCache {
   private readonly casters = new Map<Caster, CasterState>
@@ -140,6 +142,7 @@ export default class ShadowCache {
         continue
       }
       this.changes.push({
+        hidden: state.hidden,
         hiding: false,
         sphere: state.sphere,
       })
@@ -151,7 +154,7 @@ export default class ShadowCache {
         this.lights.delete(light)
         continue
       }
-      state.dirty ||= this.changes.some(({hiding, sphere}) => !(hiding && light.isDirectionalLight) && this.reaches(light, sphere))
+      state.dirty ||= this.changes.some(change => !(light.isDirectionalLight ? change.hiding : change.hidden) && this.reaches(light, change.sphere))
       if (!(state.dirty && active(light))) {
         continue
       }
@@ -183,6 +186,7 @@ export default class ShadowCache {
       }
       this.casters.set(caster, state)
       this.changes.push({
+        hidden,
         hiding: false,
         sphere: state.sphere,
       })
@@ -193,6 +197,7 @@ export default class ShadowCache {
       if (state.hidden !== hidden) {
         state.hidden = hidden
         this.changes.push({
+          hidden: false,
           hiding: true,
           sphere: state.sphere,
         })
@@ -201,6 +206,7 @@ export default class ShadowCache {
     }
     // Both where it was and where it is now changed.
     this.changes.push({
+      hidden: state.hidden,
       hiding: false,
       sphere: state.sphere.clone(),
     })
@@ -209,6 +215,7 @@ export default class ShadowCache {
     state.instances = instances
     state.matrix.copy(caster.matrixWorld)
     this.changes.push({
+      hidden,
       hiding: false,
       sphere: worldSphere(caster, state.sphere),
     })

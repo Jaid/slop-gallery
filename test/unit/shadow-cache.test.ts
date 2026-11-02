@@ -85,6 +85,29 @@ test('casters that appear, disappear or hide count as changes', () => {
   scene.add(added)
   expect(step()).toBe(false)
 })
+test('lamps ignore casters changing out of sight, but see them come into or go out of sight', () => {
+  const {hidden, near, scene, step} = setup()
+  step()
+  hidden.add(near)
+  expect(step()).toBe(true)
+  near.position.x = 0.5
+  expect(step()).toBe(false)
+  hidden.delete(near)
+  expect(step()).toBe(true)
+  // Moving while going out of sight still takes it out of the map, and moving while coming back puts it in again.
+  hidden.add(near)
+  near.position.x = 1
+  expect(step()).toBe(true)
+  hidden.delete(near)
+  near.position.x = 0.5
+  expect(step()).toBe(true)
+  // A caster streaming in out of sight leaves the map alone.
+  const added = new Mesh(new BoxGeometry)
+  added.castShadow = true
+  hidden.add(added)
+  scene.add(added)
+  expect(step()).toBe(false)
+})
 test('an inactive light keeps its update until it is active again', () => {
   const {lamp, near, setActive, step} = setup()
   step()
