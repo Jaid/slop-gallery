@@ -177,10 +177,43 @@ test('directional lights ignore casters hiding, since they draw hidden ones too'
   step()
   hidden.add(caster)
   expect(step()).toBe(false)
-  caster.position.x = 1
-  expect(step()).toBe(true)
   hidden.delete(caster)
   expect(step()).toBe(false)
+})
+test('directional lights put off casters changing out of sight until a room shows again', () => {
+  const scene = new Scene
+  const sun = new DirectionalLight
+  sun.castShadow = true
+  sun.position.set(0, 10, 0)
+  const caster = new Mesh(new BoxGeometry)
+  caster.castShadow = true
+  scene.add(sun, caster)
+  const cache = new ShadowCache
+  const hidden = new Set<Mesh>
+  const step = () => {
+    sun.shadow.needsUpdate = false
+    scene.updateMatrixWorld()
+    cache.update(scene, hidden, () => true)
+    return sun.shadow.needsUpdate
+  }
+  step()
+  hidden.add(caster)
+  expect(step()).toBe(false)
+  // A Knot turning in a room out of sight leaves the map alone, frame after frame …
+  caster.position.x = 1
+  expect(step()).toBe(false)
+  caster.position.x = 2
+  expect(step()).toBe(false)
+  // … and renders it once the room shows again.
+  hidden.delete(caster)
+  expect(step()).toBe(true)
+  expect(step()).toBe(false)
+  caster.position.x = 3
+  expect(step()).toBe(true)
+  // Moving while going out of sight counts at once, since the map draws it where it went.
+  hidden.add(caster)
+  caster.position.x = 4
+  expect(step()).toBe(true)
 })
 test('a light reaches the view where its range meets the camera’s frustum, wherever the light itself is', () => {
   // Standing on a floor and looking north, with a lamp hanging 7 m under the floor ahead.

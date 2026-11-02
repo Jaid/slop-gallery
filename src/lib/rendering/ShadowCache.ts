@@ -31,6 +31,8 @@ type Change = {
   sphere: Sphere
 }
 type LightState = {
+  /** whether a caster changed out of sight since the map last rendered, which shows once its room does */
+  deferred: boolean
   dirty: boolean
   frame: number
   matrix: Matrix4
@@ -94,7 +96,8 @@ export class ShadowRefresher {
 /**
  * Keeps shadow maps until something changes in their light’s reach: a shadow caster that moves, appears or disappears, or the light itself moving.
  * Almost everything in the gallery stands still, so most lights render their shadow map once instead of every frame.
- * Directional lights shine from outside the culled rooms and draw hidden casters too, so hiding or showing a caster leaves their shadow maps alone. Lamps leave hidden casters out of their maps, so they only notice them coming into or going out of sight.
+ * Directional lights shine from outside the culled rooms and draw hidden casters too, so hiding or showing a caster leaves their shadow maps alone. A caster changing out of sight only changes shadows nobody sees, so it waits until its room, or any other, shows again, or something in sight changes.
+ * Lamps leave hidden casters out of their maps, so they only notice them coming into or going out of sight.
  */
 export default class ShadowCache {
   private readonly casters = new Map<Caster, CasterState>
@@ -154,7 +157,22 @@ export default class ShadowCache {
         this.lights.delete(light)
         continue
       }
-      state.dirty ||= this.changes.some(change => !(light.isDirectionalLight ? change.hiding : change.hidden) && this.reaches(light, change.sphere))
+      for (const change of this.changes) {
+        if (state.dirty || !this.reaches(light, change.sphere)) {
+          continue
+        }
+        if (!light.isDirectionalLight) {
+          state.dirty = !change.hidden
+        } else if (change.hiding) {
+          // A room showing again brings into view what changed in it out of sight.
+          state.dirty = state.deferred
+        } else if (change.hidden) {
+          state.deferred = true
+        } else {
+          state.dirty = true
+        }
+      }
+      state.deferred &&= !state.dirty
       if (!(state.dirty && active(light))) {
         continue
       }
@@ -228,6 +246,7 @@ export default class ShadowCache {
       light.shadow.autoUpdate = false
       light.shadow.needsUpdate = true
       this.lights.set(light, {
+        deferred: false,
         dirty: false,
         frame,
         matrix: light.matrixWorld.clone(),
