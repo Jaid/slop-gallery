@@ -8,7 +8,7 @@ import {createFrameSink, endWarmup, frameFormat, installVirtualClock, parseRecip
 import fs from 'fs-extra'
 import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
-import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, timestamp, waitForFrames} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, openHeadlessGallery, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, timestamp, waitForFrames, warnAboutDevServer} from './lib/headlessGallery.ts'
 
 const help = `Usage: bun scripts/film.ts [options]
 
@@ -117,6 +117,7 @@ if (fps <= 0) {
   throw new Error('--fps must be positive.')
 }
 const setup = await resolveGallerySetup(values)
+warnAboutDevServer(setup)
 const settle = resolveSettle(values.settle)
 const output = values['output-file'] === undefined ? join(filmRoot, `${setup.world}-${timestamp()}.jxl`) : resolve(values['output-file'])
 const format = frameFormat(output)

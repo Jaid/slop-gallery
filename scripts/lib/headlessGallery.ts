@@ -19,7 +19,7 @@ export const warmupRows = 360
 const queryOptionNames = [...new Set([...queryParameters.filter(key => !dedicatedQueryOptionNames.has(key)), ...Object.values(worldParameters).flat()])].toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
 /** Scripts pick their own default height; the width follows 16:9. */
-export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server
+export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          use this static build (e.g. dist) instead of the dev server, which suits captures better: the dev server can reload the page while it captures
   --graphics <mode>       mirrors ?graphics (fast, heavy, cinematic, which is heavy with larger maps and more samples for non-realtime renders, or auto, which picks fast or heavy for the GPU). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
@@ -137,6 +137,12 @@ const resolveWarmupScale = (value: string | undefined, height: number, scale: nu
     throw new Error(`--warmup_scale must be a positive scale or false, got “${value}”.`)
   }
   return warmupScale
+}
+/** Warns on stderr when a capture runs against the dev server instead of a static build: Vite reloads the page whenever it optimizes newly found dependencies, as on a cold cache, and a reload after posing silently leaves the camera at the player spawn. */
+export const warnAboutDevServer = (setup: GallerySetup) => {
+  if (setup.target === undefined) {
+    console.warn('Warning: capturing from the Vite dev server, which can reload the page mid-capture and lose the pose; captures should target a static build: bun run build, then --target dist.')
+  }
 }
 /** Validates the shared gallery options before anything is started. */
 export const resolveGallerySetup = async (values: GalleryValues, defaultHeight = 720) => {

@@ -11,7 +11,7 @@ import getFree from 'get-free'
 import {jxlEffort, lossyJxlOptions} from 'knot-materials/scripts/lib/encodeJxl.ts'
 import {Packr} from 'msgpackr'
 
-import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, resolveSize, serveGallery, waitForFrames, waitForGallery, watchPage} from './lib/headlessGallery.ts'
+import {degrees, galleryHelp, galleryOptions, parseNumbers, radians, repositoryRoot, resolveGallerySetup, resolveSettle, resolveSize, serveGallery, waitForFrames, waitForGallery, warnAboutDevServer, watchPage} from './lib/headlessGallery.ts'
 
 const snapHeight = 1080
 const help = `Usage: bun scripts/snap.ts [options]
@@ -71,6 +71,7 @@ if (values.help) {
   process.exit(0)
 }
 const setup = await resolveGallerySetup(values, snapHeight)
+warnAboutDevServer(setup)
 const settle = resolveSettle(values.settle)
 let bookmark: CameraBookmark | undefined
 if (values.bookmark !== undefined) {
