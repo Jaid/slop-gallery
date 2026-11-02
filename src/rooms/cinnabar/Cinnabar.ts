@@ -35,6 +35,7 @@ export default class Cinnabar extends Room {
   constructor() {
     super({
       title: 'The Cinnabar',
+      frame: 'cinnabar-meander',
       cameras,
       spawns,
       skybox: 'sky',
