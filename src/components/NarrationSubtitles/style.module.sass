@@ -35,8 +35,12 @@ $spoken: #ffd23f
 .word
   position: relative
   display: inline-block
+  transition: translate 160ms ease-out
   &[data-state='spoken']
     color: $spoken
+  // Lifted by `translate`, which moves only the painted word, so its neighbors and the line keep their places. The enter animation runs toward this lift as its implicit end.
+  &[data-state='current']
+    translate: 0 -0.1em
 
 .letter
   transition: color 70ms linear
