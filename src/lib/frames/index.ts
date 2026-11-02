@@ -3,6 +3,7 @@ import type {PortraitFrameId} from './frameParameter.ts'
 
 import AntechamberAdamFrame from './AntechamberAdamFrame.ts'
 import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
+import CellCofferFrame from './CellCofferFrame.ts'
 import CinnabarMeanderFrame from './CinnabarMeanderFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import CorridorKumikoFrame from './CorridorKumikoFrame.ts'
@@ -35,6 +36,7 @@ export const frames = {
   'corridor-kumiko': new CorridorKumikoFrame,
   'oculus-float': new OculusFloatFrame,
   'exhibition-evidence': new ExhibitionEvidenceFrame,
+  'cell-coffer': new CellCofferFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()
