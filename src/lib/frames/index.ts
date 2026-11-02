@@ -6,6 +6,7 @@ import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
+import SiennaVelvetFrame from './SiennaVelvetFrame.ts'
 import VesperRippleFrame from './VesperRippleFrame.ts'
 
 /** the frame of every work whose room has none of its own */
@@ -17,6 +18,7 @@ export const frames = {
   'vesper-ripple': new VesperRippleFrame,
   'banquet-perspective': new BanquetPerspectiveFrame,
   'antechamber-adam': new AntechamberAdamFrame,
+  'sienna-velvet': new SiennaVelvetFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()
