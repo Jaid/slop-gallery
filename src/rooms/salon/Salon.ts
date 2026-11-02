@@ -29,6 +29,7 @@ export default class Salon extends Room {
   constructor() {
     super({
       title: 'The Salon',
+      frame: 'salon-barbizon',
       cameras,
       spawns,
       skybox: 'sky',
