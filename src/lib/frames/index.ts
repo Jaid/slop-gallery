@@ -7,6 +7,7 @@ import CinnabarMeanderFrame from './CinnabarMeanderFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
+import MoonfallMeteoriteFrame from './MoonfallMeteoriteFrame.ts'
 import SalonBarbizonFrame from './SalonBarbizonFrame.ts'
 import SiennaVelvetFrame from './SiennaVelvetFrame.ts'
 import VesperRippleFrame from './VesperRippleFrame.ts'
@@ -23,6 +24,7 @@ export const frames = {
   'sienna-velvet': new SiennaVelvetFrame,
   'salon-barbizon': new SalonBarbizonFrame,
   'cinnabar-meander': new CinnabarMeanderFrame,
+  'moonfall-meteorite': new MoonfallMeteoriteFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()

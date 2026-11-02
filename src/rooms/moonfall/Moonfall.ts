@@ -49,6 +49,7 @@ export default class Moonfall extends Room {
   constructor() {
     super({
       title: 'Moonfall',
+      frame: 'moonfall-meteorite',
       cameras,
       spawns,
       ambience: ambienceEmitters,
