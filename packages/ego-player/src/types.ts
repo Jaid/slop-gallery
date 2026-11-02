@@ -40,6 +40,8 @@ export type EgoPlayerHandle = {
   readonly body: RapierRigidBody | null
   /** The same detached diagnostic snapshot the dump action produces, with the current input, or null before the body is ready. Works without `onDump`. */
   dump: () => EgoDump | null
+  /** Flings the character off with a world-space velocity, replacing its momentum, like a blast or a springy obstacle. No-op before setup and while flying. */
+  fling: (velocity: EgoPoint) => void
   /** A detached snapshot, or null before the body is ready. */
   getState: () => EgoState | null
   /** Restore zoom before another camera controller snapshots the current FOV. */

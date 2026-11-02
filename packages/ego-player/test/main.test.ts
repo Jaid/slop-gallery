@@ -252,6 +252,60 @@ test('release shortens jumps and a repress during coyote time does not double-ju
   tick(motor, {jump: true})
   expect(motor.getState().velocity.y).toBeLessThan(released)
 })
+test('a fling replaces momentum and releasing jump does not cut it short', () => {
+  const motor = grounded()
+  tick(motor, {forward: true}, 60)
+  tick(motor, {
+    forward: true,
+    jump: true,
+  })
+  const start = motor.body.translation().z
+  motor.fling({
+    x: 0,
+    y: 3,
+    z: 5,
+  })
+  tick(motor)
+  const {velocity} = motor.getState()
+  expect(velocity.x).toBeCloseTo(0, 4)
+  expect(velocity.y).toBeCloseTo(3 - defaultEgoOptions.gravity * world.timestep, 4)
+  expect(velocity.z).toBeCloseTo(5 - defaultEgoOptions.airDeceleration * world.timestep, 4)
+  for (let i = 0; i < 120 && !motor.grounded; i++) {
+    tick(motor)
+  }
+  expect(motor.grounded).toBe(true)
+  // About half a second in the air, slowed only by air deceleration, it lands 2.4 m back.
+  expect(motor.body.translation().z - start).toBeGreaterThan(2.3)
+})
+test('a fling off the ground spends coyote time, and one while flying is ignored', () => {
+  const motor = grounded()
+  motor.fling({
+    x: 4,
+    y: 3,
+    z: 0,
+  })
+  expect(motor.grounded).toBe(false)
+  tick(motor, {jump: true})
+  expect(motor.getState().velocity.y).toBeCloseTo(3 - defaultEgoOptions.gravity * world.timestep, 4)
+  expect(motor.getState().velocity.x).toBeCloseTo(4 - defaultEgoOptions.airDeceleration * world.timestep, 4)
+  tick(motor, {}, 1, true, true)
+  motor.fling({
+    x: 9,
+    y: 9,
+    z: 9,
+  })
+  tick(motor, {}, 1, true, true)
+  expect(motor.getState().velocity).toEqual({
+    x: 0,
+    y: 0,
+    z: 0,
+  })
+  expect(() => motor.fling({
+    x: Number.NaN,
+    y: 0,
+    z: 0,
+  })).toThrow(RangeError)
+})
 test('coyote time allows a jump after walking off a ledge', () => {
   const ground = floor()
   const motor = player()

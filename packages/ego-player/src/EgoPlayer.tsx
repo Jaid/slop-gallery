@@ -220,6 +220,12 @@ export default function EgoPlayer({cameraEnabled = true, casualZoomFactor = 2, c
       }
       return (diagnostics.current ?? new EgoDiagnostics(scene, camera)).capture(motor.getState(), input())
     },
+    fling: velocity => {
+      // Before setup, the initial placement would reset the momentum anyway.
+      if (initialized.current) {
+        motorRef.current?.fling(velocity)
+      }
+    },
     teleport: (destination, rotation) => {
       const motor = motorRef.current
       if (!motor) {

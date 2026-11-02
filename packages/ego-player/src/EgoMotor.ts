@@ -1,5 +1,5 @@
 import type {EgoOptions} from './options.ts'
-import type {EgoImpact, EgoInput, EgoPosition, EgoState} from './types.ts'
+import type {EgoImpact, EgoInput, EgoPoint, EgoPosition, EgoState} from './types.ts'
 import type {RapierCollider, RapierContext, RapierRigidBody} from '@react-three/rapier'
 import type {Quaternion} from 'three/webgpu'
 
@@ -35,6 +35,8 @@ export default class EgoMotor {
   private isGrounded = false
   private jumpBufferedUntil = Number.NEGATIVE_INFINITY
   private jumpHeld = false
+  /** whether the upward velocity comes from a jump, which releasing the button cuts short, rather than from a fling */
+  private jumping = false
   private lastGroundedAt = Number.NEGATIVE_INFINITY
   private lastLandingSpeed = 0
   private readonly movement = new Vector3
@@ -127,6 +129,26 @@ export default class EgoMotor {
     this.world.removeCharacterController(this.controller)
   }
 
+  /**
+   * Flings the character off with `velocity`, replacing its momentum, as a blast or a springy obstacle would. It flies on under gravity and air control from the next step, and releasing jump doesn’t cut an upward fling short.
+   * An upward fling lifts it off the ground and spends its coyote time; on the ground, a level one slides it away under the ground’s deceleration. Does nothing while flying.
+   */
+  fling(velocity: EgoPoint) {
+    if (![velocity.x, velocity.y, velocity.z].every(Number.isFinite)) {
+      throw new RangeError('ego-player: fling velocity must be finite.')
+    }
+    if (this.disposed || this.isFlying) {
+      return
+    }
+    this.velocity.set(velocity.x, 0, velocity.z)
+    this.verticalVelocity = velocity.y
+    this.jumping = false
+    if (velocity.y > 0) {
+      this.isGrounded = false
+      this.lastGroundedAt = Number.NEGATIVE_INFINITY
+    }
+  }
+
   getState(): EgoState {
     return {
       active: this.active,
@@ -168,7 +190,7 @@ export default class EgoMotor {
     } else if (jumpHeld && !this.jumpHeld) {
       this.jumpBufferedUntil = now + Math.max(o.jumpBufferTime, 0)
     }
-    if (!jumpHeld && this.jumpHeld && this.verticalVelocity > 0) {
+    if (!jumpHeld && this.jumpHeld && this.jumping && this.verticalVelocity > 0) {
       this.verticalVelocity *= clamp(o.jumpReleaseFactor, 0, 1)
     }
     this.jumpHeld = jumpHeld
@@ -231,6 +253,7 @@ export default class EgoMotor {
     const canJump = grounded || now - this.lastGroundedAt <= Math.max(o.coyoteTime, 0)
     if (this.jumpBufferedUntil >= now && canJump) {
       this.verticalVelocity = getJumpVelocity(o.jumpHeight * jumpFactor, o.gravity)
+      this.jumping = true
       this.jumpBufferedUntil = Number.NEGATIVE_INFINITY
       // Consume coyote time too, so release/repress cannot double-jump.
       this.lastGroundedAt = Number.NEGATIVE_INFINITY
@@ -267,6 +290,7 @@ export default class EgoMotor {
       }
       this.hadGroundContact = true
       this.airborneTime = 0
+      this.jumping = false
       this.lastGroundedAt = now
       if (this.verticalVelocity < 0) {
         this.verticalVelocity = 0
@@ -329,6 +353,7 @@ export default class EgoMotor {
     this.velocity.set(0, 0, 0)
     this.physicalVelocity.set(0, 0, 0)
     this.verticalVelocity = 0
+    this.jumping = false
     this.airborneTime = 0
     this.hadGroundContact = false
     this.lastLandingSpeed = 0
@@ -441,6 +466,7 @@ export default class EgoMotor {
     this.updateShape()
     this.velocity.y = 0
     this.verticalVelocity = 0
+    this.jumping = false
     this.airborneTime = 0
     this.lastGroundedAt = Number.NEGATIVE_INFINITY
   }
