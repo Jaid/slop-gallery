@@ -82,7 +82,7 @@ export default class SlopGallery extends World<GalleryRoom> {
     return this.navigation.contains(position)
   }
 
-  /** The Knots the gallery showcases in the Exhibition and the Oculus while their rooms are mounted. */
+  /** The Knots the gallery showcases in the Exhibition while its room is mounted. */
   override dumpKnots() {
     return showcasedKnots.values().toArray()
   }
