@@ -5,10 +5,12 @@ import {colliderGeometry} from './architecture.ts'
 import LobedProfileGeometry from './LobedProfileGeometry.ts'
 import RevolvedProfileGeometry from './RevolvedProfileGeometry.ts'
 
-/** how much larger the column is built than its parts are measured below */
-const scale = 1.25
 /** how high the cap stands over the foot, as measured */
 const height = 1.1
+/** how high a column pedestal’s cap stands over its foot, which whatever it carries rests on */
+export const columnPedestalHeight = 1.3
+/** how much larger the column is built than its parts are measured below, so its cap stands {@link columnPedestalHeight} high */
+const scale = columnPedestalHeight / height
 /** the fluted shaft between the base and the capital, its ends hidden in both, as measured */
 const shaft = {
   /** out to its fillets, the strips between the flutes */
@@ -26,8 +28,6 @@ const reach = {
   foot: 0.235,
   cap: 0.205,
 }
-/** how high a column pedestal’s cap stands over its foot, which whatever it carries rests on */
-export const columnPedestalHeight = height * scale
 /** the fluted shaft between the base and the capital, its ends hidden in both */
 export const columnShaft = {
   ...shaft,
