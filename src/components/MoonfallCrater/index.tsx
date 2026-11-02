@@ -1,5 +1,3 @@
-import type {Texture} from 'three/webgpu'
-
 import {RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
@@ -13,8 +11,9 @@ import CraterGeometry from '#src/lib/gallery/moonfall/CraterGeometry.ts'
 import StanchionRingGeometry from '#src/lib/gallery/railings/StanchionRingGeometry.ts'
 import {useGallery} from '#src/lib/gallery/store.ts'
 import CraterMaterial from '#src/lib/materials/CraterMaterial.ts'
-import FloorMaterial, {setFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
+import {setFloorReflectionHeight} from '#src/lib/materials/FloorMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
+import SlateFloorMaterial from '#src/lib/materials/SlateFloorMaterial.ts'
 import VelvetRopeMaterial from '#src/lib/materials/VelvetRopeMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
@@ -22,7 +21,7 @@ import {floorMirror} from '#src/worlds/gallery/relations.ts'
 
 const slateHeight = slopGallery.room('moonfall').floorY
 
-export default function MoonfallCrater({stone}: {stone: Texture}) {
+export default function MoonfallCrater() {
   const geometry = useDisposable(useMemo(() => new CraterGeometry, []))
   const fence = useDisposable(useMemo(() => new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts), []))
   const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.postCollision, fence.rope].map(colliderGeometry)
@@ -31,17 +30,10 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
   const velvet = useDisposable(useMemo(() => new VelvetRopeMaterial, []))
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
   // Honed slate in fast mode; polished in heavy mode, where it mirrors the room around the crater.
-  const slate = useDisposable(useMemo(() => new FloorMaterial(stone, {
-    color: '#24373d',
-    envMapIntensity: 0.08,
-    roughness: floorReflections ? 0.1 : 0.9,
-    reflection: floorReflections ? {
-      strength: 0.05,
-      grazingStrength: 0,
-      loss: 0,
-      gaussianBlur: 10,
-    } : undefined,
-  }), [floorReflections, stone]))
+  const slate = useDisposable(useMemo(() => new SlateFloorMaterial({
+    craterRadius: moonfallCrater.radius,
+    reflections: floorReflections,
+  }), [floorReflections]))
   const reflection = slate.reflectionTarget
   const room = useGallery(state => state.room)
   useEffect(() => {

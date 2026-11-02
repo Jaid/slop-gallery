@@ -1,5 +1,3 @@
-import type {Texture} from 'three/webgpu'
-
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 
 import MoonfallCrater from '#component/MoonfallCrater'
@@ -11,10 +9,10 @@ import slopGallery from '#src/worlds/gallery/index.ts'
 const room = slopGallery.room('moonfall')
 
 /** Moonfall’s crater, ceiling, wall lights and orbit. */
-export default function MoonfallRoom({stone}: {stone: Texture}) {
+export default function MoonfallRoom() {
   const [width, depth] = room.size
   return <group name='moonfall-room' position={[room.center[0], room.floorY, room.center[1]]}>
-    <MoonfallCrater stone={stone} />
+    <MoonfallCrater />
     <RigidBody colliders={false} type='fixed'>
       <CuboidCollider args={[width / 2, 0.15, depth / 2]} position={[0, 5.9, 0]} />
       <Box color='#0b141d' envMapIntensity={0} name='moonfall-ceiling' position={[0, 5.78, 0]} size={[width, 0.18, depth]} />

@@ -80,7 +80,7 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
   },
   moonfall: async () => {
     const {default: Room} = await import('#src/rooms/moonfall/components/MoonfallRoom/index.tsx')
-    return ({stone}) => <Room stone={stone} />
+    return () => <Room />
   },
   oculus: async () => {
     const {default: Room} = await import('#src/rooms/oculus/components/OculusRoom/index.tsx')
