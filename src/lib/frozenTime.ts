@@ -45,6 +45,11 @@ export class AnimationClock {
 
   constructor(private readonly maxDelta = Infinity) {}
 
+  /** the animation’s time in seconds as of the last {@link advance} */
+  get time() {
+    return frozenSeconds ?? this.elapsed
+  }
+
   /** adds a frame’s delta in seconds and returns the animation’s time */
   advance(delta: number) {
     if (frozenSeconds !== undefined) {
