@@ -1,14 +1,16 @@
 import type AmbienceLoop from '../../src/lib/audio/ambience/base/AmbienceLoop.ts'
 import type {AudioOutput} from '../../src/lib/audio/proceduralAudio.ts'
+import type {MoodFade} from '../../src/lib/moods/base/Mood.ts'
 
 import {afterEach, describe, expect, test} from 'bun:test'
 
 import {AmbientLight, Color, HemisphereLight, PointLight, Scene} from 'three/webgpu'
 
+import {fusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import Mood from '../../src/lib/moods/base/Mood.ts'
 import {readMood} from '../../src/lib/moods/forcedMood.ts'
-import {moods} from '../../src/lib/moods/index.ts'
+import {fusionMood, moods} from '../../src/lib/moods/index.ts'
 import MoodMixer, {moodFade} from '../../src/lib/moods/MoodMixer.ts'
 import {applyLightLevels, lightTint, noTint} from '../../src/lib/rendering/lightLevels.ts'
 
@@ -30,6 +32,7 @@ class RecordingLoop {
   }
 }
 class TestMood extends Mood {
+  override readonly fade?: MoodFade
   readonly fill = {
     color: '#808080',
     gain: 1,
@@ -47,9 +50,10 @@ class TestMood extends Mood {
   readonly loops: Array<RecordingLoop> = []
   readonly title: string
 
-  constructor(readonly id: string) {
+  constructor(readonly id: string, fade?: MoodFade) {
     super()
     this.title = id
+    this.fade = fade
   }
 
   createAmbience() {
@@ -100,6 +104,33 @@ describe('mood mixer', () => {
     expect(mixer.mood).toBe(second)
     run(mixer, second, moodFade.in)
     expect(mixer.amount).toBe(1)
+  })
+  test('a mood with a pace of its own comes and goes at it, also while it gives way to another one', () => {
+    const mixer = new MoodMixer
+    const slow = new TestMood('slow', {
+      in: 2,
+      out: 1,
+    })
+    const next = new TestMood('next')
+    run(mixer, slow, 1)
+    expect(mixer.amount).toBeCloseTo(0.5, 1)
+    run(mixer, slow, 1)
+    expect(mixer.amount).toBe(1)
+    run(mixer, next, 0.5)
+    expect(mixer.mood).toBe(slow)
+    expect(mixer.amount).toBeCloseTo(0.5, 1)
+    run(mixer, next, 0.5 + step * 2)
+    expect(mixer.mood).toBe(next)
+  })
+  test('a light with userData.untinted keeps its color through the mood', () => {
+    const mixer = new MoodMixer
+    const mood = new TestMood('test')
+    const lamp = new PointLight
+    const portal = new PointLight
+    portal.userData.untinted = true
+    run(mixer, mood, moodFade.in)
+    expect(mixer.tintOf(lamp).equals(noTint)).toBe(false)
+    expect(mixer.tintOf(portal)).toBe(noTint)
   })
   test('the loop starts once there is an output, follows the strength and stops with its mood', () => {
     const mixer = new MoodMixer
@@ -170,8 +201,15 @@ describe('moods', () => {
       expect(ambience.id).toBe(`mood-${mood.id}`)
     }
   })
+  test('the fusion’s mood belongs to no orb and comes over the world while the intro plays', () => {
+    expect(moods).toContain(fusionMood)
+    const orbMoods: ReadonlyArray<Mood> = orbs.map(orb => orb.mood)
+    expect(orbMoods).not.toContain(fusionMood)
+    expect(fusionMood.fade.in).toBe(fusionTiming.intro)
+  })
   test('?mood names a mood by its id and ignores anything else', () => {
     expect(readMood('http://localhost/?mood=horror')).toBe('horror')
+    expect(readMood('http://localhost/?mood=fusion')).toBe('fusion')
     expect(readMood('http://localhost/?mood=sunshine')).toBe('')
     expect(readMood('http://localhost/')).toBe('')
   })

@@ -66,6 +66,8 @@ export default class PortalShow {
     this.visuals.place(fusion.frame.center)
     this.light.position.fromArray(fusion.frame.center)
     this.light.name = 'fusion-light'
+    // The fusion’s mood darkens and cools the light around it, but its own glow shines on in the portal’s colors.
+    this.light.userData.untinted = true
     this.root.name = `fusion-${fusion.id}`
     this.root.add(this.visuals.root, this.light)
   }

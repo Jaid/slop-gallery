@@ -1,16 +1,17 @@
 import type AmbienceLoop from '../audio/ambience/base/AmbienceLoop.ts'
 import type {AudioOutput} from '../audio/proceduralAudio.ts'
 import type Mood from './base/Mood.ts'
-import type {MoodLight} from './base/Mood.ts'
+import type {MoodFade, MoodLight} from './base/Mood.ts'
 import type {Light} from 'three/webgpu'
 
 import {clamp} from 'math'
 import {Color} from 'three/webgpu'
 
+import {noTint} from '../rendering/lightLevels.ts'
 import {paintMoodGrade} from '../rendering/moodGrade.ts'
 
-/** seconds a mood takes to come over the world, slowly, and to leave it again, quickly, once its prop is thrown or dropped */
-export const moodFade = {
+/** seconds a mood takes to come over the world, slowly, and to leave it again, quickly, once its prop is thrown or dropped, unless the mood has a pace of its own */
+export const moodFade: MoodFade = {
   in: 4,
   out: 0.25,
 }
@@ -58,12 +59,15 @@ export default class MoodMixer {
     this.paint()
   }
 
-  /** What a light is multiplied by now: the lamps’ tint or the fill’s. */
+  /** What a light is multiplied by now: the lamps’ tint or the fill’s, or nothing for a light with `userData.untinted`, which keeps its own color through every mood, like a fusion portal’s glow. */
   tintOf(light: Light) {
+    if (light.userData.untinted) {
+      return noTint
+    }
     return isLamp(light) ? this.lampTint : this.fillTint
   }
 
-  /** Moves `delta` seconds toward `target`, sounding the mood’s loop on `output` once there is one. */
+  /** Moves `delta` seconds toward `target`, at the pace of the mood showing, sounding the mood’s loop on `output` once there is one. */
   update(target: Mood | null, delta: number, output?: AudioOutput) {
     if (!this.current) {
       if (!target) {
@@ -72,7 +76,8 @@ export default class MoodMixer {
       this.current = target
     }
     const rising = this.current === target
-    this.progress = clamp(this.progress + delta / (rising ? moodFade.in : -moodFade.out), 0, 1)
+    const fade = this.current.fade ?? moodFade
+    this.progress = clamp(this.progress + delta / (rising ? fade.in : -fade.out), 0, 1)
     this.paint()
     if (!rising && this.progress === 0) {
       this.release()

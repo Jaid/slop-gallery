@@ -14,11 +14,19 @@ export type MoodGrade = {
   strength: number
 }
 
+/** seconds a mood takes to come over the world and to leave it again */
+export type MoodFade = {
+  in: number
+  out: number
+}
+
 /**
- * A spell over the whole world while the player holds a prop that carries it: the finished frame takes on a gradient map, the lights are tinted and a loop sounds, centered, all fading in and out together.
+ * A spell over the whole world while something casts it, like a held prop that carries it or a fusion in progress: the finished frame takes on a gradient map, the lights are tinted and a loop sounds, centered, all fading in and out together.
  * Colors are sRGB hex.
  */
 export default abstract class Mood {
+  /** how fast the mood comes and goes, if not at the mixer’s usual pace */
+  readonly fade?: MoodFade
   /** ambient, hemisphere and directional lights: the fill and the sun */
   abstract readonly fill: MoodLight
   abstract readonly grade: MoodGrade
