@@ -4,6 +4,7 @@ import type {PortraitFrameId} from './frameParameter.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
+import VesperRippleFrame from './VesperRippleFrame.ts'
 
 /** the frame of every work whose room has none of its own */
 export const classicFrame = new ClassicFrame
@@ -11,6 +12,7 @@ export const classicFrame = new ClassicFrame
 export const frames = {
   classic: classicFrame,
   'lobby-louis': new LobbyLouisFrame,
+  'vesper-ripple': new VesperRippleFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()
