@@ -5,6 +5,7 @@ import AntechamberAdamFrame from './AntechamberAdamFrame.ts'
 import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
 import CinnabarMeanderFrame from './CinnabarMeanderFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
+import CorridorKumikoFrame from './CorridorKumikoFrame.ts'
 import FortressOakFrame from './FortressOakFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
@@ -29,6 +30,7 @@ export const frames = {
   'moonfall-meteorite': new MoonfallMeteoriteFrame,
   'fortress-oak': new FortressOakFrame,
   'lodge-tramp': new LodgeTrampFrame,
+  'corridor-kumiko': new CorridorKumikoFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()
