@@ -1,6 +1,7 @@
 import type PortraitFrame from './base/PortraitFrame.ts'
 import type {PortraitFrameId} from './frameParameter.ts'
 
+import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
@@ -13,6 +14,7 @@ export const frames = {
   classic: classicFrame,
   'lobby-louis': new LobbyLouisFrame,
   'vesper-ripple': new VesperRippleFrame,
+  'banquet-perspective': new BanquetPerspectiveFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()

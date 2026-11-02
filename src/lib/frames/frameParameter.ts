@@ -2,7 +2,7 @@ import optis from 'optis'
 import readPermalink from 'read-permalink'
 
 /** the ids of every frame there is, in kebab-case, the default first; `index.ts` holds a frame for each */
-export const frameIds = ['classic', 'lobby-louis', 'vesper-ripple'] as const
+export const frameIds = ['classic', 'lobby-louis', 'vesper-ripple', 'banquet-perspective'] as const
 /** the id of one of the frames */
 export type PortraitFrameId = typeof frameIds[number]
 
