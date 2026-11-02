@@ -18,7 +18,7 @@ import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import {chandelierCanopyTop, chandelierLampY, chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
-import cellBaseboard from '../../src/rooms/cell/baseboard.ts'
+import cellBaseboard, {cellBaseboardHeight} from '../../src/rooms/cell/baseboard.ts'
 import Cell, {cellLed} from '../../src/rooms/cell/Cell.ts'
 import CellLayout from '../../src/rooms/cell/CellLayout.ts'
 import cellMap from '../../src/rooms/cell/map.ts'
@@ -335,12 +335,14 @@ describe('the passage from the Cell’s hall to its round room', () => {
   }
 })
 describe('the Cell’s trim and door', () => {
-  test('runs a low molded baseboard along the round room’s wall, which stands out of the face less than the old bands, and the Sienna’s tall one along the hall’s, the velvet lining the arch through the north one', () => {
+  test('runs a molded baseboard along the round room’s wall, which stands out of the face less than the plain bands, and the Sienna’s plain bands along the hall’s, both 20 cm high, the velvet lining the arch through the north one', () => {
     const [toe] = cellBaseboard
     const top = cellBaseboard.at(-1)!
     expect(toe).toEqual([toe[0], 0])
     expect(top[0]).toBe(wallFace)
-    expect(top[1]).toBeLessThan(0.25)
+    expect(cellBaseboardHeight).toBe(0.2)
+    expect(top[1]).toBeCloseTo(cellBaseboardHeight, 9)
+    expect(Math.max(...cellBaseboard.map(([, y]) => y))).toBeCloseTo(cellBaseboardHeight, 9)
     expect(Math.max(...cellBaseboard.map(([front]) => front))).toBeLessThan(0.2)
     for (const count of [0, 1, 3]) {
       const sandbox = new Sandbox(ids.slice(0, count))
@@ -357,7 +359,7 @@ describe('the Cell’s trim and door', () => {
         trim.computeBoundingBox()
         // The Sienna’s two plain bands, apart from the plinth blocks the casing of an opening stands on.
         if (!wall.holes?.length) {
-          expect(trim.boundingBox!.max.y).toBeCloseTo(0.44, 6)
+          expect(trim.boundingBox!.max.y).toBeCloseTo(cellBaseboardHeight, 6)
           continue
         }
         // The arch’s reveal, all of it inside the opening and across from the wall’s faces, takes the second material.

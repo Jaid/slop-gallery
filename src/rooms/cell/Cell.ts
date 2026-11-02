@@ -13,7 +13,7 @@ import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
 import footprint from '../lib/footprint.ts'
 import {planWall} from '../lib/walls.ts'
-import cellBaseboard from './baseboard.ts'
+import cellBaseboard, {cellBaseboardHeight} from './baseboard.ts'
 import cellMap from './map.ts'
 import slots from './slots.ts'
 
@@ -72,12 +72,16 @@ export default class Cell extends Room {
       ...layout.arch,
       u: vestibule?.center[0] ?? 0,
     }
+    // Four plain walls, which artworks may hang on, with the Sienna’s baseboard of two plain bands, as low as the round room’s.
+    const hall = {baseboardHeight: cellBaseboardHeight}
     const walls: Record<string, RoomWall> = {
-      // Four plain walls, which artworks may hang on, with the Sienna’s tall baseboard.
-      north: planWall(size, 'north', height, {holes: vestibule ? {vestibule: opening} : {door: opening}}),
-      east: planWall(size, 'east', height),
-      south: planWall(size, 'south', height),
-      west: planWall(size, 'west', height),
+      north: planWall(size, 'north', height, {
+        ...hall,
+        holes: vestibule ? {vestibule: opening} : {door: opening},
+      }),
+      east: planWall(size, 'east', height, hall),
+      south: planWall(size, 'south', height, hall),
+      west: planWall(size, 'west', height, hall),
       // The round room’s velvet wall keeps the Arena’s low molded baseboard in black lacquer.
       ...vestibule ? {
         vestibule: {
