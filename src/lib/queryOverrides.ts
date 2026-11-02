@@ -23,7 +23,7 @@ import {readEditLamps, readShowLamps} from './rendering/lightLevels.ts'
 import {readNear} from './rendering/near.ts'
 import {readPmrem} from './rendering/pmrem.ts'
 import {readRatio} from './rendering/ratio.ts'
-import {readScale} from './rendering/scale.ts'
+import {readScale, readWarmupScale} from './rendering/scale.ts'
 import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readStreamBudget} from './rendering/streamBudget.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
@@ -71,6 +71,7 @@ const readers: Record<string, Reader> = {
   show_wireframe: readShowWireframe,
   spawn: readSpawn,
   stream_budget: readStreamBudget,
+  warmup_scale: readWarmupScale,
   weather: readWeather,
   wireframe_highlight: readWireframeHighlight,
   telemetry: readTelemetry,

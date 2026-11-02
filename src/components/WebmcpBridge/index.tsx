@@ -4,10 +4,12 @@ import {useThree} from '@react-three/fiber'
 import {applyWireframeFlood} from 'capture-session'
 import {AimInspector} from 'ego-player'
 import {useEffect} from 'react'
+import {Vector2} from 'three/webgpu'
 
 import downloadFrame from '#src/lib/downloadFrame.ts'
 import {usePortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {loadingItems} from '#src/lib/loadingItems.ts'
+import {captureWarmup, getRenderScale} from '#src/lib/rendering/captureWarmup.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
 import {playerDumps, snapshotPlayerDump} from '#src/lib/telemetry/recordPlayerDump.ts'
 import analyzeWorld from '#src/lib/webmcp/analyzeWorld.ts'
@@ -17,6 +19,7 @@ import world from '#src/worlds/current.ts'
 export default function WebmcpBridge() {
   const scene = useThree(s => s.scene)
   const camera = useThree(s => s.camera)
+  const renderer = useThree(s => s.renderer)
   useEffect(() => {
     const controller = new AbortController
     const inspector = new AimInspector(scene, camera)
@@ -36,6 +39,24 @@ export default function WebmcpBridge() {
         return {
           ...download,
           dump,
+        }
+      },
+      endWarmup: async () => {
+        const warmed = captureWarmup.end()
+        // World hands Fiber the regular pixel ratio when it renders again, which takes no animation frame, so this also resolves under a stopped virtual clock.
+        const pixelRatio = getRenderScale() * devicePixelRatio
+        const deadline = Date.now() + 10_000
+        while (renderer.getPixelRatio() !== pixelRatio) {
+          if (Date.now() > deadline) {
+            throw new Error(`The canvas still renders at a pixel ratio of ${renderer.getPixelRatio()} instead of ${pixelRatio}.`)
+          }
+          await new Promise(resolve => setTimeout(resolve, 10))
+        }
+        const size = renderer.getDrawingBufferSize(new Vector2)
+        return {
+          warmed,
+          width: size.x,
+          height: size.y,
         }
       },
       getAim: () => inspector.getAim(),
@@ -75,6 +96,6 @@ export default function WebmcpBridge() {
       controller.abort()
       unregister()
     }
-  }, [scene, camera])
+  }, [scene, camera, renderer])
   return null
 }

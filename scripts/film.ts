@@ -4,7 +4,7 @@ import type {Shot} from 'capture-session/script'
 import {dirname, join, relative, resolve} from 'node:path'
 import {parseArgs} from 'node:util'
 
-import {createFrameSink, frameFormat, installVirtualClock, parseRecipe, recipeDuration, sampleRecipe, sampleWireframe, setWireframe, tweens, waitForLoadingItems} from 'capture-session/script'
+import {createFrameSink, endWarmup, frameFormat, installVirtualClock, parseRecipe, recipeDuration, sampleRecipe, sampleWireframe, setWireframe, tweens, waitForLoadingItems} from 'capture-session/script'
 import fs from 'fs-extra'
 import {av1Crf} from 'knot-materials/scripts/lib/encodeAnimation.ts'
 
@@ -158,6 +158,12 @@ const first = toPose(sampleRecipe(recipe, frameSeconds(0), fallback))
 await page.evaluate((pose: Partial<CameraPose>) => globalThis.slopGallery!.pose!(pose), first)
 await waitForFrames(page, settle)
 await waitForLoadingItems(page)
+// All of it loaded at the warmup scale; the film renders at the full size, after frames that build TRAA’s history there.
+const warmup = await endWarmup(page)
+if (warmup.warmed) {
+  await waitForFrames(page, settle)
+  await waitForLoadingItems(page)
+}
 await waitForFrames(page, settle)
 // With --scale the canvas renders more pixels than the film has; the sink downsamples them.
 const source = await page.evaluate(async () => {

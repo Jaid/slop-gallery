@@ -12,7 +12,9 @@ import {parseStreamBudget} from '#src/lib/rendering/streamBudget.ts'
 import {readWorld, worldParameters} from '#src/worlds/index.ts'
 
 export const repositoryRoot = resolve(import.meta.dir, '..', '..')
-const dedicatedQueryOptionNames = new Set(['graphics', 'seed', 'stream_budget'])
+const dedicatedQueryOptionNames = new Set(['graphics', 'seed', 'stream_budget', 'warmup_scale'])
+/** rows of the drawing buffer while a page warms up, see --warmup_scale */
+export const warmupRows = 360
 // These have dedicated options with validation and defaults. A world’s own parameters open it, like --shots opens Knottingham and --item the Sandbox.
 const queryOptionNames = [...new Set([...queryParameters.filter(key => !dedicatedQueryOptionNames.has(key)), ...Object.values(worldParameters).flat()])].toSorted()
 const queryOptions: Record<string, {type: 'string'}> = Object.fromEntries(queryOptionNames.map(key => [key, {type: 'string'}]))
@@ -22,6 +24,8 @@ export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          u
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
                           mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8; 100 in cinematic graphics, whose first frame of everything at once loses the GPU device at 2160p
+  --warmup_scale <scale|false>
+                          mirrors ?warmup_scale, the renderer scale the page loads, compiles and streams everything in at until the script ends its warmup right before capturing, so those frames stay cheap and the full-size render targets don’t exist yet. Default: ${warmupRows} rows, ${warmupRows} divided by the height, unless the regular scale is smaller; false renders at the full size from the start
   --swiftshader           renders on Chrome’s software Vulkan instead of a GPU, for machines without one like CI runners, which also need a system Vulkan driver like Mesa’s (mesa-vulkan-drivers on Ubuntu); slow, but enough to load and analyze the scene
   --width <pixels>        render width. Default: --height × 16/9, or ${Math.round(defaultHeight * 16 / 9)}
   --height <pixels>       render height. Default: --width × 9/16, or ${defaultHeight}
@@ -39,6 +43,7 @@ export const galleryOptions = {
   },
   stream_budget: {type: 'string'},
   swiftshader: {type: 'boolean'},
+  warmup_scale: {type: 'string'},
   target: {type: 'string'},
   width: {type: 'string'},
   height: {type: 'string'},
@@ -50,6 +55,7 @@ export type GalleryValues = Partial<Record<string, boolean | string>> & {
   stream_budget?: string
   swiftshader?: boolean
   target?: string
+  warmup_scale?: string
   width?: string
 }
 export type GallerySetup = Awaited<ReturnType<typeof resolveGallerySetup>>
@@ -117,6 +123,21 @@ const serveStatic = (root: string) => Bun.serve({
     return isFile ? new Response(Bun.file(file)) : new Response('Not found', {status: 404})
   },
 })
+/** The --warmup_scale to open the page with, or undefined for none: `false`, or a default that would not render fewer rows than the regular `scale`. */
+const resolveWarmupScale = (value: string | undefined, height: number, scale: number) => {
+  if (value === 'false') {
+    return
+  }
+  if (value === undefined) {
+    const warmupScale = Math.round(warmupRows / height * 10_000) / 10_000
+    return warmupScale < scale ? warmupScale : undefined
+  }
+  const warmupScale = Number(value)
+  if (!(Number.isFinite(warmupScale) && warmupScale > 0)) {
+    throw new Error(`--warmup_scale must be a positive scale or false, got “${value}”.`)
+  }
+  return warmupScale
+}
 /** Validates the shared gallery options before anything is started. */
 export const resolveGallerySetup = async (values: GalleryValues, defaultHeight = 720) => {
   const target = values.target === undefined ? undefined : resolve(values.target)
@@ -145,6 +166,11 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
       search.set(key, value)
     }
   }
+  const viewport = resolveSize(values, defaultHeight)
+  const warmupScale = resolveWarmupScale(values.warmup_scale, viewport.height, Number(search.get('scale') ?? 1))
+  if (warmupScale !== undefined) {
+    search.set('warmup_scale', String(warmupScale))
+  }
   return {
     swiftshader: values.swiftshader === true,
     target,
@@ -152,7 +178,7 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
     world: readWorld(`?${search}`),
     search,
     seed,
-    viewport: resolveSize(values, defaultHeight),
+    viewport,
   }
 }
 /** Without these, headless Chrome on a machine without a GPU hands out a fallback adapter whose canvas can’t present, which loses the device on the first frame. ANGLE’s Vulkan backend additionally needs the surface extensions of a system Vulkan driver, without which the GPU process exits. */

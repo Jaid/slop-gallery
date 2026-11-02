@@ -2,7 +2,7 @@ import type {CameraPose} from '#src/lib/diagnostics.ts'
 import type {RenderFrame} from 'knot-materials/scripts/lib/renderSettings.ts'
 import type {KnotScene} from 'knot-materials/scripts/renderKnot.ts'
 
-import {installVirtualClock} from 'capture-session/script'
+import {endWarmup, installVirtualClock, waitForLoadingItems} from 'capture-session/script'
 import {createKnotGeometry} from 'knot-materials/geometry.ts'
 import {animationFps, frameSizes, previewCamera, previewDistance} from 'knot-materials/scripts/lib/renderSettings.ts'
 
@@ -71,6 +71,9 @@ export const knottinghamScene = (graphics: 'cinematic' | 'heavy'): KnotScene => 
     },
   })
   try {
+    // Everything loads at the warmup scale; the frames render at the full size, whose still frames settle at every pose anyway.
+    await waitForLoadingItems(page)
+    await endWarmup(page)
     await page.evaluate(() => {
       globalThis.virtualClock!.start()
       // Fiber measures its first frozen delta from the last wall-clock frame; this aligns it without capturing.

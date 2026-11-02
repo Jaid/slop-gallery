@@ -38,6 +38,11 @@ const bridge: WebmcpBridge = {
     hit: null,
     hits: [],
   }),
+  endWarmup: () => Promise.resolve({
+    warmed: true,
+    width: 3840,
+    height: 2160,
+  }),
   getLoadingItems: () => ['pipeline:lobby-floor/MeshStandardNodeMaterial', 'warmup'],
   getKnots: () => [{
     id: 'example_knot',
@@ -84,7 +89,7 @@ test('WebMCP read tools are read-only, validate input and read the current bridg
   let current = bridge
   const tools = createWebmcpTools(() => current)
   const controller = new AbortController
-  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'get_loading_items', 'download_frame', 'set_wireframe'])
+  expect(tools.map(tool => tool.name)).toEqual(['get_aim', 'get_telemetry', 'dump_knots', 'dump_portrait_slots', 'analyze_world', 'get_loading_items', 'download_frame', 'end_warmup', 'set_wireframe'])
   for (const tool of tools.slice(0, 6)) {
     expect(tool.annotations?.readOnlyHint).toBe(true)
     expect(() => tool.execute({unexpected: true}, {signal: controller.signal})).toThrow(TypeError)
@@ -129,6 +134,22 @@ test('download_frame validates its optional name and downloads through the bridg
     format: 'png',
   })).toHaveProperty('fileName', 'shot.png')
   for (const input of [null, [], {unexpected: true}, {name: ''}, {name: '../escape'}, {name: 'a b'}, {name: 5}, {format: 'jxl'}]) {
+    await expect(execute(input)).rejects.toThrow(TypeError)
+  }
+  controller.abort()
+  await expect(execute({})).rejects.toThrow()
+})
+test('end_warmup takes no input and ends the warmup through the bridge', async () => {
+  const tool = createWebmcpTools(() => bridge).find(({name}) => name === 'end_warmup')!
+  const controller = new AbortController
+  const execute = (input: unknown) => Promise.try(() => tool.execute(input as Record<string, unknown>, {signal: controller.signal}))
+  expect(tool.annotations?.readOnlyHint).toBe(false)
+  expect(await execute({})).toEqual({
+    warmed: true,
+    width: 3840,
+    height: 2160,
+  })
+  for (const input of [null, [], {scale: 1}]) {
     await expect(execute(input)).rejects.toThrow(TypeError)
   }
   controller.abort()
@@ -236,7 +257,7 @@ test('registrations clean up on unmount, failure and cancellation during registr
     const registered = registerWebmcp(() => bridge, controller.signal, context)
     if (mode === 'success') {
       const cleanup = await registered
-      expect(signals).toHaveLength(8)
+      expect(signals).toHaveLength(9)
       expect(signals[0].aborted).toBe(false)
       cleanup()
       cleanup()

@@ -9,7 +9,7 @@ import {getAntiAliasing, readAntiAliasing} from '../../src/lib/rendering/antiAli
 import {readFov} from '../../src/lib/rendering/fov.ts'
 import {readNear} from '../../src/lib/rendering/near.ts'
 import {readRatio} from '../../src/lib/rendering/ratio.ts'
-import {readScale} from '../../src/lib/rendering/scale.ts'
+import {readScale, readWarmupScale} from '../../src/lib/rendering/scale.ts'
 import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from '../../src/lib/roomAnnouncements.ts'
@@ -39,15 +39,18 @@ describe('URL options', () => {
       expect(readFlying(search)).toBe(false)
     }
   })
-  test('?near and ?scale accept finite positive numbers', () => {
+  test('?near, ?scale and ?warmup_scale accept finite positive numbers', () => {
     for (const [value, expected] of [['0.05', 0.05], ['1', 1], ['1.5', 1.5], ['1e-3', 0.001], ['1e1', 10]] as const) {
       expect(readNear(`?near=${value}`)).toBe(expected)
       expect(readScale(`?scale=${value}`)).toBe(expected)
+      expect(readWarmupScale(`?warmup_scale=${value}`)).toBe(expected)
     }
     for (const value of ['', '0', '-0.1', 'auto', 'NaN', 'Infinity']) {
       expect(readNear(`?near=${value}`)).toBeUndefined()
       expect(readScale(`?scale=${value}`)).toBeUndefined()
+      expect(readWarmupScale(`?warmup_scale=${value}`)).toBeUndefined()
     }
+    expect(readWarmupScale('?scale=2')).toBeUndefined()
   })
   test('?fov accepts degrees above 0 and below 180', () => {
     for (const [value, expected] of [['90', 90], ['62.5', 62.5], ['1e1', 10], ['0.5', 0.5], ['179.9', 179.9]] as const) {

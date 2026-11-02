@@ -3,6 +3,7 @@ import type {PortraitSlot} from '#src/lib/gallery/types.ts'
 import type {PlayerDumpSnapshot} from '#src/lib/telemetry/recordPlayerDump.ts'
 import type {WorldAnalysis} from './analyzeWorld.ts'
 import type {WireframeFlood} from 'capture-session'
+import type {WarmupEnd} from 'capture-session/script'
 import type {AimSnapshot} from 'ego-player'
 import type {Rarity} from 'knot-materials/rarities.ts'
 import type VictoriaClient from 'victoria-browser-client'
@@ -22,6 +23,7 @@ export type WebmcpBridge = {
     format?: FrameFormat
     name?: string
   }) => Promise<FrameDownload & {dump: PlayerDumpSnapshot | null}>
+  endWarmup: () => Promise<WarmupEnd>
   getAim: () => AimSnapshot
   getKnots: () => ReadonlyArray<KnotDump>
   getLoadingItems: () => ReadonlyArray<string>
@@ -140,6 +142,26 @@ export default function createWebmcpTools(getBridge: () => WebmcpBridge): Array<
           name,
           format: format as FrameFormat | undefined,
         })
+      },
+    },
+    {
+      name: 'end_warmup',
+      title: 'End capture warmup',
+      description: 'End the capture warmup of a page opened with ?warmup_scale, which renders at that reduced scale until now so everything loads while frames are cheap, and resolve once the canvas has its regular size. Returns whether the page was still warming up and the width and height of the drawing buffer it renders at from now on. Frames captured during the warmup fail. Render a few frames before capturing, so temporal antialiasing builds its history at the new size. Pages without a warmup report warmed: false.',
+      inputSchema: {
+        type: 'object',
+        properties: {},
+        additionalProperties: false,
+      },
+      annotations: {
+        readOnlyHint: false,
+      },
+      execute: (input: unknown, {signal}) => {
+        signal.throwIfAborted()
+        if (!input || typeof input !== 'object' || Array.isArray(input) || Object.keys(input).length) {
+          throw new TypeError('This tool takes an empty input object.')
+        }
+        return getBridge().endWarmup()
       },
     },
     {

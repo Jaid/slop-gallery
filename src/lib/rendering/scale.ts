@@ -2,23 +2,35 @@ import optis from 'optis'
 import {useSyncExternalStore} from 'react'
 import readPermalink, {parseNumber} from 'read-permalink'
 
+/** a positive scale, or undefined for anything else */
+const positiveScale = (value: unknown) => {
+  try {
+    const scale = parseNumber(value)
+    if (scale > 0) {
+      return scale
+    }
+  } catch {
+  }
+}
 const scaleSchema = optis({
   normalizations: {
-    scale(value: unknown) {
-      try {
-        const scale = parseNumber(value)
-        if (scale > 0) {
-          return scale
-        }
-      } catch {
-      }
-    },
+    scale: positiveScale,
+  },
+})
+const warmupScaleSchema = optis({
+  normalizations: {
+    warmup_scale: positiveScale,
   },
 })
 
 /** Read an optional positive renderer scale override from the permalink. */
 export function readScale(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
   return readPermalink(input, {schema: scaleSchema}).scale
+}
+
+/** Read the optional positive `?warmup_scale` that headless captures open with: the renderer scale the page loads at until the capture ends its warmup, see `captureWarmup`. */
+export function readWarmupScale(input: URL | string = typeof location === 'undefined' ? '' : location.href) {
+  return readPermalink(input, {schema: warmupScaleSchema}).warmup_scale
 }
 
 const getDevicePixelRatio = () => (typeof devicePixelRatio === 'number' ? devicePixelRatio : 1)
