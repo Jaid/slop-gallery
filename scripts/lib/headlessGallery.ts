@@ -23,7 +23,7 @@ export const galleryHelp = (defaultHeight = 720) => `  --target <dir>          u
   --graphics <mode>       mirrors ?graphics (fast, heavy, cinematic, which is heavy with larger maps and more samples for non-realtime renders, or auto, which picks fast or heavy for the GPU). Default: heavy
   --seed <number>         mirrors ?seed, the environment seed (0–${maximumSeed}) that decides random details like the potted plants. Default: 1
   --stream_budget <ms|false>
-                          mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8; 100 in cinematic graphics, whose first frame of everything at once loses the GPU device at 2160p
+                          mirrors ?stream_budget, the milliseconds a frame after loading may spend building objects. Default: false, which builds everything in the first frame, so the scene is complete about three times sooner than at the players’ 8 and, in cinematic graphics, whose every streaming frame renders the whole view, three to six times sooner than at 100
   --warmup_scale <scale|false>
                           mirrors ?warmup_scale, the renderer scale the page loads, compiles and streams everything in at until the script ends its warmup right before capturing, so those frames stay cheap and the full-size render targets don’t exist yet. Default: ${warmupRows} rows, ${warmupRows} divided by the height, unless the regular scale is smaller; false renders at the full size from the start
   --swiftshader           renders on Chrome’s software Vulkan instead of a GPU, for machines without one like CI runners, which also need a system Vulkan driver like Mesa’s (mesa-vulkan-drivers on Ubuntu); slow, but enough to load and analyze the scene
@@ -154,8 +154,8 @@ export const resolveGallerySetup = async (values: GalleryValues, defaultHeight =
   }
   search.set('seed', String(seed))
   search.set('graphics', values.graphics)
-  // ?test=true implies it already; it is explicit so captures keep it without the test hooks. Cinematic draws every room in every pass at once in that first frame, which outlasts the GPU’s timeout at 2160p (VK_ERROR_DEVICE_LOST on hive’s RX 9060 XT).
-  const streamBudget = values.stream_budget ?? (values.graphics === 'cinematic' ? '100' : 'false')
+  // ?test=true implies it already; it is explicit so captures keep it without the test hooks. Building everything in the first frame is fastest in every graphics mode: a budget spreads the building over frames that each render the whole view, over 200 of them in cinematic graphics, 0.35 s each at 2160p and 2.3 s at 8K. The warmup keeps that first frame small; even without it, it no longer lost the device on hive’s RX 9060 XT at 2160p or 8K.
+  const streamBudget = values.stream_budget ?? 'false'
   if (parseStreamBudget(streamBudget) === undefined) {
     throw new Error(`--stream_budget must be milliseconds from 0 up or false, got “${streamBudget}”.`)
   }
