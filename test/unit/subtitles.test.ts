@@ -6,7 +6,7 @@ import {narrationWords, timingFromCharacters} from 'use-narrator/core'
 
 import NarrationSubtitles from '#component/NarrationSubtitles'
 
-import {easeFill, letterStarts, subtitleGroupAt, subtitleGroups, subtitleWordState} from '../../src/lib/audio/subtitles.ts'
+import {letterStarts, subtitleGroupAt, subtitleGroups, subtitleWordState} from '../../src/lib/audio/subtitles.ts'
 
 const groupTexts = (text: string) => subtitleGroups(text, narrationWords(text)).map(group => text.slice(group.from, group.to))
 test('subtitles show one sentence at a time, and runs of short sentences together', () => {
@@ -78,24 +78,48 @@ test('a word is current until shortly after its end, then spoken; the end of the
     progress: 1,
   }, undefined, false)).toBe('current')
 })
-test('the word fill is quick at the word’s start and end and slowest in its middle', () => {
-  expect(easeFill(-1)).toBe(0)
-  expect(easeFill(0)).toBe(0)
-  expect(easeFill(0.5)).toBeCloseTo(0.5)
-  expect(easeFill(0.1)).toBeGreaterThan(0.1)
-  expect(easeFill(0.9)).toBeLessThan(0.9)
-  // Slowest in the middle: the same step covers less ground there than near the start.
-  expect(easeFill(0.55) - easeFill(0.45)).toBeLessThan(easeFill(0.1) - easeFill(0))
-  expect(easeFill(2)).toBe(1)
+test('letters of words without spans of their own are spread over the word, quick at its start and end and slowest in its middle', () => {
+  const starts = letterStarts({words: [{
+    from: 0,
+    to: 4,
+    start: 1,
+    end: 2,
+  }]}, 4)!
+  expect(starts[0]).toBe(1)
+  expect(starts[1]).toBeCloseTo(1.146)
+  expect(starts[2]).toBeCloseTo(1.5)
+  expect(starts[3]).toBeCloseTo(1.854)
+  // Each letter in the middle takes longer than the first and the last, which lasts until the word’s end.
+  expect(starts[2] - starts[1]).toBeGreaterThan(starts[1] - starts[0])
+  expect(starts[2] - starts[1]).toBeGreaterThan(2 - starts[3])
+})
+test('words keep their character spans while words without any are spread', () => {
+  const text = 'ab cd'
+  const starts = letterStarts({
+    words: [{
+      from: 0,
+      to: 2,
+      start: 0,
+      end: 1,
+    }, {
+      from: 3,
+      to: 5,
+      start: 2,
+      end: 3,
+    }],
+    characters: [[0.2, 0.4], [0.6, 0.9], null, null, null],
+  }, text.length)!
+  // The space belongs to no word and is never shown as a letter.
+  expect(Array.from(starts, start => Math.round(start * 1000) / 1000)).toEqual([0.2, 0.6, 0, 2, 2.5])
 })
 test('letters without a span of their own start with the letter before them or their word', () => {
   const text = 'Hi, “you”'
   const characters = Array.from(text, (character, index) => (/\p{L}/u.test(character) ? [index, index + 0.5] as const : null))
   const starts = letterStarts(timingFromCharacters(text, characters), text.length)!
-  expect([...starts]).toEqual([0, 1, 1, 5, 5, 5, 6, 7, 7])
-  expect(letterStarts({words: []}, 4)).toBeUndefined()
+  expect([...starts]).toEqual([0, 1, 1, 0, 5, 5, 6, 7, 7])
+  expect(letterStarts(undefined, 4)).toBeUndefined()
 })
-test('subtitles render the current group’s words, letter by letter when the timing has letters', () => {
+test('subtitles render the current group’s words letter by letter, with or without a timing', () => {
   const text = 'Hi there. A ruler of impeccable breeding and absolutely no qualifications at all.'
   const narration = {
     instanceId: 'a',
@@ -103,15 +127,14 @@ test('subtitles render the current group’s words, letter by letter when the ti
     text,
   }
   const plain = renderToStaticMarkup(createElement(NarrationSubtitles, {narration}))
-  expect(plain).toContain('data-letters="false"')
   expect(plain).toContain('data-word="1"')
-  expect(plain).toContain('data-fill="true">there.</span>')
+  expect(plain).toContain('data-letter="3">t</span>')
+  expect(plain).not.toContain('data-fill')
   expect(plain).not.toContain('ruler')
   const characters = Array.from(text, (_, index) => [index / 10, index / 10 + 0.05] as const)
   const lettered = renderToStaticMarkup(createElement(NarrationSubtitles, {narration: {
     ...narration,
     timing: timingFromCharacters(text, characters),
   }}))
-  expect(lettered).toContain('data-letters="true"')
-  expect(lettered).toContain('data-letter="3">t</span>')
+  expect(lettered).toBe(plain)
 })

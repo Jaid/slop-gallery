@@ -1,11 +1,10 @@
 import type {AudioProgress, NarrationState, NarrationTiming} from 'use-narrator/core'
 
-import Branch from 'branch-component'
 import {Fragment, useEffect, useRef, useState} from 'react'
 import {estimateTiming, narrationCursor, narrationWords} from 'use-narrator/core'
 
 import {narrator} from '#src/lib/audio/narration.ts'
-import {easeFill, letterStarts, subtitleGroupAt, subtitleGroups, subtitleWordState} from '#src/lib/audio/subtitles.ts'
+import {letterStarts, subtitleGroupAt, subtitleGroups, subtitleWordState} from '#src/lib/audio/subtitles.ts'
 
 import css from './style.module.sass'
 
@@ -19,13 +18,12 @@ type Props = {
 }
 
 /**
- * The narration’s text, one sentence (or a run of short ones) at a time. Spoken words turn yellow: letter by letter with character timings, otherwise the current word fills from left to right.
+ * The narration’s text, one sentence (or a run of short ones) at a time. Spoken words turn yellow letter by letter, at the letters’ own times where the timing has them and spread over their word’s duration otherwise.
  * Reads the playback position every frame and paints the words directly, so React only renders when the sentence changes.
  */
 export default function NarrationSubtitles({narration: {instanceId, status, text, timing}, progress: readProgress}: Props) {
   const words = narrationWords(text)
   const groups = subtitleGroups(text, words)
-  const letters = letterStarts(timing, text.length)
   const ended = status === 'after'
   const container = useRef<HTMLElement>(null)
   const shownRef = useRef(0)
@@ -35,6 +33,8 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
     let frame = 0
     // Audio without a timing still gets paced subtitles, from an estimate over its duration.
     let estimate: NarrationTiming | undefined
+    let starts: Float32Array | undefined
+    let startsOf: NarrationTiming | undefined
     const paint = () => {
       frame = requestAnimationFrame(paint)
       const element = container.current
@@ -47,6 +47,10 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
         estimate = estimateTiming(text, progress.duration)
       }
       const used = timing ?? estimate
+      if (used !== startsOf) {
+        starts = letterStarts(used, text.length)
+        startsOf = used
+      }
       const cursor = narrationCursor(words, progress, used)
       const ahead = timeline ? narrationCursor(words, {
         ...progress,
@@ -58,7 +62,6 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
         shownRef.current = group
         setShown(group)
       }
-      element.dataset.timeline = String(timeline)
       for (const word of element.querySelectorAll<HTMLElement>('[data-group="leaving"] [data-word]')) {
         word.dataset.state = 'spoken'
       }
@@ -71,20 +74,15 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
         if (state !== 'current') {
           continue
         }
-        const fill = word.querySelector<HTMLElement>('[data-fill]')
-        if (fill) {
-          fill.style.clipPath = `inset(0 ${((1 - easeFill(cursor.progress)) * 100).toFixed(2)}% 0 0)`
-        }
-        if (letters && cursor.seconds !== undefined) {
-          for (const letter of word.querySelectorAll<HTMLElement>('[data-letter]')) {
-            letter.toggleAttribute('data-spoken', letters[Number(letter.dataset.letter)] <= cursor.seconds)
-          }
+        // Native speech has no timeline, so its current word turns yellow as a whole.
+        for (const letter of word.querySelectorAll<HTMLElement>('[data-letter]')) {
+          letter.toggleAttribute('data-spoken', !starts || cursor.seconds === undefined || starts[Number(letter.dataset.letter)] <= cursor.seconds)
         }
       }
     }
     paint()
     return () => cancelAnimationFrame(frame)
-  }, [ended, groups, instanceId, letters, readProgress, text, timing, words])
+  }, [ended, groups, instanceId, readProgress, text, timing, words])
   const renderGroup = (index: number, role: 'current' | 'leaving') => {
     const group = groups[index]
     return <p
@@ -100,7 +98,7 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
       {words.slice(group.first, group.last).map((word, order) => {
         const token = text.slice(word.from, word.to)
         let offset = word.from
-        const lettered = letters && Array.from(token, character => {
+        const letters = Array.from(token, character => {
           const at = offset
           offset += character.length
           return <span key={at} className={css.letter} data-letter={at}>{character}</span>
@@ -108,13 +106,13 @@ export default function NarrationSubtitles({narration: {instanceId, status, text
         return <Fragment key={word.from}>
           {order ? ' ' : null}
           <span className={css.word} data-word={group.first + order} style={{animationDelay: `${order * 24}ms`}}>
-            <Branch if={letters} then={lettered} else={<>{token}<span className={css.fill} aria-hidden='true' data-fill>{token}</span></>} />
+            {letters}
           </span>
         </Fragment>
       })}
     </p>
   }
-  return <section className={css.container} aria-label='Subtitles' data-ended={ended} data-letters={Boolean(letters)} data-testid='narration-subtitles' ref={container}>
+  return <section className={css.container} aria-label='Subtitles' data-ended={ended} data-testid='narration-subtitles' ref={container}>
     {/* One keyed list, so the sentence that starts leaving keeps its element and the colors the paint loop gave its words, instead of coming back white for a frame. */}
     {(leaving !== undefined && leaving !== shown ? [leaving, shown] : [shown]).map(index => renderGroup(index, index === shown ? 'current' : 'leaving'))}
   </section>

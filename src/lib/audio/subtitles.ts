@@ -49,11 +49,6 @@ export function subtitleGroups(text: string, words: ReadonlyArray<Range>, maximu
   return groups
 }
 
-/** How far the current word’s yellow fill has come at `progress` through the word: the inverse of a sine ease-in-out, so the edge leaps off at the start, lingers mid-word and hurries to the end. */
-export function easeFill(progress: number) {
-  return Math.acos(1 - 2 * Math.min(1, Math.max(0, progress))) / Math.PI
-}
-
 /** the group holding `word`: the first one before speech starts, the last one after it ends */
 export function subtitleGroupAt(groups: ReadonlyArray<SubtitleGroup>, word: number) {
   const index = groups.findIndex(group => word < group.last)
@@ -73,28 +68,28 @@ export function subtitleWordState(index: number, cursor: NarrationCursor, timing
 }
 
 /**
- * When each character of the text starts being spoken, for letter-exact highlighting, or `undefined` without character spans.
- * Characters without a span of their own, like punctuation, start with the letter before them, or with their word.
+ * When each character of the text starts being spoken, so the subtitles can turn it yellow, or `undefined` without a timing.
+ * Words with character spans keep them, and their characters without one, like punctuation, start with the letter before them. Words without spread their characters over the word’s duration along the inverse of a sine ease-in-out: the yellow sets off quickly, lingers mid-word and hurries to the end.
  */
 export function letterStarts(timing: NarrationTiming | undefined, length: number): Float32Array | undefined {
   if (!timing) {
     return
   }
-  const {characters} = timing
-  if (characters?.length !== length) {
-    return
-  }
+  const characters = timing.characters?.length === length ? timing.characters : undefined
   const starts = new Float32Array(length)
-  let word = 0
-  let previous = Number.NaN
-  for (let index = 0; index < length; index++) {
-    while (word < timing.words.length - 1 && timing.words[word].to <= index) {
-      word++
-      previous = Number.NaN
+  for (const word of timing.words) {
+    if (characters?.slice(word.from, word.to).some(Boolean)) {
+      let previous = word.start
+      for (let index = word.from; index < word.to; index++) {
+        previous = characters[index]?.[0] ?? previous
+        starts[index] = previous
+      }
+      continue
     }
-    const own = characters[index]?.[0]
-    starts[index] = own ?? (Number.isNaN(previous) ? timing.words[word]?.start ?? 0 : previous)
-    previous = starts[index]!
+    const count = word.to - word.from
+    for (let index = 0; index < count; index++) {
+      starts[word.from + index] = word.start + (word.end - word.start) * (1 - Math.cos(Math.PI * index / count)) / 2
+    }
   }
   return starts
 }
