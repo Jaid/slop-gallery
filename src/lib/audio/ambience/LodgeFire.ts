@@ -5,38 +5,61 @@ import type {Range} from './base/noise.ts'
 import {fireWorldOrigin} from '../../gallery/fireplace/config.ts'
 import AmbienceEmitter from './base/AmbienceEmitter.ts'
 
-/** a quiet glow: a steeply filtered low roar with a faint mid-range breath */
+/** a log fire’s body: a low, slowly breathing roar, the wavering draw of the chimney and a faint hiss of gas escaping the wood */
 const beds: ReadonlyArray<NoiseBed> = [
   {
     filter: 'lowpass',
-    frequency: 260,
+    frequency: 220,
     stages: 3,
-    volume: 0.05,
-    sway: [0.6, 0.5],
+    volume: 0.055,
+    sway: [0.45, 0.55],
   },
   {
     filter: 'bandpass',
-    frequency: 900,
-    q: 0.8,
+    frequency: 520,
+    q: 0.9,
     stages: 2,
-    volume: 0.004,
-    sway: [0.5, 0.7],
+    volume: 0.006,
+    sway: [0.35, 0.8],
+    drift: [0.25, 500],
+  },
+  {
+    filter: 'highpass',
+    frequency: 4800,
+    stages: 2,
+    volume: 0.0018,
+    sway: [0.6, 0.85],
+    drift: [0.4, 300],
   },
 ]
-/** sparse bursts of fine ticks, like embers splitting in the heat */
+/** clusters of fine ticks, like resin cells bursting one after another */
 const crackles = {
-  /** bursts per second */
-  rate: 1.5,
-  /** ticks per burst */
-  count: [1, 2] as Range,
-  /** seconds one burst spreads its ticks over */
-  spread: 0.08,
-  frequency: [3000, 8000] as Range,
-  duration: [0.002, 0.006] as Range,
-  volume: [0.02, 0.08] as Range,
+  /** clusters per second */
+  rate: 2.6,
+  /** ticks per cluster */
+  count: [1, 5] as Range,
+  /** mean seconds between the ticks of a cluster */
+  gap: 0.035,
+  frequency: [2200, 7500] as Range,
+  duration: [0.0015, 0.007] as Range,
+  volume: [0.015, 0.09] as Range,
+}
+/** the occasional pop of a pocket of sap: a soft knock in the wood with a bright snap on top, sometimes trailing a hiss of steam */
+const pops = {
+  rate: 0.22,
+  knock: [170, 320] as Range,
+  knockDuration: [0.04, 0.09] as Range,
+  /** share of pops that hiss afterward */
+  steam: 0.4,
+}
+/** now and then the pile settles: a dull thud as a log shifts, then embers crumbling */
+const settles = {
+  rate: 0.025,
+  thud: [80, 130] as Range,
+  duration: [0.45, 0.8] as Range,
 }
 
-/** The Lodge’s log fire burning low: a soft glow under sparse fine crackles, sounding from just above the logs. */
+/** The Lodge’s log fire: a breathing roar under clustered crackles, occasional sap pops with a hiss of steam and a log settling now and then, sounding from just above the logs. */
 export default class LodgeFire extends AmbienceEmitter {
   /** sounds from `position`, by default 60 cm above the fire’s origin, in `rooms`, by default only the Lodge */
   constructor(position: Vec3 = [fireWorldOrigin[0], fireWorldOrigin[1] + 0.6, fireWorldOrigin[2]], rooms: ReadonlyArray<string> = ['lodge']) {
@@ -60,10 +83,26 @@ export default class LodgeFire extends AmbienceEmitter {
   protected override schedule(from: number, until: number) {
     for (const time of this.scatter(crackles.rate, from, until)) {
       const count = Math.round(this.vary(crackles.count))
+      let tick = time
       for (let i = 0; i < count; i++) {
-        // Mostly faint ticks with the occasional sharp one.
+        // Mostly faint ticks with the occasional sharp one, each a little brighter or duller than the last.
         const volume = crackles.volume[0] + (crackles.volume[1] - crackles.volume[0]) * Math.random() ** 3
-        this.burst(time + Math.random() * crackles.spread, this.vary(crackles.duration), volume, this.vary(crackles.frequency), 0.8)
+        this.burst(tick, this.vary(crackles.duration), volume, this.vary(crackles.frequency), 1.2)
+        tick -= Math.log(1 - Math.random()) * crackles.gap
+      }
+    }
+    for (const time of this.scatter(pops.rate, from, until)) {
+      this.burst(time, this.vary(pops.knockDuration), 0.11, this.vary(pops.knock), 1.4)
+      this.burst(time + 0.002, 0.006, 0.12, this.vary([3500, 6500]), 1.5)
+      if (Math.random() < pops.steam) {
+        this.burst(time + 0.03, this.vary([0.25, 0.6]), 0.012, this.vary([6000, 9000]), 0.9, 0.06)
+      }
+    }
+    for (const time of this.scatter(settles.rate, from, until)) {
+      this.burst(time, this.vary(settles.duration), 0.09, this.vary(settles.thud), 0.8, 0.02)
+      // Embers crumble for a moment after.
+      for (let i = 0; i < 9; i++) {
+        this.burst(time + 0.08 + Math.random() * 0.6, this.vary([0.003, 0.012]), this.vary([0.01, 0.04]), this.vary([1500, 5000]), 1)
       }
     }
   }
