@@ -23,12 +23,13 @@ export const cameraPose = {
   position: [playerSpawn.position[0], playerSpawn.position[1] + 1.6, playerSpawn.position[2]] as Vec3,
   direction: [-Math.sin(playerSpawn.yaw) * Math.cos(playerSpawn.pitch), Math.sin(playerSpawn.pitch), -Math.cos(playerSpawn.yaw) * Math.cos(playerSpawn.pitch)] as Vec3,
 }
-/** the player’s capsule: its middle, which decides the room the player is in, its height, standing or crouching, and whether it stands on something */
+/** the player’s capsule: its middle, which decides the room the player is in, its height, standing or crouching, whether it stands on something and how fast it actually moves, in m/s */
 export const bodyPose = {
   center: [playerSpawn.position[0], playerSpawn.position[1] + defaultEgoOptions.height / 2, playerSpawn.position[2]] as Vec3,
   grounded: true,
   height: defaultEgoOptions.height,
   radius: defaultEgoOptions.radius,
+  velocity: [0, 0, 0] as Vec3,
 }
 export function setCameraFocused(focused: boolean) {
   cameraPose.focused = focused
@@ -83,6 +84,11 @@ export function narrateModel(id: string) {
 
 export function stopNarration() {
   galleryEvents.dispatchEvent(new Event('stop-narration'))
+}
+
+/** Flings the player’s body off with the velocity, in m/s, replacing its momentum. */
+export function flingPlayer(velocity: Vec3) {
+  galleryEvents.dispatchEvent(new CustomEvent('fling', {detail: velocity}))
 }
 
 export function requestMerge(first: string, second: string) {

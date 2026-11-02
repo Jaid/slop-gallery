@@ -8,7 +8,7 @@ import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {beats, introSeconds, introSiphon, slurp} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
-import {portalFrame, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
+import {portalFrame, portalRebound, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
 import {fusionTiming, ingredientAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
@@ -358,5 +358,28 @@ describe('breaking off', () => {
     expect(body([x + 0.75, y, z])).toBe(false)
     expect(body([x, y - 1.6, z])).toBe(false)
     expect(body([x, y - 1, z + 1])).toBe(false)
+  })
+  test('throws the body back the way it jumped in, as fast as it came within bounds, with a hop', () => {
+    const [x, y, z] = frame.center
+    const rebound = (center: [number, number, number], velocity: [number, number, number]) => portalRebound(frame, {
+      center,
+      velocity,
+    })
+    // A walking jump straight at it from the room comes back faster than it went in.
+    const walked = rebound([x + 0.6, y - 0.4, z], [-3, 2, 0])
+    expect(walked[0]).toBeCloseTo(5)
+    expect(walked[1]).toBe(3)
+    expect(walked[2]).toBeCloseTo(0)
+    // A sprinting jump that grazes it diagonally goes back nearly the way it came, at no more than 8 m/s.
+    const sprinted = rebound([x + 0.3, y - 0.5, z - 0.5], [-6.4, 1, 6.4])
+    expect(Math.hypot(sprinted[0], sprinted[2])).toBeCloseTo(8)
+    expect((sprinted[0] - sprinted[2]) * Math.SQRT1_2 / 8).toBeGreaterThan(Math.cos(Math.PI / 18))
+    // Rising straight into it, the body is thrown out away from its middle, or into the room right under it.
+    const beside = rebound([x, y - 1, z + 0.3], [0, 5.4, 0])
+    expect(beside[0]).toBeCloseTo(0)
+    expect(beside[2]).toBeCloseTo(5)
+    const under = rebound([x, y - 1, z], [0, 5.4, 0])
+    expect(under[0]).toBeCloseTo(frame.normal[0] * 5)
+    expect(under[2]).toBeCloseTo(frame.normal[2] * 5)
   })
 })

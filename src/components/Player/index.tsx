@@ -1,3 +1,4 @@
+import type {Vec3} from '#src/lib/gallery.ts'
 import type {EgoAction, EgoImpact, EgoPlayerHandle, EgoState} from 'ego-player'
 import type {Camera} from 'three/webgpu'
 
@@ -98,11 +99,22 @@ export default function Player() {
       player.current?.teleport(destination, rotation)
       // The body is there before the player’s next update, so whatever follows it, like the room the player is in, never sees it where it was.
       bodyPose.center = [destination[0], destination[1] + defaultEgoOptions.height / 2, destination[2]]
+      bodyPose.velocity = [0, 0, 0]
     }
     galleryEvents.addEventListener('teleport', teleport)
+    const fling = (event: Event) => {
+      const [x, y, z] = (event as CustomEvent<Vec3>).detail
+      player.current?.fling({
+        x,
+        y,
+        z,
+      })
+    }
+    galleryEvents.addEventListener('fling', fling)
     return () => {
       galleryEvents.removeEventListener('release-zoom', releaseZoom)
       galleryEvents.removeEventListener('teleport', teleport)
+      galleryEvents.removeEventListener('fling', fling)
       if (playerTelemetry.read === read) {
         playerTelemetry.read = null
       }
@@ -152,6 +164,7 @@ export default function Player() {
     bodyPose.height = state.crouching ? defaultEgoOptions.crouchHeight : defaultEgoOptions.height
     bodyPose.center = [x, y + bodyPose.height / 2, z]
     bodyPose.grounded = state.grounded
+    bodyPose.velocity = [state.velocity.x, state.velocity.y, state.velocity.z]
     if (!cameraPose.focused) {
       angles.setFromQuaternion(camera.quaternion, 'YXZ')
       playerSession.capture({
