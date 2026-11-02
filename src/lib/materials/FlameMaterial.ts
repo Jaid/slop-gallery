@@ -1,4 +1,4 @@
-import {attribute, cameraFar, cameraNear, cameraPosition, float, max, modelWorldMatrixInverse, mx_noise_float, perspectiveDepthToViewZ, positionView, screenUV, smoothstep, time, uv, vec2, vec3, vec4, viewportDepthTexture} from 'three/tsl'
+import {attribute, cameraFar, cameraNear, cameraPosition, color, float, max, mix, modelWorldMatrixInverse, mx_noise_float, perspectiveDepthToViewZ, positionView, screenUV, smoothstep, time, uv, vec2, vec3, vec4, viewportDepthTexture} from 'three/tsl'
 import {AdditiveBlending, MeshBasicNodeMaterial} from 'three/webgpu'
 
 import fireColor from './fireColor.ts'
@@ -52,13 +52,21 @@ export default class FlameMaterial extends MeshBasicNodeMaterial {
     const erosion = mx_noise_float(vec3(metric.x.mul(7).add(offset), metric.y.mul(5.5).sub(time.mul(rise * 1.3)), time.mul(0.9))).mul(0.5).add(0.5)
     // Never let a displaced flame reach the side of its quad.
     const border = smoothstep(0.8, 1, corner.x.sub(0.5).abs().mul(2)).oneMinus()
-    const density = body.mul(smoothstep(0, 0.14, v)).mul(border).sub(v.pow(1.4).mul(erosion).mul(1.15)).clamp()
+    // Tongues pinch off: a cut rises through the upper flame every third of a second or so, leaving a detached wisp above it that burns out as it climbs.
+    const pinchPhase = v.mul(2.2).sub(time.mul(2.9)).sub(seed.mul(3.1)).add(coarse.mul(0.25)).fract()
+    const pinch = smoothstep(0, 0.12, pinchPhase).mul(smoothstep(0.32, 0.18, pinchPhase)).mul(smoothstep(0.35, 0.75, v)).mul(0.9)
+    // The whole flame breathes: flare-ups and lulls from slow noise, a little faster in thin flames.
+    const breath = mx_noise_float(vec3(time.mul(1.6).add(offset), offset, 0)).mul(0.5).add(mx_noise_float(vec3(time.mul(4.3).sub(offset), 0, offset)).mul(0.2))
+    const flare = breath.mul(0.35).add(1)
+    const density = body.mul(smoothstep(0, 0.14, v)).mul(border).sub(v.pow(1.4).mul(erosion).mul(float(1.15).div(flare))).sub(pinch).clamp()
     // Hotter, denser gas sits low in the flame.
     // Soft intersections: fade out where wood sits just behind the sheet, so a log crossing a flame never shows a hard seam.
     const behind = positionView.z.sub(perspectiveDepthToViewZ(viewportDepthTexture(screenUV), cameraNear, cameraFar))
     const soft = smoothstep(0, softness, behind)
     const heat = density.smoothstep(0.02, 0.65).mul(v.mul(-0.5).add(0.95)).mul(soft)
-    this.colorNode = fireColor(heat).mul(brightness)
+    // Where the gas first meets air at the root, it burns blue before the soot glows.
+    const root = smoothstep(0.16, 0.02, v).mul(density.smoothstep(0.1, 0.5)).mul(soft)
+    this.colorNode = mix(fireColor(heat).mul(brightness).mul(flare.mul(0.5).add(0.5)), color('#3d63ff').mul(0.55), root.mul(0.6))
     this.opacityNode = float(1)
     // Ambient occlusion and temporal antialiasing read the normal and velocity targets, which every fragment overwrites without blending. Keep the empty rest of each quad out of them.
     this.maskNode = heat.greaterThan(1 / 256)
