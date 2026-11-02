@@ -40,6 +40,7 @@ export default class Oculus extends Room {
   constructor() {
     super({
       title: 'Oculus',
+      frame: 'oculus-float',
       cameras,
       spawns,
       skybox: 'sky',

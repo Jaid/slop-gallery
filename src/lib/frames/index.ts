@@ -11,6 +11,7 @@ import {readFrame} from './frameParameter.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
 import LodgeTrampFrame from './LodgeTrampFrame.ts'
 import MoonfallMeteoriteFrame from './MoonfallMeteoriteFrame.ts'
+import OculusFloatFrame from './OculusFloatFrame.ts'
 import SalonBarbizonFrame from './SalonBarbizonFrame.ts'
 import SiennaVelvetFrame from './SiennaVelvetFrame.ts'
 import VesperRippleFrame from './VesperRippleFrame.ts'
@@ -31,6 +32,7 @@ export const frames = {
   'fortress-oak': new FortressOakFrame,
   'lodge-tramp': new LodgeTrampFrame,
   'corridor-kumiko': new CorridorKumikoFrame,
+  'oculus-float': new OculusFloatFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()
