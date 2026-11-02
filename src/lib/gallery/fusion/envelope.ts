@@ -3,7 +3,7 @@ import type {FusionTiming} from './timing.ts'
 
 import {clamp, fade} from 'math'
 
-import {beats, choreographed, gathering, implosion, introClock, turns} from './intro.ts'
+import {beats, choreographed, gathering, implosion, introClock, release, ringFall, turns, whirl, whirling} from './intro.ts'
 import {clarityBetween, ingredientAt} from './timing.ts'
 
 /** what the portal’s disc shows: an ingredient by its index, or the result */
@@ -58,28 +58,45 @@ export function portalEnvelope(elapsed: number, outcome: FusionOutcome | undefin
   return canceledAt === undefined || elapsed < canceledAt ? envelope : recoiled(envelope, elapsed, elapsed - canceledAt)
 }
 
-/** The portal brewing once its intro is over, showing the ingredients in turn until the outcome is in. The intro settles into it as it ends, and the souls it reeled in land in it with a blaze, a shockwave and a burst of sparks. */
+/** The portal brewing once its intro is over, showing the ingredients in turn until the outcome is in. The intro settles into it as it ends, and the ring of fire the intro’s slingshot left behind lands in it with a blaze, a big shockwave and a burst of sparks. */
 export function brewing(elapsed: number, timing: FusionTiming, ingredients: number): PortalEnvelope {
   const ingredient = ingredientAt(elapsed, ingredients, timing)
   const energy = 0.92 + 0.08 * Math.sin(elapsed * 3.1) + 0.05 * Math.sin(elapsed * 7.3)
   const landed = elapsed - timing.intro
-  const landing = landed >= 0 && landed < timing.ingredient
-  return {
-    burst: landing ? landed : 10,
-    burstStrength: landing ? 0.6 : 0,
+  const calm: PortalEnvelope = {
+    burst: 10,
+    burstStrength: 0,
     embers: 0,
     energy,
-    flash: landed >= 0 ? 0.75 * Math.exp(-landed * 9) : 0,
+    flash: 0,
     image: ingredient,
     lens: 1,
-    light: brewingLight * energy + (landed >= 0 ? 45 * Math.exp(-landed * 6) : 0),
-    // A small shockwave greets every ingredient as it starts to surface, a big one the souls.
+    light: brewingLight * energy,
+    // A small shockwave greets every ingredient as it starts to surface.
     pulse: Math.max(0, landed) % timing.ingredient,
-    pulseStrength: landing ? 1.2 : 0.35,
+    pulseStrength: 0.35,
     // It swells a little while an ingredient shows, so the image reads.
     size: 1 + 0.03 * Math.sin(elapsed * 2.3) + 0.14 * (ingredient?.clarity ?? 0),
     // The vortex quickens the longer the image model takes.
     spin: 1.6 + 0.04 * Math.min(elapsed, 30),
+  }
+  if (landed < 0) {
+    return calm
+  }
+  // The ring of fire lands: the portal blazes up, swells and lurches, and a big shockwave greets it instead of the first ingredient’s.
+  const landing = landed < timing.ingredient
+  const onset = Math.min(landed / 0.03, 1)
+  const swell = Math.sin(Math.PI / 2 * Math.min(landed / 0.08, 1)) * Math.exp(-landed * 5)
+  return {
+    ...calm,
+    burst: landing ? landed : calm.burst,
+    burstStrength: landing ? 1.2 : 0,
+    energy: energy + onset * Math.exp(-landed * 4) + 1 - onset,
+    flash: 1.3 * Math.exp(-landed * 7),
+    light: calm.light + 140 * Math.exp(-landed * 4.5),
+    pulseStrength: landing ? 2 : calm.pulseStrength,
+    size: calm.size * (1 + 0.38 * swell),
+    spin: calm.spin + 6 * onset * Math.exp(-landed * 3),
   }
 }
 
@@ -184,7 +201,7 @@ function shaped(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: 
 /** the portal’s size after each beat of the ember, and the ember’s once the motes are in */
 const growth = [0.32, 0.55, 0.75, 1] as const
 const easeOutBack = (t: number) => 1 + 2.6 * (t - 1) ** 3 + 1.6 * (t - 1) ** 2
-/** The portal during the intro (see `intro.ts`): a dark singularity feeding on the view, bursting into an ember that the motes kindle and that beats into the portal, settling into {@link brewing} by its end. */
+/** The portal during the intro (see `intro.ts`): a dark singularity feeding on the view, bursting into an ember that the motes kindle and that beats into the portal, which spins up as it whirls the satellites around and draws in the ring of fire they left, settling into {@link brewing} by its end. */
 function opening(elapsed: number, timing: FusionTiming, ingredients: number): PortalEnvelope {
   const t = introClock(elapsed, timing)
   if (t < implosion) {
@@ -236,7 +253,8 @@ function opening(elapsed: number, timing: FusionTiming, ingredients: number): Po
     burstStrength: ignited === undefined ? 1 : 0.9,
     embers: 0,
     energy,
-    flash: 0.6 * Math.exp(-burst * 8) + (ignited === undefined ? 0 : 0.7 * Math.exp(-ignited * 8)),
+    // The ignition only kindles the slingshot, which builds to a blaze of its own.
+    flash: 0.6 * Math.exp(-burst * 8) + (ignited === undefined ? 0 : 0.28 * Math.exp(-ignited * 8)),
     image,
     // The ember bends the view once the room has stopped wobbling.
     lens: (0.4 * kindled + 0.6 * fade(clamp((t - beats[2] + 0.3) / 0.6, 0, 1))) * fade(clamp((t - 1.9) / 0.4, 0, 1)),
@@ -248,19 +266,34 @@ function opening(elapsed: number, timing: FusionTiming, ingredients: number): Po
   }
   // It settles into the brewing portal over its last half second.
   const weight = fade(clamp((t - choreographed + 0.55) / 0.55, 0, 1))
-  if (weight <= 0) {
-    return own
+  let settled = own
+  if (weight > 0) {
+    const brewed = brewing(elapsed, timing, ingredients)
+    const mix = (a: number, b: number) => a + (b - a) * weight
+    settled = {
+      ...own,
+      energy: mix(own.energy, brewed.energy),
+      flash: mix(own.flash, brewed.flash),
+      lens: mix(own.lens, brewed.lens),
+      light: mix(own.light, brewed.light),
+      size: mix(own.size, brewed.size),
+      spin: mix(own.spin, brewed.spin),
+    }
   }
-  const brewed = brewing(elapsed, timing, ingredients)
-  const mix = (a: number, b: number) => a + (b - a) * weight
+  if (t <= whirl) {
+    return settled
+  }
+  // It spins up with the whirl, flares as it lets go and draws the ring of fire in.
+  const speed = whirling(t)
+  const fall = ringFall(t)
+  const letGo = t - release
   return {
-    ...own,
-    energy: mix(own.energy, brewed.energy),
-    flash: mix(own.flash, brewed.flash),
-    lens: mix(own.lens, brewed.lens),
-    light: mix(own.light, brewed.light),
-    size: mix(own.size, brewed.size),
-    spin: mix(own.spin, brewed.spin),
+    ...settled,
+    energy: settled.energy + 0.5 * speed + fall,
+    flash: settled.flash + (letGo < 0 ? 0 : 0.35 * Math.exp(-letGo * 25)),
+    light: settled.light + 25 * speed + 30 * fall,
+    size: settled.size * (1 - 0.08 * speed - 0.15 * Math.sin(Math.PI * fall)),
+    spin: settled.spin + 12 * speed + 6 * Math.sin(Math.PI * fall),
   }
 }
 /** The ingredient whose satellite the ember yanks in `t` seconds into the choreography, as its turn of the surfacing motif. */

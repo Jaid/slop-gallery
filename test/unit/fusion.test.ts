@@ -6,7 +6,7 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
-import {beats, introSeconds, introSiphon, slurp} from '../../src/lib/gallery/fusion/intro.ts'
+import {beats, choreographed, grabs, introSeconds, introTether, introTrail, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, portalRebound, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
 import {fusionTiming, ingredientAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
@@ -178,13 +178,17 @@ describe('intro', () => {
       expect(before.scale).toBeCloseTo(after.scale, 2)
     }
   })
-  test('keeps everything above the floor and moving smoothly', () => {
+  test('keeps everything above the floor, clear of the wall while it whirls and moving smoothly', () => {
+    const setOff = introSeconds(beats[2], fusionTiming)
     for (const satellite of satellites) {
       let last: Vector3 | undefined
-      for (let elapsed = 0; elapsed < end; elapsed += 1 / 120) {
+      for (let elapsed = 0; elapsed < end + 0.5; elapsed += 1 / 120) {
         const {position, scale} = satellitePose(frame, fusionTiming, satellite, elapsed, undefined, pose())
         expect(Number.isFinite(position.x + position.y + position.z + scale)).toBe(true)
         expect(position.y).toBeGreaterThan(0.3)
+        if (elapsed >= setOff) {
+          expect(wallSide(position)).toBeGreaterThan(0.1)
+        }
         // A yank may be quick, but nothing jumps faster than 24 m/s between frames.
         if (last) {
           expect(position.distanceTo(last)).toBeLessThan(0.2)
@@ -211,21 +215,42 @@ describe('intro', () => {
     }
     expect(portalEnvelope(0, undefined, undefined, fusionTiming, 2).size).toBeLessThan(0.1)
   })
-  test('draws both souls out after the last beat, reels them into the portal by its end and sets both circling freely', () => {
-    for (const index of [0, 1]) {
-      expect(introSiphon(index, introSeconds(beats[2], fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
-      expect(introSiphon(index, introSeconds(slurp, fusionTiming), fusionTiming)?.reach).toBeCloseTo(1, 6)
-      let reach = 1
-      for (let elapsed = introSeconds(slurp, fusionTiming); elapsed < end; elapsed += 0.01) {
-        const drawn = introSiphon(index, elapsed, fusionTiming)!
-        expect(drawn.reach).toBeLessThanOrEqual(reach)
-        reach = drawn.reach
-      }
-      expect(introSiphon(index, just, fusionTiming)!.reach).toBeLessThan(0.01)
-      expect(introSiphon(index, end, fusionTiming)).toBeUndefined()
-      expect(introSiphon(index, end + 3, fusionTiming)).toBeUndefined()
+  test('whirls both an extra lap on tethers from the last beat on, lets go of them at full speed and sets both circling freely', () => {
+    expect(whirled(whirl)).toBe(0)
+    expect(whirling(release)).toBeCloseTo(1, 9)
+    expect(whirled(choreographed)).toBeCloseTo(Math.PI * 2, 9)
+    expect(whirled(choreographed + 1)).toBeCloseTo(Math.PI * 2, 9)
+    let angle = 0
+    for (let t = whirl; t < choreographed + 0.5; t += 0.005) {
+      expect(whirled(t)).toBeGreaterThanOrEqual(angle)
+      angle = whirled(t)
     }
+    for (const index of [0, 1]) {
+      expect(introTether(index, introSeconds(grabs[index], fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
+      expect(introTether(index, introSeconds(grabs[index] + 0.1, fusionTiming), fusionTiming)?.reach).toBeCloseTo(1, 6)
+      expect(introTether(index, introSeconds(release + 0.1, fusionTiming), fusionTiming)).toBeUndefined()
+      expect(introTether(index, end + 3, fusionTiming)).toBeUndefined()
+    }
+    expect(introOrbitRate(introSeconds(release, fusionTiming), fusionTiming)).toBeGreaterThan(orbitSpeed * 4)
     expect(Math.abs(introOrbitRate(just, fusionTiming) - orbitSpeed)).toBeLessThan(0.3)
+  })
+  test('the ring of fire left behind falls into the portal and lands as the intro ends, with a blaze', () => {
+    for (const index of [0, 1]) {
+      expect(introTrail(index, introSeconds(whirl, fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
+      let reach = 1
+      for (let elapsed = introSeconds(release, fusionTiming); elapsed < end; elapsed += 0.01) {
+        const blazing = introTrail(index, elapsed, fusionTiming)!
+        expect(blazing.reach).toBeLessThanOrEqual(reach)
+        reach = blazing.reach
+      }
+      expect(introTrail(index, just, fusionTiming)!.reach).toBeLessThan(0.01)
+      expect(introTrail(index, end, fusionTiming)).toBeUndefined()
+    }
+    const landing = portalEnvelope(end, undefined, undefined, fusionTiming, 2)
+    expect(landing.flash).toBeGreaterThan(1)
+    expect(landing.burst).toBe(0)
+    expect(landing.burstStrength).toBeGreaterThan(1)
+    expect(portalEnvelope(end + 2, undefined, undefined, fusionTiming, 2).flash).toBeLessThan(0.01)
   })
 })
 const spec = () => ({

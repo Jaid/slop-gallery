@@ -2,7 +2,7 @@ import type {FusionTiming} from '../gallery/fusion/timing.ts'
 import type {Vec3} from '../gallery/types.ts'
 import type {AudioOutput} from './proceduralAudio.ts'
 
-import {beats, choreographed, drags, gathering, implosion, introSeconds, seizures, slurp, yank} from '../gallery/fusion/intro.ts'
+import {beats, choreographed, drags, gathering, grabs, implosion, introSeconds, release, whirl, whirled, whirling, yank} from '../gallery/fusion/intro.ts'
 import {whiteNoise} from './ambience/base/noise.ts'
 
 type Tone = {
@@ -330,7 +330,7 @@ export default class FusionSound {
     this.play(source.connect(shaping), source, start, duration, volume, attack, Math.random() * 3)
   }
 
-  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, the ember’s heartbeat, its first two beats yanking the satellites in with a whoosh and its third igniting the portal with a roar and a chord, and the portal drawing the souls out with the snap of its strands and a ghostly wail rising over it, slurping them in and landing them with a thump. */
+  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, the ember’s heartbeat, its first two beats yanking the satellites in with a whoosh and its third igniting the portal with a short roar and a chord, and the portal’s slingshot: the zip of its tethers lashing out, a whir climbing to a howl under whooshes passing ever faster while it whirls both around, a snap and a twang as it lets go, a rush as the ring of fire falls in and a boom, a blast of air, a bright chord and glitter as it lands. */
   private intro(start: number, timing: FusionTiming) {
     const at = (seconds: number) => start + introSeconds(seconds, timing)
     const until = (from: number, to: number) => introSeconds(to - from, timing)
@@ -471,68 +471,116 @@ export default class FusionSound {
         attack: 0.03,
       })
     }
-    // The last beat ignites it: a roar of flame and a chord.
+    // The last beat ignites it: a short roar and a chord.
     const ignition = beats.at(-1)!
-    this.hiss(at(ignition), 1, {
+    this.hiss(at(ignition), 0.5, {
       filter: 'bandpass',
       frequency: 300,
       end: 2500,
       q: 0.7,
-      volume: 0.08,
-      attack: 0.08,
+      volume: 0.07,
+      attack: 0.05,
     })
-    for (const [index, frequency] of [440, 554.37, 659.25, 880].entries()) {
-      this.bell(at(ignition) + 0.04 + index * 0.04, frequency, 0.02, 1.8)
+    for (const [index, frequency] of [440, 554.37, 659.25].entries()) {
+      this.bell(at(ignition) + 0.04 + index * 0.04, frequency, 0.013, 1.1)
     }
-    // The strands snap out, and a wail of two trembling voices rises while they draw the souls out.
-    for (const seizure of seizures) {
-      this.hiss(at(seizure), 0.09, {
+    // Each tether lashes out with a zip.
+    for (const grab of grabs) {
+      this.hiss(at(grab), 0.07, {
         filter: 'bandpass',
-        frequency: 2600,
-        end: 5200,
+        frequency: 2400,
+        end: 5000,
         q: 2.5,
         volume: 0.045,
         attack: 0.002,
       })
     }
-    for (const [index, frequency] of [392, 587.33].entries()) {
-      this.tone(at(seizures[0]) + 0.08, until(seizures[0], choreographed), {
-        frequency,
-        end: frequency * 2,
-        volume: 0.011,
-        attack: until(seizures[0] + 0.3, choreographed),
-        vibrato: [frequency * 0.018, 5.3 + index * 0.9],
+    // The whirl: a whir climbing to a howl and whooshes passing ever faster, six a lap, each a little higher.
+    const whirlUp = until(whirl, release)
+    this.tone(at(whirl), whirlUp + 0.04, {
+      frequency: 80,
+      end: 420,
+      volume: 0.03,
+      attack: whirlUp * 0.95,
+      type: 'triangle',
+      vibrato: [8, 13],
+    })
+    this.hiss(at(whirl), whirlUp + 0.03, {
+      filter: 'bandpass',
+      frequency: 400,
+      end: 3000,
+      q: 1.4,
+      volume: 0.075,
+      attack: whirlUp * 0.95,
+    })
+    let passes = 0
+    for (let moment: number = whirl; moment < choreographed; moment += 0.002) {
+      const due = Math.floor(whirled(moment) / (Math.PI / 3))
+      if (due <= passes) {
+        continue
+      }
+      passes = due
+      const speed = whirling(moment)
+      this.hiss(at(moment), 0.07 + 0.12 * (1 - speed), {
+        filter: 'bandpass',
+        frequency: 500 + 1800 * speed,
+        q: 1.8,
+        volume: 0.03 + 0.08 * speed,
+        attack: 0.03 + 0.04 * (1 - speed),
       })
     }
-    // They slurp the souls in, ever faster, and land them in the portal with a thump.
-    this.hiss(at(slurp), until(slurp, choreographed) + 0.04, {
-      filter: 'bandpass',
-      frequency: 450,
-      end: 6000,
-      q: 3,
-      volume: 0.08,
-      attack: until(slurp + 0.05, choreographed),
+    // It lets go: a snap and a twang, while the ring of fire falls in with a rush sucked into the portal.
+    this.hiss(at(release), 0.04, {
+      filter: 'highpass',
+      frequency: 3600,
+      volume: 0.13,
+      attack: 0.001,
     })
-    this.tone(at(slurp), until(slurp, choreographed), {
-      frequency: 160,
-      end: 1300,
-      volume: 0.014,
-      attack: until(slurp + 0.05, choreographed),
+    this.tone(at(release), 0.22, {
+      frequency: 1300,
+      end: 320,
+      volume: 0.022,
+      attack: 0.002,
       type: 'triangle',
     })
-    this.tone(at(choreographed), 0.55, {
-      frequency: 110,
-      end: 38,
-      volume: 0.13,
-      attack: 0.004,
-    })
-    this.hiss(at(choreographed), 0.4, {
+    const falling = until(release, choreographed)
+    this.hiss(at(release), falling + 0.02, {
       filter: 'lowpass',
-      frequency: 2600,
-      end: 180,
-      volume: 0.05,
+      frequency: 300,
+      end: 5000,
+      volume: 0.09,
+      attack: falling * 0.95,
+    })
+    this.tone(at(release), falling, {
+      frequency: 300,
+      end: 1500,
+      volume: 0.012,
+      attack: falling * 0.9,
+    })
+    // It lands: a boom, a blast of air, a bright chord and glitter.
+    this.tone(at(choreographed), 1.2, {
+      frequency: 120,
+      end: 32,
+      volume: 0.15,
       attack: 0.004,
     })
+    this.hiss(at(choreographed), 0.8, {
+      filter: 'lowpass',
+      frequency: 4500,
+      end: 150,
+      volume: 0.09,
+      attack: 0.004,
+    })
+    for (const [index, frequency] of [659.25, 830.61, 987.77, 1318.51].entries()) {
+      this.bell(at(choreographed) + 0.02 + index * 0.03, frequency, 0.02, 2.2)
+    }
+    for (let index = 0; index < 12; index++) {
+      this.tone(at(choreographed) + 0.04 + Math.random() * 0.7, 0.05 + Math.random() * 0.08, {
+        frequency: 2600 + Math.random() * 4200,
+        volume: 0.008,
+        attack: 0.002,
+      })
+    }
   }
 
   /** whether a sound due at `start` is already over, like the start of an intro the sound engine was made too late for */

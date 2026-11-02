@@ -5,7 +5,7 @@ import type {FusionTiming} from './timing.ts'
 import {clamp, fade} from 'math'
 import {Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
-import {beats, departure, dragged, drags, implosion, introClock, introSeconds, yank} from './intro.ts'
+import {beats, choreographed, departure, dragged, drags, implosion, introClock, introSeconds, release, whirl, whirled, whirlRate, yank} from './intro.ts'
 
 /** radians per second the satellites circle the portal at while it brews */
 export const orbitSpeed = 1.45
@@ -17,6 +17,8 @@ const shrinkFrom = 0.35
 export const fizzleRelease = 0.3
 /** radians per second a prop tumbles around its axis while it orbits */
 export const tumbleSpeed = 1.9
+/** how far the tethers pull the satellites in while the intro whirls them, as a share of the orbit */
+const tightened = 0.1
 
 /** something orbiting a fusion’s portal: the work or what was thrown into it */
 export type SatelliteOrbit = {
@@ -52,6 +54,10 @@ const tangent = new Vector3
 const center = new Vector3
 const toward = new Vector3
 const offset = new Vector3
+const unwhirled = new Vector3
+const whirledTo = new Vector3
+const facingBefore = new Quaternion
+const facingAfter = new Quaternion
 /** how far out beyond its place on the orbit the burst knocks a satellite, as a share of the orbit */
 const drift = 1.3
 const from: SatellitePose = {
@@ -150,9 +156,9 @@ export function orbiting(frame: PortalFrame, satellite: SatelliteOrbit, elapsed:
   return out
 }
 
-/** radians per second the satellites circle the portal at `elapsed` seconds into the intro: not at all until the last beat sets them off */
+/** radians per second the satellites circle the portal at `elapsed` seconds into the intro: not at all until the last beat sets them off, and far faster while the portal whirls them */
 export function introOrbitRate(elapsed: number, timing: FusionTiming) {
-  return orbitSpeed * clamp((introClock(elapsed, timing) - beats[2]) / departure, 0, 1)
+  return orbitSpeed * clamp((introClock(elapsed, timing) - beats[2]) / departure, 0, 1) + whirlRate(elapsed, timing)
 }
 
 /** The orbit running down and shuddering through the start of a fizzle, `progress` of the way through it. */
@@ -161,8 +167,21 @@ function stuttering(frame: PortalFrame, timing: FusionTiming, satellite: Satelli
   const angle = orbitAngle(satellite.phase, failedAt) + orbitSpeed * (stutter - stutter ** 2 / (2 * fizzleRelease * timing.fizzle) * 0.8)
   return orbiting(frame, satellite, elapsed, angle, 1 + Math.sin(elapsed * 47) * 0.035, out)
 }
+/** an elastic return from `displaced` to 0 over `seconds`, pushed on by `kick` at the start; exactly 0 from `seconds` on */
+function spring(after: number, displaced: number, kick: number, seconds: number) {
+  if (after <= 0) {
+    return displaced
+  }
+  if (after >= seconds) {
+    return 0
+  }
+  const decay = 4.2 / seconds
+  const swing = 2.4 * Math.PI / seconds
+  const taper = 1 - (after / seconds) ** 4
+  return (displaced * Math.cos(swing * after) + kick * Math.sin(swing * after)) * Math.exp(-decay * after) * taper
+}
 /**
- * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, on its beat of the ember, yanked to its place beside it, from where the last beat sets it off around the portal.
+ * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, on its beat of the ember, yanked to its place beside it, from where the last beat sets it off around the portal, whirled an extra lap on the portal’s tether.
  */
 function entering(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrbit, elapsed: number, out: SatellitePose) {
   const t = introClock(elapsed, timing)
@@ -171,7 +190,8 @@ function entering(frame: PortalFrame, timing: FusionTiming, satellite: Satellite
   if (t < yanked) {
     return loose(frame, timing, satellite, t, out)
   }
-  orbiting(frame, satellite, elapsed, rampedAngle(satellite.phase, elapsed, introSeconds(beats[2], timing), introSeconds(departure, timing)), 1, out)
+  const angle = rampedAngle(satellite.phase, elapsed, introSeconds(beats[2], timing), introSeconds(departure, timing))
+  orbiting(frame, satellite, elapsed, angle, 1, out)
   // It bobs in its place until the last beat sets it off.
   const dangling = 1 - fade(clamp((t - beats[2]) / departure, 0, 1))
   out.position.addScaledVector(tangent.fromArray(frame.tangent), 0.05 * Math.sin(t * 3.1 + index) * dangling).addScaledVector(up, 0.03 * Math.sin(t * 4.3 + index * 2) * dangling)
@@ -182,6 +202,21 @@ function entering(frame: PortalFrame, timing: FusionTiming, satellite: Satellite
   out.position.lerpVectors(from.position, out.position, pull)
   out.quaternion.slerpQuaternions(from.quaternion, target.copy(out.quaternion), clamp(pull, 0, 1))
   out.scale = from.scale + (out.scale - from.scale) * clamp(pull, 0, 1.1)
+  if (t <= whirl) {
+    return out
+  }
+  // The tether whirls it an extra lap around the portal, pulled in a little, then lets go, and it coasts on out into the orbit, overshooting it and springing back.
+  const letGo = t - release
+  const reach = letGo < 0 ? 1 - tightened * fade(clamp((t - whirl) / 0.2, 0, 1)) : 1 + spring(introSeconds(letGo, timing), -tightened, 0.1, introSeconds(choreographed - release, timing))
+  orbitPoint(frame, angle, 1, unwhirled)
+  orbitPoint(frame, angle + whirled(t), reach, whirledTo)
+  out.position.add(whirledTo).sub(unwhirled)
+  if (!satellite.tumble) {
+    // A work keeps facing the room from wherever the whirl takes it.
+    orbitFacing(frame, unwhirled, 0, facingBefore)
+    orbitFacing(frame, whirledTo, 0, facingAfter)
+    out.quaternion.premultiply(facingAfter.multiply(facingBefore.invert()))
+  }
   return out
 }
 /** Where the satellite is `t` seconds into the choreography until the ember yanks it in: rattling, then dragged toward the singularity, swirling and spinning, and knocked out by the burst to its own side, past the place the ember will yank it to, drifting there and still turning. */

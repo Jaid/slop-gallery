@@ -9,7 +9,7 @@ import FusionSound from '#src/lib/audio/FusionSound.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
-import {decorateIntro, introSiphon} from '#src/lib/gallery/fusion/intro.ts'
+import {decorateIntro, introTether, introTrail} from '#src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitAngle} from '#src/lib/gallery/fusion/orbit.ts'
 import PortalVisuals, {emberPalette, paletteOf} from '#src/lib/gallery/fusion/PortalVisuals.ts'
 import {holdArtworkTexture} from '#src/lib/useArtworkTexture.ts'
@@ -112,20 +112,32 @@ export default class PortalShow {
     decorateIntro(visuals, elapsed, timing, frame.normal)
     this.satellites.update(elapsed)
     middle.fromArray(frame.center)
-    for (const [index, siphon] of visuals.siphons.entries()) {
+    for (const [index, tether] of visuals.tethers.entries()) {
       const from = this.satellites.centers[index]
-      const drawn = from && introSiphon(index, elapsed, timing)
-      siphon.uniforms.energy.value = drawn ? Math.min(envelope.energy, 1.3) * drawn.glow : 0
-      if (!drawn) {
+      const held = from && introTether(index, elapsed, timing)
+      tether.uniforms.energy.value = held ? held.glow : 0
+      if (!held) {
         continue
       }
-      siphon.uniforms.clock.value = elapsed
-      siphon.uniforms.flow.value = drawn.flow
-      siphon.uniforms.slack.value = drawn.slack
-      siphon.uniforms.soul.value = drawn.soul
-      siphon.uniforms.width.value = drawn.width
-      siphon.uniforms.to.value.copy(middle)
-      siphon.uniforms.from.value.lerpVectors(middle, from, drawn.reach)
+      tether.uniforms.clock.value = elapsed
+      tether.uniforms.flow.value = held.flow
+      tether.uniforms.knot.value = held.knot
+      tether.uniforms.slack.value = held.slack
+      tether.uniforms.width.value = held.width
+      tether.uniforms.to.value.copy(middle)
+      tether.uniforms.from.value.lerpVectors(middle, from, held.reach)
+    }
+    for (const [index, trail] of visuals.trails.entries()) {
+      const head = this.satellites.centers[index]
+      const blazing = head && introTrail(index, elapsed, timing)
+      trail.uniforms.energy.value = blazing ? blazing.energy : 0
+      if (!blazing) {
+        continue
+      }
+      trail.follow(frame, head, blazing.reach)
+      trail.uniforms.clock.value = elapsed
+      trail.uniforms.length.value = blazing.length
+      trail.uniforms.width.value = blazing.width
     }
     this.light.intensity = envelope.light
     this.light.color.copy(this.paint.swirl).lerp(this.paint.rim, envelope.flash / 2)
