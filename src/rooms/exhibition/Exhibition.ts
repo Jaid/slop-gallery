@@ -37,6 +37,7 @@ export default class Exhibition extends Room {
   constructor() {
     super({
       title: 'The Exhibition',
+      frame: 'exhibition-evidence',
       cameras,
       spawns,
       lamps,
