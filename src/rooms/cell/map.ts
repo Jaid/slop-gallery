@@ -13,6 +13,7 @@ const round = (value: number) => Math.round(value * 1e4) / 1e4 + 0
 export default function cellMap(layout: CellLayout) {
   const [width, depth] = layout.size
   const half = width / 2 - inset
+  const halfDepth = depth / 2 - inset
   const archHalf = layout.arch.width / 2 - inset
   const shapes: Array<string> = []
   const {vestibule} = layout
@@ -20,9 +21,9 @@ export default function cellMap(layout: CellLayout) {
     const [x, z] = vestibule.center
     // Through the north wall and the passage beyond, a little into the round room’s inset.
     const notch = layout.northZ - layout.passage - inset - 0.025
-    shapes.push(`<path d="M ${-half} ${-half} H ${round(x - archHalf)} V ${round(notch)} H ${round(x + archHalf)} V ${-half} H ${half} V ${half} H ${-half} Z"/>`, `<circle cx="${round(x)}" cy="${round(z)}" r="${round(vestibule.radius - inset)}"/>`)
+    shapes.push(`<path d="M ${-half} ${-halfDepth} H ${round(x - archHalf)} V ${round(notch)} H ${round(x + archHalf)} V ${-halfDepth} H ${half} V ${halfDepth} H ${-half} Z"/>`, `<circle cx="${round(x)}" cy="${round(z)}" r="${round(vestibule.radius - inset)}"/>`)
   } else {
-    shapes.push(`<rect x="${-half}" y="${-half}" width="${round(half * 2)}" height="${round(half * 2)}"/>`)
+    shapes.push(`<rect x="${-half}" y="${-halfDepth}" width="${round(half * 2)}" height="${round(halfDepth * 2)}"/>`)
   }
   // Every column by its plinth.
   const pedestals = layout.pedestals.map(({position: [x, z]}) => `<circle cx="${round(x)}" cy="${round(z)}" r="${columnPedestalRadius.foot}"/>`)
