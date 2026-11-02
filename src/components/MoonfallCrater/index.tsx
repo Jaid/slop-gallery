@@ -26,7 +26,7 @@ export default function MoonfallCrater({stone}: {stone: Texture}) {
   const geometry = useDisposable(useMemo(() => new CraterGeometry, []))
   const fence = useDisposable(useMemo(() => new StanchionRingGeometry(moonfallCrater.fenceRadius, moonfallCrater.fencePosts), []))
   const collision = [geometry.floor, geometry.terrain, geometry.rocks, fence.postCollision, fence.rope].map(colliderGeometry)
-  const rock = useDisposable(useMemo(() => new CraterMaterial(false), []))
+  const rock = useDisposable(useMemo(() => new CraterMaterial({rock: true}), []))
   const terrain = useDisposable(useMemo(() => new CraterMaterial, []))
   const velvet = useDisposable(useMemo(() => new VelvetRopeMaterial, []))
   const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
