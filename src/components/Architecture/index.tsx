@@ -23,6 +23,7 @@ import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
+import MarmorinoMaterial from '#src/lib/materials/MarmorinoMaterial.ts'
 import {TravertineWallMaterial} from '#src/lib/materials/travertine/index.ts'
 import VesperWallMaterial from '#src/lib/materials/VesperWallMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
@@ -66,6 +67,8 @@ export default function Architecture() {
   const wood = useDisposable(useMemo(() => surfaceTexture('wood', surfaceAnisotropy), [surfaceAnisotropy]))
   // The Sienna is papered in damask above dark wood: its baseboards, reveals, cornice, wainscot and joists share one varnished timber.
   const damask = useDisposable(useMemo(() => new DamaskWallpaperMaterial, []))
+  // The Antechamber is plastered in burnished marmorino.
+  const marmorino = useDisposable(useMemo(() => new MarmorinoMaterial, []))
   const joineryX = useDisposable(useMemo(() => new JoineryWoodMaterial({grain: 'x'}), []))
   const joineryZ = useDisposable(useMemo(() => new JoineryWoodMaterial({
     grain: 'z',
@@ -117,6 +120,9 @@ export default function Architecture() {
     }
     if (wall.room === 'sienna') {
       return damask
+    }
+    if (wall.room === 'antechamber') {
+      return marmorino
     }
     if (wall.room === 'cinnabar') {
       return cinnabar.surface(wall)
