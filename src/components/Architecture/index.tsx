@@ -2,7 +2,6 @@ import type {Wall} from '#src/lib/gallery.ts'
 
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import GalleryLighting from '#component/GalleryLighting'
@@ -14,6 +13,7 @@ import {surfaceTexture} from '#src/components/Scene/materials.ts'
 import WallSurface from '#src/components/Scene/WallSurface.tsx'
 import {cutArchitectures, provideArchitecture} from '#src/lib/gallery/architecture.ts'
 import {siennaWainscotFields} from '#src/lib/gallery/siennaWainscot.ts'
+import ArchitecturalConcreteMaterial from '#src/lib/materials/ArchitecturalConcreteMaterial.ts'
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import BanquetMaterials from '#src/lib/materials/BanquetMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
@@ -82,12 +82,8 @@ export default function Architecture() {
   const banquet = useDisposable(useMemo(() => new BanquetMaterials, []))
   // The Cinnabar’s are frescoed in Pompeian red over a black socle, their panels laid out around each wall’s doorways too.
   const cinnabar = useDisposable(useMemo(() => new CinnabarMaterials, []))
-  const oculusMaterial = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    map: stone,
-    color: '#4c5558',
-    roughness: 0.95,
-    envMapIntensity: 0,
-  }), [stone]))
+  // The Oculus and the Exhibition are cast in dark concrete, board-formed walls over troweled floors.
+  const oculusMaterial = useDisposable(useMemo(() => new ArchitecturalConcreteMaterial, []))
   const wallMaterial = (wall: Wall) => {
     if (wall.room === 'oculus' || wall.room === 'exhibition') {
       return oculusMaterial
