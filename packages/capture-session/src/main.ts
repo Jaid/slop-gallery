@@ -1,3 +1,5 @@
+export type {CaptureWarmupOptions} from './CaptureWarmup.ts'
+export {default as CaptureWarmup} from './CaptureWarmup.ts'
 export {default as FloodTriangles} from './FloodTriangles.ts'
 export {collectMeshPath, matchesMeshPath, normalizeMeshPath} from './meshPath.ts'
 export {swapTriangleGeometry} from './triangleGeometry.ts'

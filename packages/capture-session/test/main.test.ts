@@ -8,6 +8,8 @@ describe('capture-session', () => {
     expect(captureSession.WireframeFloodPass).toBeFunction()
     expect(captureSession.WireframeRenderPipeline).toBeFunction()
     expect(captureSession.applyWireframeFlood).toBeFunction()
+    expect(captureSession.CaptureWarmup).toBeFunction()
+    expect(script.endWarmup).toBeFunction()
     expect(script.sampleWireframe).toBeFunction()
     expect(script.setWireframe).toBeFunction()
   })

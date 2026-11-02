@@ -45,5 +45,17 @@ export const waitForLoadingItems = async (page: Page, {between, timeout = 120_00
   }
 }
 
+/** what `end_warmup` reports: whether the page was still warming up, and the drawing buffer’s size it renders at from now on */
+export type WarmupEnd = {
+  height: number
+  warmed: boolean
+  width: number
+}
+
+/**
+ * Ends the page’s capture warmup (see `CaptureWarmup`) through the app’s `end_warmup` tool, which resolves once the canvas has its regular size. Call it once nothing is left loading at the warmup scale, then render a few frames before capturing, so temporal effects build their history at the new size. A page without a warmup reports `warmed: false` and its current size.
+ */
+export const endWarmup = (page: Page) => callWebmcpTool(page, 'end_warmup') as Promise<WarmupEnd>
+
 /** Changes the wireframe flood through the `set_wireframe` tool, with its snake_case input, and resolves with the whole flood now in effect. */
 export const setWireframe = (page: Page, input: Record<string, unknown>) => callWebmcpTool(page, 'set_wireframe', input) as Promise<Record<string, unknown>>
