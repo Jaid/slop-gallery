@@ -50,7 +50,7 @@ test('the complete fireplace faces inward from the south wall without moving the
     }
     expect(origin.x).toBeCloseTo(lodge.center[0])
     expect(origin.z).toBeCloseTo(-30.8)
-    expect(toWorld([fire.position[0], fire.position[1], fire.position[2] + fire.light.glowPosition[2]]).z).toBeCloseTo(-31.15)
+    expect(toWorld([fire.position[0], fire.position[1], fire.position[2] + fire.light.position[2]]).z).toBeCloseTo(-31.1)
     const fireplaceForward = new Vector3(0, 0, 1)
     expect(fireplaceForward.transformDirection(transform).z).toBeCloseTo(-1)
     expect(descendants(room).find(child => child.props.position?.[0] === -3.7)).toBeDefined()

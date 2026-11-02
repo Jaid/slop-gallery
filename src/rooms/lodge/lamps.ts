@@ -9,7 +9,7 @@ const {chandelier} = lodgeInterior
 const fromFire = ([x, y, z]: Vec3): Vec3 => [-(fire.position[0] + x), fire.position[1] + y, -(fire.position[2] + z)]
 
 export default {
-  // High above the front log, flickering around an average of 90%. Fast graphics, which have no flames, let it glow lower and steadier from the ember bed instead.
+  // High above the front log, flickering with the flames around an average of 90%.
   fire: {
     position: fromFire(fire.light.position),
     strength: 68,

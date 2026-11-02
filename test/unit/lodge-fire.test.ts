@@ -2,7 +2,7 @@ import type {BufferAttribute, InterleavedBufferAttribute, MeshStandardNodeMateri
 
 import {expect, spyOn, test} from 'bun:test'
 
-import {AdditiveBlending, Box3, Mesh, Vector3} from 'three/webgpu'
+import {AdditiveBlending, Box3, Mesh, Vector3, ViewportDepthTextureNode} from 'three/webgpu'
 
 import Coals, {clearOfLogs, fireCoals} from '../../src/lib/gallery/fireplace/Coals.ts'
 import fire from '../../src/lib/gallery/fireplace/config.ts'
@@ -168,6 +168,27 @@ test('fire materials glow without lighting, and flames are additive light that n
     flame.dispose()
     bed.dispose()
     log.dispose()
+  }
+})
+test('only soft flames read the depth buffer, hard ones still glow additively', () => {
+  const readsDepth = (material: FlameMaterial) => {
+    let found = false
+    material.colorNode!.traverse(node => {
+      found ||= node instanceof ViewportDepthTextureNode
+    })
+    return found
+  }
+  const soft = new FlameMaterial
+  const hard = new FlameMaterial({soft: false})
+  try {
+    expect(readsDepth(soft)).toBe(true)
+    expect(readsDepth(hard)).toBe(false)
+    expect(hard.blending).toBe(AdditiveBlending)
+    expect(hard.depthWrite).toBe(false)
+    expect(hard.maskNode).not.toBeNull()
+  } finally {
+    soft.dispose()
+    hard.dispose()
   }
 })
 test('every charred log shares one shader build and keeps its own direction and size', () => {

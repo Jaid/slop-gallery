@@ -18,7 +18,10 @@ const softness = 0.07
  * Flames are light, not surfaces – they blend additively, never write depth and ignore scene lighting. Fragments without any heat are discarded.
  */
 export default class FlameMaterial extends MeshBasicNodeMaterial {
-  constructor() {
+  constructor({soft = true}: {
+    /** whether flames fade out in front of the wood behind them instead of cutting off at it, which copies the depth buffer every frame they are drawn */
+    soft?: boolean
+  } = {}) {
     super({
       transparent: true,
       depthWrite: false,
@@ -59,13 +62,12 @@ export default class FlameMaterial extends MeshBasicNodeMaterial {
     const breath = mx_noise_float(vec3(time.mul(1.6).add(offset), offset, 0)).mul(0.5).add(mx_noise_float(vec3(time.mul(4.3).sub(offset), 0, offset)).mul(0.2))
     const flare = breath.mul(0.35).add(1)
     const density = body.mul(smoothstep(0, 0.14, v)).mul(border).sub(v.pow(1.4).mul(erosion).mul(float(1.15).div(flare))).sub(pinch).clamp()
-    // Hotter, denser gas sits low in the flame.
     // Soft intersections: fade out where wood sits just behind the sheet, so a log crossing a flame never shows a hard seam.
-    const behind = positionView.z.sub(perspectiveDepthToViewZ(viewportDepthTexture(screenUV), cameraNear, cameraFar))
-    const soft = smoothstep(0, softness, behind)
-    const heat = density.smoothstep(0.02, 0.65).mul(v.mul(-0.5).add(0.95)).mul(soft)
+    const fade = soft ? smoothstep(0, softness, positionView.z.sub(perspectiveDepthToViewZ(viewportDepthTexture(screenUV), cameraNear, cameraFar))) : float(1)
+    // Hotter, denser gas sits low in the flame.
+    const heat = density.smoothstep(0.02, 0.65).mul(v.mul(-0.5).add(0.95)).mul(fade)
     // Where the gas first meets air at the root, it burns blue before the soot glows.
-    const root = smoothstep(0.16, 0.02, v).mul(density.smoothstep(0.1, 0.5)).mul(soft)
+    const root = smoothstep(0.16, 0.02, v).mul(density.smoothstep(0.1, 0.5)).mul(fade)
     this.colorNode = mix(fireColor(heat).mul(brightness).mul(flare.mul(0.5).add(0.5)), color('#3d63ff').mul(0.55), root.mul(0.6))
     this.opacityNode = float(1)
     // Ambient occlusion and temporal antialiasing read the normal and velocity targets, which every fragment overwrites without blending. Keep the empty rest of each quad out of them.
