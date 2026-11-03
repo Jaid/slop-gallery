@@ -12,6 +12,7 @@ import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import {arrivalFrame} from '../../src/lib/gallery/actions.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {portalFrame} from '../../src/lib/gallery/fusion/portalFrame.ts'
+import {nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {environmentSeed} from '../../src/lib/gameSeed.ts'
 import samplePortraits from './fixtures/portraits.ts'
@@ -461,16 +462,22 @@ test('whatever the player carries when the result flips out stays in hand', asyn
     director.dispose()
   }
 })
-test('a failure shows once the fusion fizzled out after its minimum, then releases both originals', async () => {
+test('a failure shows once the fusion fizzled out after its intro, without waiting for the minimum, then releases both originals', async () => {
   const director = new TestDirector(defaults, 'test', brief)
   try {
     const job = director.fuse('a', 'b')
     director.result.reject(new Error('Provider unavailable'))
-    await sleep(0.08)
+    await sleep(0.01)
     expect(useGallery.getState().portraits.find(p => p.id === 'a')?.fusing).toBe(true)
-    expect(director.opened[0].outcome?.kind).toBe('failure')
+    expect(director.opened[0].outcome).toEqual({
+      kind: 'failure',
+      at: brief.intro,
+    })
+    // It has fizzled out before a result would even have been due.
+    await sleep(brief.minimum - director.opened[0].elapsed())
+    expect(director.opened[0].closed).toBe(true)
     await job
-    expect(director.opened[0].elapsed()).toBeGreaterThanOrEqual(brief.minimum + brief.fizzle)
+    expect(director.opened[0].elapsed()).toBeGreaterThanOrEqual(brief.intro + brief.fizzle)
     expect(director.opened[0].closed).toBe(true)
     expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
     expect(useGallery.getState().notice).toContain('did not finish')
@@ -487,14 +494,15 @@ test('jumping into the portal breaks the fusion off with a notice at once, gives
     expect(fusion.cancel()).toBe(true)
     expect(director.signal?.aborted).toBe(true)
     expect(useGallery.getState().notice).toBe('You canceled the fusion. Both originals are still here.')
+    // It fails as the next turn of the images begins, without waiting for the minimum.
     expect(fusion.outcome).toEqual({
       kind: 'failure',
-      at: brief.minimum,
+      at: nextTurn(fusion.canceledAt!, brief),
     })
     // The image model never answers, and the fusion doesn’t wait for it.
     await job
     expect(fusion.closed).toBe(true)
-    expect(fusion.elapsed()).toBeGreaterThanOrEqual(brief.minimum + brief.fizzle)
+    expect(fusion.elapsed()).toBeGreaterThanOrEqual(fusion.outcome!.at + brief.fizzle)
     expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
     expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
     expect(useGallery.getState().notice).toBe('You canceled the fusion. Both originals are still here.')

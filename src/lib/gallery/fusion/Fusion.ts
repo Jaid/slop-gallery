@@ -49,7 +49,7 @@ let opened = 0
 
 /**
  * A fusion as the gallery shows it: a portal opens in front of the hung portrait with its intro, which brings the portrait and what was thrown into it into orbit around it, while the portal shows their images in turn.
- * The director tells it how the fusion went and waits for its timeline: the outcome never shows before {@link FusionTiming.minimum}, a result flips out after the climax and a failure hands everything back after the fizzle.
+ * The director tells it how the fusion went and waits for its timeline: a result never shows before {@link FusionTiming.minimum} and flips out after the climax, while a failure only waits for the intro and hands everything back after the fizzle.
  * Its own clock is `performance.now()`, which the renderer and the virtual clock of the film script follow too.
  */
 export default class Fusion {
@@ -121,7 +121,7 @@ export default class Fusion {
     const elapsed = this.elapsed()
     this.canceledAt = elapsed
     this.canceller.abort(new DOMException('The player broke the fusion off.', 'AbortError'))
-    this.failAt(Math.max(nextTurn(elapsed, this.timing), this.timing.minimum)).catch(() => this.close())
+    this.failAt(nextTurn(elapsed, this.timing)).catch(() => this.close())
     return true
   }
 
@@ -140,7 +140,7 @@ export default class Fusion {
     this.closeAt(emergedAt + this.afterglow).catch(() => this.close())
   }
 
-  /** Shows the failure, no sooner than the minimum: the portal fizzles out, the hung portrait flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */
+  /** Shows the failure, no sooner than the end of the intro, as it need not wait for the minimum: the portal fizzles out, the hung portrait flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */
   async fail() {
     if (this.outcome?.kind === 'failure') {
       await this.over.promise
@@ -149,7 +149,7 @@ export default class Fusion {
     if (this.settled()) {
       return
     }
-    await this.failAt(Math.max(this.elapsed(), this.timing.minimum))
+    await this.failAt(Math.max(this.elapsed(), this.timing.intro))
   }
 
   /** Ends the fusion once its director is done with it. One whose result flipped out keeps glowing until its afterglow is over; any other is aborted. */

@@ -286,7 +286,7 @@ describe('fusion', () => {
   const timing = {
     intro: 0.08,
     image: 0.02,
-    minimum: 0.08,
+    minimum: 0.2,
     climax: 0.04,
     afterglow: 0.03,
     fizzle: 0.04,
@@ -352,6 +352,20 @@ describe('fusion', () => {
     fusion.addImage('late.jxl')
     expect(fusion.spec.images).toEqual(['work.jxl'])
   })
+  test('a failure waits for the intro, but not for the minimum', async () => {
+    const fusion = new Fusion(spec(), {
+      frame,
+      timing,
+    })
+    await fusion.fail()
+    expect(fusion.outcome).toEqual({
+      kind: 'failure',
+      at: timing.intro,
+    })
+    expect(fusion.closed).toBe(true)
+    expect(fusion.elapsed()).toBeGreaterThanOrEqual(timing.intro + timing.fizzle)
+    expect(fusion.elapsed()).toBeLessThan(timing.minimum + timing.fizzle)
+  })
   test('breaking it off aborts its signal at once and fails it as the next turn of the images begins, which fail() then waits for', async () => {
     const fusion = new Fusion(spec(), {
       frame,
@@ -363,6 +377,7 @@ describe('fusion', () => {
     expect(fusion.canceledAt).toBeGreaterThan(timing.intro + timing.image)
     expect(fusion.outcome?.kind).toBe('failure')
     expect(fusion.outcome!.at).toBeCloseTo(timing.intro + timing.image * Math.ceil((fusion.canceledAt! - timing.intro) / timing.image), 9)
+    expect(fusion.outcome!.at).toBeLessThan(timing.minimum)
     expect(fusion.cancel()).toBe(false)
     await fusion.fail()
     expect(fusion.closed).toBe(true)

@@ -95,7 +95,7 @@ function wav(buffer: AudioBuffer) {
 /** Renders one fusion’s sound offline, heard from four meters in front of its portal, with the portal’s own envelope driving it every 50 ms like the frames do. */
 async function render(outcome: Outcome, resultAt: number) {
   const {afterglow, climax, fizzle} = fusionTiming
-  const at = Math.max(resultAt, fusionTiming.minimum)
+  const at = Math.max(resultAt, outcome === 'success' ? fusionTiming.minimum : fusionTiming.intro)
   const end = outcome === 'success' ? at + climax + afterglow : at + fizzle
   const seconds = end + 3
   const context = new OfflineAudioContext(2, Math.ceil(rate * seconds), rate)

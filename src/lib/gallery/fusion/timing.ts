@@ -12,11 +12,11 @@ export type FusionTiming = {
   image: number
   /** The ceremony opens with this, once and never looped: the portal forms, takes hold of the work and what was thrown into it and shows each image once, until both orbit it. */
   intro: number
-  /** The outcome never shows before this, however fast the image model answers. */
+  /** A result never shows before this, however fast the image model answers; a failure, from the model or the player breaking the fusion off, only waits for the intro. */
   minimum: number
 }
 
-/** how many turns of the images every fusion shows after its intro before its outcome may show */
+/** how many turns of the images every fusion shows after its intro before its result may show */
 export const minimumTurns = 4
 const introDuration = 4
 const turnDuration = 1.5
