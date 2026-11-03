@@ -2,6 +2,7 @@ import type Fusion from '../gallery/fusion/Fusion.ts'
 import type {FusionSpec} from '../gallery/fusion/Fusion.ts'
 import type {SizedImage} from '../gallery/ImageImporter.ts'
 import type {Portrait, ThrownItem} from '../gallery/types.ts'
+import type {OpenRouterAccess} from './openRouterAccess.ts'
 import type {AiSettings} from './settings.ts'
 import type {Span} from 'victoria-browser-client'
 
@@ -13,6 +14,7 @@ import {encodeGeneratedImage, imageSize} from '../gallery/ImageImporter.ts'
 import {validateImage} from '../gallery/imagePolicy.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
+import {hasAccess} from './openRouterAccess.ts'
 import {tieredModel} from './settings.ts'
 
 export default class GalleryDirector {
@@ -23,8 +25,13 @@ export default class GalleryDirector {
   private fusing = new Map<string, symbol>
   /** this director’s fusions in progress */
   private fusions = new Set<Fusion>
-  constructor(private settings: AiSettings, private key: string) {
-    this.narrator = new PortraitNarration(settings, key)
+  constructor(private settings: AiSettings, private access: OpenRouterAccess) {
+    this.narrator = new PortraitNarration(settings, access)
+  }
+
+  /** whether AI is on and can reach OpenRouter */
+  private get usingAi() {
+    return this.settings.ai && hasAccess(this.access)
   }
 
   dispose() {
@@ -53,7 +60,7 @@ export default class GalleryDirector {
     if (this.controller.signal.aborted) {
       return
     }
-    if (!this.settings.ai || !this.key) {
+    if (!this.usingAi) {
       this.narrator.ready(portrait.id)
       return
     }
@@ -145,7 +152,7 @@ export default class GalleryDirector {
       },
       images: recipe.looks,
     })
-    notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
+    notify(this.usingAi ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
       await this.brew(a, fusion, recipe, current, {
         canceled: 'You canceled the fusion. Both originals are still here.',
@@ -202,7 +209,7 @@ export default class GalleryDirector {
     if (recipe.unchanged) {
       notify(`The ${item.title} contributes nothing to fuse “${a.title}” with. It will come back as it went in.`)
     } else {
-      notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${recipe.handmade} is taking shape. No AI and no upload.`)
+      notify(this.usingAi ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${recipe.handmade} is taking shape. No AI and no upload.`)
     }
     const photographed = ingredient.contributions.some(contribution => contribution.kind === 'image')
     try {
@@ -223,11 +230,11 @@ export default class GalleryDirector {
 
   /** Makes the result of `recipe`, asking the image model for the shape `aspect` (width divided by height) of the hung portrait, or locally without AI. */
   protected async generate(recipe: FusionRecipe, signal: AbortSignal, aspect: number): Promise<SizedImage> {
-    if (!this.settings.ai || !this.key) {
+    if (!this.usingAi) {
       return recipe.local()
     }
     const {default: FusionGenerator} = await import('./FusionGenerator.ts')
-    const fusionGenerator = new FusionGenerator(this.key, this.settings.image_model, this.settings.ai_tier)
+    const fusionGenerator = new FusionGenerator(this.access, this.settings.image_model, this.settings.ai_tier)
     const result = await fusionGenerator.generate(await recipe.content(), {
       aspect,
       signal,
@@ -237,7 +244,7 @@ export default class GalleryDirector {
   protected async generateFlavor(image: Blob, onPartial: (partial: Partial<Portrait>) => void, signal: AbortSignal): Promise<Partial<Portrait>> {
     const {default: FlavorGenerator} = await import('./FlavorGenerator.ts')
     const effort = ['high', 'low', 'medium', 'minimal', 'none'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
-    const flavorGenerator = new FlavorGenerator(this.key, tieredModel(this.settings.text_model, this.settings.ai_tier), effort as 'low')
+    const flavorGenerator = new FlavorGenerator(this.access, tieredModel(this.settings.text_model, this.settings.ai_tier), effort as 'low')
     return flavorGenerator.generate(image, onPartial, signal)
   }
 
@@ -298,7 +305,7 @@ export default class GalleryDirector {
           }
         }
         fused = await Promise.race([telemetry ? telemetry.wrap('gallery.fusion', generate, {attributes: {
-          mode: this.settings.ai && this.key ? 'ai' : 'local',
+          mode: this.usingAi ? 'ai' : 'local',
           aspect: a.width / a.height,
           ingredients: recipe.ingredients.length,
         }}) : generate(), broken.promise])
@@ -344,7 +351,7 @@ export default class GalleryDirector {
       title: 'An unexpected collaboration',
       creator: 'You · accidental alchemist',
       year: fusedAt.getFullYear(),
-      description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : recipe.localDescription}`.slice(0, 5000),
+      description: `${description} ${this.usingAi ? 'An AI-assisted collaboration.' : recipe.localDescription}`.slice(0, 5000),
     } : released
     const state = useGallery.getState()
     // The result arrives seconds after the throw; whatever the player carries by then stays in hand.

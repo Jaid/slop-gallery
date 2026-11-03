@@ -14,7 +14,7 @@ import {auditionTranscript} from './voiceAuditions.ts'
 export default class IrisQualityAudition extends ExternalGenerator {
   constructor(private readonly output: string, private readonly transport: IrisTransport, private readonly apiKey: string, private readonly retryFailed = false) {
     // A direct xAI key must never be installed in the OpenRouter client.
-    super(transport === 'openrouter' ? apiKey : '')
+    super({key: transport === 'openrouter' ? apiKey : ''})
     this.headers['X-OpenRouter-Cache'] = 'false'
     delete this.headers['X-OpenRouter-Cache-TTL']
   }

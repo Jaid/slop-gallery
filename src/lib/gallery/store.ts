@@ -4,6 +4,7 @@ import {create} from 'zustand'
 
 import world from '#src/worlds/current.ts'
 
+import {readAiSettings} from '../ai/settings.ts'
 import {audioOverride} from '../audio/audioParameter.ts'
 import {readStored} from '../browserStorage.ts'
 import {environmentSeed} from '../gameSeed.ts'
@@ -60,7 +61,8 @@ export const useGallery = create<State>((set, get) => ({
   room: world.defaultRoom,
   placement: null,
   ai: false,
-  apiKey: readStored('apiKey') ?? '',
+  // A key from ?openrouter_key stands in for the saved one on this page, without replacing it.
+  apiKey: readAiSettings().openrouter_key || readStored('apiKey') || '',
   // An explicit ?audio wins over the player’s last switch.
   sound: audioOverride ?? readStored('audio') === 'true',
   narration: null,

@@ -42,6 +42,11 @@ const searchParameters = (input: string) => {
 const searchParameter = (key: string): Reader => input => searchParameters(input).get(key) ?? undefined
 const readers: Record<string, Reader> = {
   ...Object.fromEntries(Object.keys(readAiSettings(defaultsUrl)).map(key => [key, (input: string) => readAiSettings(input)[key as keyof ReturnType<typeof readAiSettings>]])),
+  // Only whether a key was given, which never leaves the page.
+  openrouter_key: input => {
+    const key = readAiSettings(input).openrouter_key
+    return typeof key === 'string' ? 'redacted' : key
+  },
   albedo: readAlbedo,
   anti_aliasing: readAntiAliasing,
   audio: readAudio,

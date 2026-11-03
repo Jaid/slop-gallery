@@ -1,3 +1,4 @@
+import type {OpenRouterAccess} from '../ai/openRouterAccess.ts'
 import type {AiSettings} from '../ai/settings.ts'
 import type {Portrait} from '../gallery/types.ts'
 import type {AudioHandle, Narrator} from 'use-narrator/core'
@@ -7,6 +8,7 @@ import {SpeechCache} from 'use-narrator/core'
 
 import NarrationAligner from '../ai/NarrationAligner.ts'
 import NarrationGenerator from '../ai/NarrationGenerator.ts'
+import {hasAccess} from '../ai/openRouterAccess.ts'
 import {tieredModel} from '../ai/settings.ts'
 import {notify} from '../gallery/actions.ts'
 import {useGallery} from '../gallery/store.ts'
@@ -63,10 +65,10 @@ export default class PortraitNarration {
   private requests = new Map<string, Request>
   private unsubscribe: () => void
 
-  constructor(private readonly settings: AiSettings, private readonly key: string, private readonly target: Narrator = narrator) {
-    const generator = new NarrationGenerator(key, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice ?? narratorVoice(environmentSeed))
+  constructor(private readonly settings: AiSettings, private readonly access: OpenRouterAccess, private readonly target: Narrator = narrator) {
+    const generator = new NarrationGenerator(access, tieredModel(settings.audio_model, settings.ai_tier), settings.narrator_voice ?? narratorVoice(environmentSeed))
     const character = settings.narrator_character ?? narratorCharacter(environmentSeed)
-    const aligner = settings.stt_model === false ? undefined : new NarrationAligner(key, settings.stt_model)
+    const aligner = settings.stt_model === false ? undefined : new NarrationAligner(access, settings.stt_model)
     this.cache = new SpeechCache(async (speech, signal) => {
       const audio = await generator.generate(speech.text, {
         signal: AbortSignal.any([signal, AbortSignal.timeout(90_000)]),
@@ -129,7 +131,7 @@ export default class PortraitNarration {
         text,
         title: ready.title,
         rate: 0.91,
-        synthesize: this.settings.ai && this.key ? this.cache.synthesize : 'browser' as const,
+        synthesize: this.settings.ai && hasAccess(this.access) ? this.cache.synthesize : 'browser' as const,
       }
     }, {
       id,
@@ -154,7 +156,7 @@ export default class PortraitNarration {
   /** Waiting jobs observe label completion directly. This hook is only for optional eager generation. */
   ready(id: string) {
     const story = storyFor(id)
-    if (!story || !this.settings.eager_audio || !this.settings.ai || !this.key || !useGallery.getState().sound || story.narration || story.pending || story.fusing || this.lifetime.signal.aborted) {
+    if (!story || !this.settings.eager_audio || !this.settings.ai || !hasAccess(this.access) || !useGallery.getState().sound || story.narration || story.pending || story.fusing || this.lifetime.signal.aborted) {
       return
     }
     void this.cache.synthesize({

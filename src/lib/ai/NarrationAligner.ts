@@ -1,3 +1,4 @@
+import type {OpenRouterAccess} from './openRouterAccess.ts'
 import type {NarrationTiming, RecognizedWord} from 'use-narrator/core'
 
 import {timingFromWords} from 'use-narrator/core'
@@ -16,8 +17,8 @@ const formats: Record<string, string> = {
 
 /** Times a narration’s words in its generated audio by speech-to-text with word timestamps, then maps them onto the narration’s own text. */
 export default class NarrationAligner extends ExternalGenerator {
-  constructor(key: string, readonly model: string) {
-    super(key)
+  constructor(access: OpenRouterAccess, readonly model: string) {
+    super(access)
   }
 
   async align(audio: Blob, text: string, {signal}: {signal?: AbortSignal} = {}): Promise<NarrationTiming> {

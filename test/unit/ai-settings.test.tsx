@@ -4,8 +4,10 @@ import {renderToStaticMarkup} from 'react-dom/server'
 import {GraphicsModeProvider} from 'use-graphics-mode'
 
 import Menu from '#component/Menu'
+import OpenRouterConnection from '#component/OpenRouterConnection'
 
 import {patchAiSettings, readAiSettings, tieredModel} from '../../src/lib/ai/settings.ts'
+import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 
 test('model and narration preferences remain configurable through URL parameters', () => {
   const customSettingsQuery = new URLSearchParams({
@@ -59,6 +61,32 @@ test('?ai_tier appends OpenRouter’s routing variant, and nothing without a val
   expect(tieredModel('google/gemini-4-argon', 'flex')).toBe('google/gemini-4-argon:floor')
   expect(tieredModel('google/gemini-3.8-flash-tts', 'priority')).toBe('google/gemini-3.8-flash-tts:nitro')
 })
+test('?openrouter_host names the origin serving OpenRouter’s API, a bare host meaning HTTPS', () => {
+  expect(readAiSettings('').openrouter_host).toBe('https://openrouter.ai')
+  expect(readAiSettings('?openrouter_host=openrouter.nas.lan').openrouter_host).toBe('https://openrouter.nas.lan')
+  expect(readAiSettings('?openrouter_host=%20openrouter.nas.lan/%20').openrouter_host).toBe('https://openrouter.nas.lan')
+  expect(readAiSettings('?openrouter_host=localhost:3310').openrouter_host).toBe('https://localhost:3310')
+  expect(readAiSettings(`?openrouter_host=${encodeURIComponent('http://10.0.0.22:3310/api/v1')}`).openrouter_host).toBe('http://10.0.0.22:3310')
+  for (const value of ['', '%20', 'ftp://example.com', 'exa%20mple.com']) {
+    expect(readAiSettings(`?openrouter_host=${value}`).openrouter_host).toBe('https://openrouter.ai')
+  }
+})
+test('?openrouter_key gives a key, false for none at all, and nothing otherwise', () => {
+  expect(readAiSettings('').openrouter_key).toBeUndefined()
+  expect(readAiSettings('?openrouter_key=sk-or-v1-test').openrouter_key).toBe('sk-or-v1-test')
+  expect(readAiSettings('?openrouter_key=false').openrouter_key).toBe(false)
+  expect(readAiSettings('?openrouter_key=0').openrouter_key).toBe(false)
+  for (const value of ['', '%20', 'true', '1']) {
+    expect(readAiSettings(`?openrouter_key=${value}`).openrouter_key).toBeUndefined()
+  }
+})
+test('a key from ?openrouter_key never shows in the query overrides that telemetry records', () => {
+  expect(readQueryOverrides('http://localhost/?openrouter_key=sk-or-v1-test')).toEqual({openrouter_key: 'redacted'})
+  expect(readQueryOverrides('http://localhost/?openrouter_key=false&openrouter_host=openrouter.nas.lan')).toEqual({
+    openrouter_host: 'https://openrouter.nas.lan',
+    openrouter_key: false,
+  })
+})
 test('?ai=false disables AI, while a missing parameter keeps it on', () => {
   expect(readAiSettings('?ai=false').ai).toBe(false)
   expect(readAiSettings('').ai).toBe(true)
@@ -92,4 +120,17 @@ test('the menu hides every AI option for ?ai=false', () => {
   const shown = renderMenu(true)
   expect(shown).toContain('data-testid="connection"')
   expect(shown).toContain('API key')
+})
+test('?openrouter_key=false locks the key input and connects through the host alone', () => {
+  const settings = readAiSettings('?openrouter_host=openrouter.nas.lan&openrouter_key=false')
+  const html = renderToStaticMarkup(<OpenRouterConnection available params={settings} setParams={() => {}} />)
+  expect(html).toMatch(/<input[^>]*\bid="settings-key"[^>]*\bdisabled=""/u)
+  expect(html).toContain('placeholder="Added by openrouter.nas.lan"')
+  expect(html).toContain('Enabled')
+  expect(html).toContain('Enable AI')
+  expect(html).not.toContain('Disconnect')
+  const plain = renderToStaticMarkup(<OpenRouterConnection available params={readAiSettings('')} setParams={() => {}} />)
+  expect(plain).not.toMatch(/<input[^>]*\bdisabled=""/u)
+  expect(plain).toContain('Not connected')
+  expect(plain).toContain('only goes to OpenRouter')
 })

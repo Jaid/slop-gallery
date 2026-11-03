@@ -70,7 +70,7 @@ const create = (overrides: Partial<AiSettings> = {}, key = '') => {
     // Alignment has its own test, so the rest count speech requests alone.
     stt_model: false,
     ...overrides,
-  }, key, narrator)
+  }, {key}, narrator)
   return producer
 }
 test('pending portraits keep request order rather than replacing each other', async () => {

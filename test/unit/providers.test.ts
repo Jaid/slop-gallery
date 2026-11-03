@@ -72,7 +72,7 @@ test('the real text adapter consumes streamed structured output', async () => {
   })}\n\n`
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(new Response(`${chunk(JSON.stringify(flavor)) + chunk('', 'stop')}data: [DONE]\n\n`, {headers: {'content-type': 'text/event-stream'}}))
   const partials: Array<unknown> = []
-  const flavorGenerator = new FlavorGenerator('test-key', 'test-model')
+  const flavorGenerator = new FlavorGenerator({key: 'test-key'}, 'test-model')
   const result = await flavorGenerator.generate(new Blob(['pixels'], {type: 'image/webp'}), partial => partials.push(partial))
   expect(result).toEqual(flavor)
   expect(partials.length).toBeGreaterThan(0)
@@ -89,7 +89,7 @@ test('the real image adapter sends the images the ingredients contributed in the
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
   const first = new Blob([data], {type: 'image/png'})
   const second = new Blob([Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEUAAP+KeNJXAAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')], {type: 'image/png'})
-  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
+  const fusionGenerator = new FusionGenerator({key: 'test-key'}, 'test-image-model')
   const recipe = new FusionRecipe([
     portraitIngredient({
       title: 'hanging',
@@ -121,7 +121,7 @@ test('the real image adapter sends an orb’s prompt verbatim with the hung port
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
   const work = new Blob([data], {type: 'image/png'})
-  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
+  const fusionGenerator = new FusionGenerator({key: 'test-key'}, 'test-image-model')
   const recipe = new FusionRecipe([
     portraitIngredient({
       title: 'work',
@@ -150,7 +150,7 @@ test('the real image adapter asks a known model for the supported ratio closest 
   const work = new Blob([data], {type: 'image/png'})
   const request = async (model: string, aspect?: number) => {
     fetchSpy!.mockResolvedValueOnce(chatImage(data))
-    const fusionGenerator = new FusionGenerator('test-key', model)
+    const fusionGenerator = new FusionGenerator({key: 'test-key'}, model)
     await fusionGenerator.generate({
       images: [await work.bytes(), await work.bytes()],
       text: fusionInstruction,
@@ -177,7 +177,7 @@ test('the real image adapter re-encodes an image of a format image models reject
     encoded.push(image)
     return Promise.resolve(new Blob([webp], {type: 'image/webp'}))
   })
-  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
+  const fusionGenerator = new FusionGenerator({key: 'test-key'}, 'test-image-model')
   try {
     const recipe = new FusionRecipe([
       portraitIngredient({
@@ -203,7 +203,7 @@ test('the real image adapter re-encodes an image of a format image models reject
 test('the real image adapter asks for the AI tier’s routing variant through chat', async () => {
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
-  const fusionGenerator = new FusionGenerator('test-key', 'google/gemini-nano-banana-2.1', 'priority')
+  const fusionGenerator = new FusionGenerator({key: 'test-key'}, 'google/gemini-nano-banana-2.1', 'priority')
   await fusionGenerator.generate({
     images: [data],
     text: 'Make it spooky.',
@@ -229,10 +229,10 @@ test('the real image adapter falls back to the images endpoint, without a tier, 
     images: [data],
     text: 'Make it spooky.',
   }
-  const firstGenerator = new FusionGenerator('test-key', model, 'priority')
+  const firstGenerator = new FusionGenerator({key: 'test-key'}, model, 'priority')
   const first = await firstGenerator.generate(prompt)
   expect(first.size).toBe(data.byteLength)
-  const secondGenerator = new FusionGenerator('test-key', model, 'priority')
+  const secondGenerator = new FusionGenerator({key: 'test-key'}, model, 'priority')
   await secondGenerator.generate(prompt)
   expect(fetchSpy.mock.calls.map(call => call[0])).toEqual([
     'https://openrouter.ai/api/v1/chat/completions',

@@ -1,5 +1,6 @@
 import type {ImagePrompt} from '../gallery/fusion/FusionRecipe.ts'
 import type {RatioString} from './imageRatios.ts'
+import type {OpenRouterAccess} from './openRouterAccess.ts'
 import type {AiTier} from './settings.ts'
 
 import {APICallError, generateImage, generateText} from 'ai'
@@ -32,8 +33,8 @@ const toBlob = (file: {
  * The same Nano Banana 2.1 fusion took a median 10.1 s through chat and 17.3 s through `/images`, with the same tokens and image (2026-11-03, 12 rounds each). Chat also takes the `ai_tier` routing variants, which `/images` answers with a 404.
  */
 export default class extends ExternalGenerator {
-  constructor(key: string, private readonly modelId: string, private readonly tier?: AiTier) {
-    super(key)
+  constructor(access: OpenRouterAccess, private readonly modelId: string, private readonly tier?: AiTier) {
+    super(access)
   }
   /** Makes the result of a fusion from the prompt its recipe wrote of the images and instructions its ingredients contributed (`FusionRecipe.content`). */
   async generate(prompt: ImagePrompt, {aspect, signal = AbortSignal.timeout(180_000)}: EditOptions = {}) {

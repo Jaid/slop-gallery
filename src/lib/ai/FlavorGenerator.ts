@@ -1,3 +1,4 @@
+import type {OpenRouterAccess} from './openRouterAccess.ts'
 import type {OpenRouterProviderOptions} from '@openrouter/ai-sdk-provider'
 import type {FilePart} from 'ai'
 
@@ -74,8 +75,8 @@ export default class extends ExternalGenerator {
       additionalProperties: false,
     }),
   })
-  constructor(key: string, model: string, effort: Extract<NonNullable<OpenRouterProviderOptions['reasoning']>, {effort: unknown}>['effort'] = 'low') {
-    super(key)
+  constructor(access: OpenRouterAccess, model: string, effort: Extract<NonNullable<OpenRouterProviderOptions['reasoning']>, {effort: unknown}>['effort'] = 'low') {
+    super(access)
     this.model = this.provider.chat(model, {reasoning: {effort}})
   }
   async generate(image: Blob, onPartial?: (flavor: Partial<GeneratedFlavor>) => void, signal?: AbortSignal) {

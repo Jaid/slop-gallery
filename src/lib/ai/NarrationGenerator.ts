@@ -1,9 +1,11 @@
+import type {OpenRouterAccess} from './openRouterAccess.ts'
+
 import pcmWave from '../audio/pcmWave.ts'
 import ExternalGenerator from './ExternalGenerator.ts'
 
 export default class NarrationGenerator extends ExternalGenerator {
-  constructor(key: string, readonly model: string, readonly voice: string) {
-    super(key)
+  constructor(access: OpenRouterAccess, readonly model: string, readonly voice: string) {
+    super(access)
   }
 
   async generate(input: string, {signal, format = this.model.startsWith('google/gemini-') ? 'pcm' : 'mp3', character, providerOptions}: {

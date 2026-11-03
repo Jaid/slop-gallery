@@ -22,7 +22,7 @@ type Clip = {
 /** Every clip has its own stateless, uncached upstream request and durable provenance. */
 export default class VoiceAuditionRunner extends ExternalGenerator {
   constructor(private readonly output: string, private readonly apiKey?: string, private readonly retryFailed = false) {
-    super(apiKey ?? '')
+    super({key: apiKey ?? ''})
     this.headers['X-OpenRouter-Cache'] = 'false'
     delete this.headers['X-OpenRouter-Cache-TTL']
   }

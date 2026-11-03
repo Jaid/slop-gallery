@@ -112,8 +112,8 @@ class TestDirector extends GalleryDirector {
   resultSize = [1024, 1024]
   /** what the image model was told to give up by */
   signal: AbortSignal | undefined
-  constructor(settings: AiSettings, key: string, private timing = instant) {
-    super(settings, key)
+  constructor(settings: AiSettings, key: false | string, private timing = instant) {
+    super(settings, {key})
   }
   protected override generate(recipe: FusionRecipe, signal: AbortSignal, aspect: number) {
     this.recipe = recipe
