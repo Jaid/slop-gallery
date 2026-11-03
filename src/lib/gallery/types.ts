@@ -1,4 +1,5 @@
 import type {PortraitFrameId} from '../frames/frameParameter.ts'
+import type {IngredientRegistration} from './fusion/FusionRecipe.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 import type {NarrationTiming} from 'use-narrator/core'
 
@@ -37,25 +38,15 @@ export type Portrait = {
   width: number
   year?: number
 }
-/** a grabbable object thrown into a hung work, which the work then merges with a studio photograph of */
-export type ThrownObject = {
-  /** the frame the merge’s result wears for good instead of that of the room it arrives in */
-  frame?: PortraitFrameId
+/** a grabbable object thrown into a hung work, which the work then merges with whatever the object registers as an ingredient of the fusion */
+export type ThrownItem = {
+  /** whether a success uses it up, like an orb, instead of the portal spitting it back out */
+  consumable?: boolean
   id: string
-  /** Photographs the item as it is now. Called once, after the work is reserved for the merge. */
-  snapshot: () => Promise<Blob>
+  /** Registers what the item brings into the fusion, by default a studio photograph of it as it is now. Called once, after the work is reserved for the merge. */
+  ingredient: () => IngredientRegistration
   title: string
 }
-/** an orb thrown into a hung work, which reworks the work by its prompt instead of merging it with a photograph of itself; only the merge’s portal shows a photograph of it, one made in advance */
-export type ThrownOrb = ThrownObject & {
-  /** the orb’s glow, which tints the work instead when the merge is made locally, without AI, and the portal of the merge */
-  color: string
-  /** the URL of the photograph the merge’s portal shows */
-  photo: string
-  /** the whole instruction the image model gets along with the work, sent verbatim */
-  prompt: string
-}
-export type ThrownItem = ThrownObject | ThrownOrb
 /** the aspect ratios of default works and their slots, as width:height */
 export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'
 /** a default work of the world, before it hangs in a portrait slot */

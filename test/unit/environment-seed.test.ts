@@ -2,7 +2,7 @@ import {expect, test} from 'bun:test'
 
 import {narratorCharacter, narratorTraits, narratorVoice, narratorVoices} from '../../src/lib/audio/narratorCharacter.ts'
 import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
-import {orbs} from '../../src/lib/gallery/orbs/index.ts'
+import {orbs, promptOrbs} from '../../src/lib/gallery/orbs/index.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 
 test('?seed accepts unsigned 32-bit integers and ignores anything else', () => {
@@ -79,7 +79,7 @@ test('samples pick distinct items in list order, the same for the same seed and 
   expect(environmentSample(1, 'letters', items, 8)).toEqual(items)
   expect(() => environmentSample(1, 'letters', items, 9)).toThrow()
 })
-for (const orb of orbs) {
+for (const orb of promptOrbs) {
   test(`the ${orb.title}’s prompt names 3 to 5 of its adjectives in their order, never two synonyms, the same for the same seed`, () => {
     const pool = orb.adjectives.flat()
     const distinctPool = new Set(pool)

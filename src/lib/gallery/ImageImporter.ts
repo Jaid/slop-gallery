@@ -53,35 +53,49 @@ export async function encodeGeneratedImage(source: Blob) {
   }
 }
 
-export async function compositeImages(first: Blob | string, second: Blob | string) {
+/** The local stand-in for a merge of several images: a cut-paper collage in the shape of the first, which every further one covers from a wavy cut on, each cut further right, the cuts gilded. */
+export async function compositeImages(sources: ReadonlyArray<Blob | string>) {
+  if (!sources.length) {
+    throw new Error('A collage needs at least one image.')
+  }
   const bitmaps: Array<ImageBitmap> = []
   try {
-    for (const source of [first, second]) {
+    for (const source of sources) {
       bitmaps.push(await createImageBitmap(await loadBlob(source)))
     }
-    const [a, b] = bitmaps as [ImageBitmap, ImageBitmap]
-    const scale = Math.min(1, 2048 / Math.max(a.width, a.height))
-    const canvas = new OffscreenCanvas(Math.max(1, Math.round(a.width * scale)), Math.max(1, Math.round(a.height * scale)))
+    const [base, ...others] = bitmaps
+    const scale = Math.min(1, 2048 / Math.max(base.width, base.height))
+    const canvas = new OffscreenCanvas(Math.max(1, Math.round(base.width * scale)), Math.max(1, Math.round(base.height * scale)))
     const context = canvas.getContext('2d')!
-    context.drawImage(a, 0, 0, canvas.width, canvas.height)
-    context.save()
+    context.drawImage(base, 0, 0, canvas.width, canvas.height)
     const {width: w, height: h} = canvas
-    context.beginPath()
-    context.moveTo(w * 0.48, 0)
-    context.bezierCurveTo(w * 0.95, h * 0.3, w * 0.05, h * 0.7, w * 0.52, h)
-    context.lineTo(w, h)
-    context.lineTo(w, 0)
-    context.closePath()
-    context.clip()
-    const fit = Math.max(w / b.width, h / b.height)
-    context.drawImage(b, (w - b.width * fit) / 2, (h - b.height * fit) / 2, b.width * fit, b.height * fit)
-    context.restore()
+    // Cut k of n images runs around k/n of the width, swinging out less the more images share it.
+    const cut = (index: number) => {
+      const middle = (index + 1) / bitmaps.length
+      const swing = 0.9 / bitmaps.length
+      const slant = 0.04 / bitmaps.length
+      context.moveTo(w * (middle - slant), 0)
+      context.bezierCurveTo(w * (middle + swing), h * 0.3, w * (middle - swing), h * 0.7, w * (middle + slant), h)
+    }
+    for (const [index, image] of others.entries()) {
+      context.save()
+      context.beginPath()
+      cut(index)
+      context.lineTo(w, h)
+      context.lineTo(w, 0)
+      context.closePath()
+      context.clip()
+      const fit = Math.max(w / image.width, h / image.height)
+      context.drawImage(image, (w - image.width * fit) / 2, (h - image.height * fit) / 2, image.width * fit, image.height * fit)
+      context.restore()
+    }
     context.strokeStyle = '#d6b779'
     context.lineWidth = Math.max(2, w * 0.003)
-    context.beginPath()
-    context.moveTo(w * 0.48, 0)
-    context.bezierCurveTo(w * 0.95, h * 0.3, w * 0.05, h * 0.7, w * 0.52, h)
-    context.stroke()
+    for (const index of others.keys()) {
+      context.beginPath()
+      cut(index)
+      context.stroke()
+    }
     return await canvasImage(canvas)
   } finally {
     for (const bitmap of bitmaps) {
@@ -90,7 +104,7 @@ export async function compositeImages(first: Blob | string, second: Blob | strin
   }
 }
 
-/** The local stand-in for an orb’s rework: the work washed in the orb’s color and darkened toward its edges by it. */
+/** The local stand-in for an ingredient’s instruction, like an orb’s prompt: the work washed in the ingredient’s glow and darkened toward its edges by it. */
 export async function tintImage(source: Blob | string, color: string) {
   const bitmap = await createImageBitmap(await loadBlob(source))
   try {

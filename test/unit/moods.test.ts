@@ -187,10 +187,12 @@ describe('light tint', () => {
   })
 })
 describe('moods', () => {
-  test('every orb casts a mood of its own, sharing its id', () => {
-    expect(orbs.map(orb => orb.mood.id).toSorted()).toEqual(orbs.map(orb => orb.id).toSorted())
-    const distinct = new Set(orbs.map(orb => orb.mood))
-    expect(distinct.size).toBe(orbs.length)
+  test('every orb that casts a mood casts one of its own, sharing its id, and only the Transparent Orb casts none', () => {
+    const moody = orbs.filter(orb => orb.mood)
+    expect(orbs.filter(orb => !orb.mood).map(orb => orb.id)).toEqual(['transparent'])
+    expect(moody.map(orb => orb.mood!.id).toSorted()).toEqual(moody.map(orb => orb.id).toSorted())
+    const distinct = new Set(moody.map(orb => orb.mood))
+    expect(distinct.size).toBe(moody.length)
     for (const mood of moods) {
       expect(mood.grade.strength).toBeGreaterThan(0)
       expect(mood.grade.strength).toBeLessThanOrEqual(1)
@@ -204,7 +206,7 @@ describe('moods', () => {
   })
   test('the fusion’s mood belongs to no orb and comes over the world while the intro plays', () => {
     expect(moods).toContain(fusionMood)
-    const orbMoods: ReadonlyArray<Mood> = orbs.map(orb => orb.mood)
+    const orbMoods: ReadonlyArray<Mood> = orbs.flatMap(orb => (orb.mood ? [orb.mood] : []))
     expect(orbMoods).not.toContain(fusionMood)
     expect(fusionMood.fade.in).toBe(fusionTiming.intro)
   })

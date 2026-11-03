@@ -13,7 +13,7 @@ import CellCeilingGeometry, {cellCeilingSlab, cellChandelierPivot, cellCoffers, 
 import CellDoorGeometry from '../../src/lib/gallery/CellDoorGeometry.ts'
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
 import withOpeningReveals from '../../src/lib/gallery/openingReveals.ts'
-import {orbs} from '../../src/lib/gallery/orbs/index.ts'
+import {orbs, promptOrbs} from '../../src/lib/gallery/orbs/index.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import {chandelierCanopyTop, chandelierLampY, chandelierPhysics} from '../../src/lib/physics/chandelier.ts'
@@ -64,8 +64,8 @@ describe('?item', () => {
     expect(triple.room('cell').room.layout.pedestals).toHaveLength(3)
   })
 })
-test('every orb brings a JPEG XL photograph of itself for the portal of its merges, in its own folder', async () => {
-  for (const orb of orbs) {
+test('every orb with a prompt brings a JPEG XL photograph of itself for the portal of its merges, in its own folder', async () => {
+  for (const orb of promptOrbs) {
     expect(orb.photo.replaceAll('\\', '/')).toEndWith(`/orbs/${orb.id}/photo.jxl`)
     const bytes = await Bun.file(orb.photo).bytes()
     // A bare JPEG XL codestream.

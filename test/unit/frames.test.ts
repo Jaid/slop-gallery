@@ -73,25 +73,27 @@ const seeds = Array.from({length: 64}, (_, index) => index * 7919 + 1)
 const rooms = new Map([...slopGallery.rooms, ...sandbox.rooms].map(room => [room.id, room.room]))
 /** the frame choices of the rooms that have one */
 const roomChoices = rooms.values().flatMap(room => (room.frame ? [room.frame] : [])).toArray()
+/** the frame choices of the orbs that bring one */
+const orbChoices = orbs.flatMap(orb => (orb.frame ? [orb.frame] : []))
 describe('frame choices', () => {
   test('a single frame is always picked, and of several, every seed picks one for the whole game, which one depending on the seed', () => {
     expect(pickFrame(5, 'lodge-tramp')).toBe('lodge-tramp')
     expect(choiceFrames('lodge-tramp')).toEqual(['lodge-tramp'])
-    for (const choice of [...roomChoices, ...orbs.map(orb => orb.frame)]) {
+    for (const choice of [...roomChoices, ...orbChoices]) {
       const picks = new Set(seeds.map(seed => pickFrame(seed, choice)))
       expect([...picks].every(id => choiceFrames(choice).includes(id))).toBe(true)
       expect(picks.size).toBe(choiceFrames(choice).length)
     }
   })
   test('rooms and ingredients each pick on their own, so a seed does not pick the first frame everywhere', () => {
-    const several = [...roomChoices, ...orbs.map(orb => orb.frame)].filter(choice => choiceFrames(choice).length > 1)
+    const several = [...roomChoices, ...orbChoices].filter(choice => choiceFrames(choice).length > 1)
     for (const seed of seeds.slice(0, 8)) {
       const positions = new Set(several.map(choice => choiceFrames(choice).indexOf(pickFrame(seed, choice))))
       expect(positions.size).toBeGreaterThan(1)
     }
   })
   test('every frame but the default is brought by exactly one room or ingredient', () => {
-    const brought = [...roomChoices, ...orbs.map(orb => orb.frame)].flatMap(choice => choiceFrames(choice))
+    const brought = [...roomChoices, ...orbChoices].flatMap(choice => choiceFrames(choice))
     expect(brought.toSorted()).toEqual(frameIds.filter(id => id !== 'classic').toSorted())
   })
 })

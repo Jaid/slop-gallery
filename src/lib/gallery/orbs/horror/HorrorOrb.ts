@@ -3,11 +3,11 @@ import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial
 import EyeOrbMaterial from '#src/lib/materials/orb/EyeOrbMaterial.ts'
 import {horrorMood} from '#src/lib/moods/index.ts'
 
-import Orb from '../base/Orb.ts'
+import PromptOrb from '../base/PromptOrb.ts'
 import photo from './photo.jxl' with {distance: '1', format: 'jxl', maximumLong: '512'}
 
 /** A bloodshot eye bleeding into its liquid. It corrupts a work into something disturbing. */
-export default class HorrorOrb extends Orb {
+export default class HorrorOrb extends PromptOrb {
   readonly adjectives = [
     // unease
     ['unsettling', 'disturbing'],

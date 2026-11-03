@@ -3,11 +3,11 @@ import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial
 import BatsOrbMaterial from '#src/lib/materials/orb/BatsOrbMaterial.ts'
 import {halloweenMood} from '#src/lib/moods/index.ts'
 
-import Orb from '../base/Orb.ts'
+import PromptOrb from '../base/PromptOrb.ts'
 import photo from './photo.jxl' with {distance: '1', format: 'jxl', maximumLong: '512'}
 
 /** Bats circling a harvest moon in orange haze. It dresses a work up for Halloween, festive rather than frightening. */
-export default class HalloweenOrb extends Orb {
+export default class HalloweenOrb extends PromptOrb {
   readonly adjectives = [
     // mood
     ['festive', 'party-ready'],

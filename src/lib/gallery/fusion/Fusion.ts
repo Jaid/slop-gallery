@@ -15,7 +15,7 @@ export type FusionPartner = {
 export type FusionSpec = {
   /** the swirl’s color, like an orb’s glow; the portal’s own otherwise */
   color?: string
-  /** the images the portal shows in turn, the work’s first; more can surface later, like a prop’s photograph */
+  /** the images the portal shows of the ingredients in turn, the work’s first; more can surface later, like a prop’s photograph; an ingredient that registered nothing to show, like the Transparent Orb, shows nothing */
   ingredients: Array<Blob | string>
   partner: FusionPartner
   /** the hung work the portal opens in front of, which the result replaces */
@@ -34,7 +34,7 @@ export type ImageHold = {
 export type FusionOptions = {
   frame: PortalFrame
   /** Keeps the result ready to show from before the climax until the fusion closes, so the work flips out with it already decoded. */
-  hold?: (image: Blob) => ImageHold
+  hold?: (image: Blob | string) => ImageHold
   /** Called once when the fusion is over and its portal closed. */
   onClose?: (fusion: Fusion) => void
   timing?: FusionTiming
@@ -60,8 +60,8 @@ export default class Fusion {
   /** unique among the fusions of the page */
   readonly id = ++opened
   outcome?: FusionOutcome
-  /** the merged image, once it is in */
-  result?: Blob
+  /** the merged image, once it is in, or the work’s own where nothing came in to merge it with */
+  result?: Blob | string
   /** aborted once the player breaks the fusion off, which the merge it shows gives up on */
   readonly signal: AbortSignal
   readonly spec: FusionSpec
@@ -164,7 +164,7 @@ export default class Fusion {
   }
 
   /** Shows the result, no sooner than the minimum and once it is ready to show: the satellites spiral into the portal, which shows the result. Resolves when the result is due to flip out; the director then commits it and calls {@link emerge}. */
-  async succeed(result: Blob) {
+  async succeed(result: Blob | string) {
     if (this.settled()) {
       return
     }

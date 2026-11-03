@@ -1,15 +1,15 @@
-import type {PortraitFrameId} from '../frames/frameParameter.ts'
 import type Fusion from '../gallery/fusion/Fusion.ts'
 import type {FusionSpec} from '../gallery/fusion/Fusion.ts'
 import type {SizedImage} from '../gallery/ImageImporter.ts'
-import type {Portrait, ThrownItem, ThrownOrb} from '../gallery/types.ts'
+import type {Portrait, ThrownItem} from '../gallery/types.ts'
 import type {AiSettings} from './settings.ts'
 import type {Span} from 'victoria-browser-client'
 
 import PortraitNarration from '../audio/PortraitNarration.ts'
 import {arrivalFrame, loadBlob, notify} from '../gallery/actions.ts'
+import FusionRecipe from '../gallery/fusion/FusionRecipe.ts'
 import {openFusion} from '../gallery/fusion/fusions.ts'
-import {compositeImages, encodeGeneratedImage, imageSize, tintImage} from '../gallery/ImageImporter.ts'
+import {encodeGeneratedImage, imageSize} from '../gallery/ImageImporter.ts'
 import {validateImage} from '../gallery/imagePolicy.ts'
 import {useGallery} from '../gallery/store.ts'
 import {telemetry} from '../telemetry/index.ts'
@@ -107,38 +107,24 @@ export default class GalleryDirector {
     }
   }
 
+  /** Makes the result of the fusion of `recipe`, asking the image model for the shape `aspect` (width divided by height) of the hung work, or locally without AI. */
+  protected async generate(recipe: FusionRecipe, signal: AbortSignal, aspect: number): Promise<SizedImage> {
+    if (!this.settings.ai || !this.key) {
+      return recipe.local()
+    }
+    const {default: MergeGenerator} = await import('./MergeGenerator.ts')
+    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
+    const result = await mergeGenerator.generate(await recipe.content(), {
+      aspect,
+      signal,
+    })
+    return encodeGeneratedImage(result)
+  }
   protected async generateFlavor(image: Blob, onPartial: (partial: Partial<Portrait>) => void, signal: AbortSignal): Promise<Partial<Portrait>> {
     const {default: FlavorGenerator} = await import('./FlavorGenerator.ts')
     const effort = ['high', 'low', 'medium', 'minimal', 'none'].includes(this.settings.text_model_effort) ? this.settings.text_model_effort : 'low'
     const flavorGenerator = new FlavorGenerator(this.key, tieredModel(this.settings.text_model, this.settings.ai_tier), effort as 'low')
     return flavorGenerator.generate(image, onPartial, signal)
-  }
-  /** Merges the hung work `first` with `second` into a new image, asking the image model for the shape `aspect` (width divided by height) of the hung work. */
-  protected async generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number): Promise<SizedImage> {
-    if (!this.settings.ai || !this.key) {
-      return compositeImages(first, second)
-    }
-    const {default: MergeGenerator} = await import('./MergeGenerator.ts')
-    const [hanging, thrown] = await Promise.all([loadBlob(first), loadBlob(second)])
-    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
-    const result = await mergeGenerator.generate(hanging, thrown, {
-      aspect,
-      signal,
-    })
-    return encodeGeneratedImage(result)
-  }
-  /** Reworks the hung work `work` by the orb’s prompt into a new image, asking the image model for the shape `aspect` (width divided by height) of the hung work. */
-  protected async generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number): Promise<SizedImage> {
-    if (!this.settings.ai || !this.key) {
-      return tintImage(work, orb.color)
-    }
-    const {default: MergeGenerator} = await import('./MergeGenerator.ts')
-    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
-    const result = await mergeGenerator.generateFromOrb(await loadBlob(work), orb.prompt, {
-      aspect,
-      signal,
-    })
-    return encodeGeneratedImage(result)
   }
 
   async merge(first: string, second: string) {
@@ -168,17 +154,26 @@ export default class GalleryDirector {
       const portraits = useGallery.getState().portraits
       return !this.controller.signal.aborted && portraits.some(p => p.id === first && p.source === a.source && p.merging && p.mergeJob === token) && portraits.some(p => p.id === second && p.source === b.source && p.reserved && p.mergeJob === token)
     }
+    const recipe = new FusionRecipe({
+      title: a.title,
+      image: a.source,
+    }, [
+      {
+        title: b.title,
+        image: b.source,
+      },
+    ])
     const fusion = this.startFusion({
       work: a,
       partner: {
         kind: 'portrait',
         id: second,
       },
-      ingredients: [a.source, b.source],
+      ingredients: recipe.looks,
     })
     notify(this.settings.ai && this.key ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
-      await this.fuse(a, fusion, (signal, aspect) => this.generateMerge(a.source, b.source, signal, aspect), current, {
+      await this.fuse(a, fusion, recipe, current, {
         canceled: 'You canceled the fusion. Both originals are still here.',
         description: `“${a.title}” met “${b.title}”. Neither had planned to share a frame.`,
         failure: 'The fusion did not finish. Both originals are still here. Check the image model or try again.',
@@ -196,7 +191,7 @@ export default class GalleryDirector {
     }
   }
 
-  /** Merges the hung work `portrait` with a studio photograph of the thrown `item` or, for an orb, reworks it by the orb’s prompt. The item stays in the room, except for an orb, which a success uses up. */
+  /** Merges the hung work `portrait` with whatever the thrown `item` registers as an ingredient: a studio photograph of it by default, an orb’s prompt or nothing at all, which leaves the work as it was. The item stays in the room, unless a success uses it up, like an orb. */
   async mergeItem(portrait: string, item: ThrownItem) {
     if (this.controller.signal.aborted) {
       return
@@ -214,41 +209,40 @@ export default class GalleryDirector {
       pending: false,
     })
     const current = () => !this.controller.signal.aborted && useGallery.getState().portraits.some(p => p.id === portrait && p.source === a.source && p.merging && p.mergeJob === token)
-    const orb = 'prompt' in item
+    // Registered once the work is reserved, like a prop’s studio photograph, which is taken now.
+    const addition = {
+      title: item.title,
+      ...item.ingredient(),
+    }
+    const recipe = new FusionRecipe({
+      title: a.title,
+      image: a.source,
+    }, [addition])
     const fusion = this.startFusion({
       work: a,
       partner: {
         kind: 'prop',
         id: item.id,
-        consumed: orb,
+        consumed: item.consumable ?? false,
       },
-      ingredients: [a.source],
-      color: orb ? item.color : undefined,
+      ingredients: recipe.looks,
+      color: recipe.color,
     })
-    // An orb’s photograph only shows in the portal, and was taken in advance; anything else is photographed now, which is what the work merges with.
-    const photograph = orb ? undefined : item.snapshot()
-    if (photograph) {
-      void photograph.then(image => fusion.addIngredient(image), () => {})
-    } else if (orb) {
-      fusion.addIngredient(item.photo)
+    for (const look of recipe.pendingLooks) {
+      void look.then(image => fusion.addIngredient(image), () => {})
     }
-    notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${orb ? 'tint' : 'collage'} is taking shape. No AI and no upload.`)
+    if (recipe.unchanged) {
+      notify(`The ${item.title} brings nothing to fuse “${a.title}” with. It will come back as it went in.`)
+    } else {
+      notify(this.settings.ai && this.key ? `The alchemy is underway. “${a.title}” stays safe until it succeeds.` : `A local ${recipe.handmade} is taking shape. No AI and no upload.`)
+    }
     try {
-      const failure = 'The fusion did not finish. The original is still here. Check the image model or try again.'
-      const canceled = 'You canceled the fusion. The original is still here.'
-      await (orb ? this.fuse(a, fusion, (signal, aspect) => this.generateOrbMerge(a.source, item, signal, aspect), current, {
-        canceled,
-        consume: item.id,
-        description: `“${a.title}” caught the ${item.title} and was never quite the same.`,
-        failure,
-        frame: item.frame,
-        locally: `Tinted by hand in the ${item.title}’s glow.`,
-      }) : this.fuse(a, fusion, async (signal, aspect) => this.generateMerge(a.source, await photograph!, signal, aspect), current, {
-        canceled,
-        description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
-        failure,
-        frame: item.frame,
-      }))
+      await this.fuse(a, fusion, recipe, current, {
+        canceled: 'You canceled the fusion. The original is still here.',
+        consume: item.consumable ? item.id : undefined,
+        description: addition.image === undefined ? `“${a.title}” caught the ${item.title} and was never quite the same.` : `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
+        failure: 'The fusion did not finish. The original is still here. Check the image model or try again.',
+      })
     } finally {
       this.endFusion(fusion)
       this.releaseMerge(portrait, token)
@@ -269,21 +263,19 @@ export default class GalleryDirector {
   }
 
   /**
-   * Generates the new image of the hung work `a` with `make` while `fusion` shows it and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove` and using up the prop `consume`.
+   * Makes the result of `recipe` while `fusion` shows it and, if `current` still holds afterward, replaces the hung work `a` with it, dropping the work `remove` and using up the prop `consume`.
+   * Where nothing but `a` registered anything, there is nothing to merge it with and no image model to ask: `a` itself comes back out of the portal as it went in.
    * The result flips out of the portal as a loose work once the fusion’s climax is over; a failure shows once the fusion fizzled out, like one the player broke off by jumping into its portal, which gives up on the image at once.
-   * Its frame takes the shape of the image, whatever the model made of the shape it was asked for, at the area of `a`’s frame, and is `frame` if an ingredient brought one, otherwise that of the room the result arrives in.
+   * A new image’s frame takes its shape, whatever the model made of the shape it was asked for, at the area of `a`’s frame. The result is framed by the frame design an ingredient brought, otherwise by the room it arrives in.
    */
-  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {canceled, consume, description, failure, frame, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
+  private async fuse(a: Portrait, fusion: Fusion, recipe: FusionRecipe, current: () => boolean, {canceled, consume, description, failure, remove}: {
     /** the notice right as the player breaks the fusion off */
     canceled: string
     /** the id of a prop the success uses up */
     consume?: string
+    /** how the description of a new work tells how it came to be */
     description: string
     failure: string
-    /** the frame an ingredient brought, which the result wears wherever it arrives */
-    frame?: PortraitFrameId
-    /** how the description tells a merge made without AI */
-    locally?: string
     remove?: string
   }) {
     // The fizzle the player saw coming on breaking the fusion off goes without a notice of its own.
@@ -304,34 +296,37 @@ export default class GalleryDirector {
       broken.reject(fusion.signal.reason)
     }
     fusion.signal.addEventListener('abort', breakOff, {once: true})
-    let merged: Pick<Portrait, 'height' | 'width'> & {image: Blob}
-    try {
-      // Image models take 15–40 s for most merges, but now and then over 100 s.
-      const signal = AbortSignal.any([this.controller.signal, fusion.signal, AbortSignal.timeout(180_000)])
-      const generate = async (span?: Span) => {
-        const {image, width, height} = await make(signal, a.width / a.height)
-        span?.setAttributes({
-          width,
-          height,
-        })
-        validateImage(image)
-        return {
-          image,
-          ...imageSize(width, height, a.width * a.height * 10_000),
+    let merged: Pick<Portrait, 'height' | 'source' | 'width'> | undefined
+    if (!recipe.unchanged) {
+      try {
+        // Image models take 15–40 s for most merges, but now and then over 100 s.
+        const signal = AbortSignal.any([this.controller.signal, fusion.signal, AbortSignal.timeout(180_000)])
+        const generate = async (span?: Span) => {
+          const {image, width, height} = await this.generate(recipe, signal, a.width / a.height)
+          span?.setAttributes({
+            width,
+            height,
+          })
+          validateImage(image)
+          return {
+            source: image,
+            ...imageSize(width, height, a.width * a.height * 10_000),
+          }
         }
+        merged = await Promise.race([telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {
+          mode: this.settings.ai && this.key ? 'ai' : 'local',
+          aspect: a.width / a.height,
+          ingredients: recipe.ingredients.length,
+        }}) : generate(), broken.promise])
+      } catch {
+        await failed()
+        return
       }
-      merged = await Promise.race([telemetry ? telemetry.wrap('gallery.merge', generate, {attributes: {
-        mode: this.settings.ai && this.key ? 'ai' : 'local',
-        aspect: a.width / a.height,
-      }}) : generate(), broken.promise])
-    } catch {
-      await failed()
-      return
+      if (!current()) {
+        return
+      }
     }
-    if (!current()) {
-      return
-    }
-    await fusion.succeed(merged.image)
+    await fusion.succeed(merged?.source ?? a.source)
     if (!current()) {
       return
     }
@@ -340,32 +335,33 @@ export default class GalleryDirector {
       await failed()
       return
     }
-    const mergedAt = new Date
     const launch = fusion.launch()
-    const result: Portrait = {
+    // It flips out of the portal loose, for the player to hang wherever they like, framed by an ingredient or by the room the portal releases it into.
+    const released: Portrait = {
       ...a,
       ...launch,
-      // A new work, framed by its ingredient or by the room the portal releases it into.
-      frame: frame ?? arrivalFrame(launch.position, a.position),
-      source: merged.image,
-      width: merged.width,
-      height: merged.height,
-      narration: undefined,
+      frame: recipe.frame ?? arrivalFrame(launch.position, a.position),
       merging: false,
       mergeJob: undefined,
       flavorJob: undefined,
       pending: false,
-      imported: true,
-      // It flips out of the portal loose, for the player to hang wherever they like.
       hung: false,
       wallId: undefined,
       labelAbove: undefined,
       orientation: undefined,
+    }
+    const mergedAt = new Date
+    // A new work, unless it is the work itself.
+    const result: Portrait = merged ? {
+      ...released,
+      ...merged,
+      narration: undefined,
+      imported: true,
       title: 'An unexpected collaboration',
       creator: 'You · accidental alchemist',
       year: mergedAt.getFullYear(),
-      description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : locally}`.slice(0, 5000),
-    }
+      description: `${description} ${this.settings.ai && this.key ? 'An AI-assisted collaboration.' : recipe.localDescription}`.slice(0, 5000),
+    } : released
     const state = useGallery.getState()
     // The result arrives seconds after the throw; whatever the player carries by then stays in hand.
     const {held, placement} = state
@@ -382,6 +378,10 @@ export default class GalleryDirector {
       consumed: consume && held !== consume ? [...consumed, consume] : consumed,
     }))
     fusion.emerge()
+    if (!merged) {
+      notify(`“${a.title}” came back as it went in.`)
+      return
+    }
     notify('Something wonderfully unexpected.')
     void this.flavor(result).catch(() => notify('The label could not be prepared.'))
   }

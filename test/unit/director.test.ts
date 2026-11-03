@@ -1,7 +1,9 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
+import type {PortraitFrameId} from '../../src/lib/frames/frameParameter.ts'
 import type {FusionOptions, FusionSpec} from '../../src/lib/gallery/fusion/Fusion.ts'
+import type FusionRecipe from '../../src/lib/gallery/fusion/FusionRecipe.ts'
 import type {FusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
-import type {Portrait, ThrownItem, ThrownOrb} from '../../src/lib/gallery/types.ts'
+import type {Portrait, ThrownItem} from '../../src/lib/gallery/types.ts'
 
 import {beforeEach, expect, test} from 'bun:test'
 
@@ -34,6 +36,38 @@ beforeEach(() => {
     })),
   })
 })
+/** a prop the studio photographs, which merges with the work */
+const apple: ThrownItem = {
+  id: 'prop-apple',
+  title: 'the apple',
+  ingredient: () => ({image: Promise.resolve(new Blob(['apple'], {type: 'image/webp'}))}),
+}
+/** an orb registering a prompt, a glow and an illustration of itself, which a success uses up */
+const testOrb: ThrownItem = {
+  id: 'prop-orb-test',
+  title: 'Test Orb',
+  consumable: true,
+  ingredient: () => ({
+    color: '#8a3cff',
+    instruction: 'Make it spooky.',
+    look: '/orbs/test.jxl',
+  }),
+}
+/** an orb registering nothing at all, like the Transparent Orb */
+const clearOrb: ThrownItem = {
+  id: 'prop-orb-clear',
+  title: 'Clear Orb',
+  consumable: true,
+  ingredient: () => ({}),
+}
+/** the item, registering the frame design too */
+const framing = (item: ThrownItem, frame: PortraitFrameId): ThrownItem => ({
+  ...item,
+  ingredient: () => ({
+    ...item.ingredient(),
+    frame,
+  }),
+})
 const instant: FusionTiming = {
   intro: 0,
   ingredient: 1,
@@ -50,7 +84,8 @@ class TestDirector extends GalleryDirector {
   hold: FusionOptions['hold']
   opened: Array<Fusion> = []
   partial: ((partial: Partial<Portrait>) => void) | undefined
-  received: Array<Portrait['source']> = []
+  /** the recipe the result was asked to be made of, if one was asked for */
+  recipe: FusionRecipe | undefined
   result = Promise.withResolvers<Blob>()
   /** the pixel size of the result */
   resultSize = [1024, 1024]
@@ -59,21 +94,16 @@ class TestDirector extends GalleryDirector {
   constructor(settings: AiSettings, key: string, private timing = instant) {
     super(settings, key)
   }
+  protected override generate(recipe: FusionRecipe, signal: AbortSignal, aspect: number) {
+    this.recipe = recipe
+    this.signal = signal
+    this.aspect = aspect
+    // Like the image model, it waits for every image, like a prop’s photograph, which may fail.
+    return recipe.images().then(() => this.sized())
+  }
   protected override generateFlavor(_image: Blob, partial: (partial: Partial<Portrait>) => void) {
     this.partial = partial
     return this.flavorResult.promise
-  }
-  protected override generateMerge(first: Portrait['source'], second: Portrait['source'], signal: AbortSignal, aspect: number) {
-    this.received = [first, second]
-    this.signal = signal
-    this.aspect = aspect
-    return this.sized()
-  }
-  protected override generateOrbMerge(work: Portrait['source'], orb: ThrownOrb, signal: AbortSignal, aspect: number) {
-    this.received = [work, orb.prompt]
-    this.signal = signal
-    this.aspect = aspect
-    return this.sized()
   }
   protected override openFusion(spec: FusionSpec) {
     const fusion = new Fusion(spec, {
@@ -104,7 +134,7 @@ test('fusion keeps both originals until success and commits one change', async (
     ai: false,
   }, '')
   const job = director.merge('a', 'b')
-  expect(director.received).toEqual([a, b])
+  expect(director.recipe!.ingredients.map(ingredient => ingredient.image)).toEqual([a, b])
   expect(useGallery.getState().portraits).toHaveLength(2)
   const merged = new Blob(['result'], {type: 'image/webp'})
   director.result.resolve(merged)
@@ -126,14 +156,7 @@ for (const partner of ['work', 'orb']) {
     try {
       // Asked for 3:2, the model still made something squarer.
       director.resultSize = [1200, 1000]
-      const job = partner === 'orb' ? director.mergeItem('a', {
-        id: 'prop-orb-test',
-        title: 'Test Orb',
-        color: '#8a3cff',
-        photo: '/orbs/test.jxl',
-        prompt: 'Make it spooky.',
-        snapshot: () => Promise.reject(new Error('An orb is never photographed on a throw.')),
-      }) : director.merge('a', 'b')
+      const job = partner === 'orb' ? director.mergeItem('a', testOrb) : director.merge('a', 'b')
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
       expect(director.aspect).toBe(1.5)
@@ -244,11 +267,6 @@ test('disposing a different director does not release another director’s label
   await job
   owner.dispose()
 })
-const apple = {
-  id: 'prop-apple',
-  title: 'the apple',
-  snapshot: () => Promise.resolve(new Blob(['apple'], {type: 'image/webp'})),
-}
 test('a thrown item merges into the hung work and leaves the collection size alone', async () => {
   const director = new TestDirector({
     ...defaults,
@@ -256,10 +274,9 @@ test('a thrown item merges into the hung work and leaves the collection size alo
   }, '')
   const job = director.mergeItem('a', apple)
   expect(useGallery.getState().portraits[0].merging).toBe(true)
-  await Promise.resolve()
-  await Promise.resolve()
-  expect(director.received[0]).toBe(a)
-  expect(await (director.received[1] as Blob).text()).toBe('apple')
+  const [work, photograph] = await director.recipe!.images()
+  expect(work).toBe(a)
+  expect(await (photograph as Blob).text()).toBe('apple')
   const merged = new Blob(['result'], {type: 'image/webp'})
   director.result.resolve(merged)
   await job
@@ -278,7 +295,7 @@ test('a thrown item merges into the hung work and leaves the collection size alo
 test('a thrown item cannot merge into a loose, merging or reserved work', async () => {
   const director = new TestDirector(defaults, 'test')
   await director.mergeItem('b', apple)
-  expect(director.received).toEqual([])
+  expect(director.recipe).toBeUndefined()
   const job = director.mergeItem('a', apple)
   await director.mergeItem('a', apple)
   expect(useGallery.getState().portraits[0].mergeJob).toBeDefined()
@@ -294,7 +311,7 @@ test('a failing photograph releases the work', async () => {
   const director = new TestDirector(defaults, 'test')
   await director.mergeItem('a', {
     ...apple,
-    snapshot: () => Promise.reject(new Error('No GPU')),
+    ingredient: () => ({image: Promise.reject(new Error('No GPU'))}),
   })
   expect(useGallery.getState().portraits[0]).toMatchObject({
     source: a,
@@ -308,28 +325,17 @@ test('a thrown orb reworks the hung work by its prompt instead of a photograph, 
     ai: false,
   }, '')
   try {
-    const photograph = '/orbs/test.jxl'
-    let snapshots = 0
-    const job = director.mergeItem('a', {
-      id: 'prop-orb-test',
-      title: 'Test Orb',
-      color: '#8a3cff',
-      photo: photograph,
-      prompt: 'Make it spooky.',
-      snapshot: () => {
-        snapshots++
-        return Promise.resolve(new Blob(['orb'], {type: 'image/webp'}))
-      },
-    })
+    const job = director.mergeItem('a', testOrb)
     expect(useGallery.getState().portraits[0].merging).toBe(true)
-    await Promise.resolve()
-    expect(director.received).toEqual([a, 'Make it spooky.'])
-    // The orb’s photograph only surfaces in the portal, tinted in its glow, and the studio never photographs it.
+    const recipe = director.recipe!
+    expect(await recipe.images()).toEqual([a])
+    expect(recipe.instructions).toEqual(['Make it spooky.'])
+    expect(recipe.text(1)).toBe('Make it spooky.')
+    // The orb’s illustration only surfaces in the portal, tinted in its glow, and never goes to the image model.
     expect(director.opened[0].spec).toMatchObject({
       color: '#8a3cff',
-      ingredients: [a, photograph],
+      ingredients: [a, '/orbs/test.jxl'],
     })
-    expect(snapshots).toBe(0)
     const merged = new Blob(['spooky'], {type: 'image/webp'})
     director.result.resolve(merged)
     await job
@@ -491,23 +497,9 @@ test('broken off while its result is being made ready, the fusion keeps the orig
     director.dispose()
   }
 })
-const testOrb: ThrownOrb = {
-  id: 'prop-orb-test',
-  title: 'Test Orb',
-  color: '#8a3cff',
-  photo: '/orbs/test.jxl',
-  prompt: 'Make it spooky.',
-  snapshot: () => Promise.reject(new Error('An orb is never photographed on a throw.')),
-}
 test('the result wears the frame a thrown ingredient brought wherever it arrives, and without one that of the room it arrives in', async () => {
-  const items: Array<ThrownItem> = [{
-    ...testOrb,
-    frame: 'lodge-tramp',
-  }, {
-    ...apple,
-    frame: 'cell-coffer',
-  }, testOrb, apple]
-  for (const item of items) {
+  const items: Array<[ThrownItem, PortraitFrameId | undefined]> = [[framing(testOrb, 'lodge-tramp'), 'lodge-tramp'], [framing(apple, 'cell-coffer'), 'cell-coffer'], [testOrb, undefined], [apple, undefined]]
+  for (const [item, frame] of items) {
     useGallery.setState(original, true)
     useGallery.setState({
       sound: false,
@@ -529,7 +521,7 @@ test('the result wears the frame a thrown ingredient brought wherever it arrives
       await job
       const result = useGallery.getState().portraits.find(p => p.id === 'a')!
       expect(result.source).not.toBe(a)
-      expect(result.frame).toBe(item.frame ?? arrivalFrame(result.position, position, environmentSeed))
+      expect(result.frame).toBe(frame ?? arrivalFrame(result.position, position, environmentSeed))
     } finally {
       director.dispose()
     }
@@ -574,6 +566,54 @@ for (const ending of ['failed', 'broken off']) {
       await job
       expect(useGallery.getState().consumed).toEqual([])
       expect(useGallery.getState().portraits[0].source).toBe(a)
+    } finally {
+      director.dispose()
+    }
+  })
+}
+for (const ai of [false, true]) {
+  test(`an item registering nothing leaves only the hung work’s image, so no image model is asked${ai ? ', even with AI' : ''} and the work itself comes back out of the portal, framed by the room it arrives in`, async () => {
+    const before = useGallery.getState().portraits[0]
+    useGallery.getState().update('a', {
+      // the Halloween Orb’s, which no room wears
+      frame: 'halloween-lantern',
+      narration: {audio: '/narration.opus'},
+    })
+    useGallery.setState({consumed: []})
+    const director = new TestDirector(ai ? defaults : {
+      ...defaults,
+      ai: false,
+    }, ai ? 'test' : '', brief)
+    try {
+      const job = director.mergeItem('a', clearOrb)
+      const [fusion] = director.opened
+      // The portal shows the work alone, in its own colors.
+      expect(fusion.spec.ingredients).toEqual([a])
+      expect(fusion.spec.color).toBeUndefined()
+      expect(useGallery.getState().notice).toContain('brings nothing to fuse')
+      await job
+      expect(director.recipe).toBeUndefined()
+      // The fusion still plays out in full.
+      expect(fusion.outcome?.kind).toBe('success')
+      expect(fusion.result).toBe(a)
+      expect(fusion.emergedAt).toBeGreaterThanOrEqual(brief.minimum + brief.climax)
+      const portrait = useGallery.getState().portraits.find(p => p.id === 'a')!
+      expect(portrait).toMatchObject({
+        source: a,
+        width: before.width,
+        height: before.height,
+        title: before.title,
+        creator: before.creator,
+        description: before.description,
+        narration: {audio: '/narration.opus'},
+        hung: false,
+        merging: false,
+        position: fusion.frame.center,
+      })
+      expect(portrait.frame).toBe(arrivalFrame(portrait.position, before.position, environmentSeed))
+      expect(portrait.frame).not.toBe('halloween-lantern')
+      expect(useGallery.getState().consumed).toEqual(['prop-orb-clear'])
+      expect(useGallery.getState().notice).toContain('came back as it went in')
     } finally {
       director.dispose()
     }
