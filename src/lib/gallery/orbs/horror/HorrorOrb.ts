@@ -34,6 +34,7 @@ export default class HorrorOrb extends Orb {
   ]
   readonly change = 'provide traits that make it'
   readonly color = '#a8060f'
+  readonly frame = ['horror-flesh', 'horror-bleeding'] as const
   readonly id = 'horror'
   readonly mood = horrorMood
   readonly photo = photo

@@ -39,6 +39,8 @@ export type Portrait = {
 }
 /** a grabbable object thrown into a hung work, which the work then merges with a studio photograph of */
 export type ThrownObject = {
+  /** the frame the merge’s result wears for good instead of that of the room it arrives in */
+  frame?: PortraitFrameId
   id: string
   /** Photographs the item as it is now. Called once, after the work is reserved for the merge. */
   snapshot: () => Promise<Blob>

@@ -1,15 +1,17 @@
 import type {AiSettings} from '../../src/lib/ai/settings.ts'
 import type {FusionOptions, FusionSpec} from '../../src/lib/gallery/fusion/Fusion.ts'
 import type {FusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
-import type {Portrait, ThrownOrb} from '../../src/lib/gallery/types.ts'
+import type {Portrait, ThrownItem, ThrownOrb} from '../../src/lib/gallery/types.ts'
 
 import {beforeEach, expect, test} from 'bun:test'
 
 import GalleryDirector from '../../src/lib/ai/GalleryDirector.ts'
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
+import {arrivalFrame} from '../../src/lib/gallery/actions.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {portalFrame} from '../../src/lib/gallery/fusion/portalFrame.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
+import {environmentSeed} from '../../src/lib/gameSeed.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 const defaults: AiSettings = readAiSettings()
@@ -497,6 +499,42 @@ const testOrb: ThrownOrb = {
   prompt: 'Make it spooky.',
   snapshot: () => Promise.reject(new Error('An orb is never photographed on a throw.')),
 }
+test('the result wears the frame a thrown ingredient brought wherever it arrives, and without one that of the room it arrives in', async () => {
+  const items: Array<ThrownItem> = [{
+    ...testOrb,
+    frame: 'lodge-tramp',
+  }, {
+    ...apple,
+    frame: 'cell-coffer',
+  }, testOrb, apple]
+  for (const item of items) {
+    useGallery.setState(original, true)
+    useGallery.setState({
+      sound: false,
+      portraits: [{
+        ...original.portraits[0],
+        id: 'a',
+        source: a,
+        hung: true,
+      }],
+    })
+    const {position} = useGallery.getState().portraits[0]
+    const director = new TestDirector({
+      ...defaults,
+      ai: false,
+    }, '')
+    try {
+      const job = director.mergeItem('a', item)
+      director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+      await job
+      const result = useGallery.getState().portraits.find(p => p.id === 'a')!
+      expect(result.source).not.toBe(a)
+      expect(result.frame).toBe(item.frame ?? arrivalFrame(result.position, position, environmentSeed))
+    } finally {
+      director.dispose()
+    }
+  }
+})
 test('a success uses up a thrown orb, but not one the player caught again, nor anything else thrown', async () => {
   for (const [item, held, consumed] of [[testOrb, null, ['prop-orb-test']], [testOrb, 'prop-orb-test', []], [apple, null, []]] as const) {
     useGallery.setState({

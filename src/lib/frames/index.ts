@@ -16,6 +16,9 @@ import ExhibitionVitrineFrame from './ExhibitionVitrineFrame.ts'
 import FortressOakFrame from './FortressOakFrame.ts'
 import FortressStrapworkFrame from './FortressStrapworkFrame.ts'
 import {readFrame} from './frameParameter.ts'
+import HalloweenLanternFrame from './HalloweenLanternFrame.ts'
+import HorrorBleedingFrame from './HorrorBleedingFrame.ts'
+import HorrorFleshFrame from './HorrorFleshFrame.ts'
 import LobbyLouisFrame from './LobbyLouisFrame.ts'
 import LobbyTravertineFrame from './LobbyTravertineFrame.ts'
 import LodgeCharredFrame from './LodgeCharredFrame.ts'
@@ -32,6 +35,10 @@ import SalonWhistlerFrame from './SalonWhistlerFrame.ts'
 import SiennaBurlFrame from './SiennaBurlFrame.ts'
 import SiennaLeatherFrame from './SiennaLeatherFrame.ts'
 import SiennaVelvetFrame from './SiennaVelvetFrame.ts'
+import SpookAbyssFrame from './SpookAbyssFrame.ts'
+import SpookMaelstromFrame from './SpookMaelstromFrame.ts'
+import SpookRiftFrame from './SpookRiftFrame.ts'
+import SpookSeanceFrame from './SpookSeanceFrame.ts'
 import VesperRippleFrame from './VesperRippleFrame.ts'
 import VesperSgraffitoFrame from './VesperSgraffitoFrame.ts'
 
@@ -71,6 +78,13 @@ export const frames = {
   'exhibition-evidence': new ExhibitionEvidenceFrame,
   'exhibition-containment': new ExhibitionContainmentFrame,
   'cell-coffer': new CellCofferFrame,
+  'halloween-lantern': new HalloweenLanternFrame,
+  'horror-flesh': new HorrorFleshFrame,
+  'horror-bleeding': new HorrorBleedingFrame,
+  'spook-maelstrom': new SpookMaelstromFrame,
+  'spook-rift': new SpookRiftFrame,
+  'spook-abyss': new SpookAbyssFrame,
+  'spook-seance': new SpookSeanceFrame,
 } as const satisfies Record<PortraitFrameId, PortraitFrame>
 
 const forcedFrameId = readFrame()

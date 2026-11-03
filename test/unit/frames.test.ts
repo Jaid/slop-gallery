@@ -10,6 +10,7 @@ import {arrivalFrame} from '../../src/lib/gallery/actions.ts'
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {hangDefaultWorks} from '../../src/lib/gallery/defaultPortraits.ts'
 import {imageSize} from '../../src/lib/gallery/ImageImporter.ts'
+import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {portraitRatios, slotAreas, slotFrame} from '../../src/lib/placement/portraitSlots.ts'
 import {hangingOffset} from '../../src/lib/placement/wallGeometry.ts'
 import artworks from '../../src/worlds/gallery/artworks.ts'
@@ -76,21 +77,21 @@ describe('frame choices', () => {
   test('a single frame is always picked, and of several, every seed picks one for the whole game, which one depending on the seed', () => {
     expect(pickFrame(5, 'lodge-tramp')).toBe('lodge-tramp')
     expect(choiceFrames('lodge-tramp')).toEqual(['lodge-tramp'])
-    for (const choice of roomChoices) {
+    for (const choice of [...roomChoices, ...orbs.map(orb => orb.frame)]) {
       const picks = new Set(seeds.map(seed => pickFrame(seed, choice)))
       expect([...picks].every(id => choiceFrames(choice).includes(id))).toBe(true)
       expect(picks.size).toBe(choiceFrames(choice).length)
     }
   })
-  test('every room picks on its own, so a seed does not pick the first frame everywhere', () => {
-    const several = roomChoices.filter(choice => choiceFrames(choice).length > 1)
+  test('rooms and ingredients each pick on their own, so a seed does not pick the first frame everywhere', () => {
+    const several = [...roomChoices, ...orbs.map(orb => orb.frame)].filter(choice => choiceFrames(choice).length > 1)
     for (const seed of seeds.slice(0, 8)) {
       const positions = new Set(several.map(choice => choiceFrames(choice).indexOf(pickFrame(seed, choice))))
       expect(positions.size).toBeGreaterThan(1)
     }
   })
-  test('every frame but the default is brought by exactly one room', () => {
-    const brought = roomChoices.flatMap(choice => choiceFrames(choice))
+  test('every frame but the default is brought by exactly one room or ingredient', () => {
+    const brought = [...roomChoices, ...orbs.map(orb => orb.frame)].flatMap(choice => choiceFrames(choice))
     expect(brought.toSorted()).toEqual(frameIds.filter(id => id !== 'classic').toSorted())
   })
 })

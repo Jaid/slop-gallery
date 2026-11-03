@@ -29,6 +29,7 @@ export default class SpookOrb extends Orb {
   ]
   readonly change = 'add something supernatural that makes it'
   readonly color = '#3fd98a'
+  readonly frame = ['spook-maelstrom', 'spook-rift', 'spook-abyss', 'spook-seance'] as const
   readonly id = 'spook'
   readonly mood = spookMood
   readonly photo = photo

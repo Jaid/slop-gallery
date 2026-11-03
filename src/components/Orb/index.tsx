@@ -21,7 +21,7 @@ export default function Orb({id, orb, position}: {
     photo: orb.photo,
     prompt: orb.prompt(environmentSeed),
   }), [orb])
-  return <GrabbableProp id={id ?? orb.propId} colliders='ball' mood={orb.mood} orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
+  return <GrabbableProp id={id ?? orb.propId} colliders='ball' frame={orb.frame} mood={orb.mood} orb={spell} orbit={{radius: orbRadius * 1.3}} position={position} title={orb.title} type='dynamic'>
     <mesh castShadow material={material}><sphereGeometry args={[orbRadius, 96, 64]} /></mesh>
   </GrabbableProp>
 }

@@ -1,3 +1,4 @@
+import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
 import type OrbGlassMaterial from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
@@ -20,6 +21,8 @@ export default abstract class Orb {
   abstract readonly change: string
   /** the orb’s glow, which tints the work instead when the merge is made locally, without AI, and the portal of the merge */
   abstract readonly color: string
+  /** the frame a work it reworks comes out of the portal in, wherever that is, or several, of which every game picks one */
+  abstract readonly frame: FrameChoice
   abstract readonly id: string
   /** what comes over the world while the player holds the orb */
   abstract readonly mood: Mood

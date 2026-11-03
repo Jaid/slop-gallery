@@ -1,3 +1,4 @@
+import type {PortraitFrameId} from '../frames/frameParameter.ts'
 import type Fusion from '../gallery/fusion/Fusion.ts'
 import type {FusionSpec} from '../gallery/fusion/Fusion.ts'
 import type {SizedImage} from '../gallery/ImageImporter.ts'
@@ -240,11 +241,13 @@ export default class GalleryDirector {
         consume: item.id,
         description: `“${a.title}” caught the ${item.title} and was never quite the same.`,
         failure,
+        frame: item.frame,
         locally: `Tinted by hand in the ${item.title}’s glow.`,
       }) : this.fuse(a, fusion, async (signal, aspect) => this.generateMerge(a.source, await photograph!, signal, aspect), current, {
         canceled,
         description: `“${a.title}” was struck by ${item.title}. Neither had planned to share a frame.`,
         failure,
+        frame: item.frame,
       }))
     } finally {
       this.endFusion(fusion)
@@ -268,15 +271,17 @@ export default class GalleryDirector {
   /**
    * Generates the new image of the hung work `a` with `make` while `fusion` shows it and, if `current` still holds afterward, replaces `a` with the result, dropping the work `remove` and using up the prop `consume`.
    * The result flips out of the portal as a loose work once the fusion’s climax is over; a failure shows once the fusion fizzled out, like one the player broke off by jumping into its portal, which gives up on the image at once.
-   * Its frame takes the shape of the image, whatever the model made of the shape it was asked for, at the area of `a`’s frame.
+   * Its frame takes the shape of the image, whatever the model made of the shape it was asked for, at the area of `a`’s frame, and is `frame` if an ingredient brought one, otherwise that of the room the result arrives in.
    */
-  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {canceled, consume, description, failure, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
+  private async fuse(a: Portrait, fusion: Fusion, make: (signal: AbortSignal, aspect: number) => Promise<SizedImage>, current: () => boolean, {canceled, consume, description, failure, frame, locally = 'A locally made cut-paper collage, joined with a little gold.', remove}: {
     /** the notice right as the player breaks the fusion off */
     canceled: string
     /** the id of a prop the success uses up */
     consume?: string
     description: string
     failure: string
+    /** the frame an ingredient brought, which the result wears wherever it arrives */
+    frame?: PortraitFrameId
     /** how the description tells a merge made without AI */
     locally?: string
     remove?: string
@@ -340,8 +345,8 @@ export default class GalleryDirector {
     const result: Portrait = {
       ...a,
       ...launch,
-      // A new work, framed by the room the portal releases it into.
-      frame: arrivalFrame(launch.position, a.position),
+      // A new work, framed by its ingredient or by the room the portal releases it into.
+      frame: frame ?? arrivalFrame(launch.position, a.position),
       source: merged.image,
       width: merged.width,
       height: merged.height,

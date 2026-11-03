@@ -1,4 +1,5 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
+import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
 import type {ThrownOrb, Vec3} from '#src/lib/gallery.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
@@ -12,9 +13,11 @@ import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 import {Box3, Vector3} from 'three/webgpu'
 
+import {pickFrame} from '#src/lib/frames/frameChoice.ts'
 import {cameraPose, notify, requestItemMerge, useGallery} from '#src/lib/gallery.ts'
 import {handBack, settle} from '#src/lib/gallery/fusion/handBack.ts'
 import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
+import {environmentSeed} from '#src/lib/gameSeed.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 import {bodyThrow, clearBodyThrow} from '#src/lib/physics/ThrowState.ts'
 import {snapshotObject} from '#src/lib/rendering/StudioSnapshotRenderer.ts'
@@ -84,6 +87,8 @@ export type SnapshotSubject = {
 type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
   blockedMessage?: () => string
   children: ReactNode
+  /** the frame a work merged with the prop comes out in, instead of the frame of the room it arrives in, or several, of which every game picks one */
+  frame?: FrameChoice
   id: string
   /** what comes over the world while the player holds the prop */
   mood?: Mood
@@ -107,7 +112,7 @@ export default function GrabbableProp(props: GrabbablePropProps) {
 }
 
 /** The prop while it is still in the world. */
-function PresentProp({id, title, mood, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject, ...props}: GrabbablePropProps) {
+function PresentProp({id, title, frame, mood, orb, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   const controller = useRef<GrabbableBody | null>(null)
@@ -275,6 +280,7 @@ function PresentProp({id, title, mood, orb, orbit, children, canGrab, blockedMes
       id,
       title,
       snapshot: handle.snapshot,
+      ...frame ? {frame: pickFrame(environmentSeed, frame)} : {},
       ...orb,
     })
   }

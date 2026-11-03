@@ -33,6 +33,7 @@ export default class HalloweenOrb extends Orb {
   ]
   readonly change = 'add casual Halloween decoration that makes it'
   readonly color = '#ff7b1c'
+  readonly frame = 'halloween-lantern'
   readonly id = 'halloween'
   readonly mood = halloweenMood
   readonly photo = photo
