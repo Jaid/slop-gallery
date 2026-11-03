@@ -92,24 +92,20 @@ describe('contextual HUD', () => {
   test('recorded and provider audio show the real five-band visualization', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
       instanceId: 'story',
-      title: 'A story',
       status: 'playing',
       source: 'audio',
     }))
-    expect(html).toContain('A story')
-    expect(html).toContain('<small>Narrator</small>')
+    expect(html).toContain('data-testid="narrator-avatar"')
     expect(html).toContain('data-testid="audio-bars"')
     expect(html.match(/<i>/g)).toHaveLength(5)
   })
   test('browser speech shows a static speaking icon, not a spectrum', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
       instanceId: 'browser-story',
-      title: 'A browser story',
       status: 'playing',
       source: 'browser',
     }))
-    expect(html).toContain('A browser story')
-    expect(html).toContain('<small>Narrator</small>')
+    expect(html).toContain('data-testid="narrator-avatar"')
     expect(html).toContain('data-testid="narration-static"')
     expect(html).not.toContain('data-testid="audio-bars"')
     expect(html).not.toContain('<i>')
@@ -134,19 +130,19 @@ describe('contextual HUD', () => {
       ],
     }))
     expect(html).toContain('data-testid="narration-stack"')
-    expect(html).toContain('Main narration')
-    expect(html).toContain('Parallel narration')
+    expect(html).not.toContain('Main narration')
+    expect(html).not.toContain('Parallel narration')
     expect(html.match(/aria-label="Audio guide"/g)).toHaveLength(2)
+    expect(html.match(/data-testid="narrator-avatar"/g)).toHaveLength(2)
     expect(html.match(/data-testid="audio-bars"/g)).toHaveLength(2)
   })
   test('preparing narration does not pretend to have audio measurements', () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
       instanceId: 'story',
-      title: 'A story',
       status: 'preparing',
       source: null,
     }))
-    expect(html).toContain('<small>Narrator</small>')
+    expect(html).toContain('data-testid="narrator-avatar"')
     expect(html).not.toContain('data-testid="audio-bars"')
   })
 })
@@ -154,12 +150,9 @@ for (const status of ['before', 'after'] as const) {
   test(`audio narrator keeps near-flat bars during ${status} silence`, () => {
     const html = renderToStaticMarkup(createElement(NarrationIndicator, {
       instanceId: `padded-${status}`,
-      title: 'A padded story',
       status,
       source: 'audio',
     }))
-    expect(html).toContain('A padded story')
-    expect(html).toContain('<small>Narrator</small>')
     expect(html).toContain('data-testid="audio-bars"')
     if (status === 'before') {
       expect(html).toContain('scaleY(0.03)')
