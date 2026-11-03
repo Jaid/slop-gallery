@@ -18,7 +18,7 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 ## Gallery signals
 
 - Five-second gauges: portrait totals and hung/imported/pending/fusing counts, readiness, pointer lock, AI enabled, holding, inspection, and narration activity. `gallery.room.active{room}` emits a bounded one-hot series for every room, including zero for rooms that were left.
-- Logs and event counters: attachment, room changes, menu/lock/readiness changes, loading progress (`loading.progress` every second behind the loading screen, `loading.finished` once it lifts), collection revisions, narration transitions and import/fusion/narration/teleport requests.
+- Logs and event counters: attachment, room changes, menu/lock/readiness changes, loading progress (`loading.progress` every second behind the loading screen, `loading.finished` once it lifts), collection revisions, narration transitions, import/fusion/narration/teleport requests and refused placements (`gallery.placement.refused` with the `reason` from `placementIssues` or `noWall`, `room`, `wall.id` and `placement.in_reach`).
 - Traces: session/startup/gameplay parents, state-change events, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 

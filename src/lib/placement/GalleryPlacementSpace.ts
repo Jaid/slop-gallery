@@ -5,6 +5,7 @@ import type {Wall} from './wallGeometry.ts'
 import {lodgeWindowGlassDistance} from '../gallery/lodge.ts'
 import {salonWindowGlassDistance} from '../gallery/salonWindow.ts'
 import {PlacementSpace} from './base/PlacementSpace.ts'
+import {placementIssues} from './wallGeometry.ts'
 
 /**
  * The museum’s rooms, stairs and passages.
@@ -54,7 +55,7 @@ export class GalleryPlacementSpace extends PlacementSpace {
         rotation: direction[0] < 0 ? Math.PI / 2 : -Math.PI / 2,
         wallId: pane.wallId,
         valid: false,
-        reason: 'Keep the window clear.',
+        reason: placementIssues.window,
       },
     }
   }

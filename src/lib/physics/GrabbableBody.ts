@@ -87,7 +87,7 @@ export default class GrabbableBody {
 
   /**
    * Lets go of the prop as far from `origin`, inside the player’s capsule, toward `target`, where it was held, as it fits, loose and, if `throwing`, thrown along `direction`, by default that line. Where it fits nowhere, it stays where it was before it was grabbed.
-   * Returns whether it did, so the player can be told.
+   * Returns whether it did.
    */
   release(origin: Vec3, target: Vec3, throwing: boolean, direction?: Vec3) {
     if (!this.carrying) {

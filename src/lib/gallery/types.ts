@@ -1,5 +1,6 @@
 import type {FrameChoice} from '../frames/frameChoice.ts'
 import type {PortraitFrameId} from '../frames/frameParameter.ts'
+import type {PlacementIssue} from '../placement/wallGeometry.ts'
 import type {ItemIngredient} from './fusion/FusionRecipe.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 import type {NarrationTiming} from 'use-narrator/core'
@@ -77,7 +78,8 @@ export type Placement = {
   /** whether the placard goes above the frame, because below it would block the spot */
   labelAbove?: boolean
   position: MathVec3
-  reason: string
+  /** why the artwork cannot hang here, or an empty string if it can */
+  reason: PlacementIssue | ''
   rotation: number
   valid: boolean
   wallId: string

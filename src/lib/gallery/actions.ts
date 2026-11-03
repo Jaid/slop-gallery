@@ -58,7 +58,7 @@ export function enterGallery() {
   }
   galleryEvents.dispatchEvent(new Event('cancel-view'))
   void SoundEngine.get().resume().catch(() => notify('Audio could not be enabled.'))
-  void pauseMenu.enter().catch(() => notify('Click the gallery to begin exploring.'))
+  void pauseMenu.enter().catch(() => {})
 }
 
 export function chime(frequency = 320) {
@@ -136,10 +136,6 @@ export function viewPortrait(id: string) {
     return
   }
   galleryEvents.dispatchEvent(new CustomEvent('view', {detail: id}))
-}
-
-export function importRejected() {
-  notify('Choose PNG, JPEG, WebP, AVIF or GIF under 25 mb. Animated images are displayed as a still.')
 }
 
 export async function loadBlob(source: Blob | string) {

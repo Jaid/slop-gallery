@@ -80,7 +80,7 @@ describe('the Salon', () => {
       }
       expect(placementIssue(banquetNorth, p.position, p.width, p.height, [])).toBe('')
     }
-    expect(placementIssue(banquetNorth, wallPosition(banquetNorth, 0, 2.6), 1, 1, [])).toContain('doorway')
+    expect(placementIssue(banquetNorth, wallPosition(banquetNorth, 0, 2.6), 1, 1, [])).toBe('doorway')
   })
   test('the ottoman leaves the doorway path and the walls clear', () => {
     const {depth, position, width} = salonBench

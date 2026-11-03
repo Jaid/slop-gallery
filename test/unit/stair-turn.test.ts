@@ -87,7 +87,7 @@ describe('round stair landing', () => {
             const placement = galleryPlacement.findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])
             expect(placement?.wallId).toBe(wall.id)
             expect(placement?.valid).toBe(false)
-            expect(placement?.reason).toBe('Keep the stairway clear.')
+            expect(placement?.reason).toBe('unsticky')
           }
           for (const part of [geometry.surface, ...geometry.trim, ...geometry.cornice]) {
             const positions = part.getAttribute('position')

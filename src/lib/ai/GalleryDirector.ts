@@ -376,7 +376,6 @@ export default class GalleryDirector {
       notify(`“${a.title}” came back as it went in.`)
       return
     }
-    notify('Something wonderfully unexpected.')
     void this.flavor(result).catch(() => notify('The label could not be prepared.'))
   }
 

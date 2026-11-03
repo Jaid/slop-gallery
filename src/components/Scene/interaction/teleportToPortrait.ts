@@ -2,7 +2,7 @@ import type {RootState} from '@react-three/fiber'
 
 import {Matrix4, PerspectiveCamera, Quaternion, Vector3} from 'three/webgpu'
 
-import {galleryEvents, notify, useGallery} from '#src/lib/gallery.ts'
+import {galleryEvents, useGallery} from '#src/lib/gallery.ts'
 
 const up = new Vector3(0, 1, 0)
 
@@ -27,5 +27,4 @@ export default function teleportToPortrait(camera: RootState['camera'], id: stri
       rotation: rotation.toArray(),
     },
   }))
-  notify('You’re in front of the artwork. Step inside to keep exploring.')
 }

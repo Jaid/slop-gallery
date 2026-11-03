@@ -53,7 +53,7 @@ export abstract class PlacementSpace {
       const position = wallPosition(candidateWall, u, point[1])
       const inReach = distance * length <= this.reach
       let above = labelAbove
-      let reason = inReach ? this.placementIssue(candidateWall, position, width, height, portraits, ignoreId, above) : placementIssues.reach
+      let reason: Placement['reason'] = inReach ? this.placementIssue(candidateWall, position, width, height, portraits, ignoreId, above) : placementIssues.reach
       if (reason && inReach && !this.placementIssue(candidateWall, position, width, height, portraits, ignoreId, !above)) {
         above = !above
         reason = ''

@@ -4,7 +4,8 @@ import type {RootState} from '@react-three/fiber'
 
 import {Vector3} from 'three/webgpu'
 
-import {cameraPose, chime, notify, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, chime, useGallery} from '#src/lib/gallery.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 import world from '#src/worlds/current.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
@@ -92,9 +93,14 @@ export default function createGrabController(camera: RootState['camera'], placem
           } : item
         }))
         chime(620)
-        notify('Perfectly placed. Probably.')
       } else {
-        notify(candidate?.reason ? `No move made. ${candidate.reason}` : 'No move made. Find an empty patch of wall.')
+        const reason = candidate?.reason ?? 'noWall'
+        telemetry?.event('placement.refused', {
+          reason,
+          room: state.room,
+          'wall.id': candidate?.wallId ?? 'none',
+          'placement.in_reach': candidate?.inReach ?? false,
+        }, `Placement refused: ${reason}`)
       }
     }
     useGallery.setState({

@@ -225,10 +225,6 @@ export default class ImageImporter {
       }
       if (count) {
         chime(500)
-        notify(`${count === 1 ? 'A new arrival' : `${count} new arrivals`}. ${target ? 'Any work that did not fit is waiting in front of you.' : 'Pick up a frame and find it a home.'}`)
-      }
-      if (files.length > 12) {
-        notify('Import up to 12 images at a time. The first 12 have been processed.')
       }
     })
     return this.queue

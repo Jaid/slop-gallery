@@ -6,7 +6,7 @@ import {useEffect} from 'react'
 import {useDropzone} from 'react-dropzone'
 
 import ArtworkDropOverlay from '#component/ArtworkDropOverlay'
-import {dragPose, galleryEvents, importRejected, notify, useGallery} from '#src/lib/gallery.ts'
+import {dragPose, galleryEvents, notify, useGallery} from '#src/lib/gallery.ts'
 import {imageExtensions, maximumImageBytes} from '#src/lib/gallery/imagePolicy.ts'
 
 import css from './style.module.sass'
@@ -34,7 +34,6 @@ export default function Dropzone({children}: PropsWithChildren) {
     noClick: true,
     noKeyboard: true,
     onDropAccepted: handleDrop,
-    onDropRejected: importRejected,
     accept: imageExtensions,
     maxSize: maximumImageBytes,
     onDragOver: event => {

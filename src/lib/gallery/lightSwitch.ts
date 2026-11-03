@@ -1,5 +1,7 @@
 import type {WallReservation} from '../placement/wallGeometry.ts'
 
+import {placementIssues} from '../placement/wallGeometry.ts'
+
 /**
  * Old push-button switches: a gilt plate with a column of buttons, pressing one of which pushes it in and pops the pressed one out.
  * All values are in meters, measured from the middle of the plate’s back on the wall.
@@ -46,6 +48,6 @@ export function lightSwitchReservation(u: number, y: number): WallReservation {
     bottom: y - height / 2,
     height: y + height / 2,
     profile: 'rectangle',
-    reason: 'Let’s keep the light switches clear.',
+    reason: placementIssues.lightSwitch,
   }
 }

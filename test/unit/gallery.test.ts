@@ -54,7 +54,7 @@ describe('wall geometry', () => {
       valid: false,
     })
     const wall = walls.find(w => w.id === 'lobby-west')!
-    expect(placementIssue(wall, wallPosition(wall, 0, 2.5), 2, 2, [])).toContain('doorway')
+    expect(placementIssue(wall, wallPosition(wall, 0, 2.5), 2, 2, [])).toBe('doorway')
   })
   test('rejects edges, low labels, ceilings and overlaps', () => {
     const wall = walls[0]
@@ -62,7 +62,7 @@ describe('wall geometry', () => {
       expect(placementIssue(wall, wallPosition(wall, u, y), 2, 2, [])).not.toBe('')
     }
     const p = samplePortraits[0]
-    expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits)).toContain('close')
+    expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits)).toBe('neighbor')
     expect(placementIssue(wall, p.position, p.width, p.height, samplePortraits, p.id)).toBe('')
   })
   test('keeps distant wall previews but never accepts them as placements', () => {
@@ -72,7 +72,7 @@ describe('wall geometry', () => {
         position: [4, 2.5, -31.78],
         inReach: false,
         valid: false,
-        reason: 'Move closer to hang this artwork.',
+        reason: 'reach',
       })
     }
     expect(galleryPlacement.findPlacement([4, 2.5, -22], [0, 0, -1], 2, 2, [])).toMatchObject({
@@ -172,7 +172,7 @@ describe('wall geometry', () => {
     const wall = walls[0]
     const layout = portraitLabelLayout(2, 2)
     const lowestCenter = 0.48 - layout.bottom + portraitLabel.clearance
-    expect(placementIssue(wall, wallPosition(wall, 4, lowestCenter - 0.001), 2, 2, [])).toContain('label')
+    expect(placementIssue(wall, wallPosition(wall, 4, lowestCenter - 0.001), 2, 2, [])).toBe('frame')
     expect(placementIssue(wall, wallPosition(wall, 4, lowestCenter + 0.001), 2, 2, [])).toBe('')
   })
   test('room boundaries are shared by UI and interaction', () => {

@@ -211,11 +211,8 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
         // Let go of where it was shown, or before it was ever shown, where the camera holds it.
         const {direction, origin, target} = shownOn.current ?? holdLine(cameraPose.position, cameraPose.direction, holdDistance.current)
         shownOn.current = null
-        const returned = carried.release(origin, target, throwing, direction)
+        carried.release(origin, target, throwing, direction)
         settle(rigidBody, prop)
-        if (returned) {
-          notify('Not enough room here. Returned the object.')
-        }
       },
     }
     propObjects.set(id, handle)

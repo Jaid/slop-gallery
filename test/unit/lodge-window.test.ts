@@ -221,7 +221,7 @@ describe('Lodge through-window', () => {
         expect(world.castRay(new RAPIER.Ray(origin, direction), 10, true)!.timeOfImpact).toBeCloseTo(hit.distance, 5)
         expect(galleryPlacement.findPlacement(origin.toArray(), direction.toArray(), 1, 1, [])).toMatchObject({
           valid: false,
-          reason: 'Keep the window clear.',
+          reason: 'window',
         })
       }
     } finally {
@@ -253,7 +253,7 @@ describe('Lodge through-window', () => {
       height: 0.8,
       position: wallPosition(wall, lodge.center[1] - lodgeWindow.z, (lodgeWindow.bottom + lodgeWindow.top) / 2),
     }
-    expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toContain('doorway')
+    expect(placementIssue(wall, portrait.position, portrait.width, portrait.height, [])).toBe('doorway')
     expect(portrait.hung).toBe(true)
   })
 })

@@ -100,12 +100,12 @@ describe('the glass wall between the Lobby and the Salon', () => {
     expect(galleryPlacement.findPlacement([4, 2.7, -24], [1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'lobby-extension_east',
       valid: false,
-      reason: 'Keep the window clear.',
+      reason: 'window',
     })
     expect(galleryPlacement.findPlacement([12, 2.7, -22], [-1, 0, 0], 1, 1, [])).toMatchObject({
       wallId: 'salon-west',
       valid: false,
-      reason: 'Keep the window clear.',
+      reason: 'window',
     })
     // Beside it and below it the walls stay what they were.
     expect(galleryPlacement.findPlacement([12, 2.7, -17.5], [-1, 0, 0], 1, 1, [])).toMatchObject({

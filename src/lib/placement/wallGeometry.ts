@@ -7,14 +7,18 @@ export const placementReach = 10
 /** distance between a wall plane and the center of an artwork hanging on it */
 export const hangingOffset = 0.22
 
-/** Reasons why an artwork cannot hang at a spot, shown to the player. */
+/** Reasons why an artwork cannot hang at a spot. */
 export const placementIssues = {
-  unsticky: 'Keep the stairway clear.',
-  frame: 'Leave space for the frame and its label.',
-  doorway: 'Let’s keep the doorway clear.',
-  neighbor: 'A little too close to another masterpiece.',
-  reach: 'Move closer to hang this artwork.',
+  unsticky: 'unsticky',
+  frame: 'frame',
+  doorway: 'doorway',
+  neighbor: 'neighbor',
+  reach: 'reach',
+  window: 'window',
+  lightSwitch: 'lightSwitch',
 } as const
+
+export type PlacementIssue = typeof placementIssues[keyof typeof placementIssues]
 
 export type WallOpening = {
   bottom?: number
@@ -33,8 +37,8 @@ export type WallOpening = {
 
 /** a solid feature on a wall that artworks must keep clear of, like an entrance surround or a panel of buttons */
 export type WallReservation = WallOpening & {
-  /** shown when an artwork would overlap it; defaults to the doorway reason */
-  reason?: string
+  /** why an artwork cannot overlap it; defaults to the doorway reason */
+  reason?: PlacementIssue
 }
 
 export type Wall = {

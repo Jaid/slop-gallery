@@ -90,7 +90,7 @@ test('the light switches sit side by side on plain plaster beside the Lobby arch
   }
   expect(wall.reservations).toHaveLength(2)
   const inFront = (u: number) => wallPosition(wall, u, 1.6)
-  expect(obstructionIssue(wall, inFront(temperature.u + 0.5), 0.6, 0.6)).toBe('Let’s keep the light switches clear.')
+  expect(obstructionIssue(wall, inFront(temperature.u + 0.5), 0.6, 0.6)).toBe('lightSwitch')
   expect(obstructionIssue(wall, inFront(temperature.u + 1), 0.6, 0.6)).toBe('')
 })
 test('the buttons of a switch plate stay apart, inside the plate and clear of its screws', () => {

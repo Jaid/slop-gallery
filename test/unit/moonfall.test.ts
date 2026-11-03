@@ -46,7 +46,7 @@ describe('lower gallery', () => {
     const position = wallPosition(wall, 2, lower.floorY + 2.5)
     expect(position[1]).toBeCloseTo(-5.5)
     expect(placementIssue(wall, position, 2, 2, [])).toBe('')
-    expect(placementIssue(wall, wallPosition(wall, 2, lower.floorY + 1), 2, 2, [])).toContain('label')
+    expect(placementIssue(wall, wallPosition(wall, 2, lower.floorY + 1), 2, 2, [])).toBe('frame')
     expect(galleryPlacement.findPlacement([-2, -5.5, 27], [0, 0, 1], 2, 2, [])).toMatchObject({
       wallId: wall.id,
       valid: true,
@@ -55,7 +55,7 @@ describe('lower gallery', () => {
     expect(galleryPlacement.findPlacement([4, -6.4, 11.5], [1, 0, 0], 1, 1, [])?.wallId).toBe('moonfall-east')
     expect(galleryPlacement.findPlacement([8, -0.5, 11.5], [0, 0, -1], 1, 1, [])).toMatchObject({
       valid: false,
-      reason: 'Keep the stairway clear.',
+      reason: 'unsticky',
     })
   })
   test('every tread matches the physical floor, and sidewalls close every tread edge', () => {
