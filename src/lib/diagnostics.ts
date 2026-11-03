@@ -21,7 +21,7 @@ export type GalleryDiagnostics = {
   locked: boolean
   menuStage: PauseMenuStage
   placement: Placement | null
-  portraits: Array<Pick<Portrait, 'height' | 'hung' | 'id' | 'merging' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
+  portraits: Array<Pick<Portrait, 'fusing' | 'height' | 'hung' | 'id' | 'pending' | 'position' | 'reserved' | 'title' | 'wallId' | 'width'> & {physical?: {
     x: number
     y: number
     z: number
@@ -49,7 +49,7 @@ export type GalleryDiagnostics = {
 type GalleryDebugApi = Partial<CaptureFrameApi> & {
   /** the X dump snapshot of the current view, without logging, copying or sound; null before the player is ready */
   dump?: () => PlayerDumpSnapshot | null
-  merge?: (first: string, second: string) => void
+  fuse?: (first: string, second: string) => void
   player?: {
     enabled: boolean
     grounded: boolean

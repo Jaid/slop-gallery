@@ -29,7 +29,7 @@ export type PortalPalette = {
  * It is two quads at the group’s origin: the disc and the lens blend over the scene, the glow adds onto it. Everything the frame changes is a uniform; the group itself only moves.
  */
 export default class PortalCore extends Group {
-  /** the image the disc shows, swapped for each ingredient */
+  /** the image the disc shows, swapped for each of the images */
   readonly image: TextureNode
   readonly uniforms = {
     /** width divided by height of the shown image */

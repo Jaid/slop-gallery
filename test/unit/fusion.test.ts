@@ -9,7 +9,7 @@ import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {beats, choreographed, grabs, introSeconds, introTether, introTrail, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, portalRebound, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
-import {fusionTiming, ingredientAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
+import {fusionTiming, imageAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
   id: 'work',
@@ -61,24 +61,24 @@ describe('timeline', () => {
   test('the intro fills the minimum', () => {
     expect(fusionTiming.intro).toBe(fusionTiming.minimum)
   })
-  test('after the intro, the ingredients surface one after another, over and over', () => {
-    const {intro: introEnd, ingredient} = fusionTiming
-    expect(ingredientAt(introEnd - 0.1, 2)).toBeUndefined()
-    expect(ingredientAt(introEnd + ingredient / 2, 2)).toEqual({
+  test('after the intro, the images surface one after another, over and over', () => {
+    const {intro: introEnd, image} = fusionTiming
+    expect(imageAt(introEnd - 0.1, 2)).toBeUndefined()
+    expect(imageAt(introEnd + image / 2, 2)).toEqual({
       index: 0,
       turn: introTurns,
       clarity: 1,
     })
-    expect(ingredientAt(introEnd + ingredient * 1.5, 2)).toMatchObject({
+    expect(imageAt(introEnd + image * 1.5, 2)).toMatchObject({
       index: 1,
       turn: introTurns + 1,
       clarity: 1,
     })
-    expect(ingredientAt(introEnd + 0.001, 2)!.clarity).toBeLessThan(0.05)
+    expect(imageAt(introEnd + 0.001, 2)!.clarity).toBeLessThan(0.05)
   })
   test('the portal brews after its intro, closes after the result is out and dies down when it fizzles', () => {
-    // It swells while an ingredient shows.
-    expect(portalEnvelope(fusionTiming.intro + fusionTiming.ingredient / 2, undefined, undefined, fusionTiming, 2).size).toBeGreaterThan(1.1)
+    // It swells while an image shows.
+    expect(portalEnvelope(fusionTiming.intro + fusionTiming.image / 2, undefined, undefined, fusionTiming, 2).size).toBeGreaterThan(1.1)
     const success = {
       kind: 'success' as const,
       at: 5,
@@ -197,7 +197,7 @@ describe('intro', () => {
       }
     }
   })
-  test('shows each ingredient once, then settles into the brewing portal', () => {
+  test('shows each image once, then settles into the brewing portal', () => {
     const shown = new Map<number, number>
     for (let elapsed = 0; elapsed < end; elapsed += 0.01) {
       const {image} = portalEnvelope(elapsed, undefined, undefined, fusionTiming, 2)
@@ -256,15 +256,15 @@ describe('intro', () => {
 const spec = () => ({
   work,
   partner: {
-    kind: 'prop' as const,
+    kind: 'item' as const,
     id: 'prop',
   },
-  ingredients: ['work.jxl'],
+  images: ['work.jxl'],
 })
 describe('fusion', () => {
   const timing = {
     intro: 0.08,
-    ingredient: 0.02,
+    image: 0.02,
     minimum: 0.08,
     climax: 0.04,
     afterglow: 0.03,
@@ -306,20 +306,20 @@ describe('fusion', () => {
     expect(fusion.closed).toBe(true)
     expect(closed).toBe(1)
     expect(fusion.elapsed()).toBeLessThan(timing.minimum)
-    fusion.addIngredient('late.jxl')
-    expect(fusion.spec.ingredients).toEqual(['work.jxl'])
+    fusion.addImage('late.jxl')
+    expect(fusion.spec.images).toEqual(['work.jxl'])
   })
-  test('breaking it off aborts its signal at once and fails it as the next turn of the ingredients begins, which fail() then waits for', async () => {
+  test('breaking it off aborts its signal at once and fails it as the next turn of the images begins, which fail() then waits for', async () => {
     const fusion = new Fusion(spec(), {
       frame,
       timing,
     })
-    await new Promise(resolve => setTimeout(resolve, (timing.intro + timing.ingredient * 1.4) * 1000))
+    await new Promise(resolve => setTimeout(resolve, (timing.intro + timing.image * 1.4) * 1000))
     expect(fusion.cancel()).toBe(true)
     expect(fusion.signal.aborted).toBe(true)
-    expect(fusion.canceledAt).toBeGreaterThan(timing.intro + timing.ingredient)
+    expect(fusion.canceledAt).toBeGreaterThan(timing.intro + timing.image)
     expect(fusion.outcome?.kind).toBe('failure')
-    expect(fusion.outcome!.at).toBeCloseTo(timing.intro + timing.ingredient * Math.ceil((fusion.canceledAt! - timing.intro) / timing.ingredient), 9)
+    expect(fusion.outcome!.at).toBeCloseTo(timing.intro + timing.image * Math.ceil((fusion.canceledAt! - timing.intro) / timing.image), 9)
     expect(fusion.cancel()).toBe(false)
     await fusion.fail()
     expect(fusion.closed).toBe(true)
@@ -339,15 +339,15 @@ describe('fusion', () => {
   })
 })
 describe('breaking off', () => {
-  test('waits for the end of the intro, then for the next turn of the ingredients', () => {
-    const {intro, ingredient} = fusionTiming
+  test('waits for the end of the intro, then for the next turn of the images', () => {
+    const {intro, image} = fusionTiming
     expect(nextTurn(0.5)).toBe(intro)
     expect(nextTurn(intro)).toBe(intro)
-    expect(nextTurn(intro + 0.1)).toBeCloseTo(intro + ingredient, 9)
-    expect(nextTurn(intro + ingredient * 2.5)).toBeCloseTo(intro + ingredient * 3, 9)
+    expect(nextTurn(intro + 0.1)).toBeCloseTo(intro + image, 9)
+    expect(nextTurn(intro + image * 2.5)).toBeCloseTo(intro + image * 3, 9)
   })
   test('makes the portal recoil at once with a blaze, a shockwave and sparks, then flicker on charred until it fizzles', () => {
-    const elapsed = fusionTiming.intro + fusionTiming.ingredient * 0.6
+    const elapsed = fusionTiming.intro + fusionTiming.image * 0.6
     const failure = {
       kind: 'failure' as const,
       at: nextTurn(elapsed),

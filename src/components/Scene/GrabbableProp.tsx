@@ -1,6 +1,6 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {Vec3} from '#src/lib/gallery.ts'
-import type {IngredientRegistration} from '#src/lib/gallery/fusion/FusionRecipe.ts'
+import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -13,7 +13,7 @@ import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 import {Box3, Vector3} from 'three/webgpu'
 
-import {cameraPose, notify, requestItemMerge, useGallery} from '#src/lib/gallery.ts'
+import {cameraPose, notify, requestItemFusion, useGallery} from '#src/lib/gallery.ts'
 import {handBack, settle} from '#src/lib/gallery/fusion/handBack.ts'
 import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
@@ -34,7 +34,7 @@ export type PropHandle = {
   seize: () => boolean
   /** whether a fusion holds the prop */
   seized: () => boolean
-  /** Photographs the prop as it is now in the studio, as a WebP for a merge. */
+  /** Photographs the prop as it is now in the studio, as a WebP, which it contributes to a fusion by default. */
   snapshot: () => Promise<Blob>
   title: string
   /** Hands the prop back to the physics where its `group` is, flying off with the velocities. */
@@ -88,14 +88,14 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   /** whether a fusion it is thrown into uses it up on success, like an orb, instead of spitting it back out */
   consumable?: boolean
   id: string
-  /** what the prop brings into the fusion of a work it is thrown into instead of a studio photograph of itself, like an orb’s prompt, or nothing at all */
-  ingredient?: IngredientRegistration
+  /** the prop as an ingredient of the fusion of a portrait it is thrown into, with what it contributes, like an orb’s prompt, or nothing at all; by default, it contributes a studio photograph of itself */
+  ingredient?: ItemIngredient
   /** what comes over the world while the player holds the prop */
   mood?: Mood
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3
-  /** For props drawn elsewhere, e.g. by an instanced batch, whose children are only invisible stand-ins: builds what the studio photographs when the prop is thrown into a work. */
+  /** For props drawn elsewhere, e.g. by an instanced batch, whose children are only invisible stand-ins: builds what the studio photographs when the prop is thrown into a portrait. */
   snapshotSubject?: () => SnapshotSubject
   title: string
 }
@@ -260,13 +260,13 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
   }, {before: 'render'})
   const struck = (event: CollisionEnterPayload) => {
     const current = body.current
-    // Only a throw merges, not a drop or a knock; one throw merges once, even if the prop bounces into another work.
+    // Only a throw fuses, not a drop or a knock; one throw fuses once, even if the prop bounces into another portrait.
     if (!current || !group.current || !bodyThrow(current)) {
       return
     }
     const other: unknown = event.other.rigidBodyObject?.userData.portraitId
     const target = useGallery.getState().portraits.find(portrait => portrait.id === other)
-    if (!target?.hung || target.merging || target.reserved) {
+    if (!target?.hung || target.fusing || target.reserved) {
       return
     }
     const handle = propObjects.get(id)
@@ -274,11 +274,18 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       return
     }
     clearBodyThrow(current)
-    requestItemMerge(target.id, {
+    requestItemFusion(target.id, {
       id,
       title,
       consumable,
-      ingredient: () => ingredient ?? {image: handle.snapshot()},
+      ingredient: () => ingredient ?? {
+        contributions: [
+          {
+            kind: 'image',
+            image: handle.snapshot(),
+          },
+        ],
+      },
     })
   }
   return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>

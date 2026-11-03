@@ -10,7 +10,7 @@ import {modelImageType} from './modelImage.ts'
 import {tieredModel} from './settings.ts'
 
 type EditOptions = {
-  /** width divided by height of the hung work, which decides the ratio the model is asked for */
+  /** width divided by height of the hung portrait, which decides the ratio the model is asked for */
   aspect?: number
   signal?: AbortSignal
 }
@@ -29,15 +29,15 @@ const toBlob = (file: {
 
 /**
  * Makes fusion results through OpenRouter’s chat endpoint wherever the model takes it, and through its `/images` endpoint for models that only serve there, like GPT Image 2.5 Sunburst.
- * The same Nano Banana 2.1 merge took a median 10.1 s through chat and 17.3 s through `/images`, with the same tokens and image (2026-11-03, 12 rounds each). Chat also takes the `ai_tier` routing variants, which `/images` answers with a 404.
+ * The same Nano Banana 2.1 fusion took a median 10.1 s through chat and 17.3 s through `/images`, with the same tokens and image (2026-11-03, 12 rounds each). Chat also takes the `ai_tier` routing variants, which `/images` answers with a 404.
  */
 export default class extends ExternalGenerator {
   constructor(key: string, private readonly modelId: string, private readonly tier?: AiTier) {
     super(key)
   }
-  /** Makes the result of a fusion from the prompt its recipe wrote of its ingredients’ images and instructions (`FusionRecipe.content`). */
+  /** Makes the result of a fusion from the prompt its recipe wrote of the images and instructions its ingredients contributed (`FusionRecipe.content`). */
   async generate(prompt: ImagePrompt, {aspect, signal = AbortSignal.timeout(180_000)}: EditOptions = {}) {
-    // Without a ratio, a 3:2 work merged with a prop’s square photograph came back 4:3 from Nano Banana 2.1 and Grok and square from Sunburst (2026-11-01).
+    // Without a ratio, a 3:2 portrait fused with a prop’s square photograph came back 4:3 from Nano Banana 2.1 and Grok and square from Sunburst (2026-11-01).
     const ratio = aspect === undefined ? undefined : requestedRatio(this.modelId, aspect)
     if (!imagesOnlyModels.has(this.modelId)) {
       try {

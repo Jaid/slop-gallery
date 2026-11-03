@@ -4,21 +4,21 @@ import type {FusionTiming} from './timing.ts'
 
 import {fusionTiming, nextTurn} from './timing.ts'
 
-/** what was thrown into the hung work */
+/** the ingredient thrown into the hung portrait */
 export type FusionPartner = {
-  /** for a prop, whether a success uses it up, like an orb, instead of spitting it back out */
+  /** for an item, whether a success uses it up, like an orb, instead of spitting it back out */
   consumed?: boolean
   id: string
-  /** a loose work, which the result replaces along with the hung one; or a prop, which the portal spits back out unless it is consumed */
-  kind: 'portrait' | 'prop'
+  /** a loose portrait, which the result replaces along with the hung one; or an item, which the portal spits back out unless it is consumed */
+  kind: 'item' | 'portrait'
 }
 export type FusionSpec = {
   /** the swirl’s color, like an orb’s glow; the portal’s own otherwise */
   color?: string
-  /** the images the portal shows of the ingredients in turn, the work’s first; more can surface later, like a prop’s photograph; an ingredient that registered nothing to show, like the Transparent Orb, shows nothing */
-  ingredients: Array<Blob | string>
+  /** the images the portal shows of the ingredients in turn, the hung portrait’s first; more can surface later, like a prop’s photograph; an ingredient with nothing to show, like the Transparent Orb, shows nothing */
+  images: Array<Blob | string>
   partner: FusionPartner
-  /** the hung work the portal opens in front of, which the result replaces */
+  /** the hung portrait, the fusion’s first ingredient, which the portal opens in front of and the result replaces */
   work: Pick<Portrait, 'height' | 'id' | 'position' | 'rotation' | 'width'>
 }
 export type FusionOutcome = {
@@ -33,7 +33,7 @@ export type ImageHold = {
 }
 export type FusionOptions = {
   frame: PortalFrame
-  /** Keeps the result ready to show from before the climax until the fusion closes, so the work flips out with it already decoded. */
+  /** Keeps the result ready to show from before the climax until the fusion closes, so the result flips out already decoded. */
   hold?: (image: Blob | string) => ImageHold
   /** Called once when the fusion is over and its portal closed. */
   onClose?: (fusion: Fusion) => void
@@ -45,8 +45,8 @@ const poll = 100
 let opened = 0
 
 /**
- * A merge as the gallery shows it: a portal opens in front of the hung work with its intro, which brings the work and what was thrown into it into orbit around it, while the portal shows their images in turn.
- * The director tells it how the merge went and waits for its timeline: the outcome never shows before {@link FusionTiming.minimum}, a result flips out after the climax and a failure hands everything back after the fizzle.
+ * A fusion as the gallery shows it: a portal opens in front of the hung portrait with its intro, which brings the portrait and what was thrown into it into orbit around it, while the portal shows their images in turn.
+ * The director tells it how the fusion went and waits for its timeline: the outcome never shows before {@link FusionTiming.minimum}, a result flips out after the climax and a failure hands everything back after the fizzle.
  * Its own clock is `performance.now()`, which the renderer and the virtual clock of the film script follow too.
  */
 export default class Fusion {
@@ -60,9 +60,9 @@ export default class Fusion {
   /** unique among the fusions of the page */
   readonly id = ++opened
   outcome?: FusionOutcome
-  /** the merged image, once it is in, or the work’s own where nothing came in to merge it with */
+  /** the fused image, once it is in, or the hung portrait’s own where nothing was contributed to fuse it with */
   result?: Blob | string
-  /** aborted once the player breaks the fusion off, which the merge it shows gives up on */
+  /** aborted once the player breaks the fusion off, which makes the image model give up */
   readonly signal: AbortSignal
   readonly spec: FusionSpec
   readonly startedAt = performance.now()
@@ -96,14 +96,14 @@ export default class Fusion {
   }
 
   /** Adds an image the portal shows from its next turn on. */
-  addIngredient(image: Blob | string) {
+  addImage(image: Blob | string) {
     if (!this.closed) {
-      this.spec.ingredients.push(image)
+      this.spec.images.push(image)
     }
   }
 
   /**
-   * Breaks the fusion off while it still brews, as the player does by jumping into its portal: the portal recoils at once, {@link signal} tells the merge to give up, and the fusion fails like a merge that went wrong as the next turn of the ingredients begins, no sooner than the end of its intro.
+   * Breaks the fusion off while it still brews, as the player does by jumping into its portal: the portal recoils at once, {@link signal} tells the image model to give up, and the fusion fails like one that went wrong as the next turn of the images begins, no sooner than the end of its intro.
    * Returns whether it broke off, which it no longer does once its outcome is in.
    */
   cancel() {
@@ -132,7 +132,7 @@ export default class Fusion {
     this.closeAt(emergedAt + this.timing.afterglow).catch(() => this.close())
   }
 
-  /** Shows the failure, no sooner than the minimum: the portal fizzles out, the work flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */
+  /** Shows the failure, no sooner than the minimum: the portal fizzles out, the hung portrait flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */
   async fail() {
     if (this.outcome?.kind === 'failure') {
       await this.over.promise
@@ -151,7 +151,7 @@ export default class Fusion {
     }
   }
 
-  /** Where the result starts its flight: at the portal’s middle, facing the room like the work did, thrown straight up with a forward flip. */
+  /** Where the result starts its flight: at the portal’s middle, facing the room like the hung portrait did, thrown straight up with a forward flip. */
   launch(): Required<Pick<Portrait, 'position' | 'rotation' | 'spin' | 'velocity'>> {
     const {center, normal, tangent} = this.frame
     return {

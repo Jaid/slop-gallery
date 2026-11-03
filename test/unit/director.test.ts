@@ -36,41 +36,62 @@ beforeEach(() => {
     })),
   })
 })
-/** a prop the studio photographs, which merges with the work */
+/** a prop contributing its studio photograph */
 const apple: ThrownItem = {
   id: 'prop-apple',
   title: 'the apple',
-  ingredient: () => ({image: Promise.resolve(new Blob(['apple'], {type: 'image/webp'}))}),
+  ingredient: () => ({
+    contributions: [
+      {
+        kind: 'image',
+        image: Promise.resolve(new Blob(['apple'], {type: 'image/webp'})),
+      },
+    ],
+  }),
 }
-/** an orb registering a prompt, a glow and an illustration of itself, which a success uses up */
+/** an orb contributing a prompt and showing by a glow and an illustration of itself, which a success uses up */
 const testOrb: ThrownItem = {
   id: 'prop-orb-test',
   title: 'Test Orb',
   consumable: true,
   ingredient: () => ({
-    color: '#8a3cff',
-    instruction: 'Make it spooky.',
+    contributions: [
+      {
+        kind: 'instruction',
+        instruction: 'Make it spooky.',
+      },
+    ],
+    glow: '#8a3cff',
     look: '/orbs/test.jxl',
   }),
 }
-/** an orb registering nothing at all, like the Transparent Orb */
+/** an orb without any contribution, like the Transparent Orb */
 const clearOrb: ThrownItem = {
   id: 'prop-orb-clear',
   title: 'Clear Orb',
   consumable: true,
-  ingredient: () => ({}),
+  ingredient: () => ({contributions: []}),
 }
-/** the item, registering the frame design too */
+/** the item, contributing the frame too */
 const framing = (item: ThrownItem, frame: PortraitFrameId): ThrownItem => ({
   ...item,
-  ingredient: () => ({
-    ...item.ingredient(),
-    frame,
-  }),
+  ingredient: () => {
+    const ingredient = item.ingredient()
+    return {
+      ...ingredient,
+      contributions: [
+        ...ingredient.contributions,
+        {
+          kind: 'frame',
+          frame,
+        },
+      ],
+    }
+  },
 })
 const instant: FusionTiming = {
   intro: 0,
-  ingredient: 1,
+  image: 1,
   minimum: 0,
   climax: 0,
   afterglow: 0,
@@ -89,7 +110,7 @@ class TestDirector extends GalleryDirector {
   result = Promise.withResolvers<Blob>()
   /** the pixel size of the result */
   resultSize = [1024, 1024]
-  /** what the merge was told to give up by */
+  /** what the image model was told to give up by */
   signal: AbortSignal | undefined
   constructor(settings: AiSettings, key: string, private timing = instant) {
     super(settings, key)
@@ -133,18 +154,19 @@ test('fusion keeps both originals until success and commits one change', async (
     ...defaults,
     ai: false,
   }, '')
-  const job = director.merge('a', 'b')
-  expect(director.recipe!.ingredients.map(ingredient => ingredient.image)).toEqual([a, b])
+  const job = director.fuse('a', 'b')
+  expect(await director.recipe!.images()).toEqual([a, b])
+  expect(director.recipe!.ingredients.map(ingredient => ingredient.kind)).toEqual(['portrait', 'portrait'])
   expect(useGallery.getState().portraits).toHaveLength(2)
-  const merged = new Blob(['result'], {type: 'image/webp'})
-  director.result.resolve(merged)
+  const fused = new Blob(['result'], {type: 'image/webp'})
+  director.result.resolve(fused)
   await job
   expect(useGallery.getState().portraits).toHaveLength(1)
-  expect(useGallery.getState().portraits[0].source).toBe(merged)
+  expect(useGallery.getState().portraits[0].source).toBe(fused)
   director.dispose()
 })
 for (const partner of ['work', 'orb']) {
-  test(`a merge with a thrown ${partner} frames the result in its own shape at the area of the hung work’s frame`, async () => {
+  test(`a fusion with a thrown ${partner} frames the result in its own shape at the area of the hung portrait’s frame`, async () => {
     useGallery.getState().update('a', {
       width: 3,
       height: 2,
@@ -156,7 +178,7 @@ for (const partner of ['work', 'orb']) {
     try {
       // Asked for 3:2, the model still made something squarer.
       director.resultSize = [1200, 1000]
-      const job = partner === 'orb' ? director.mergeItem('a', testOrb) : director.merge('a', 'b')
+      const job = partner === 'orb' ? director.fuseItem('a', testOrb) : director.fuse('a', 'b')
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
       expect(director.aspect).toBe(1.5)
@@ -170,16 +192,16 @@ for (const partner of ['work', 'orb']) {
 }
 test('failed fusion releases both originals', async () => {
   const director = new TestDirector(defaults, 'test')
-  const job = director.merge('a', 'b')
+  const job = director.fuse('a', 'b')
   director.result.reject(new Error('Provider unavailable'))
   await job
   expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
-  expect(useGallery.getState().portraits.some(p => p.merging || p.reserved)).toBe(false)
+  expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
   director.dispose()
 })
 test('removing one original releases the survivor and ignores late success', async () => {
   const director = new TestDirector(defaults, 'test')
-  const job = director.merge('a', 'b')
+  const job = director.fuse('a', 'b')
   useGallery.getState().remove('a')
   director.result.resolve(new Blob(['late']))
   await job
@@ -192,7 +214,7 @@ test('removing one original releases the survivor and ignores late success', asy
 })
 test('canceling a director prevents late changes', async () => {
   const director = new TestDirector(defaults, 'test')
-  const job = director.merge('a', 'b')
+  const job = director.fuse('a', 'b')
   director.dispose()
   director.result.resolve(new Blob(['late']))
   await job
@@ -232,101 +254,108 @@ test('streamed artwork years are retained and invalid provider years are ignored
     director.dispose()
   }
 })
-test('obsolete merge cleanup cannot cancel its replacement', async () => {
+test('obsolete fusion cleanup cannot cancel its replacement', async () => {
   const old = new TestDirector({
     ...defaults,
     ai: false,
   }, '')
-  const obsolete = old.merge('a', 'b')
+  const obsolete = old.fuse('a', 'b')
   old.dispose()
   const replacement = new TestDirector({
     ...defaults,
     ai: false,
   }, '')
   try {
-    const job = replacement.merge('a', 'b')
+    const job = replacement.fuse('a', 'b')
     old.result.resolve(new Blob(['obsolete'], {type: 'image/webp'}))
     await obsolete
-    expect(useGallery.getState().portraits[0].merging).toBe(true)
+    expect(useGallery.getState().portraits[0].fusing).toBe(true)
     expect(useGallery.getState().portraits[1].reserved).toBe(true)
-    const merged = new Blob(['replacement'], {type: 'image/webp'})
-    replacement.result.resolve(merged)
+    const fused = new Blob(['replacement'], {type: 'image/webp'})
+    replacement.result.resolve(fused)
     await job
-    expect(useGallery.getState().portraits.map(p => p.source)).toEqual([merged])
+    expect(useGallery.getState().portraits.map(p => p.source)).toEqual([fused])
   } finally {
     replacement.dispose()
   }
 })
-test('disposing a different director does not release another director’s label or merge', async () => {
+test('disposing a different director does not release another director’s label or fusion', async () => {
   const owner = new TestDirector(defaults, 'test')
   const unrelated = new TestDirector(defaults, 'test')
-  const job = owner.merge('a', 'b')
+  const job = owner.fuse('a', 'b')
   unrelated.dispose()
-  expect(useGallery.getState().portraits[0].merging).toBe(true)
+  expect(useGallery.getState().portraits[0].fusing).toBe(true)
   owner.result.reject(new Error('test'))
   await job
   owner.dispose()
 })
-test('a thrown item merges into the hung work and leaves the collection size alone', async () => {
+test('a thrown item fuses with the hung portrait and leaves the collection size alone', async () => {
   const director = new TestDirector({
     ...defaults,
     ai: false,
   }, '')
-  const job = director.mergeItem('a', apple)
-  expect(useGallery.getState().portraits[0].merging).toBe(true)
+  const job = director.fuseItem('a', apple)
+  expect(useGallery.getState().portraits[0].fusing).toBe(true)
   const [work, photograph] = await director.recipe!.images()
   expect(work).toBe(a)
   expect(await (photograph as Blob).text()).toBe('apple')
-  const merged = new Blob(['result'], {type: 'image/webp'})
-  director.result.resolve(merged)
+  const fused = new Blob(['result'], {type: 'image/webp'})
+  director.result.resolve(fused)
   await job
   const portraits = useGallery.getState().portraits
   expect(portraits).toHaveLength(2)
   expect(portraits[0]).toMatchObject({
     id: 'a',
-    source: merged,
-    merging: false,
+    source: fused,
+    fusing: false,
     hung: false,
   })
   expect(portraits[0].description).toContain('struck by the apple')
   expect(portraits[1].source).toBe(b)
   director.dispose()
 })
-test('a thrown item cannot merge into a loose, merging or reserved work', async () => {
+test('a thrown item cannot fuse with a loose, fusing or reserved portrait', async () => {
   const director = new TestDirector(defaults, 'test')
-  await director.mergeItem('b', apple)
+  await director.fuseItem('b', apple)
   expect(director.recipe).toBeUndefined()
-  const job = director.mergeItem('a', apple)
-  await director.mergeItem('a', apple)
-  expect(useGallery.getState().portraits[0].mergeJob).toBeDefined()
+  const job = director.fuseItem('a', apple)
+  await director.fuseItem('a', apple)
+  expect(useGallery.getState().portraits[0].fusionJob).toBeDefined()
   director.result.reject(new Error('Provider unavailable'))
   await job
   expect(useGallery.getState().portraits[0]).toMatchObject({
     source: a,
-    merging: false,
+    fusing: false,
   })
   director.dispose()
 })
-test('a failing photograph releases the work', async () => {
+test('a failing photograph releases the portrait', async () => {
   const director = new TestDirector(defaults, 'test')
-  await director.mergeItem('a', {
+  await director.fuseItem('a', {
     ...apple,
-    ingredient: () => ({image: Promise.reject(new Error('No GPU'))}),
+    ingredient: () => ({
+      contributions: [
+        {
+          kind: 'image',
+          image: Promise.reject(new Error('No GPU')),
+        },
+      ],
+    }),
   })
   expect(useGallery.getState().portraits[0]).toMatchObject({
     source: a,
-    merging: false,
+    fusing: false,
   })
   director.dispose()
 })
-test('a thrown orb reworks the hung work by its prompt instead of a photograph, and its portal shows the photograph made of it in advance', async () => {
+test('a thrown orb contributes its prompt instead of a photograph, and its portal shows the photograph made of it in advance', async () => {
   const director = new TestDirector({
     ...defaults,
     ai: false,
   }, '')
   try {
-    const job = director.mergeItem('a', testOrb)
-    expect(useGallery.getState().portraits[0].merging).toBe(true)
+    const job = director.fuseItem('a', testOrb)
+    expect(useGallery.getState().portraits[0].fusing).toBe(true)
     const recipe = director.recipe!
     expect(await recipe.images()).toEqual([a])
     expect(recipe.instructions).toEqual(['Make it spooky.'])
@@ -334,16 +363,16 @@ test('a thrown orb reworks the hung work by its prompt instead of a photograph, 
     // The orb’s illustration only surfaces in the portal, tinted in its glow, and never goes to the image model.
     expect(director.opened[0].spec).toMatchObject({
       color: '#8a3cff',
-      ingredients: [a, '/orbs/test.jxl'],
+      images: [a, '/orbs/test.jxl'],
     })
-    const merged = new Blob(['spooky'], {type: 'image/webp'})
-    director.result.resolve(merged)
+    const fused = new Blob(['spooky'], {type: 'image/webp'})
+    director.result.resolve(fused)
     await job
     const [portrait] = useGallery.getState().portraits
     expect(portrait).toMatchObject({
       id: 'a',
-      source: merged,
-      merging: false,
+      source: fused,
+      fusing: false,
       hung: false,
     })
     expect(portrait.description).toContain('caught the Test Orb')
@@ -358,34 +387,34 @@ test('generated image admission failure preserves both originals', async () => {
     ai: false,
   }, '')
   try {
-    const job = director.merge('a', 'b')
+    const job = director.fuse('a', 'b')
     director.result.resolve(new Blob([new Uint8Array(25_000_001)], {type: 'image/webp'}))
     await job
     expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
-    expect(useGallery.getState().portraits.some(p => p.merging || p.reserved)).toBe(false)
+    expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
   } finally {
     director.dispose()
   }
 })
 const brief: FusionTiming = {
   intro: 0.02,
-  ingredient: 0.04,
+  image: 0.04,
   minimum: 0.15,
   climax: 0.05,
   afterglow: 0.05,
   fizzle: 0.05,
 }
 const sleep = (seconds: number) => new Promise(resolve => setTimeout(resolve, seconds * 1000))
-test('the result flips out of the portal as a loose work, no sooner than the fusion’s minimum and climax', async () => {
+test('the result flips out of the portal as a loose portrait, no sooner than the fusion’s minimum and climax', async () => {
   const director = new TestDirector({
     ...defaults,
     ai: false,
   }, '', brief)
   try {
     const {rotation} = useGallery.getState().portraits[0]
-    const job = director.merge('a', 'b')
-    const merged = new Blob(['result'], {type: 'image/webp'})
-    director.result.resolve(merged)
+    const job = director.fuse('a', 'b')
+    const fused = new Blob(['result'], {type: 'image/webp'})
+    director.result.resolve(fused)
     await sleep(0.1)
     // The image is in, but the portal brews on until its minimum.
     expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
@@ -400,7 +429,7 @@ test('the result flips out of the portal as a loose work, no sooner than the fus
     const [portrait] = useGallery.getState().portraits
     expect(portrait).toMatchObject({
       id: 'a',
-      source: merged,
+      source: fused,
       hung: false,
       wallId: undefined,
       position: fusion.frame.center,
@@ -422,7 +451,7 @@ test('whatever the player carries when the result flips out stays in hand', asyn
     ai: false,
   }, '')
   try {
-    const job = director.merge('a', 'b')
+    const job = director.fuse('a', 'b')
     useGallery.setState({held: 'prop-apple'})
     director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
     await job
@@ -435,24 +464,24 @@ test('whatever the player carries when the result flips out stays in hand', asyn
 test('a failure shows once the fusion fizzled out after its minimum, then releases both originals', async () => {
   const director = new TestDirector(defaults, 'test', brief)
   try {
-    const job = director.merge('a', 'b')
+    const job = director.fuse('a', 'b')
     director.result.reject(new Error('Provider unavailable'))
     await sleep(0.08)
-    expect(useGallery.getState().portraits.find(p => p.id === 'a')?.merging).toBe(true)
+    expect(useGallery.getState().portraits.find(p => p.id === 'a')?.fusing).toBe(true)
     expect(director.opened[0].outcome?.kind).toBe('failure')
     await job
     expect(director.opened[0].elapsed()).toBeGreaterThanOrEqual(brief.minimum + brief.fizzle)
     expect(director.opened[0].closed).toBe(true)
-    expect(useGallery.getState().portraits.some(p => p.merging || p.reserved)).toBe(false)
+    expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
     expect(useGallery.getState().notice).toContain('did not finish')
   } finally {
     director.dispose()
   }
 })
-test('jumping into the portal breaks the fusion off with a notice at once, gives up on the image and fails like a merge that went wrong', async () => {
+test('jumping into the portal breaks the fusion off with a notice at once, gives up on the image and fails like a fusion that went wrong', async () => {
   const director = new TestDirector(defaults, 'test', brief)
   try {
-    const job = director.merge('a', 'b')
+    const job = director.fuse('a', 'b')
     await sleep(0.03)
     const [fusion] = director.opened
     expect(fusion.cancel()).toBe(true)
@@ -467,7 +496,7 @@ test('jumping into the portal breaks the fusion off with a notice at once, gives
     expect(fusion.closed).toBe(true)
     expect(fusion.elapsed()).toBeGreaterThanOrEqual(brief.minimum + brief.fizzle)
     expect(useGallery.getState().portraits.map(p => p.source)).toEqual([a, b])
-    expect(useGallery.getState().portraits.some(p => p.merging || p.reserved)).toBe(false)
+    expect(useGallery.getState().portraits.some(p => p.fusing || p.reserved)).toBe(false)
     expect(useGallery.getState().notice).toBe('You canceled the fusion. Both originals are still here.')
   } finally {
     director.dispose()
@@ -483,7 +512,7 @@ test('broken off while its result is being made ready, the fusion keeps the orig
       ready: sleep(0.06),
       release: () => {},
     })
-    const job = director.merge('a', 'b')
+    const job = director.fuse('a', 'b')
     director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
     await sleep(0.03)
     const [fusion] = director.opened
@@ -497,7 +526,7 @@ test('broken off while its result is being made ready, the fusion keeps the orig
     director.dispose()
   }
 })
-test('the result wears the frame a thrown ingredient brought wherever it arrives, and without one that of the room it arrives in', async () => {
+test('the result wears the frame a thrown ingredient contributed wherever it arrives, and without one that of the room it arrives in', async () => {
   const items: Array<[ThrownItem, PortraitFrameId | undefined]> = [[framing(testOrb, 'lodge-tramp'), 'lodge-tramp'], [framing(apple, 'cell-coffer'), 'cell-coffer'], [testOrb, undefined], [apple, undefined]]
   for (const [item, frame] of items) {
     useGallery.setState(original, true)
@@ -516,7 +545,7 @@ test('the result wears the frame a thrown ingredient brought wherever it arrives
       ai: false,
     }, '')
     try {
-      const job = director.mergeItem('a', item)
+      const job = director.fuseItem('a', item)
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
       const result = useGallery.getState().portraits.find(p => p.id === 'a')!
@@ -539,9 +568,9 @@ test('a success uses up a thrown orb, but not one the player caught again, nor a
       ai: false,
     }, '')
     try {
-      const job = director.mergeItem('a', item)
+      const job = director.fuseItem('a', item)
       expect(director.opened.at(-1)!.spec.partner).toEqual({
-        kind: 'prop',
+        kind: 'item',
         id: item.id,
         consumed: item === testOrb,
       })
@@ -557,7 +586,7 @@ for (const ending of ['failed', 'broken off']) {
   test(`a ${ending} fusion leaves the orb in the world`, async () => {
     const director = new TestDirector(defaults, 'test', brief)
     try {
-      const job = director.mergeItem('a', testOrb)
+      const job = director.fuseItem('a', testOrb)
       if (ending === 'failed') {
         director.result.reject(new Error('Provider unavailable'))
       } else {
@@ -572,7 +601,7 @@ for (const ending of ['failed', 'broken off']) {
   })
 }
 for (const ai of [false, true]) {
-  test(`an item registering nothing leaves only the hung work’s image, so no image model is asked${ai ? ', even with AI' : ''} and the work itself comes back out of the portal, framed by the room it arrives in`, async () => {
+  test(`an item without any contribution leaves only the hung portrait’s image, so no image model is asked${ai ? ', even with AI' : ''} and the portrait itself comes back out of the portal, framed by the room it arrives in`, async () => {
     const before = useGallery.getState().portraits[0]
     useGallery.getState().update('a', {
       // the Halloween Orb’s, which no room wears
@@ -585,12 +614,12 @@ for (const ai of [false, true]) {
       ai: false,
     }, ai ? 'test' : '', brief)
     try {
-      const job = director.mergeItem('a', clearOrb)
+      const job = director.fuseItem('a', clearOrb)
       const [fusion] = director.opened
-      // The portal shows the work alone, in its own colors.
-      expect(fusion.spec.ingredients).toEqual([a])
+      // The portal shows the hung portrait alone, in its own colors.
+      expect(fusion.spec.images).toEqual([a])
       expect(fusion.spec.color).toBeUndefined()
-      expect(useGallery.getState().notice).toContain('brings nothing to fuse')
+      expect(useGallery.getState().notice).toContain('contributes nothing to fuse')
       await job
       expect(director.recipe).toBeUndefined()
       // The fusion still plays out in full.
@@ -607,7 +636,7 @@ for (const ai of [false, true]) {
         description: before.description,
         narration: {audio: '/narration.opus'},
         hung: false,
-        merging: false,
+        fusing: false,
         position: fusion.frame.center,
       })
       expect(portrait.frame).toBe(arrivalFrame(portrait.position, before.position, environmentSeed))
@@ -621,7 +650,7 @@ for (const ai of [false, true]) {
 }
 test('disposing the director closes its fusions at once', async () => {
   const director = new TestDirector(defaults, 'test', brief)
-  const job = director.merge('a', 'b')
+  const job = director.fuse('a', 'b')
   director.dispose()
   const [fusion] = director.opened
   expect(fusion.closed).toBe(true)

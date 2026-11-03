@@ -168,18 +168,18 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     expect(imported.width / imported.height).toBe(2)
     expect(imported.hung).toBe(false)
     const pending = await page.evaluate(id => {
-      globalThis.slopGallery!.merge!('orange', id)
+      globalThis.slopGallery!.fuse!('orange', id)
       return globalThis.slopGallery!.snapshot!()
     }, imported.id)
-    expect(pending.portraits.find(p => p.id === 'orange')?.merging).toBe(true)
+    expect(pending.portraits.find(p => p.id === 'orange')?.fusing).toBe(true)
     expect(pending.portraits).toHaveLength(baseline + 1)
     await page.waitForFunction(id => {
       const portraits = globalThis.slopGallery!.snapshot!().portraits
-      return !portraits.some(p => p.id === id) && portraits.some(p => p.id === 'orange' && p.title === 'An unexpected collaboration' && !p.merging)
+      return !portraits.some(p => p.id === id) && portraits.some(p => p.id === 'orange' && p.title === 'An unexpected collaboration' && !p.fusing)
     }, {}, imported.id)
-    const {portraits: portraitsAfterMerge} = await snapshot(page)
-    expect(portraitsAfterMerge).toHaveLength(baseline)
-    // Only the seed survives a reload, so the merge is gone while the visit continues the same game.
+    const {portraits: portraitsAfterFusion} = await snapshot(page)
+    expect(portraitsAfterFusion).toHaveLength(baseline)
+    // Only the seed survives a reload, so the fusion is gone while the visit continues the same game.
     await page.reload({waitUntil: 'domcontentloaded'})
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready)
     const reloaded = await snapshot(page)

@@ -93,13 +93,13 @@ export function flingPlayer(velocity: Vec3) {
   galleryEvents.dispatchEvent(new CustomEvent('fling', {detail: velocity}))
 }
 
-export function requestMerge(first: string, second: string) {
-  galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
+export function requestFusion(first: string, second: string) {
+  galleryEvents.dispatchEvent(new CustomEvent('fusion', {detail: [first, second]}))
 }
 
-/** Asks for the hung work `portrait` to merge with a photograph of the thrown `item`. */
-export function requestItemMerge(portrait: string, item: ThrownItem) {
-  galleryEvents.dispatchEvent(new CustomEvent('merge-item', {
+/** Asks for the hung portrait `portrait` to fuse with the thrown `item`. */
+export function requestItemFusion(portrait: string, item: ThrownItem) {
+  galleryEvents.dispatchEvent(new CustomEvent('item-fusion', {
     detail: {
       portrait,
       item,
@@ -111,7 +111,7 @@ export function requestItemMerge(portrait: string, item: ThrownItem) {
 export function dropPortrait(id: string) {
   const state = useGallery.getState()
   const portrait = state.portraits.find(candidate => candidate.id === id)
-  if (!portrait?.hung || portrait.reserved || portrait.merging || state.held === id) {
+  if (!portrait?.hung || portrait.reserved || portrait.fusing || state.held === id) {
     return false
   }
   const {held, placement: heldPlacement} = state

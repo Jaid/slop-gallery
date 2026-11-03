@@ -8,9 +8,9 @@ export type FusionTiming = {
   climax: number
   /** A failed fusion hands the work back to its wall and spits out what was thrown into it. */
   fizzle: number
-  /** After the intro, each ingredient surfaces in the portal for this long, one after another, over and over until the outcome is in. */
-  ingredient: number
-  /** The ceremony opens with this, once and never looped: the portal forms, takes hold of the work and what was thrown into it and shows each ingredient once, until both orbit it. */
+  /** After the intro, each of the images surfaces in the portal for this long, one after another, over and over until the outcome is in. */
+  image: number
+  /** The ceremony opens with this, once and never looped: the portal forms, takes hold of the work and what was thrown into it and shows each image once, until both orbit it. */
   intro: number
   /** The outcome never shows before this, however fast the image model answers. */
   minimum: number
@@ -19,14 +19,14 @@ export type FusionTiming = {
 /** The intro fills the minimum, which every fusion waits for anyway. */
 export const fusionTiming: FusionTiming = {
   intro: 4,
-  ingredient: 1.5,
+  image: 1.5,
   minimum: 4,
   climax: 1.3,
   afterglow: 1.6,
   fizzle: 1,
 }
 
-/** how many turns of the ingredients the intro shows, one each, which the turns after it count on from */
+/** how many turns of the images the intro shows, one each, which the turns after it count on from */
 export const introTurns = 2
 /** the share of an image’s turn it takes to surface from the swirl, and again to sink back into it */
 const surfacing = 0.24
@@ -40,24 +40,24 @@ export function clarityBetween(elapsed: number, from: number, to: number) {
   return Math.min(clamp(progress / surfacing, 0, 1), clamp((1 - progress) / surfacing, 0, 1))
 }
 
-/** Seconds into a fusion that the next turn of the ingredients begins, `elapsed` seconds in, the end of the intro while it plays: the beat of the loop on which a fusion the player broke off fizzles. */
-export function nextTurn(elapsed: number, {ingredient, intro}: Pick<FusionTiming, 'ingredient' | 'intro'> = fusionTiming) {
-  if (elapsed <= intro || ingredient <= 0) {
+/** Seconds into a fusion that the next turn of the images begins, `elapsed` seconds in, the end of the intro while it plays: the beat of the loop on which a fusion the player broke off fizzles. */
+export function nextTurn(elapsed: number, {image, intro}: Pick<FusionTiming, 'image' | 'intro'> = fusionTiming) {
+  if (elapsed <= intro || image <= 0) {
     return Math.max(elapsed, intro)
   }
-  return intro + Math.ceil((elapsed - intro) / ingredient) * ingredient
+  return intro + Math.ceil((elapsed - intro) / image) * image
 }
 
-/** The ingredient the portal shows `elapsed` seconds into a fusion of `count` ingredients and how clearly, once its intro is over; the intro shows its own. */
-export function ingredientAt(elapsed: number, count: number, {ingredient, intro}: Pick<FusionTiming, 'ingredient' | 'intro'> = fusionTiming) {
-  if (elapsed < intro || count === 0 || ingredient <= 0) {
+/** The image the portal shows `elapsed` seconds into a fusion showing `count` images and how clearly, once its intro is over; the intro shows its own. */
+export function imageAt(elapsed: number, count: number, {image, intro}: Pick<FusionTiming, 'image' | 'intro'> = fusionTiming) {
+  if (elapsed < intro || count === 0 || image <= 0) {
     return
   }
-  const turn = Math.floor((elapsed - intro) / ingredient)
-  const start = intro + turn * ingredient
+  const turn = Math.floor((elapsed - intro) / image)
+  const start = intro + turn * image
   return {
     index: (introTurns + turn) % count,
     turn: introTurns + turn,
-    clarity: clarityBetween(elapsed, start, start + ingredient),
+    clarity: clarityBetween(elapsed, start, start + image),
   }
 }

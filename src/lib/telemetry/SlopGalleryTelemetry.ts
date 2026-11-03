@@ -119,7 +119,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
         })
       }
     })
-    const listeners = ['imported', 'merge', 'merge-item', 'narrate', 'stop-narration', 'teleport'].map(name => {
+    const listeners = ['imported', 'fusion', 'item-fusion', 'narrate', 'stop-narration', 'teleport'].map(name => {
       const listener = () => this.event(`${name}.requested`)
       events?.addEventListener(name, listener)
       return () => events?.removeEventListener(name, listener)
@@ -177,7 +177,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
 
   sample(state: GalleryState) {
     this.metric('gallery.portraits', state.portraits.length)
-    for (const flag of ['hung', 'pending', 'merging', 'imported'] as const) {
+    for (const flag of ['hung', 'pending', 'fusing', 'imported'] as const) {
       this.metric(`gallery.portraits.${flag}`, state.portraits.filter(portrait => portrait[flag]).length)
     }
     for (const flag of ['ready', 'locked', 'ai'] as const) {

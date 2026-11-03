@@ -6,7 +6,7 @@ import {useGallery} from '#src/lib/gallery.ts'
 import {useFusions} from '#src/lib/gallery/fusion/fusions.ts'
 import PortalVisuals from '#src/lib/gallery/fusion/PortalVisuals.ts'
 
-/** The portal of every merge in progress, in whichever world is loaded. */
+/** The portal of every fusion in progress, in whichever world is loaded. */
 export default function Fusions() {
   const fusions = useFusions(state => state.fusions)
   return <>

@@ -49,7 +49,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
         width: portrait.width,
         height: portrait.height,
         pending: portrait.pending,
-        merging: portrait.merging,
+        fusing: portrait.fusing,
         reserved: portrait.reserved,
         physical: portraitObjects.get(portrait.id)?.body.translation(),
       })),
@@ -62,7 +62,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
           rotation,
         },
       }))
-      api.merge = (first: string, second: string) => galleryEvents.dispatchEvent(new CustomEvent('merge', {detail: [first, second]}))
+      api.fuse = (first: string, second: string) => galleryEvents.dispatchEvent(new CustomEvent('fusion', {detail: [first, second]}))
       // Detaches the camera from the player until the next teleport, so a still photo can be framed exactly.
       api.pose = ({position, rotation, fov} = {}) => {
         setCameraFocused(true)
@@ -88,7 +88,7 @@ export default function useInteractionDiagnostics(camera: RootState['camera'], r
     return () => {
       delete api.snapshot
       delete api.teleport
-      delete api.merge
+      delete api.fuse
       delete api.pose
     }
   }, [camera, placement, renderer])

@@ -53,7 +53,7 @@ export async function encodeGeneratedImage(source: Blob) {
   }
 }
 
-/** The local stand-in for a merge of several images: a cut-paper collage in the shape of the first, which every further one covers from a wavy cut on, each cut further right, the cuts gilded. */
+/** The local stand-in for a fusion of several images: a cut-paper collage in the shape of the first, which every further one covers from a wavy cut on, each cut further right, the cuts gilded. */
 export async function compositeImages(sources: ReadonlyArray<Blob | string>) {
   if (!sources.length) {
     throw new Error('A collage needs at least one image.')
@@ -104,7 +104,7 @@ export async function compositeImages(sources: ReadonlyArray<Blob | string>) {
   }
 }
 
-/** The local stand-in for an ingredient’s instruction, like an orb’s prompt: the work washed in the ingredient’s glow and darkened toward its edges by it. */
+/** The local stand-in for the instructions an ingredient contributes, like an orb’s prompt: the image washed in the ingredient’s glow and darkened toward its edges by it. */
 export async function tintImage(source: Blob | string, color: string) {
   const bitmap = await createImageBitmap(await loadBlob(source))
   try {

@@ -25,30 +25,30 @@ export default function useGalleryAI() {
     const narrate = (event: Event) => {
       director.narrator.enqueue((event as CustomEvent<string>).detail)
     }
-    const merge = (event: Event) => {
+    const fuse = (event: Event) => {
       const [a, b] = (event as CustomEvent<[string, string]>).detail
-      void director.merge(a, b).catch(() => notify('The fusion could not be started.'))
+      void director.fuse(a, b).catch(() => notify('The fusion could not be started.'))
     }
-    const mergeItem = (event: Event) => {
+    const fuseItem = (event: Event) => {
       const {portrait, item} = (event as CustomEvent<{
         item: ThrownItem
         portrait: string
       }>).detail
-      void director.mergeItem(portrait, item).catch(() => notify('The fusion could not be started.'))
+      void director.fuseItem(portrait, item).catch(() => notify('The fusion could not be started.'))
     }
     const unsubscribe = useGallery.subscribe(s => {
       SoundEngine.existing()?.mute(!s.sound)
     })
     galleryEvents.addEventListener('imported', imported)
     galleryEvents.addEventListener('narrate', narrate)
-    galleryEvents.addEventListener('merge', merge)
-    galleryEvents.addEventListener('merge-item', mergeItem)
+    galleryEvents.addEventListener('fusion', fuse)
+    galleryEvents.addEventListener('item-fusion', fuseItem)
     return () => {
       unsubscribe()
       galleryEvents.removeEventListener('imported', imported)
       galleryEvents.removeEventListener('narrate', narrate)
-      galleryEvents.removeEventListener('merge', merge)
-      galleryEvents.removeEventListener('merge-item', mergeItem)
+      galleryEvents.removeEventListener('fusion', fuse)
+      galleryEvents.removeEventListener('item-fusion', fuseItem)
       director.dispose()
     }
   }, [key, params.ai, params.ai_tier, params.text_model, params.text_model_effort, params.image_model, params.audio_model, params.stt_model, params.narrator_voice, params.narrator_character, params.eager_audio])

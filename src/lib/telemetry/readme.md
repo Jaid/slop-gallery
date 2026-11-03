@@ -17,8 +17,8 @@ const ego = telemetry.createEgo({read: readPlayerAndAim})
 
 ## Gallery signals
 
-- Five-second gauges: portrait totals and hung/imported/pending/merging counts, readiness, pointer lock, AI enabled, holding, inspection, and narration activity. `gallery.room.active{room}` emits a bounded one-hot series for every room, including zero for rooms that were left.
-- Logs and event counters: attachment, room changes, menu/lock/readiness changes, loading progress (`loading.progress` every second behind the loading screen, `loading.finished` once it lifts), collection revisions, narration transitions and import/merge/narration/teleport requests.
+- Five-second gauges: portrait totals and hung/imported/pending/fusing counts, readiness, pointer lock, AI enabled, holding, inspection, and narration activity. `gallery.room.active{room}` emits a bounded one-hot series for every room, including zero for rooms that were left.
+- Logs and event counters: attachment, room changes, menu/lock/readiness changes, loading progress (`loading.progress` every second behind the loading screen, `loading.finished` once it lifts), collection revisions, narration transitions and import/fusion/narration/teleport requests.
 - Traces: session/startup/gameplay parents, state-change events, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 
@@ -68,7 +68,7 @@ Performance reports carry `room`, `locked`, `graphics.profile` and the effective
 
 The gallery renderer opts into timestamp queries only when telemetry is enabled. It traces actual `init()` and `compileAsync()` calls. The load-time pipeline warmup (see the rendering readme) runs as ordinary frames behind the loading screen, not as `compileAsync()`.
 
-`gallery.session` parents startup and pointer-lock gameplay intervals. Startup ends on readiness; unlock ends gameplay. State changes are bounded span events with the existing correlated logs/counters, not independent traces. AI/merge operations inherit the active context at their start and retain it across async boundaries. Parent spans export when ended, so an ongoing session/gameplay parent may not yet be visible. On `pagehide`, the app ends those open gallery spans before requesting a final client flush; the Victoria browser client owns transport semantics and also handles visibility/page lifecycle delivery. Event overflow is explicit; logs continue independently.
+`gallery.session` parents startup and pointer-lock gameplay intervals. Startup ends on readiness; unlock ends gameplay. State changes are bounded span events with the existing correlated logs/counters, not independent traces. AI/fusion operations inherit the active context at their start and retain it across async boundaries. Parent spans export when ended, so an ongoing session/gameplay parent may not yet be visible. On `pagehide`, the app ends those open gallery spans before requesting a final client flush; the Victoria browser client owns transport semantics and also handles visibility/page lifecycle delivery. Event overflow is explicit; logs continue independently.
 
 The Victoria client schedules delivery every second while statistics still report every five seconds. Delivery remains bounded and best-effort. Use `get_telemetry` to inspect collection limits, pending records, rejection/drop counts and delivery failures before interpreting missing GPU/trace data.
 

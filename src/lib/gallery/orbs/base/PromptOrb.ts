@@ -1,22 +1,22 @@
 import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
-import type {IngredientRegistration} from '#src/lib/gallery/fusion/FusionRecipe.ts'
+import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
 
 import {environmentPick, environmentSample} from '../../../environmentSeed.ts'
 import Orb from './Orb.ts'
 
-/** An orb filled with a scene of its own, which reworks a work it is thrown into by its prompt and frames it in its own frame, while the fusion’s portal shows its photograph, which lies in the orb’s folder. */
+/** An orb filled with a scene of its own, which contributes its prompt as an instruction and its frame to the fusion of a portrait it is thrown into, while the fusion’s portal shows its photograph, which lies in the orb’s folder. */
 export default abstract class PromptOrb extends Orb {
   /** how many of its adjectives a prompt may name, one of which the environment seed picks */
   readonly adjectiveCounts: ReadonlyArray<number> = [3, 4, 5]
   /**
-   * what the prompt describes the reworked work by, ordered so that neighboring adjectives in a prompt belong together; the environment seed picks as many entries as it picked of {@link adjectiveCounts}
+   * what the prompt describes the reworked image by, ordered so that neighboring adjectives in a prompt belong together; the environment seed picks as many entries as it picked of {@link adjectiveCounts}
    * Synonyms share an entry, of which a prompt names at most one.
    */
   abstract readonly adjectives: ReadonlyArray<ReadonlyArray<string> | string>
-  /** what the image model is asked to do to the work, leading into the adjectives */
+  /** what the image model is asked to do to the image, leading into the adjectives */
   abstract readonly change: string
-  /** the orb’s glow, which tints the portal of the fusion and the work instead when the result is made locally, without AI */
+  /** the orb’s glow, which tints the portal of the fusion and, made locally without AI, the image in place of its prompt */
   abstract readonly color: string
   abstract override readonly frame: FrameChoice
   abstract override readonly mood: Mood
@@ -25,17 +25,22 @@ export default abstract class PromptOrb extends Orb {
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
 
-  /** its prompt, its glow, its photograph to show in the portal and its frame */
-  override ingredient(seed: number): IngredientRegistration {
+  /** The orb contributes its prompt as an instruction and its frame, and shows in the portal by its glow and its photograph. */
+  override ingredient(seed: number): ItemIngredient {
     return {
-      ...super.ingredient(seed),
-      color: this.color,
-      instruction: this.prompt(seed),
+      contributions: [
+        {
+          kind: 'instruction',
+          instruction: this.prompt(seed),
+        },
+        ...super.ingredient(seed).contributions,
+      ],
+      glow: this.color,
       look: this.photo,
     }
   }
 
-  /** the orb’s whole instruction to the image model in the environment of `seed`, sent verbatim along with the work: its premise and change, then 3 to 5 of its adjectives in their listed order, never two synonyms */
+  /** the orb’s whole instruction to the image model in the environment of `seed`, sent verbatim along with the image: its premise and change, then 3 to 5 of its adjectives in their listed order, never two synonyms */
   prompt(seed: number) {
     const count = environmentPick(seed, `${this.id}-orb:count`, this.adjectiveCounts)
     const entries = environmentSample(seed, `${this.id}-orb:adjectives`, this.adjectives, count)

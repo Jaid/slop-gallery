@@ -1,5 +1,5 @@
 import type {PortraitFrameId} from '../frames/frameParameter.ts'
-import type {IngredientRegistration} from './fusion/FusionRecipe.ts'
+import type {ItemIngredient} from './fusion/FusionRecipe.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 import type {NarrationTiming} from 'use-narrator/core'
 
@@ -15,14 +15,14 @@ export type Portrait = {
   flavorJob?: symbol
   /** the frame the work wears for good, the default frame if left out: a default work’s that of the room whose slot it was hung in, any other work’s that of the room it arrived in */
   frame?: PortraitFrameId
+  fusing?: boolean
+  fusionJob?: symbol
   height: number
   hung: boolean
   id: string
   imported?: boolean
   /** whether the placard hangs above the frame instead of below it, as in a low slot */
   labelAbove?: boolean
-  mergeJob?: symbol
-  merging?: boolean
   narration?: Narration
   orientation?: MathQuat
   pending?: boolean
@@ -38,13 +38,13 @@ export type Portrait = {
   width: number
   year?: number
 }
-/** a grabbable object thrown into a hung work, which the work then merges with whatever the object registers as an ingredient of the fusion */
+/** a grabbable object thrown into a hung portrait, which it then fuses with as an ingredient */
 export type ThrownItem = {
   /** whether a success uses it up, like an orb, instead of the portal spitting it back out */
   consumable?: boolean
   id: string
-  /** Registers what the item brings into the fusion, by default a studio photograph of it as it is now. Called once, after the work is reserved for the merge. */
-  ingredient: () => IngredientRegistration
+  /** The item as an ingredient, with what it contributes to the fusion, by default a studio photograph of it as it is now. Called once, after the portrait is reserved for the fusion. */
+  ingredient: () => ItemIngredient
   title: string
 }
 /** the aspect ratios of default works and their slots, as width:height */

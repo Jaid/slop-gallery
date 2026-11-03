@@ -88,7 +88,7 @@ export default class PortalShow {
     const {frame, outcome, timing} = fusion
     const delta = this.last === undefined ? 0 : clamp(elapsed - this.last, 0, 0.1)
     this.last = elapsed
-    const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, fusion.spec.ingredients.length, fusion.canceledAt)
+    const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, fusion.spec.images.length, fusion.canceledAt)
     this.phase = (this.phase + envelope.spin * delta) % (Math.PI * 2000)
     // Colors die down to embers while it fizzles.
     this.paint.core.lerpColors(this.palette.core, this.embers.core, envelope.embers)
@@ -163,7 +163,7 @@ export default class PortalShow {
     } : undefined
   }
 
-  /** Plays the sound of whatever began since the last frame: a new ingredient, the recoil of a fusion the player broke off, the climax, the result or the fizzle. */
+  /** Plays the sound of whatever began since the last frame: a new image, the recoil of a fusion the player broke off, the climax, the result or the fizzle. */
   private cue(elapsed: number, turn: number | undefined) {
     const {fusion, sound} = this
     const {outcome, timing} = fusion
@@ -222,10 +222,10 @@ export default class PortalShow {
     return sound
   }
 
-  /** Shows the ingredient or the result the envelope asks for, once its image is decoded. */
+  /** Shows the image or the result the envelope asks for, once its image is decoded. */
   private show(image: ReturnType<typeof portalEnvelope>['image']) {
     const {core} = this.visuals
-    const source = image && ('result' in image ? this.fusion.result : this.fusion.spec.ingredients[image.index])
+    const source = image && ('result' in image ? this.fusion.result : this.fusion.spec.images[image.index])
     const texture = source === undefined ? undefined : this.image(source)
     if (!image || !texture) {
       core.uniforms.clarity.value = 0

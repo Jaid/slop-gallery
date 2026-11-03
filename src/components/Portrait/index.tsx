@@ -13,7 +13,7 @@ import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
 import {frameBack} from '#src/lib/frames/base/PortraitFrame.ts'
 import {portraitFrame} from '#src/lib/frames/index.ts'
-import {chime, requestMerge, useGallery} from '#src/lib/gallery.ts'
+import {chime, requestFusion, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import world from '#src/worlds/current.ts'
 
@@ -39,8 +39,8 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   }, [p.id])
   // A fusion flies the work around by its group meanwhile, so its body neither stands in the way nor falls.
   useEffect(() => {
-    body.current?.setEnabled(!held && !p.reserved && !p.merging)
-  }, [held, p.reserved, p.merging])
+    body.current?.setEnabled(!held && !p.reserved && !p.fusing)
+  }, [held, p.reserved, p.fusing])
   useEffect(() => {
     if (!body.current) {
       return
@@ -99,7 +99,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       const other: unknown = event.other.rigidBodyObject?.userData.portraitId
       const target = useGallery.getState().portraits.find(a => a.id === other)
       if (target?.hung) {
-        requestMerge(target.id, p.id)
+        requestFusion(target.id, p.id)
       }
     }}
     onSleep={() => {
@@ -127,7 +127,7 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       <mesh castShadow geometry={geometry} material={held ? frame.heldMaterial : frame.materials} name='portrait-frame' receiveShadow />
       <mesh name='portrait-image' position={[0, 0, frame.imageDepth]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent={held} /></mesh>
       {/* The placard hides while the work orbits a fusion’s portal. */}
-      <Branch if={p.hung && !p.merging}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
+      <Branch if={p.hung && !p.fusing}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
     </group>
   </RigidBody>
 }

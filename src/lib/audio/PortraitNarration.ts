@@ -16,7 +16,7 @@ import {narrator} from './narration.ts'
 import {narratorCharacter, narratorVoice} from './narratorCharacter.ts'
 import transcriptFor from './transcript.ts'
 
-type Story = Pick<Portrait, 'description' | 'id' | 'title'> & Partial<Pick<Portrait, 'merging' | 'narration' | 'pending' | 'source'>>
+type Story = Pick<Portrait, 'description' | 'id' | 'title'> & Partial<Pick<Portrait, 'fusing' | 'narration' | 'pending' | 'source'>>
 type Request = {
   controller: AbortController
   handle?: AudioHandle
@@ -40,7 +40,7 @@ function waitForStory(id: string, signal: AbortSignal): Promise<Story> {
         unsubscribe()
         signal.removeEventListener('abort', abort)
         reject(new Error('The artwork no longer exists.'))
-      } else if (!story.pending && !story.merging) {
+      } else if (!story.pending && !story.fusing) {
         unsubscribe()
         signal.removeEventListener('abort', abort)
         resolve(story)
@@ -91,7 +91,7 @@ export default class PortraitNarration {
       for (const [id, request] of this.requests) {
         const current = storyFor(id)
         const previous = request.story
-        if (!current || previous && (current.title !== previous.title || current.description !== previous.description || current.source !== previous.source || current.narration !== previous.narration || current.pending || current.merging)) {
+        if (!current || previous && (current.title !== previous.title || current.description !== previous.description || current.source !== previous.source || current.narration !== previous.narration || current.pending || current.fusing)) {
           request.controller.abort('Artwork changed')
         }
       }
@@ -145,7 +145,7 @@ export default class PortraitNarration {
     }).catch(error => {
       console.error('Portrait narration cleanup failed.', error)
     })
-    if (story.pending || story.merging) {
+    if (story.pending || story.fusing) {
       notify('The narrator is waiting for the ink to dry…')
     }
     return handle
@@ -154,7 +154,7 @@ export default class PortraitNarration {
   /** Waiting jobs observe label completion directly. This hook is only for optional eager generation. */
   ready(id: string) {
     const story = storyFor(id)
-    if (!story || !this.settings.eager_audio || !this.settings.ai || !this.key || !useGallery.getState().sound || story.narration || story.pending || story.merging || this.lifetime.signal.aborted) {
+    if (!story || !this.settings.eager_audio || !this.settings.ai || !this.key || !useGallery.getState().sound || story.narration || story.pending || story.fusing || this.lifetime.signal.aborted) {
       return
     }
     void this.cache.synthesize({

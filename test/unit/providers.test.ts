@@ -1,9 +1,9 @@
 import {afterEach, expect, spyOn, test} from 'bun:test'
 
 import FlavorGenerator from '../../src/lib/ai/FlavorGenerator.ts'
-import MergeGenerator from '../../src/lib/ai/MergeGenerator.ts'
+import FusionGenerator from '../../src/lib/ai/FusionGenerator.ts'
 import * as modelImageModule from '../../src/lib/ai/modelImage.ts'
-import FusionRecipe, {mergeInstruction} from '../../src/lib/gallery/fusion/FusionRecipe.ts'
+import FusionRecipe, {fusionInstruction, itemIngredient, portraitIngredient} from '../../src/lib/gallery/fusion/FusionRecipe.ts'
 
 const bitmap = globalThis.createImageBitmap
 /** a chat completion answering with the PNG `data` as its image, as OpenRouter answers image models */
@@ -84,27 +84,32 @@ test('the real text adapter consumes streamed structured output', async () => {
   expect(request.model).toBe('test-model')
   expect(request.messages.at(-1)!.content[0].image_url.url).toStartWith('data:image/webp;base64,')
 })
-test('the real image adapter sends the images of the recipe’s ingredients in their order, hanging first, with the merge instruction', async () => {
+test('the real image adapter sends the images the ingredients contributed in their order, the hung portrait’s first, with the fusion instruction', async () => {
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
   const first = new Blob([data], {type: 'image/png'})
   const second = new Blob([Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEUAAP+KeNJXAAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')], {type: 'image/png'})
-  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
-  const recipe = new FusionRecipe({
-    title: 'hanging',
-    image: first,
-  }, [
-    {
-      title: 'thrown',
-      image: Promise.resolve(second),
-    },
+  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
+  const recipe = new FusionRecipe([
+    portraitIngredient({
+      title: 'hanging',
+      source: first,
+    }),
+    itemIngredient('thrown', {
+      contributions: [
+        {
+          kind: 'image',
+          image: Promise.resolve(second),
+        },
+      ],
+    }),
   ])
-  const result = await mergeGenerator.generate(await recipe.content())
+  const result = await fusionGenerator.generate(await recipe.content())
   expect(result.size).toBe(data.byteLength)
   expect(fetchSpy.mock.calls[0][0]).toBe('https://openrouter.ai/api/v1/chat/completions')
   const request = chatRequest(fetchSpy.mock.calls[0])
   expect(request.modalities).toEqual(['image'])
-  expect(chatText(request)).toBe(mergeInstruction)
+  expect(chatText(request)).toBe(fusionInstruction)
   const firstImageBytes = new Uint8Array(await first.arrayBuffer())
   const secondImageBytes = new Uint8Array(await second.arrayBuffer())
   expect(chatImages(request)).toEqual([
@@ -112,23 +117,28 @@ test('the real image adapter sends the images of the recipe’s ingredients in t
     `data:image/png;base64,${secondImageBytes.toBase64()}`,
   ])
 })
-test('the real image adapter sends an orb’s prompt verbatim with the work as the only image, and nothing of the orb’s look', async () => {
+test('the real image adapter sends an orb’s prompt verbatim with the hung portrait’s as the only image, and nothing of the orb’s look', async () => {
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
   const work = new Blob([data], {type: 'image/png'})
-  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
-  const recipe = new FusionRecipe({
-    title: 'work',
-    image: work,
-  }, [
-    {
-      title: 'Test Orb',
-      color: '#8a3cff',
-      instruction: 'Make it spooky.',
+  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
+  const recipe = new FusionRecipe([
+    portraitIngredient({
+      title: 'work',
+      source: work,
+    }),
+    itemIngredient('Test Orb', {
+      contributions: [
+        {
+          kind: 'instruction',
+          instruction: 'Make it spooky.',
+        },
+      ],
+      glow: '#8a3cff',
       look: '/orbs/test.jxl',
-    },
+    }),
   ])
-  const result = await mergeGenerator.generate(await recipe.content())
+  const result = await fusionGenerator.generate(await recipe.content())
   expect(result.size).toBe(data.byteLength)
   const request = chatRequest(fetchSpy.mock.calls[0])
   expect(chatImages(request)).toEqual([`data:image/png;base64,${data.toBase64()}`])
@@ -140,10 +150,10 @@ test('the real image adapter asks a known model for the supported ratio closest 
   const work = new Blob([data], {type: 'image/png'})
   const request = async (model: string, aspect?: number) => {
     fetchSpy!.mockResolvedValueOnce(chatImage(data))
-    const mergeGenerator = new MergeGenerator('test-key', model)
-    await mergeGenerator.generate({
+    const fusionGenerator = new FusionGenerator('test-key', model)
+    await fusionGenerator.generate({
       images: [await work.bytes(), await work.bytes()],
-      text: mergeInstruction,
+      text: fusionInstruction,
     }, {aspect})
     return chatRequest(fetchSpy!.mock.calls.at(-1)!)
   }
@@ -167,18 +177,23 @@ test('the real image adapter re-encodes an image of a format image models reject
     encoded.push(image)
     return Promise.resolve(new Blob([webp], {type: 'image/webp'}))
   })
-  const mergeGenerator = new MergeGenerator('test-key', 'test-image-model')
+  const fusionGenerator = new FusionGenerator('test-key', 'test-image-model')
   try {
-    const recipe = new FusionRecipe({
-      title: 'work',
-      image: work,
-    }, [
-      {
-        title: 'Test Orb',
-        instruction: 'Make it spooky.',
-      },
+    const recipe = new FusionRecipe([
+      portraitIngredient({
+        title: 'work',
+        source: work,
+      }),
+      itemIngredient('Test Orb', {
+        contributions: [
+          {
+            kind: 'instruction',
+            instruction: 'Make it spooky.',
+          },
+        ],
+      }),
     ])
-    await mergeGenerator.generate(await recipe.content())
+    await fusionGenerator.generate(await recipe.content())
   } finally {
     toWebp.mockRestore()
   }
@@ -188,8 +203,8 @@ test('the real image adapter re-encodes an image of a format image models reject
 test('the real image adapter asks for the AI tier’s routing variant through chat', async () => {
   const data = Uint8Array.fromBase64('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACAQMAAABIeJ9nAAAAA1BMVEX/AAAZ4gk3AAAADElEQVQI12NgYGAAAAAEAAEnNCcKAAAAAElFTkSuQmCC')
   fetchSpy = spyOn(globalThis, 'fetch').mockResolvedValue(chatImage(data))
-  const mergeGenerator = new MergeGenerator('test-key', 'google/gemini-nano-banana-2.1', 'priority')
-  await mergeGenerator.generate({
+  const fusionGenerator = new FusionGenerator('test-key', 'google/gemini-nano-banana-2.1', 'priority')
+  await fusionGenerator.generate({
     images: [data],
     text: 'Make it spooky.',
   }, {aspect: 1.5})
@@ -214,10 +229,10 @@ test('the real image adapter falls back to the images endpoint, without a tier, 
     images: [data],
     text: 'Make it spooky.',
   }
-  const firstGenerator = new MergeGenerator('test-key', model, 'priority')
+  const firstGenerator = new FusionGenerator('test-key', model, 'priority')
   const first = await firstGenerator.generate(prompt)
   expect(first.size).toBe(data.byteLength)
-  const secondGenerator = new MergeGenerator('test-key', model, 'priority')
+  const secondGenerator = new FusionGenerator('test-key', model, 'priority')
   await secondGenerator.generate(prompt)
   expect(fetchSpy.mock.calls.map(call => call[0])).toEqual([
     'https://openrouter.ai/api/v1/chat/completions',

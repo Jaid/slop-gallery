@@ -64,7 +64,7 @@ describe('?item', () => {
     expect(triple.room('cell').room.layout.pedestals).toHaveLength(3)
   })
 })
-test('every orb with a prompt brings a JPEG XL photograph of itself for the portal of its merges, in its own folder', async () => {
+test('every orb with a prompt brings a JPEG XL photograph of itself for the portal of its fusions, in its own folder', async () => {
   for (const orb of promptOrbs) {
     expect(orb.photo.replaceAll('\\', '/')).toEndWith(`/orbs/${orb.id}/photo.jxl`)
     const bytes = await Bun.file(orb.photo).bytes()

@@ -267,7 +267,7 @@ describe('target descriptions', () => {
     expect(describeTarget(portrait.id, [{
       ...portrait,
       hung: false,
-      merging: true,
+      fusing: true,
     }])?.keys).toEqual([
       {
         controls: ['KeyE'],

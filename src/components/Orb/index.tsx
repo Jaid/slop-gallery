@@ -8,7 +8,7 @@ import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
 import {orbRadius} from '#src/lib/gallery/orbs/index.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
 
-/** A glass ball, filled with its orb’s scene if it has one, which rolls when knocked, casts its orb’s mood over the world while held and brings what its orb registers into the fusion of a work it is thrown into, which uses it up. */
+/** A glass ball, filled with its orb’s scene if it has one, which rolls when knocked, casts its orb’s mood over the world while held and is an ingredient of the fusion of a portrait it is thrown into, contributing whatever its orb contributes, and used up by its success. */
 export default function Orb({id, orb, position}: {
   /** its prop’s id, unique in the world, the orb’s own prop id by default */
   id?: string

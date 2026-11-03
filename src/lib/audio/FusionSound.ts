@@ -37,7 +37,7 @@ type Beds = {
 const silence = 0.0001
 /** the tones a bell rings, as multiples of its pitch with their share of its volume and how long they ring */
 const bellPartials = [[1, 1, 1], [2.01, 0.45, 0.66], [2.76, 0.32, 0.5], [4.07, 0.18, 0.34], [5.43, 0.1, 0.25]] as const
-/** the pitches the ingredients surface with, one after another: a gentle rising motif */
+/** the pitches the images surface with, one after another: a gentle rising motif */
 const surfacing = [659.25, 783.99, 987.77, 880]
 /** the chord the result flips out on */
 const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.51]
@@ -65,7 +65,7 @@ function impulse(context: BaseAudioContext) {
 }
 
 /**
- * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: its intro’s own, a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every ingredient that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles, after a crack and a screech if the player broke it off.
+ * The sound of a fusion, synthesized live and heard from its portal through an HRTF panner: its intro’s own, a low hum, a shimmer and the whoosh of the orbit while the portal brews, a bell for every image that surfaces in it, a rising rush through the climax and a boom with a fanfare when the result flips out – or a sputtering fall when it fizzles, after a crack and a screech if the player broke it off.
  * Everything rings in a short, bright reverb. It plays on the sound engine’s effects master, which the mute covers.
  */
 export default class FusionSound {
@@ -257,7 +257,7 @@ export default class FusionSound {
     setTimeout(() => this.panner.disconnect(), (fade + 2.4) * 1000)
   }
 
-  /** An ingredient surfaces in the portal: a bell with a slow vibrato over a soft rush, each one a step further along the motif. */
+  /** An image surfaces in the portal: a bell with a slow vibrato over a soft rush, each one a step further along the motif. */
   surface(turn: number) {
     if (this.stopped) {
       return

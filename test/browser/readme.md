@@ -64,7 +64,7 @@ bun test/browser/run.ts pointShadowSeams.ts --standalone
 
 This standalone fixture lights a closed, double-sided room with a single shadow-casting point light, so every surface sees the light and the shadowed render must match the same render at shadow intensity 0. It compares the darkened fraction against three’s own filter. Before the filters compared each lookup against the depth of its own cube face (three’s r187 fix for point shadow seams), they darkened about three times as much of the room, along the seams between the cube’s faces.
 
-For the studio that photographs thrown props for the merge with a hung work:
+For the studio that photographs thrown props for their fusion with a hung portrait:
 
 ```sh
 bun test/browser/run.ts studioSnapshot.ts
@@ -72,7 +72,7 @@ bun test/browser/run.ts studioSnapshot.ts
 
 This detached fixture draws the gallery’s shared gold with a renderer of its own first, then photographs the Props’ apple twice and a white and a charcoal ball with `StudioSnapshotRenderer`. It decodes the WebPs and checks that no object pixel lies outside the middle 960 px, that the object reaches that window’s edge, that the backdrop gray contrasts with the measured lightness and that both snapshots of the apple frame alike. It reports the first (device creation) and warm snapshot times.
 
-For the sound of a merge’s portal:
+For the sound of a fusion’s portal:
 
 ```sh
 bun test/browser/run.ts fusionSound.ts

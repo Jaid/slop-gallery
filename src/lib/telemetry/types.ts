@@ -11,9 +11,9 @@ export type GalleryState = {
     status: string
   } | null
   portraits: ReadonlyArray<{
+    fusing?: boolean
     hung: boolean
     imported?: boolean
-    merging?: boolean
     pending?: boolean
   }>
   ready: boolean

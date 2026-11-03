@@ -51,7 +51,7 @@ export function describeTarget(id: string | null, portraits: ReadonlyArray<Portr
   if (prop) {
     keys.push(prop.canGrab() ? grab : blockedGrab)
   } else if (portrait) {
-    keys.push(portrait.merging ? blockedGrab : grab)
+    keys.push(portrait.fusing ? blockedGrab : grab)
   }
   if (!keys.length) {
     return null

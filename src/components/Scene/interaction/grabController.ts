@@ -15,7 +15,7 @@ const grab = () => {
     return
   }
   const portrait = state.portraits.find(candidate => candidate.id === state.active)
-  if (portrait?.merging || portrait?.reserved) {
+  if (portrait?.fusing || portrait?.reserved) {
     return
   }
   useGallery.setState({held: state.active})
