@@ -258,7 +258,7 @@ export default class FusionSound {
     setTimeout(() => this.panner.disconnect(), (fade + 2.4) * 1000)
   }
 
-  /** An image surfaces in the portal: a bell with a slow vibrato over a soft rush, each one a step further along the motif. */
+  /** An image has come clear in the portal: a bell with a slow vibrato over a soft rush, each one a step further along the motif. */
   surface(turn: number) {
     if (this.stopped) {
       return

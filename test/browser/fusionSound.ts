@@ -144,7 +144,7 @@ async function render(outcome: Outcome, resultAt: number) {
             sound.fizzle(fizzle)
           }
         }
-        if (stage === 'brewing' && envelope.image && 'turn' in envelope.image && envelope.image.turn !== turn) {
+        if (stage === 'brewing' && envelope.image && 'turn' in envelope.image && envelope.image.turn !== turn && envelope.image.clarity >= 1) {
           turn = envelope.image.turn
           sound.surface(turn)
         }

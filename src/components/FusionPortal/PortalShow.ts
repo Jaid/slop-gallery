@@ -1,4 +1,5 @@
 import type {EffectShow} from '#src/lib/gallery/fusion/effects/index.ts'
+import type {PortalImage} from '#src/lib/gallery/fusion/envelope.ts'
 import type Fusion from '#src/lib/gallery/fusion/Fusion.ts'
 import type {PortalPalette} from '#src/lib/gallery/fusion/PortalCore.ts'
 import type {Texture} from 'three/webgpu'
@@ -153,7 +154,7 @@ export default class PortalShow {
       this.sound = this.listen()
     }
     const orbit = elapsed < timing.intro ? introOrbitRate(elapsed, timing) : (orbitAngle(0, elapsed, this.climax()) - orbitAngle(0, elapsed - 0.01, this.climax())) / 0.01
-    this.cue(elapsed, envelope.image && 'turn' in envelope.image ? envelope.image.turn : undefined)
+    this.cue(elapsed, envelope.image)
     this.sound?.update({
       energy: envelope.energy,
       orbit,
@@ -179,8 +180,8 @@ export default class PortalShow {
     } : undefined
   }
 
-  /** Plays the sound of whatever began since the last frame: a new image, the recoil of a fusion the player broke off, the climax, the result or the fizzle. */
-  private cue(elapsed: number, turn: number | undefined) {
+  /** Plays the sound of whatever began since the last frame: a new image come clear, the recoil of a fusion the player broke off, the climax, the result or the fizzle. */
+  private cue(elapsed: number, image: PortalImage | undefined) {
     const {fusion, sound} = this
     const {outcome, timing} = fusion
     if (fusion.canceledAt !== undefined && !this.recoiled) {
@@ -205,9 +206,10 @@ export default class PortalShow {
         sound?.fizzle(timing.fizzle)
       }
     }
-    if (stage === 'brewing' && turn !== undefined && turn !== this.turn) {
-      this.turn = turn
-      sound?.surface(turn)
+    // An image rings once it has come clear rather than as it starts to surface, so the first one after the intro doesn’t drown in the ring of fire landing.
+    if (stage === 'brewing' && image && 'turn' in image && image.turn !== this.turn && image.clarity >= 1) {
+      this.turn = image.turn
+      sound?.surface(image.turn)
     }
   }
 
