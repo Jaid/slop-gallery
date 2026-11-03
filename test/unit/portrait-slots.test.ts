@@ -6,7 +6,7 @@ import artworks from '../../src/worlds/gallery/artworks.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import {galleryPlacement} from './fixtures/gallery.ts'
 
-const slots = slopGallery.portraitSlots()
+const slots = slopGallery.portraitSlots(1)
 const occupied = slots.map(asPortrait)
 describe('portrait slots', () => {
   test('frames keep their ratio and area at every size', () => {

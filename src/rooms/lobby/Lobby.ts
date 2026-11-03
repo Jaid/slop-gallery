@@ -40,7 +40,7 @@ export default class Lobby extends Room {
   constructor() {
     super({
       title: 'Lobby',
-      frame: 'lobby-louis',
+      frame: ['lobby-travertine', 'lobby-louis'],
       cameras,
       spawns,
       ambience: ambienceEmitters,

@@ -71,5 +71,5 @@ export default function defaultPortraits(seed: number): Array<Portrait> {
   if (!portraitSet) {
     return []
   }
-  return hangDefaultWorks(world.portraitSlots(), world.artworks, seed)
+  return hangDefaultWorks(world.portraitSlots(seed), world.artworks, seed)
 }

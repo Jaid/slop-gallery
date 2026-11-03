@@ -5,6 +5,7 @@ import type {Vec3} from 'math'
 
 import {Vector3} from 'three/webgpu'
 
+import {pickFrame} from '#src/lib/frames/frameChoice.ts'
 import {slotFrame} from '#src/lib/placement/portraitSlots.ts'
 import {placeWalls} from '#src/rooms/lib/walls.ts'
 
@@ -48,11 +49,6 @@ export default class PlacedRoom<Kind extends Room = Room> {
   /** the world height of the room’s main floor in meters, which its floor reflection mirrors at: the height of its origin */
   get floorY() {
     return this.origin[1]
-  }
-
-  /** the frame the works wear that hang in the room’s slots or arrive in the room, or undefined for the default frame */
-  get frame() {
-    return this.room.frame
   }
 
   /** the height of the ceiling over the floor of a room around a rectangular floor plan */
@@ -122,6 +118,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.room.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
+  /** The frame the works wear that hang in the room’s slots or arrive in the room in the game of `seed`, which picks one where the room has several, or undefined for the default frame. */
+  frame(seed: number) {
+    return this.room.frame && pickFrame(seed, this.room.frame)
+  }
+
   /** What the ground under the world position sounds like. */
   groundSurface(position: Vec3) {
     return this.room.groundSurface(this.toLocal(position))
@@ -138,9 +139,9 @@ export default class PlacedRoom<Kind extends Room = Room> {
     })).toArray()
   }
 
-  /** The portrait slots with global ids in world meters, as the placement code takes them, each with the room’s frame. */
-  slots(): Array<PortraitSlot> {
-    const {frame} = this.room
+  /** The portrait slots with global ids in world meters, as the placement code takes them, each with the room’s frame in the game of `seed`. */
+  slots(seed: number): Array<PortraitSlot> {
+    const frame = this.frame(seed)
     return this.room.slots.entries().map(([id, {area, position, priority = 0, labelAbove, wallId, ...slot}]) => ({
       id: this.room.globalId(id),
       ...slot,

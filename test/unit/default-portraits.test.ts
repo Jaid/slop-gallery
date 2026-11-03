@@ -5,7 +5,7 @@ import artworks from '../../src/worlds/gallery/artworks.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import sandbox from '../../src/worlds/sandbox/index.ts'
 
-const slots = slopGallery.portraitSlots()
+const slots = slopGallery.portraitSlots(7)
 test('default works hang in distinct slots of their ratio, taking the slot’s size', () => {
   const portraits = defaultPortraits(7)
   expect(portraits.map(portrait => portrait.id)).toEqual(artworks.map(artwork => artwork.id))
@@ -26,8 +26,8 @@ test('the seed decides the assignment, and the same seed repeats it', () => {
 })
 test('with fewer slots than works, as in the Sandbox, the seed draws which works hang, every slot of a ratio with works taking one', () => {
   const ratios = new Set(sandbox.artworks.map(artwork => artwork.ratio))
-  const sandboxSlots = sandbox.portraitSlots().filter(slot => ratios.has(slot.ratio))
-  const hang = (seed: number) => hangDefaultWorks(sandbox.portraitSlots(), sandbox.artworks, seed)
+  const sandboxSlots = sandbox.portraitSlots(1).filter(slot => ratios.has(slot.ratio))
+  const hang = (seed: number) => hangDefaultWorks(sandbox.portraitSlots(seed), sandbox.artworks, seed)
   for (const seed of [1, 2, 3, 4, 5]) {
     const portraits = hang(seed)
     expect(portraits).toHaveLength(sandboxSlots.length)

@@ -10,6 +10,7 @@ import SoundEngine from '../audio/SoundEngine.ts'
 import {writeStored} from '../browserStorage.ts'
 import crosshair, {crosshairToggleKey} from '../crosshair.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
+import {environmentSeed} from '../gameSeed.ts'
 import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {graphicsTuningKey, toggleGraphicsTuning} from '../rendering/customGraphics.ts'
@@ -151,9 +152,9 @@ export async function loadBlob(source: Blob | string) {
   return response.blob()
 }
 
-/** The frame of a work arriving at `position`, which `from` looks at: that of the room the work arrives in or, where that lies outside of every room, like beyond a wall, that of the room it was made from. */
-export function arrivalFrame(position: Vec3, from: Vec3) {
-  return world.roomAt(position) ? world.frameAt(position) : world.frameAt(from)
+/** The frame of a work arriving at `position`, which `from` looks at, in the game of `seed`: that of the room the work arrives in or, where that lies outside of every room, like beyond a wall, that of the room it was made from. */
+export function arrivalFrame(position: Vec3, from: Vec3, seed = environmentSeed) {
+  return world.frameAt(world.roomAt(position) ? position : from, seed)
 }
 
 /** A new work 1.6 m in front of the pose, facing it, in the frame of the room it arrives in. */

@@ -1,6 +1,6 @@
 import type {OrnamentOptions} from './frameGeometry.ts'
 
-import {ExtrudeGeometry, LatheGeometry, Shape, Vector2} from 'three/webgpu'
+import {BoxGeometry, ExtrudeGeometry, LatheGeometry, Shape, Vector2} from 'three/webgpu'
 
 import {ornament} from './frameGeometry.ts'
 
@@ -26,6 +26,13 @@ export function dome(radius: number, height: number, {segments = 8, rings = 3, .
     return ring === rings ? [0, height] : [Math.cos(angle) * radius, Math.sin(angle) * height]
   })
   return turned(outline, segments, options)
+}
+
+/** A box of `width` × `height` × `depth` meters, its back on z = 0. */
+export function block(width: number, height: number, depth: number, options?: OrnamentOptions) {
+  const box = new BoxGeometry(width, height, depth)
+  box.translate(0, 0, depth / 2)
+  return ornament(box, options)
 }
 
 /** A flat shape of points in meters, counterclockwise, raised `depth` toward the viewer from z = 0, its front edge eased by a bevel of `bevel` meters. */

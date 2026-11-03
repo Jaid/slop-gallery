@@ -37,7 +37,7 @@ export default class Sienna extends Room {
   constructor() {
     super({
       title: 'The Sienna',
-      frame: 'sienna-velvet',
+      frame: ['sienna-velvet', 'sienna-burl', 'sienna-leather'],
       cameras,
       spawns,
       lamps,

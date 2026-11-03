@@ -181,7 +181,7 @@ describe('worlds', () => {
     expect(single.wallDistance([vestibuleX, 1, z], [0, 0, -1])).toBeGreaterThan(z - vestibuleZ + vestibule.radius - wallFace)
   })
   test('the Sandbox’s walls have portrait slots, at most one for every default work of each ratio, every one a valid hanging spot with all the others filled', () => {
-    const slots = sandbox.portraitSlots()
+    const slots = sandbox.portraitSlots(1)
     // Every default work’s ratio has a slot, and no ratio has more slots than works; slots of other ratios wait for works of their own.
     const available = ratios(slots)
     for (const [ratio, count] of Object.entries(ratios(sandbox.artworks))) {

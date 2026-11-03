@@ -17,8 +17,15 @@ export type GiltRelief = {
 export type GiltOptions = {
   /** the red clay the leaf is laid on, which shows where it is rubbed through */
   bole?: string
+  /** how strongly the hollows mirror the studio, relative to the default */
+  environmentIntensity?: number
   /** how much dirt has settled in the hollows, 0 to 1 */
   grime?: number
+  /** paint over the gilding, like a monogram, where its mask is 1 */
+  overlay?: (surface: FrameSurface) => {
+    color: Node<'vec3'>
+    mask: Float
+  }
   relief?: GiltRelief
   /** how far the polished ridges and the matte flats scatter their reflections */
   roughness?: {
@@ -31,7 +38,7 @@ export type GiltOptions = {
 
 type Float = Node<'float'>
 
-/** water gilding’s deep yellow gold in linear RGB, a touch cooler than the shared gold of the fittings */
+/** water gilding’s deep yellow gold, a touch cooler than the shared gold of the fittings */
 const waterGold = [0.9, 0.55, 0.2] as const
 
 /**
@@ -40,13 +47,14 @@ const waterGold = [0.9, 0.55, 0.2] as const
  * It reads the frame’s attributes, so it only suits frame geometry. A {@link GiltRelief} carves ornament into it as shading alone, its hollows taking the grime like the moulding’s own.
  */
 export default class GiltMaterial extends MeshPhysicalNodeMaterial {
-  constructor({bole = '#7a2f1b', roughness = {
+  constructor({bole = '#7a2f1b', environmentIntensity = 1, overlay, roughness = {
     burnished: 0.12,
     matte: 0.3,
   }, relief, grime = 0.5, wear = 0.25}: GiltOptions = {}) {
     super({
       metalness: 1,
       envMap: frameStudio,
+      envMapIntensity: environmentIntensity,
     })
     const surface = readSurface()
     const p = surface.position
@@ -65,10 +73,12 @@ export default class GiltMaterial extends MeshPhysicalNodeMaterial {
     const gold = vec3(...waterGold).mul(toning.mul(0.08).add(0.94))
     const dirty = mix(gold, gold.mul(vec3(0.42, 0.34, 0.24)), hollow.mul(grime))
     const clay = color(bole).mul(patches.mul(0.25).add(0.85))
-    this.colorNode = mix(dirty, clay, rubbed)
-    this.metalnessNode = float(1).sub(rubbed.mul(0.92))
+    const painted = overlay?.(surface)
+    const paintMask = painted?.mask ?? float(0)
+    this.colorNode = mix(mix(dirty, clay, rubbed), painted?.color ?? vec3(0), paintMask)
+    this.metalnessNode = float(1).sub(rubbed.mul(0.92)).mul(float(1).sub(paintMask))
     const crackle = mx_worley_noise_float(p.mul(160)).smoothstep(0, 0.08).oneMinus().mul(visibleDetail(footprint, 0.006))
-    this.roughnessNode = mix(float(roughness.matte), float(roughness.burnished), ridge).add(hollow.mul(grime * 0.25)).add(rubbed.mul(0.35)).add(crackle.mul(0.08))
+    this.roughnessNode = mix(mix(float(roughness.matte), float(roughness.burnished), ridge).add(hollow.mul(grime * 0.25)).add(rubbed.mul(0.35)).add(crackle.mul(0.08)), float(0.55), paintMask)
     const grain = speckle.mul(0.00002).sub(crackle.mul(0.00003))
     this.normalNode = heightNormal(carved.add(grain).add(smoothstep(0, 1, rubbed).mul(-0.00008)))
   }

@@ -1,8 +1,8 @@
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 
-/** the ids of every frame there is, in kebab-case, the default first; `index.ts` holds a frame for each */
-export const frameIds = ['classic', 'lobby-louis', 'vesper-ripple', 'banquet-perspective', 'antechamber-adam', 'sienna-velvet', 'salon-barbizon', 'cinnabar-meander', 'moonfall-meteorite', 'fortress-oak', 'lodge-tramp', 'corridor-kumiko', 'oculus-float', 'exhibition-evidence', 'cell-coffer'] as const
+/** the ids of every frame there is, in kebab-case, the default first, then those of the rooms; `index.ts` holds a frame for each */
+export const frameIds = ['classic', 'lobby-travertine', 'lobby-louis', 'vesper-ripple', 'vesper-sgraffito', 'banquet-perspective', 'banquet-deco', 'banquet-checker', 'antechamber-adam', 'sienna-velvet', 'sienna-burl', 'sienna-leather', 'salon-barbizon', 'salon-whistler', 'salon-impressionist', 'cinnabar-meander', 'moonfall-meteorite', 'moonfall-orbit', 'moonfall-regolith', 'fortress-strapwork', 'fortress-oak', 'lodge-twig', 'lodge-tramp', 'lodge-charred', 'corridor-kumiko', 'corridor-mission', 'oculus-float', 'oculus-acrylic', 'exhibition-vitrine', 'exhibition-evidence', 'exhibition-containment', 'cell-coffer'] as const
 /** the id of one of the frames */
 export type PortraitFrameId = typeof frameIds[number]
 

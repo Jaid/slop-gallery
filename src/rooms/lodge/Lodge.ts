@@ -47,7 +47,7 @@ export default class Lodge extends Room {
   constructor() {
     super({
       title: 'Lodge',
-      frame: 'lodge-tramp',
+      frame: ['lodge-twig', 'lodge-tramp', 'lodge-charred'],
       cameras,
       spawns,
       ambience: ambienceEmitters,

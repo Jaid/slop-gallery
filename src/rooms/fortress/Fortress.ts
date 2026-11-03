@@ -37,7 +37,7 @@ export default class Fortress extends Room {
   constructor() {
     super({
       title: 'The Fortress',
-      frame: 'fortress-oak',
+      frame: ['fortress-strapwork', 'fortress-oak'],
       cameras,
       spawns,
       lamps,

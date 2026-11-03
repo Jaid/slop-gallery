@@ -1,7 +1,7 @@
 import type {FrameSurface} from './frameAttributes.ts'
 import type {Node} from 'three/webgpu'
 
-import {abs, clamp, float, max, select, smoothstep} from 'three/tsl'
+import {abs, atan, clamp, float, max, select, smoothstep, vec2} from 'three/tsl'
 
 import {visibleDetail} from '../filters.ts'
 import {fittedPeriod} from './frameAttributes.ts'
@@ -69,4 +69,23 @@ export function ribbon(phase: Float, t: Float) {
 export function gadroons(phase: Float, t: Float) {
   const x = phase.add(t.mul(0.25)).fract().sub(0.5).mul(2)
   return dome(x, t.mul(2).sub(1).mul(0.6))
+}
+
+/** Round reeds side by side across a band, `count` of them. */
+export function reeds(t: Float, count: number) {
+  const x = t.mul(count).fract().sub(0.5).mul(2)
+  return dome(x, float(0))
+}
+
+/** Petals of a rosette round its middle on its front face, `petals` of them and a button in the middle, for turned ornaments of `radius`. */
+export function rosette(surface: FrameSurface, petals: number, radius: number) {
+  const p = vec2(surface.along, surface.across).div(radius)
+  const distance = p.length()
+  const angle = atan(p.y, p.x)
+  const lobe = angle.mul(petals / 2).cos().abs()
+  const petal = smoothstep(lobe.mul(0.35).add(0.62), lobe.mul(0.35).add(0.52), distance).mul(lobe.mul(0.5).add(0.5))
+  const vein = angle.mul(petals).cos().abs().pow(8).mul(smoothstep(0.25, 0.8, distance)).mul(0.2)
+  const button = dome(distance.div(0.24), float(0))
+  const inner = smoothstep(0.22, 0.3, distance).mul(smoothstep(0.55, 0.45, distance)).mul(angle.mul(petals).cos().mul(0.5).add(0.5)).mul(0.35)
+  return clamp(max(petal.sub(vein), max(button, inner)), 0, 1)
 }

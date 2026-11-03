@@ -98,9 +98,9 @@ export default abstract class World<Kind extends Room = Room> {
   /** The height of the walkable floor under the position. */
   abstract floorHeight(position: Vec3): number
 
-  /** The frame a work arriving at the position wears: the one of the room whose fence holds it, or undefined for the default frame, also outside of every fence. */
-  frameAt(position: Vec3) {
-    return this.roomAt(position)?.frame
+  /** The frame a work arriving at the position wears in the game of `seed`: the one of the room whose fence holds it, or undefined for the default frame, also outside of every fence. */
+  frameAt(position: Vec3, seed: number) {
+    return this.roomAt(position)?.frame(seed)
   }
 
   /** What the ground under the position sounds like in the room the player is in. */
@@ -123,9 +123,9 @@ export default abstract class World<Kind extends Room = Room> {
     return room.id === current ? 0.25 : 0.1
   }
 
-  /** Every portrait slot of the world in world meters, room by room. */
-  portraitSlots() {
-    return this.rooms.flatMap(room => room.slots())
+  /** Every portrait slot of the world in world meters, room by room, framed as in the game of `seed`. */
+  portraitSlots(seed: number) {
+    return this.rooms.flatMap(room => room.slots(seed))
   }
 
   /** The placed room with the id. */

@@ -61,6 +61,11 @@ export const blackAnodized: Metal = {
   dull: '#1c1d1f',
   roughness: 0.4,
 }
+export const silver: Metal = {
+  bright: '#e3e0da',
+  dull: '#6f6a62',
+  roughness: 0.2,
+}
 
 export type FrameMetalOptions = {
   /** a pattern of its own over the metal, like an etching: how much of the bright metal shows, 0 to 1, and a relief */
