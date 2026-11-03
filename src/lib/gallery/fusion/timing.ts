@@ -16,11 +16,16 @@ export type FusionTiming = {
   minimum: number
 }
 
-/** The intro fills the minimum, which every fusion waits for anyway. */
+/** how many turns of the images every fusion shows after its intro before its outcome may show */
+export const minimumTurns = 4
+const introDuration = 4
+const turnDuration = 1.5
+
+/** The minimum lasts until {@link minimumTurns} turns of the images followed the intro. */
 export const fusionTiming: FusionTiming = {
-  intro: 4,
-  image: 1.5,
-  minimum: 4,
+  intro: introDuration,
+  image: turnDuration,
+  minimum: introDuration + minimumTurns * turnDuration,
   climax: 1.3,
   afterglow: 1.6,
   fizzle: 1,

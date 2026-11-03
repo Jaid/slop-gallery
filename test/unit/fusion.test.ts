@@ -10,7 +10,7 @@ import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {beats, choreographed, grabs, introSeconds, introTether, introTrail, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, portalRebound, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
-import {fusionTiming, imageAt, introTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
+import {fusionTiming, imageAt, introTurns, minimumTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
   id: 'work',
@@ -59,8 +59,14 @@ describe('portal frame', () => {
   })
 })
 describe('timeline', () => {
-  test('the intro fills the minimum', () => {
-    expect(fusionTiming.intro).toBe(fusionTiming.minimum)
+  test('the minimum lasts until the images took their turns after the intro', () => {
+    const {image, intro, minimum} = fusionTiming
+    expect(minimum).toBe(intro + minimumTurns * image)
+    expect(nextTurn(minimum)).toBe(minimum)
+    expect(imageAt(minimum - image / 2, 2)).toMatchObject({
+      turn: introTurns + minimumTurns - 1,
+      clarity: 1,
+    })
   })
   test('after the intro, the images surface one after another, over and over', () => {
     const {intro: introEnd, image} = fusionTiming
