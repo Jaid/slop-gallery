@@ -12,6 +12,7 @@ import crosshair, {crosshairToggleKey} from '../crosshair.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {environmentSeed} from '../gameSeed.ts'
 import {hiddenUiKey, toggleHiddenUi} from '../hiddenUi.ts'
+import {moodSuppressionKey, toggleMoodSuppression} from '../moods/moodSuppression.ts'
 import pauseMenu from '../pauseMenu.ts'
 import {graphicsTuningKey, toggleGraphicsTuning} from '../rendering/customGraphics.ts'
 import {bookmarkKey, teleportToNextBookmark} from './bookmarks.ts'
@@ -220,6 +221,9 @@ export function handleGalleryKey(event: KeyboardEvent) {
   }
   if (event.code === graphicsTuningKey && isDevelopmentMode) {
     toggleGraphicsTuning()
+  }
+  if (event.code === moodSuppressionKey && isDevelopmentMode) {
+    notify(toggleMoodSuppression() ? 'Moods suppressed. N lets them back.' : 'Moods are back.')
   }
   if (event.code === flyModeKey && isDevelopmentMode && s.locked) {
     notify(toggleFlyMode() ? 'Flying. W follows your gaze, Space and C rise and sink, F lands.' : 'Landed. Gravity is back.')

@@ -12,6 +12,7 @@ import Mood from '../../src/lib/moods/base/Mood.ts'
 import {readMood} from '../../src/lib/moods/forcedMood.ts'
 import {fusionMood, moods} from '../../src/lib/moods/index.ts'
 import MoodMixer, {moodFade} from '../../src/lib/moods/MoodMixer.ts'
+import {moodSuppression, toggleMoodSuppression} from '../../src/lib/moods/moodSuppression.ts'
 import {applyLightLevels, lightTint, noTint} from '../../src/lib/rendering/lightLevels.ts'
 
 /** a loop that only records what it was told */
@@ -206,6 +207,13 @@ describe('moods', () => {
     const orbMoods: ReadonlyArray<Mood> = orbs.map(orb => orb.mood)
     expect(orbMoods).not.toContain(fusionMood)
     expect(fusionMood.fade.in).toBe(fusionTiming.intro)
+  })
+  test('N suppresses every mood and lets them back', () => {
+    expect(moodSuppression.active).toBe(false)
+    expect(toggleMoodSuppression()).toBe(true)
+    expect(moodSuppression.active).toBe(true)
+    expect(toggleMoodSuppression()).toBe(false)
+    expect(moodSuppression.active).toBe(false)
   })
   test('?mood names a mood by its id and ignores anything else', () => {
     expect(readMood('http://localhost/?mood=horror')).toBe('horror')
