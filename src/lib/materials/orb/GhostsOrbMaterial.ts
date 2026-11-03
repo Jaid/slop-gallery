@@ -1,8 +1,10 @@
+import type {GhostExpression} from '../ghost.ts'
 import type {FillLayer, OrbGlassOptions, OrbRay} from './base/OrbGlassMaterial.ts'
 import type {Node} from 'three/webgpu'
 
-import {color, cross, float, hash, mix, mx_noise_float, smoothstep, time, vec2, vec3} from 'three/tsl'
+import {color, cross, float, mix, mx_noise_float, smoothstep, time, vec2, vec3} from 'three/tsl'
 
+import {ghostBlink, ghostColors, ghostShape} from '../ghost.ts'
 import OrbGlassMaterial from './base/OrbGlassMaterial.ts'
 import {coverage, rgb, spinAroundY, turn} from './fill.ts'
 import {orbNoise} from './noise.ts'
@@ -40,61 +42,11 @@ const ghosts = [{
   phase: 3.2,
   size: 0.2,
 }]
-const sheetColor = rgb('#e6fff2')
-const glowColor = rgb('#6dffb0')
-const holeColor = rgb('#020806')
+const sheetColor = rgb(ghostColors.sheet)
+const glowColor = rgb(ghostColors.glow)
+const holeColor = rgb(ghostColors.hole)
 const mistColor = color('#3fd98a')
 const deepColor = color('#062417')
-/** an ellipse’s inside, positive within it, roughly in units of its width */
-function ellipse(point: Node<'vec2'>, center: [number, number], [width, height]: [Node<'float'> | number, Node<'float'> | number]) {
-  return float(1).sub(point.sub(vec2(...center)).div(vec2(width, height)).length()).mul(width)
-}
-/** seconds a ghost’s eyes take to close and open again */
-const blinkLength = 0.22
-/** what a ghost’s face does: how far its eyes are shut, where they glance in its own units and how startled it is, 0–1 */
-type Expression = {
-  blink: Node<'float'>
-  glance: Node<'vec2'>
-  startle: Node<'float'>
-}
-
-/**
- * How far a ghost’s eyes are shut, 0–1. Each ghost blinks once in every stretch of a few seconds of its own, at a random moment within it, and now and then twice in a row.
- */
-function blinking(phase: number, period: number) {
-  const t = time.add(phase * 7.3)
-  const stretch = t.div(period).floor()
-  const into = t.sub(stretch.mul(period))
-  const at = hash(stretch.add(phase * 13)).mul(period - 0.8)
-  const twice = hash(stretch.add(phase * 13 + 0.5)).greaterThan(0.65)
-  const shut = (start: Node<'float'>) => float(1).sub(into.sub(start).sub(blinkLength / 2).abs().div(blinkLength / 2)).clamp().smoothstep(0, 0.6)
-  return shut(at).max(shut(at.add(blinkLength + 0.12)).mul(twice.select(float(1), float(0))))
-}
-/**
- * The inside of a ghost under a sheet, positive within it, in its own units: a round head that widens into a skirt with a rippling hem and two stubby arms, and the inside of its hollow eyes and mouth.
- * The face always turns toward whoever looks in.
- */
-function ghostShape(point: Node<'vec2'>, phase: number, {blink, glance, startle}: Expression) {
-  const {x, y} = point
-  const head = float(0.4).sub(point.sub(vec2(0, 0.22)).length())
-  const width = float(0.4).add(float(0.22).sub(y).max(0).mul(0.22))
-  const hem = float(-0.7).add(x.mul(16).add(time.mul(5)).add(phase).sin().mul(0.06))
-  const skirt = width.sub(x.abs()).min(y.sub(hem)).min(float(0.22).sub(y))
-  const wave = time.mul(3).add(phase).sin().mul(0.06)
-  const arms = float(0.09).sub(vec2(x.abs().sub(0.43), y.add(0.06).sub(wave.mul(x.sign()))).length())
-  const body = head.max(skirt).max(arms)
-  const wail = time.mul(1.7).add(phase * 2).sin().mul(0.5).add(0.5)
-  // The eyes glance about, widen when startled and close to a thin slit as they blink.
-  const seen = point.sub(vec2(glance.x.mul(x.sign()), glance.y))
-  const eyeSize = startle.mul(0.3).add(1)
-  const eyes = ellipse(vec2(seen.x.abs(), seen.y.add(blink.mul(0.03))), [0.15, 0.28], [eyeSize.mul(0.07), mix(eyeSize.mul(0.11), float(0.012), blink)])
-  const gape = wail.mul(float(1).sub(startle)).add(startle.mul(1.4))
-  const mouth = ellipse(point, [0, 0.03], [float(0.07).add(gape.mul(0.02)), float(0.07).add(gape.mul(0.07))])
-  return {
-    body,
-    face: eyes.max(mouth),
-  }
-}
 
 /** Pale ghosts under sheets drifting through green ectoplasmic mist, wailing, their hollow faces always turned toward whoever looks in. They blink, each at its own pace, glance around, and gape startled when someone leans in close; now and then one fades nearly out of sight and flickers back. */
 export default class GhostsOrbMaterial extends OrbGlassMaterial {
@@ -118,8 +70,8 @@ export default class GhostsOrbMaterial extends OrbGlassMaterial {
     })
     const layers: Array<FillLayer> = ghosts.map(({size, phase}, index) => {
       const glanceAt = time.mul(0.35).add(phase * 5)
-      const expression: Expression = {
-        blink: blinking(phase, 3.2 + index * 0.9),
+      const expression: GhostExpression = {
+        blink: ghostBlink(phase, 3.2 + index * 0.9),
         glance: vec2(mx_noise_float(vec3(glanceAt, phase, 0.5)), mx_noise_float(vec3(glanceAt, phase, 3.5)).mul(0.5)).mul(0.07).mul(startle.oneMinus()),
         startle,
       }

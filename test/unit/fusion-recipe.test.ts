@@ -150,7 +150,7 @@ describe('fusion recipe', () => {
     expect(recipe.localDescription).toBe('Tinted by hand in the Test Orb’s glow.')
   })
   for (const orb of promptOrbs) {
-    test(`the ${orb.title} contributes its prompt and frame of the game and shows by its glow and photograph`, () => {
+    test(`the ${orb.title} contributes its prompt, its frame of the game and its effect, if it has one, and shows by its glow and photograph`, () => {
       expect(orb.ingredient(7)).toEqual({
         contributions: [
           {
@@ -161,6 +161,12 @@ describe('fusion recipe', () => {
             kind: 'frame',
             frame: pickFrame(7, orb.frame),
           },
+          ...orb.effect ? [
+            {
+              kind: 'effect' as const,
+              effect: orb.effect,
+            },
+          ] : [],
         ],
         glow: orb.color,
         look: orb.photo,

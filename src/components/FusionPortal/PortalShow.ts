@@ -1,3 +1,4 @@
+import type {EffectShow} from '#src/lib/gallery/fusion/effects/index.ts'
 import type Fusion from '#src/lib/gallery/fusion/Fusion.ts'
 import type {PortalPalette} from '#src/lib/gallery/fusion/PortalCore.ts'
 import type {Texture} from 'three/webgpu'
@@ -30,11 +31,12 @@ const lightRange = 8
 const middle = new Vector3
 
 /**
- * One fusion as the scene shows it: its portal, its light, its sound and the choreography of what orbits it, all following the fusion’s clock frame by frame.
+ * One fusion as the scene shows it: its portal, its light, its sound, the choreography of what orbits it and the effects its ingredients contributed, all following the fusion’s clock frame by frame.
  * Disposing it hands back whatever still orbits, stops its sound and lets go of the images it showed.
  */
 export default class PortalShow {
   readonly root = new Group
+  private readonly effects: ReadonlyArray<EffectShow>
   private readonly embers: PortalPalette
   private readonly fusion: Fusion
   private readonly images = new Map<Blob | string, HeldImage>
@@ -69,12 +71,16 @@ export default class PortalShow {
     // The fusion’s mood darkens and cools the light around it, but its own glow shines on in the portal’s colors.
     this.light.userData.untinted = true
     this.root.name = `fusion-${fusion.id}`
-    this.root.add(this.visuals.root, this.light)
+    this.effects = fusion.spec.effects.map(effect => effect.show(fusion))
+    this.root.add(this.visuals.root, this.light, ...this.effects.map(effect => effect.root))
   }
 
   dispose() {
     this.satellites.dispose()
     this.sound?.stop()
+    for (const effect of this.effects) {
+      effect.dispose()
+    }
     for (const image of this.images.values()) {
       image.release()
     }
@@ -153,6 +159,16 @@ export default class PortalShow {
       orbit,
       spin: envelope.spin,
     })
+    const audio = this.audio()
+    for (const effect of this.effects) {
+      effect.update(elapsed, audio)
+    }
+  }
+
+  /** where the portal sounds: on the sound engine, once the player’s first click made it, while the sound is on */
+  private audio() {
+    const engine = SoundEngine.existing()
+    return engine && useGallery.getState().sound ? engine : undefined
   }
 
   private climax() {
@@ -212,12 +228,12 @@ export default class PortalShow {
 
   /** The portal’s sound, once the player’s first click made the sound engine and while the sound is on; it can only start while the portal still brews. */
   private listen() {
-    const engine = SoundEngine.existing()
-    if (!engine || !useGallery.getState().sound) {
+    const audio = this.audio()
+    if (!audio) {
       return
     }
     const {fusion} = this
-    const sound = new FusionSound(engine, fusion.frame.center)
+    const sound = new FusionSound(audio, fusion.frame.center)
     sound.open(fusion.timing, fusion.elapsed())
     return sound
   }

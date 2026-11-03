@@ -25,7 +25,7 @@ export default abstract class PromptOrb extends Orb {
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
 
-  /** The orb contributes its prompt as an instruction and its frame, and shows in the portal by its glow and its photograph. */
+  /** The orb contributes its prompt as an instruction, its frame and its effect, if it has one, and shows in the portal by its glow and its photograph. */
   override ingredient(seed: number): ItemIngredient {
     return {
       contributions: [

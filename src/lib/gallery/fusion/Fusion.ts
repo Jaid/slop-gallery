@@ -1,4 +1,5 @@
 import type {Portrait} from '../types.ts'
+import type {FusionEffect} from './effects/index.ts'
 import type {PortalFrame} from './portalFrame.ts'
 import type {FusionTiming} from './timing.ts'
 
@@ -15,6 +16,8 @@ export type FusionPartner = {
 export type FusionSpec = {
   /** the swirl’s color, like an orb’s glow; the portal’s own otherwise */
   color?: string
+  /** what the portal shows besides its own choreography, as the ingredients contributed it */
+  effects: ReadonlyArray<FusionEffect>
   /** the images the portal shows of the ingredients in turn, the hung portrait’s first; more can surface later, like a prop’s photograph; an ingredient with nothing to show, like the Transparent Orb, shows nothing */
   images: Array<Blob | string>
   partner: FusionPartner
@@ -83,6 +86,11 @@ export default class Fusion {
     this.onClose = onClose
   }
 
+  /** seconds the portal stays open after the result flipped out: its own afterglow, or longer while an effect goes on */
+  get afterglow() {
+    return Math.max(this.timing.afterglow, ...this.spec.effects.map(effect => effect.afterglow))
+  }
+
   /** Ends the fusion right away, wherever it is: everything snaps back, and the portal closes. Does nothing once it is over. */
   abort() {
     if (this.closed) {
@@ -122,14 +130,14 @@ export default class Fusion {
     return (now - this.startedAt) / 1000
   }
 
-  /** Marks the result as committed: it flips out of the portal now, which closes after its afterglow. */
+  /** Marks the result as committed: it flips out of the portal now, which closes after its {@link afterglow}. */
   emerge() {
     if (this.closed || this.outcome?.kind !== 'success' || this.emergedAt !== undefined) {
       return
     }
     const emergedAt = Math.max(this.elapsed(), this.outcome.at + this.timing.climax)
     this.emergedAt = emergedAt
-    this.closeAt(emergedAt + this.timing.afterglow).catch(() => this.close())
+    this.closeAt(emergedAt + this.afterglow).catch(() => this.close())
   }
 
   /** Shows the failure, no sooner than the minimum: the portal fizzles out, the hung portrait flies back to its wall and what was thrown into it is spat out. Resolves once all of it is back, also when the fusion was already failing, like one the player broke off. */

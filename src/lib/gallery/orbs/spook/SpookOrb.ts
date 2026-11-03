@@ -1,12 +1,13 @@
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 
+import {ghostsEffect} from '#src/lib/gallery/fusion/effects/index.ts'
 import GhostsOrbMaterial from '#src/lib/materials/orb/GhostsOrbMaterial.ts'
 import {spookMood} from '#src/lib/moods/index.ts'
 
 import PromptOrb from '../base/PromptOrb.ts'
 import photo from './photo.jxl' with {distance: '1', format: 'jxl', maximumLong: '512'}
 
-/** Blinking ghosts drifting through green mist. It lets something supernatural slip into a work. */
+/** Blinking ghosts drifting through green mist. It lets something supernatural slip into a work, and its ghosts escape the portal as the result flips out. */
 export default class SpookOrb extends PromptOrb {
   readonly adjectives = [
     // presence
@@ -29,6 +30,7 @@ export default class SpookOrb extends PromptOrb {
   ]
   readonly change = 'add something supernatural that makes it'
   readonly color = '#3fd98a'
+  override readonly effect = ghostsEffect
   readonly frame = ['spook-maelstrom', 'spook-rift', 'spook-abyss', 'spook-seance'] as const
   readonly id = 'spook'
   readonly mood = spookMood

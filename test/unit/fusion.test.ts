@@ -2,8 +2,9 @@ import type {SatelliteOrbit, SatellitePose} from '../../src/lib/gallery/fusion/o
 
 import {describe, expect, test} from 'bun:test'
 
-import {Quaternion, Vector3} from 'three/webgpu'
+import {Group, Quaternion, Vector3} from 'three/webgpu'
 
+import FusionEffect from '../../src/lib/gallery/fusion/effects/base/FusionEffect.ts'
 import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {beats, choreographed, grabs, introSeconds, introTether, introTrail, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
@@ -253,6 +254,19 @@ describe('intro', () => {
     expect(portalEnvelope(end + 2, undefined, undefined, fusionTiming, 2).flash).toBeLessThan(0.01)
   })
 })
+/** an effect that goes on for 0.2 s after the result flipped out, showing nothing */
+class LingeringEffect extends FusionEffect {
+  override readonly afterglow = 0.2
+  readonly id = 'lingering'
+
+  show() {
+    return {
+      root: new Group,
+      update: () => {},
+      dispose: () => {},
+    }
+  }
+}
 const spec = () => ({
   work,
   partner: {
@@ -260,6 +274,7 @@ const spec = () => ({
     id: 'prop',
   },
   images: ['work.jxl'],
+  effects: [],
 })
 describe('fusion', () => {
   const timing = {
@@ -291,6 +306,28 @@ describe('fusion', () => {
     expect(fusion.closed).toBe(true)
     expect(closed).toBe(1)
     expect(released).toBe(1)
+  })
+  test('an effect that goes on longer than the afterglow keeps the portal open until it is over', async () => {
+    const plain = new Fusion(spec(), {
+      frame,
+      timing,
+    })
+    expect(plain.afterglow).toBe(timing.afterglow)
+    plain.abort()
+    const fusion = new Fusion({
+      ...spec(),
+      effects: [new LingeringEffect],
+    }, {
+      frame,
+      timing,
+    })
+    expect(fusion.afterglow).toBe(0.2)
+    await fusion.succeed(new Blob(['result']))
+    fusion.emerge()
+    await new Promise(resolve => setTimeout(resolve, (timing.afterglow + 0.05) * 1000))
+    expect(fusion.closed).toBe(false)
+    await new Promise(resolve => setTimeout(resolve, 0.2 * 1000))
+    expect(fusion.closed).toBe(true)
   })
   test('aborting ends a fusion at once, and only once', async () => {
     let closed = 0

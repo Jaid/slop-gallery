@@ -1,5 +1,6 @@
 import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
-import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
+import type {FusionEffect} from '#src/lib/gallery/fusion/effects/index.ts'
+import type {IngredientContribution, ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
 import type OrbGlassMaterial from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
@@ -11,6 +12,8 @@ import {pickFrame} from '#src/lib/frames/frameChoice.ts'
  * Its prop is `prop-orb-<id>`, and it lives in a folder of its own.
  */
 export default abstract class Orb {
+  /** the effect the orb contributes to the portal of its fusion, if any */
+  readonly effect?: FusionEffect
   /** the frame the orb contributes to a fusion, or several, of which every game picks one; without one, the room the result arrives in frames it */
   readonly frame?: FrameChoice
   abstract readonly id: string
@@ -25,15 +28,21 @@ export default abstract class Orb {
   /** the glass with whatever the orb holds inside, for a ball of the given radius */
   abstract createMaterial(options: OrbGlassOptions): OrbGlassMaterial
 
-  /** the orb as an ingredient of a fusion in the environment of `seed`: it contributes its frame, if it has one */
+  /** the orb as an ingredient of a fusion in the environment of `seed`: it contributes its frame and its effect, if it has them */
   ingredient(seed: number): ItemIngredient {
-    return {
-      contributions: this.frame ? [
-        {
-          kind: 'frame',
-          frame: pickFrame(seed, this.frame),
-        },
-      ] : [],
+    const contributions: Array<IngredientContribution> = []
+    if (this.frame) {
+      contributions.push({
+        kind: 'frame',
+        frame: pickFrame(seed, this.frame),
+      })
     }
+    if (this.effect) {
+      contributions.push({
+        kind: 'effect',
+        effect: this.effect,
+      })
+    }
+    return {contributions}
   }
 }

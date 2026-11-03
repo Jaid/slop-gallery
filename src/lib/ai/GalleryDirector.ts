@@ -151,6 +151,7 @@ export default class GalleryDirector {
         id: second,
       },
       images: recipe.looks,
+      effects: recipe.effects,
     })
     notify(this.usingAi ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
@@ -201,6 +202,7 @@ export default class GalleryDirector {
         consumed: item.consumable ?? false,
       },
       images: recipe.looks,
+      effects: recipe.effects,
       color: recipe.glow,
     })
     for (const look of recipe.pendingLooks) {
