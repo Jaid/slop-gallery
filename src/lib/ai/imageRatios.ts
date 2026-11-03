@@ -1,8 +1,8 @@
-/** an aspect ratio as image endpoints take it, width:height */
+/** an aspect ratio as image models take it, width:height */
 export type RatioString = `${number}:${number}`
 
 /**
- * the aspect ratios OpenRouter’s image endpoint accepts for the image models the gallery is made for, as https://openrouter.ai/api/v1/images/models listed them on 2026-11-01, without `auto`
+ * the aspect ratios the image models the gallery is made for accept, as https://openrouter.ai/api/v1/images/models listed them on 2026-11-01, without `auto`; the chat endpoint takes them as `image_config.aspect_ratio`
  *
  * Other models get no ratio; the result keeps whatever shape they return either way.
  */

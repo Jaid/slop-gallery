@@ -72,7 +72,7 @@ export type AiSettings = ReturnType<typeof readAiSettings>
 
 /**
  * The ID to send for `model` at the service tier `tier`, with its routing variant appended, or unchanged without a tier.
- * Only for the chat and speech endpoints: OpenRouter’s image endpoint knows no variants and answers 404 to any.
+ * Only for the chat and speech endpoints, which is why images are made through chat too: OpenRouter’s `/images` endpoint knows no variants and answers 404 to any.
  */
 export function tieredModel(model: string, tier: AiTier | undefined) {
   return tier ? `${model}:${tierVariants[tier]}` : model

@@ -1,6 +1,5 @@
 import type {PortraitFrameId} from '../../frames/frameParameter.ts'
 import type {SizedImage} from '../ImageImporter.ts'
-import type {generateImage} from 'ai'
 
 import modelImage from '../../ai/modelImage.ts'
 import {loadBlob} from '../actions.ts'
@@ -24,8 +23,11 @@ export type FusionIngredient = IngredientRegistration & {
   /** what it is called, like a work’s title or “Spook Orb” */
   title: string
 }
-/** the prompt of an image model call as the AI SDK takes it */
-export type ImagePrompt = Exclude<Parameters<typeof generateImage>[0]['prompt'], string>
+/** the prompt of an image model call: the images in a format image models take, and the text */
+export type ImagePrompt = {
+  images: Array<Uint8Array>
+  text: string
+}
 
 /** the most ingredients a fusion takes, the hung work included */
 export const maximumIngredients = 4
@@ -107,7 +109,7 @@ export default class FusionRecipe {
   /** The image model’s prompt: every image of the ingredients in their order, re-encoded where image models reject its format, and the text, which is the merge instruction where there are several images, followed by the ingredients’ instructions. */
   async content(): Promise<ImagePrompt> {
     const sources = await this.images()
-    // Image models reject formats like JXL, which the default works come in, and the SDK would send them labeled as PNG.
+    // Image models reject formats like JXL, which the default works come in.
     const images = await Promise.all(sources.map(async source => modelImage(await loadBlob(source))))
     return {
       images,

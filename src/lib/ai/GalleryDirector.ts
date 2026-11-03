@@ -113,7 +113,7 @@ export default class GalleryDirector {
       return recipe.local()
     }
     const {default: MergeGenerator} = await import('./MergeGenerator.ts')
-    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model)
+    const mergeGenerator = new MergeGenerator(this.key, this.settings.image_model, this.settings.ai_tier)
     const result = await mergeGenerator.generate(await recipe.content(), {
       aspect,
       signal,
