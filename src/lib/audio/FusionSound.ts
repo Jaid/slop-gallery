@@ -3,6 +3,7 @@ import type {Vec3} from '../gallery/types.ts'
 import type {AudioOutput} from './proceduralAudio.ts'
 
 import {beats, choreographed, drags, gathering, grabs, implosion, introSeconds, release, whirl, whirled, whirling, yank} from '../gallery/fusion/intro.ts'
+import {introTurns} from '../gallery/fusion/timing.ts'
 import {whiteNoise} from './ambience/base/noise.ts'
 
 type Tone = {
@@ -37,7 +38,7 @@ type Beds = {
 const silence = 0.0001
 /** the tones a bell rings, as multiples of its pitch with their share of its volume and how long they ring */
 const bellPartials = [[1, 1, 1], [2.01, 0.45, 0.66], [2.76, 0.32, 0.5], [4.07, 0.18, 0.34], [5.43, 0.1, 0.25]] as const
-/** the pitches the images surface with, one after another: a gentle rising motif */
+/** the pitches the images surface with, one after another: a gentle rising motif, which starts over with the first turn after the intro, so it plays once in full until the minimum */
 const surfacing = [659.25, 783.99, 987.77, 880]
 /** the chord the result flips out on */
 const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.51]
@@ -263,7 +264,8 @@ export default class FusionSound {
       return
     }
     const now = this.context.currentTime
-    this.bell(now, surfacing[turn % surfacing.length], 0.03, 1.8, [5, 5.5])
+    const step = (turn - introTurns) % surfacing.length
+    this.bell(now, surfacing.at(step)!, 0.03, 1.8, [5, 5.5])
     this.hiss(now, 0.7, {
       filter: 'lowpass',
       frequency: 2200,
