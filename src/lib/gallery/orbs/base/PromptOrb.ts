@@ -27,13 +27,15 @@ export default abstract class PromptOrb extends Orb {
 
   /** The orb contributes its prompt as an instruction, its frame and its effect, if it has one, and shows in the portal by its glow and its photograph. */
   override ingredient(seed: number): ItemIngredient {
+    const orb = super.ingredient(seed)
     return {
+      ...orb,
       contributions: [
         {
           kind: 'instruction',
           instruction: this.prompt(seed),
         },
-        ...super.ingredient(seed).contributions,
+        ...orb.contributions,
       ],
       glow: this.color,
       look: this.photo,

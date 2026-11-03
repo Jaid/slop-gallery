@@ -8,45 +8,81 @@ import {clamp, fade} from 'math'
 /**
  * How a fusion opens, once and never looped, over its first {@link FusionTiming.intro} seconds. Its moments are choreographed in seconds of a {@link choreographed}-second intro and stretch with the timing’s.
  *
- * A singularity tears open in front of the work and sucks at everything around it: a wide stretch of the room bends toward it, twisting like water down a drain and darkening, while the work is torn from its wall and what was thrown into it is dragged along. Full, it collapses and bursts, the room snaps back like jelly and the burst knocks both loose into the air.
- * The light it flung out streams back in and kindles an ember, which beats like a heart: the first beat yanks the work into place beside the ember, the second what was thrown into it, each surfacing in the ember as it arrives, and the third ignites the ember into the portal and sets both circling it.
- * At that, the portal lashes a tether out to each and whirls both around itself like a hammer thrower, ever faster and a little pulled in, until the comet trails of fire they leave behind close into a ring around it while the room swirls along. At full speed it lets go: both coast on out into their orbit, a lap further along, while the ring of fire falls into the portal and lands just as the intro ends with a blaze, a shockwave and a burst of sparks, the room rippling out from it.
+ * A singularity tears open in front of the work and sucks at everything around it: a wide stretch of the room bends toward it, twisting like water down a drain and darkening, while the work is torn from its wall and what was thrown into it is dragged along. Full, it collapses and bursts, the room snaps back like jelly and the burst knocks everything loose into the air.
+ * The light it flung out streams back in and kindles an ember, which beats like a heart: each beat yanks an ingredient into place beside the ember, the work first, each surfacing in the ember as it arrives, and a last beat ignites the ember into the portal and sets them circling it.
+ * At that, the portal lashes a tether out to each and whirls them around itself like a hammer thrower, ever faster and a little pulled in, until the comet trails of fire they leave behind close into a ring around it while the room swirls along. At full speed it lets go: they coast on out into their orbit, two laps further along, while the ring of fire falls into the portal and lands just as the intro ends with a blaze, a shockwave and a burst of sparks, the room rippling out from it.
+ *
+ * It keeps the {@link pulse} of the whole fusion, three of them long: the burst falls on the first, the ignition on the second and the landing on the third, after which the images take their turns on it. The ember’s beats divide the pulse between the burst and the ignition evenly, one for each ingredient: a triplet for two, sixteenths for three, a quintuplet for four.
  *
  * The portal’s envelope, the satellites’ orbit and the fusion’s sound play their parts of it; this module holds its moments and drives the warp, the motes, the tethers and the trails.
  */
-export const choreographed = 4
-/** when the singularity, full, collapses and bursts */
-export const implosion = 1.15
-/** when the pull tears each satellite loose and drags it in, the work first */
-export const drags = [0.15, 0.27] as const
+export const choreographed = 4.5
+/** the pulse every moment of the intro falls on, a third of it */
+export const pulse = choreographed / 3
+/** when the singularity, full, collapses and bursts: on the first pulse */
+export const implosion = pulse
+/** when the ember’s last beat ignites the portal: on the second pulse */
+export const ignition = 2 * pulse
+/** when the pull tears each satellite loose and drags it in, in the order of their ingredients */
+export const drags = [0.2, 0.35, 0.5, 0.65] as const
 /** how much of its way to the singularity the pull drags a satellite before the burst */
 export const dragged = 0.62
 /** when the motes start streaming back in and when the last of them is in */
-export const gathering = [1.2, 1.95] as const
-/** when the ember beats: the first yanks in the work, the second what was thrown into it, the third ignites the portal */
-export const beats = [1.8, 2.45, 3.1] as const
+export const gathering = [implosion + 0.05, implosion + 0.8] as const
 /** how long after its beat the ember yanks its satellite in */
 export const yank = 0.1
-/** when the portal lashes a tether out to each satellite, the work’s first, as the last beat ignites it */
-export const grabs = [beats[2], beats[2] + 0.03] as const
 /** how long a tether takes to lash out to its satellite */
 const lunge = 0.06
-/** when the portal starts whirling both around it: as the last beat ignites it */
-export const whirl = beats[2]
+/** when the portal starts whirling them around it: as the last beat ignites it */
+export const whirl = ignition
 /** when it lets go of them at full speed, which leaves the ring of fire to fall into it until the intro ends */
-export const release = 3.8
+export const release = 4.2
+/** how long the room wobbles like jelly after the burst */
+const wobble = 1.35
+
+/** the ember’s heartbeat for a number of ingredients */
+export type EmberRhythm = {
+  /** when the ember beats: once for each ingredient, yanking it in, and a last time igniting the portal */
+  beats: ReadonlyArray<number>
+  /** how long after each beat its second, softer thump follows */
+  dub: number
+  /** when each ingredient shows in the ember, from its beat, whose bell rings with the beat, to the next */
+  turns: ReadonlyArray<readonly [number, number]>
+}
+const rhythms = new Map<number, EmberRhythm>
+/** The ember’s heartbeat for `ingredients` ingredients: their beats and the ignition divide the pulse after the burst evenly, so each count has a tuplet of the pulse. */
+export function emberRhythm(ingredients: number): EmberRhythm {
+  let rhythm = rhythms.get(ingredients)
+  if (!rhythm) {
+    const step = pulse / (ingredients + 1)
+    const beats = [...Array.from({length: ingredients}, (_, index) => implosion + (index + 1) * step), ignition]
+    rhythm = {
+      beats,
+      dub: Math.min(0.2, step * 0.4),
+      turns: beats.slice(0, -1).map((beat, index) => [beat, beats[index + 1]] as const),
+    }
+    rhythms.set(ingredients, rhythm)
+  }
+  return rhythm
+}
+
+/** when the portal lashes a tether out to satellite `index`, the work’s first, as the last beat ignites it */
+export function grab(index: number) {
+  return ignition + 0.03 * index
+}
+
+/** how many extra laps the whirl adds to the orbit */
+export const laps = 2
 /** how the whirl speeds up until the release: as the time since it began to this power */
-const rise = 1.3
-/** how fast the whirl peaks, in radians per second of the choreography, so that it adds exactly one lap by the time the satellites have slowed back to the orbit’s speed as the intro ends */
-const whirlPeak = 2 * Math.PI / ((release - whirl) / (rise + 1) + (choreographed - release) / 2)
+const rise = 1
+/** how fast the whirl peaks, in radians per second of the choreography, so that it adds exactly its {@link laps} by the time the satellites have slowed back to the orbit’s speed as the intro ends */
+const whirlPeak = laps * 2 * Math.PI / ((release - whirl) / (rise + 1) + (choreographed - release) / 2)
 /** the longest the trails grow, in radians of the orbit: two of them nearly close the ring */
 const longestTrail = 2.8
 /** how long the room ripples on after the ring of fire landed, in seconds of the choreography */
 const aftershock = 0.9
-/** when each ingredient shows in the ember, as its satellite is yanked in */
-export const turns = [[1.86, 2.45], [2.51, 3.1]] as const
 /** how long the satellites take after the last beat to come up to the orbit’s speed */
-export const departure = choreographed - beats[2]
+export const departure = choreographed - ignition
 /** how far the view bends around the singularity, in meters */
 const warpReach = 4.6
 /** how much faster than their own clock the motes stream back in, which takes them about 1.4 s */
@@ -62,7 +98,7 @@ export function introSeconds(seconds: number, {intro}: Pick<FusionTiming, 'intro
   return seconds * intro / choreographed
 }
 
-/** radians the whirl has added to the orbit `t` seconds into the choreography: speeding up ever harder until the release, coasting back to the orbit’s speed after it, exactly one lap in all */
+/** radians the whirl has added to the orbit `t` seconds into the choreography: speeding up ever harder until the release, coasting back to the orbit’s speed after it, exactly its {@link laps} in all */
 export function whirled(t: number) {
   if (t <= whirl) {
     return 0
@@ -103,7 +139,7 @@ export function decorateIntro({motes, warp}: {
   warp: RealityWarp
 }, elapsed: number, timing: FusionTiming, normal: Vec3) {
   const t = introClock(elapsed, timing)
-  warp.visible = t < 2.5 || t > whirl && t < choreographed + aftershock
+  warp.visible = t < implosion + wobble || t > whirl && t < choreographed + aftershock
   if (warp.visible) {
     const {chroma, darkness, front, pull, reach, ripple, twist} = warp.uniforms
     reach.value = warpReach
@@ -116,7 +152,7 @@ export function decorateIntro({motes, warp}: {
       chroma.value = 0.06 * grip
       ripple.value = 0
       front.value = 0
-    } else if (t < 2.5) {
+    } else if (t < implosion + wobble) {
       // The room snaps back, overshoots and wobbles like jelly, while a ripple runs out over it.
       const after = t - implosion
       pull.value = -0.85 * Math.exp(-after * 4.2) * Math.cos(after * 15)
@@ -161,7 +197,7 @@ export function decorateIntro({motes, warp}: {
  */
 export function introTether(index: number, elapsed: number, timing: FusionTiming) {
   const t = introClock(elapsed, timing)
-  const grabbed = t - grabs[Math.min(index, 1)]
+  const grabbed = t - grab(index)
   const letGo = clamp((t - release) / 0.07, 0, 1)
   if (grabbed < 0 || letGo >= 1) {
     return
@@ -183,7 +219,7 @@ export function introTether(index: number, elapsed: number, timing: FusionTiming
  */
 export function introTrail(index: number, elapsed: number, timing: FusionTiming) {
   const t = introClock(elapsed, timing)
-  if (t < grabs[Math.min(index, 1)] || t >= choreographed) {
+  if (t < grab(index) || t >= choreographed) {
     return
   }
   const speed = whirling(t)

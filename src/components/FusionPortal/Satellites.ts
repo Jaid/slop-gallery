@@ -10,6 +10,7 @@ import {Box3, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 import {portraitFrame} from '#src/lib/frames/index.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {handBack} from '#src/lib/gallery/fusion/handBack.ts'
+import {emberRhythm} from '#src/lib/gallery/fusion/intro.ts'
 import {fizzleRelease, satellitePose} from '#src/lib/gallery/fusion/orbit.ts'
 import {satelliteSize} from '#src/lib/gallery/fusion/portalFrame.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
@@ -212,15 +213,18 @@ export default class Satellites {
     // The two circle opposite each other, side by side along the wall when the intro hands them to the orbit.
     const phase = -Math.PI / 2 - 0.7
     const portraits = useGallery.getState().portraits
+    const {beats} = emberRhythm(spec.latches.length)
     const add = (kind: Satellite['kind'], id: string, body: RapierRigidBody, group: Object3D, scale: number, tumble?: Vector3) => {
       const start = poseOf(group)
+      const index = kind === 'work' ? 0 : 1
       list.push({
         kind,
         id,
         body,
         group,
         orbit: {
-          index: kind === 'work' ? 0 : 1,
+          beat: beats[index],
+          index,
           phase: kind === 'work' ? phase : phase + Math.PI,
           scale,
           start,

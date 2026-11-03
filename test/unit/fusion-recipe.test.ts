@@ -33,7 +33,10 @@ describe('fusion recipe', () => {
     expect(portraits.unchanged).toBe(false)
   })
   test('leaves the hung portrait unchanged where its own image is the only contribution an image model could work with, like with the Transparent Orb', () => {
-    expect(transparentOrb.ingredient(1)).toEqual({contributions: []})
+    expect(transparentOrb.ingredient(1)).toEqual({
+      contributions: [],
+      latch: 'glass',
+    })
     const clear = new FusionRecipe([hung, itemIngredient(transparentOrb.title, transparentOrb.ingredient(1))])
     expect(clear.unchanged).toBe(true)
     expect(clear.looks).toEqual([image])
@@ -150,7 +153,7 @@ describe('fusion recipe', () => {
     expect(recipe.localDescription).toBe('Tinted by hand in the Test Orb’s glow.')
   })
   for (const orb of promptOrbs) {
-    test(`the ${orb.title} contributes its prompt, its frame of the game and its effect, if it has one, and shows by its glow and photograph`, () => {
+    test(`the ${orb.title} contributes its prompt, its frame of the game and its effect, if it has one, shows by its glow and photograph and is latched on with a ping of glass`, () => {
       expect(orb.ingredient(7)).toEqual({
         contributions: [
           {
@@ -170,7 +173,12 @@ describe('fusion recipe', () => {
         ],
         glow: orb.color,
         look: orb.photo,
+        latch: 'glass',
       })
     })
   }
+  test('the intro latches every ingredient on by charging up, and an orb, even the Transparent Orb, with a ping of glass', () => {
+    const recipe = new FusionRecipe([hung, item('prop'), itemIngredient('Transparent Orb', transparentOrb.ingredient(7))])
+    expect(recipe.latches).toEqual(['charge', 'charge', 'glass'])
+  })
 })

@@ -5,7 +5,7 @@ import type {FusionTiming} from './timing.ts'
 import {clamp, fade} from 'math'
 import {Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
-import {beats, choreographed, departure, dragged, drags, implosion, introClock, introSeconds, release, whirl, whirled, whirlRate, yank} from './intro.ts'
+import {choreographed, departure, dragged, drags, ignition, implosion, introClock, introSeconds, release, whirl, whirled, whirlRate, yank} from './intro.ts'
 
 /** radians per second the satellites circle the portal at while it brews */
 export const orbitSpeed = 1.45
@@ -22,9 +22,11 @@ const tightened = 0.1
 
 /** something orbiting a fusion’s portal: the work or what was thrown into it */
 export type SatelliteOrbit = {
+  /** when the ember beats to yank it in, in seconds of the intro’s choreography, see `emberRhythm` */
+  beat: number
   /** where it rests when the fusion hands it back, for the work its spot on the wall; others don’t return */
   home?: Pose
-  /** 0 for the work, 1 for what was thrown into it, the order the intro yanks them in */
+  /** the order of its ingredient, 0 for the work, which the pull drags them in by */
   index: number
   /** its orbit angle when the fusion starts, opposite of the other one’s */
   phase: number
@@ -158,7 +160,7 @@ export function orbiting(frame: PortalFrame, satellite: SatelliteOrbit, elapsed:
 
 /** radians per second the satellites circle the portal at `elapsed` seconds into the intro: not at all until the last beat sets them off, and far faster while the portal whirls them */
 export function introOrbitRate(elapsed: number, timing: FusionTiming) {
-  return orbitSpeed * clamp((introClock(elapsed, timing) - beats[2]) / departure, 0, 1) + whirlRate(elapsed, timing)
+  return orbitSpeed * clamp((introClock(elapsed, timing) - ignition) / departure, 0, 1) + whirlRate(elapsed, timing)
 }
 
 /** The orbit running down and shuddering through the start of a fizzle, `progress` of the way through it. */
@@ -181,19 +183,19 @@ function spring(after: number, displaced: number, kick: number, seconds: number)
   return (displaced * Math.cos(swing * after) + kick * Math.sin(swing * after)) * Math.exp(-decay * after) * taper
 }
 /**
- * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, on its beat of the ember, yanked to its place beside it, from where the last beat sets it off around the portal, whirled an extra lap on the portal’s tether.
+ * The satellite’s pose `elapsed` seconds into the intro (see `intro.ts`): torn loose and dragged toward the singularity, knocked back out into the air by its burst and, on its beat of the ember, yanked to its place beside it, from where the last beat sets it off around the portal, whirled extra laps on the portal’s tether.
  */
 function entering(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrbit, elapsed: number, out: SatellitePose) {
   const t = introClock(elapsed, timing)
-  const index = Math.min(satellite.index, 1)
-  const yanked = beats[index] + yank
+  const {index} = satellite
+  const yanked = satellite.beat + yank
   if (t < yanked) {
     return loose(frame, timing, satellite, t, out)
   }
-  const angle = rampedAngle(satellite.phase, elapsed, introSeconds(beats[2], timing), introSeconds(departure, timing))
+  const angle = rampedAngle(satellite.phase, elapsed, introSeconds(ignition, timing), introSeconds(departure, timing))
   orbiting(frame, satellite, elapsed, angle, 1, out)
   // It bobs in its place until the last beat sets it off.
-  const dangling = 1 - fade(clamp((t - beats[2]) / departure, 0, 1))
+  const dangling = 1 - fade(clamp((t - ignition) / departure, 0, 1))
   out.position.addScaledVector(tangent.fromArray(frame.tangent), 0.05 * Math.sin(t * 3.1 + index) * dangling).addScaledVector(up, 0.03 * Math.sin(t * 4.3 + index * 2) * dangling)
   // Yanked from where it drifted, it springs past its place and back.
   loose(frame, timing, satellite, yanked, from)
@@ -205,7 +207,7 @@ function entering(frame: PortalFrame, timing: FusionTiming, satellite: Satellite
   if (t <= whirl) {
     return out
   }
-  // The tether whirls it an extra lap around the portal, pulled in a little, then lets go, and it coasts on out into the orbit, overshooting it and springing back.
+  // The tether whirls it extra laps around the portal, pulled in a little, then lets go, and it coasts on out into the orbit, overshooting it and springing back.
   const letGo = t - release
   const reach = letGo < 0 ? 1 - tightened * fade(clamp((t - whirl) / 0.2, 0, 1)) : 1 + spring(introSeconds(letGo, timing), -tightened, 0.1, introSeconds(choreographed - release, timing))
   orbitPoint(frame, angle, 1, unwhirled)
@@ -221,7 +223,7 @@ function entering(frame: PortalFrame, timing: FusionTiming, satellite: Satellite
 }
 /** Where the satellite is `t` seconds into the choreography until the ember yanks it in: rattling, then dragged toward the singularity, swirling and spinning, and knocked out by the burst to its own side, past the place the ember will yank it to, drifting there and still turning. */
 function loose(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrbit, t: number, out: SatellitePose) {
-  const start = drags[Math.min(satellite.index, 1)]
+  const start = drags[Math.min(satellite.index, drags.length - 1)]
   center.fromArray(frame.center)
   toward.subVectors(center, satellite.start.position).normalize()
   out.position.copy(satellite.start.position)
@@ -245,7 +247,7 @@ function loose(frame: PortalFrame, timing: FusionTiming, satellite: SatelliteOrb
     // The burst knocks it out to its own side, a little beyond the orbit, where it drifts.
     const after = t - implosion
     const knock = 1 - Math.exp(-after * 6)
-    orbitPoint(frame, rampedAngle(satellite.phase, 0, introSeconds(beats[2], timing), introSeconds(departure, timing)), drift, offset)
+    orbitPoint(frame, rampedAngle(satellite.phase, 0, introSeconds(ignition, timing), introSeconds(departure, timing)), drift, offset)
     offset.y += 0.04 * Math.sin(after * 2.6 + satellite.index * 2)
     out.position.lerp(offset, knock)
   }

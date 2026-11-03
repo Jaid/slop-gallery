@@ -124,14 +124,17 @@ async function render(outcome: Outcome, resultAt: number) {
       } else {
         const known = moment >= resultAt ? settled : undefined
         const emerged = outcome === 'success' && moment >= emergedAt ? emergedAt : undefined
-        const envelope = portalEnvelope(moment, known, emerged, fusionTiming, 2)
+        const envelope = portalEnvelope(moment, known, emerged, fusionTiming, {
+          images: 2,
+          ingredients: 2,
+        })
         if (moment === 0) {
-          sound.open(fusionTiming)
+          sound.open(fusionTiming, ['charge', 'glass'])
         }
         let next = stage
         if (emerged !== undefined) {
           next = 'emerged'
-        } else if (known && moment > known.at) {
+        } else if (known && moment >= known.at) {
           next = outcome === 'success' ? 'climax' : 'fizzle'
         }
         if (next !== stage) {
@@ -144,7 +147,7 @@ async function render(outcome: Outcome, resultAt: number) {
             sound.fizzle(fizzle)
           }
         }
-        if (stage === 'brewing' && envelope.image && 'turn' in envelope.image && envelope.image.turn !== turn && envelope.image.clarity >= 1) {
+        if (stage === 'brewing' && envelope.image && 'turn' in envelope.image && envelope.image.turn !== turn) {
           turn = envelope.image.turn
           sound.surface(turn)
         }

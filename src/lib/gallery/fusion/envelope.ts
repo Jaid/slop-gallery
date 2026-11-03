@@ -1,10 +1,11 @@
 import type {FusionOutcome} from './Fusion.ts'
+import type {EmberRhythm} from './intro.ts'
 import type {FusionTiming} from './timing.ts'
 
 import {clamp, fade} from 'math'
 
-import {beats, choreographed, gathering, implosion, introClock, release, ringFall, turns, whirl, whirling} from './intro.ts'
-import {clarityBetween, imageAt} from './timing.ts'
+import {choreographed, emberRhythm, gathering, ignition, implosion, introClock, release, ringFall, whirl, whirling} from './intro.ts'
+import {clarityBetween, firstTurn, imageAt} from './timing.ts'
 
 /** what the portal’s disc shows: one of the images by its index, or the result */
 export type PortalImage = {
@@ -40,6 +41,11 @@ export type PortalEnvelope = {
   /** radians per second the vortex turns */
   spin: number
 }
+/** what a portal shows: how many images, and how many ingredients its intro yanks in */
+export type PortalCast = {
+  images: number
+  ingredients: number
+}
 
 /** when, as a share of the fizzle, the dying portal pops */
 const fizzlePop = 0.55
@@ -52,17 +58,20 @@ const flicker = (seconds: number) => {
   return hash - Math.floor(hash)
 }
 
-/** The portal `elapsed` seconds into a fusion showing `images` images, which its intro, the outcome, the moment its result emerged and the moment the player broke it off shape. */
-export function portalEnvelope(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: number | undefined, timing: FusionTiming, images: number, canceledAt?: number): PortalEnvelope {
-  const envelope = shaped(elapsed, outcome, emergedAt, timing, images)
+/** The portal `elapsed` seconds into a fusion of the cast, which its intro, the outcome, the moment its result emerged and the moment the player broke it off shape. */
+export function portalEnvelope(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: number | undefined, timing: FusionTiming, cast: PortalCast, canceledAt?: number): PortalEnvelope {
+  const envelope = shaped(elapsed, outcome, emergedAt, timing, cast)
   return canceledAt === undefined || elapsed < canceledAt ? envelope : recoiled(envelope, elapsed, elapsed - canceledAt)
 }
 
-/** The portal brewing once its intro is over, showing the images in turn until the outcome is in. The intro settles into it as it ends, and the ring of fire the intro’s slingshot left behind lands in it with a blaze, a big shockwave and a burst of sparks. */
+/** The portal brewing once its intro is over, showing the images in turn from the end of its lull until the outcome is in. The intro settles into it as it ends, and the ring of fire the intro’s slingshot left behind lands in it with a blaze, a big shockwave and a burst of sparks. */
 export function brewing(elapsed: number, timing: FusionTiming, images: number): PortalEnvelope {
   const shown = imageAt(elapsed, images, timing)
   const energy = 0.92 + 0.08 * Math.sin(elapsed * 3.1) + 0.05 * Math.sin(elapsed * 7.3)
   const landed = elapsed - timing.intro
+  const turning = elapsed - firstTurn(timing)
+  /** seconds since the latest image started to surface, if any did */
+  const surfaced = turning < 0 ? Infinity : turning % timing.image
   const calm: PortalEnvelope = {
     burst: 10,
     burstStrength: 0,
@@ -73,7 +82,7 @@ export function brewing(elapsed: number, timing: FusionTiming, images: number): 
     lens: 1,
     light: brewingLight * energy,
     // A small shockwave greets every image as it starts to surface.
-    pulse: Math.max(0, landed) % timing.image,
+    pulse: Math.min(surfaced, 10),
     pulseStrength: 0.35,
     // It swells a little while an image shows, so it reads.
     size: 1 + 0.03 * Math.sin(elapsed * 2.3) + 0.14 * (shown?.clarity ?? 0),
@@ -83,8 +92,8 @@ export function brewing(elapsed: number, timing: FusionTiming, images: number): 
   if (landed < 0) {
     return calm
   }
-  // The ring of fire lands: the portal blazes up, swells and lurches, and a big shockwave greets it instead of the first image’s.
-  const landing = landed < timing.image
+  // The ring of fire lands: the portal blazes up, swells and lurches, and a big shockwave greets it, until the first image’s comes after it, or instead of that one without a lull.
+  const landing = landed <= surfaced
   const onset = Math.min(landed / 0.03, 1)
   const swell = Math.sin(Math.PI / 2 * Math.min(landed / 0.08, 1)) * Math.exp(-landed * 5)
   return {
@@ -94,6 +103,7 @@ export function brewing(elapsed: number, timing: FusionTiming, images: number): 
     energy: energy + onset * Math.exp(-landed * 4) + 1 - onset,
     flash: 1.3 * Math.exp(-landed * 7),
     light: calm.light + 140 * Math.exp(-landed * 4.5),
+    pulse: landing ? landed : calm.pulse,
     pulseStrength: landing ? 2 : calm.pulseStrength,
     size: calm.size * (1 + 0.38 * swell),
     spin: calm.spin + 6 * onset * Math.exp(-landed * 3),
@@ -125,8 +135,9 @@ function recoiled(envelope: PortalEnvelope, elapsed: number, since: number): Por
   }
 }
 /** The portal as long as nobody broke it off. */
-function shaped(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: number | undefined, timing: FusionTiming, images: number): PortalEnvelope {
-  const brewed = elapsed < timing.intro ? opening(elapsed, timing, images) : brewing(elapsed, timing, images)
+function shaped(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: number | undefined, timing: FusionTiming, cast: PortalCast): PortalEnvelope {
+  const {images} = cast
+  const brewed = elapsed < timing.intro ? opening(elapsed, timing, cast) : brewing(elapsed, timing, images)
   if (outcome?.kind === 'failure' && elapsed > outcome.at) {
     const progress = clamp((elapsed - outcome.at) / timing.fizzle, 0, 1)
     const fading = brewing(outcome.at, timing, images)
@@ -198,12 +209,13 @@ function shaped(elapsed: number, outcome: FusionOutcome | undefined, emergedAt: 
     light: brewingLight * energy + 110 * Math.exp(-after * 3.5),
   }
 }
-/** the portal’s size after each beat of the ember, and the ember’s once the motes are in */
-const growth = [0.32, 0.55, 0.75, 1] as const
+/** the ember’s size once the motes are in and once every ingredient’s beat has grown it a step, and the portal’s once the ignition did */
+const growth = [0.32, 0.75, 1] as const
 const easeOutBack = (t: number) => 1 + 2.6 * (t - 1) ** 3 + 1.6 * (t - 1) ** 2
 /** The portal during the intro (see `intro.ts`): a dark singularity feeding on the view, bursting into an ember that the motes kindle and that beats into the portal, which spins up as it whirls the satellites around and draws in the ring of fire they left, settling into {@link brewing} by its end. */
-function opening(elapsed: number, timing: FusionTiming, images: number): PortalEnvelope {
+function opening(elapsed: number, timing: FusionTiming, {images, ingredients}: PortalCast): PortalEnvelope {
   const t = introClock(elapsed, timing)
+  const {beats, dub, turns} = emberRhythm(ingredients)
   if (t < implosion) {
     // A dark ball with a burning rim, which grows as it feeds and collapses to a point right before it bursts.
     const feeding = t / implosion
@@ -225,7 +237,7 @@ function opening(elapsed: number, timing: FusionTiming, images: number): PortalE
   }
   const burst = t - implosion
   const kindled = fade(clamp((t - gathering[0]) / (gathering[1] - gathering[0]), 0, 1))
-  // The burst pops it wide before it shrinks to an ember, which grows as the motes stream in and a step with every beat.
+  // The burst pops it wide before it shrinks to an ember, which grows as the motes stream in and a step with every beat, the last step to the portal’s full size.
   let size = 0.12 + (growth[0] - 0.12) * kindled + 0.5 * easeOutBack(clamp(burst / 0.12, 0, 1)) * Math.exp(-burst * 6)
   let kick = 0
   let since = burst
@@ -235,14 +247,15 @@ function opening(elapsed: number, timing: FusionTiming, images: number): PortalE
     if (after < 0) {
       continue
     }
-    size += (growth[index + 1] - growth[index]) * fade(clamp(after / 0.25, 0, 1))
+    const step = index < ingredients ? (growth[1] - growth[0]) / ingredients : growth[2] - growth[1]
+    size += step * fade(clamp(after / 0.25, 0, 1))
     // Lub, dub.
-    kick += 0.22 * Math.exp(-after * 9) + (after >= 0.2 ? 0.12 * Math.exp(-(after - 0.2) * 9) : 0)
+    kick += 0.22 * Math.exp(-after * 9) + (after >= dub ? 0.12 * Math.exp(-(after - dub) * 9) : 0)
     since = after
     latest = index
   }
   const ignited = latest === beats.length - 1 ? since : undefined
-  const image = introImage(t, images)
+  const image = introImage(t, images, turns)
   const energy = 0.55 + 0.4 * kindled + 1.4 * Math.exp(-burst * 5) + (latest >= 0 ? 0.7 * Math.exp(-since * 5) : 0) + (ignited === undefined ? 0 : 1.2 * Math.exp(-ignited * 3))
   let pulseStrength = 1.4
   if (latest >= 0) {
@@ -257,7 +270,7 @@ function opening(elapsed: number, timing: FusionTiming, images: number): PortalE
     flash: 0.6 * Math.exp(-burst * 8) + (ignited === undefined ? 0 : 0.28 * Math.exp(-ignited * 8)),
     image,
     // The ember bends the view once the room has stopped wobbling.
-    lens: (0.4 * kindled + 0.6 * fade(clamp((t - beats[2] + 0.3) / 0.6, 0, 1))) * fade(clamp((t - 1.9) / 0.4, 0, 1)),
+    lens: (0.4 * kindled + 0.6 * fade(clamp((t - ignition + 0.3) / 0.6, 0, 1))) * fade(clamp((t - implosion - 0.75) / 0.4, 0, 1)),
     light: brewingLight * energy * Math.min(1, size + 0.2) + 40 * Math.exp(-burst * 5),
     pulse: since,
     pulseStrength,
@@ -297,7 +310,7 @@ function opening(elapsed: number, timing: FusionTiming, images: number): PortalE
   }
 }
 /** The ingredient whose satellite the ember yanks in `t` seconds into the choreography, as its turn of the surfacing motif. */
-function introImage(t: number, images: number): PortalImage | undefined {
+function introImage(t: number, images: number, turns: EmberRhythm['turns']): PortalImage | undefined {
   for (const [index, [from, to]] of turns.entries()) {
     if (index < images && t >= from && t < to) {
       return {

@@ -92,6 +92,7 @@ const framing = (item: ThrownItem, frame: PortraitFrameId): ThrownItem => ({
 })
 const instant: FusionTiming = {
   intro: 0,
+  lull: 0,
   image: 1,
   minimum: 0,
   climax: 0,
@@ -365,6 +366,7 @@ test('a thrown orb contributes its prompt instead of a photograph, and its porta
     expect(director.opened[0].spec).toMatchObject({
       color: '#8a3cff',
       images: [a, '/orbs/test.jxl'],
+      latches: ['charge', 'charge'],
     })
     const fused = new Blob(['spooky'], {type: 'image/webp'})
     director.result.resolve(fused)
@@ -399,6 +401,7 @@ test('generated image admission failure preserves both originals', async () => {
 })
 const brief: FusionTiming = {
   intro: 0.02,
+  lull: 0.02,
   image: 0.04,
   minimum: 0.15,
   climax: 0.05,

@@ -1,8 +1,9 @@
+import type {IngredientLatch} from '../gallery/fusion/FusionRecipe.ts'
 import type {FusionTiming} from '../gallery/fusion/timing.ts'
 import type {Vec3} from '../gallery/types.ts'
 import type {AudioOutput} from './proceduralAudio.ts'
 
-import {beats, choreographed, drags, gathering, grabs, implosion, introSeconds, release, whirl, whirled, whirling, yank} from '../gallery/fusion/intro.ts'
+import {choreographed, drags, emberRhythm, gathering, grab, ignition, implosion, introSeconds, release, whirl, whirled, whirling, yank} from '../gallery/fusion/intro.ts'
 import {introTurns} from '../gallery/fusion/timing.ts'
 import {whiteNoise} from './ambience/base/noise.ts'
 
@@ -38,8 +39,10 @@ type Beds = {
 const silence = 0.0001
 /** the tones a bell rings, as multiples of its pitch with their share of its volume and how long they ring */
 const bellPartials = [[1, 1, 1], [2.01, 0.45, 0.66], [2.76, 0.32, 0.5], [4.07, 0.18, 0.34], [5.43, 0.1, 0.25]] as const
-/** the pitches the images surface with, one after another: a gentle rising motif, which starts over with the first turn after the intro, so it plays once in full until the minimum */
+/** the pitches the images surface with, one after another: a gentle rising motif, which starts with the first turn after the lull, so it plays once in full until the minimum */
 const surfacing = [659.25, 783.99, 987.77, 880]
+/** the pitches the ember latches the ingredients on with, one for each of at most four, the last of them for as many ingredients as there are: rising through E major to G♯, which leads into the ignition’s A major */
+const latchPitches = [277.18, 329.63, 369.99, 415.3]
 /** the chord the result flips out on */
 const fanfare = [523.25, 659.25, 783.99, 1046.5, 1318.51]
 const impulses = new WeakMap<BaseAudioContext, AudioBuffer>
@@ -197,14 +200,14 @@ export default class FusionSound {
     this.release(duration * 0.3, duration * 0.4)
   }
 
-  /** The portal opens `elapsed` seconds into the fusion: the beds start, and whatever of the intro’s sound is still to come plays. */
-  open(timing: FusionTiming, elapsed = 0) {
+  /** The portal of a fusion whose ingredients latch on as `latches` says opens `elapsed` seconds into it: the beds start, and whatever of the intro’s sound is still to come plays. */
+  open(timing: FusionTiming, latches: ReadonlyArray<IngredientLatch>, elapsed = 0) {
     if (this.stopped || this.beds) {
       return
     }
     const now = this.context.currentTime
     if (elapsed < timing.intro) {
-      this.intro(now - elapsed, timing)
+      this.intro(now - elapsed, timing, latches)
     }
     this.beds = this.startBeds(now)
   }
@@ -258,9 +261,9 @@ export default class FusionSound {
     setTimeout(() => this.panner.disconnect(), (fade + 2.4) * 1000)
   }
 
-  /** An image has come clear in the portal: a bell with a slow vibrato over a soft rush, each one a step further along the motif. */
+  /** An image surfaces in the portal after the lull: a bell with a slow vibrato over a soft rush, each one a step further along the motif. The intro’s turns stay silent here, as their ingredients are latched on with beats of the intro’s own sound. */
   surface(turn: number) {
-    if (this.stopped) {
+    if (this.stopped || turn < introTurns) {
       return
     }
     const now = this.context.currentTime
@@ -332,10 +335,12 @@ export default class FusionSound {
     this.play(source.connect(shaping), source, start, duration, volume, attack, Math.random() * 3)
   }
 
-  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, the ember’s heartbeat, its first two beats yanking the satellites in with a whoosh and its third igniting the portal with a short roar and a chord, and the portal’s slingshot: the zip of its tethers lashing out, a whir climbing to a howl under whooshes passing ever faster while it whirls both around, a snap and a twang as it lets go, a rush as the ring of fire falls in and a boom, a blast of air, a bright chord and glitter as it lands. */
-  private intro(start: number, timing: FusionTiming) {
+  /** The intro (see `intro.ts`) that starts at `start`: a pinprick of glass and an inhale rising over a pressure drop while the work rattles and is dragged in, a crack, a boom and a gong as the singularity bursts, a swarm of glints as the motes stream back in, the ember’s heartbeat, a beat latching each ingredient on with a magnetic clamp charging up, an orb pinging like glass besides, rising toward the ignition, and yanking it in with a whoosh, and a last one igniting the portal with a short roar and a chord, and the portal’s slingshot: the zip of its tethers lashing out, a whir climbing to a howl under whooshes passing ever faster while it whirls them around, a snap and a twang as it lets go, a rush as the ring of fire falls in and a boom, a blast of air, a bright chord and glitter as it lands. */
+  private intro(start: number, timing: FusionTiming, kinds: ReadonlyArray<IngredientLatch>) {
+    const ingredients = kinds.length
     const at = (seconds: number) => start + introSeconds(seconds, timing)
     const until = (from: number, to: number) => introSeconds(to - from, timing)
+    const {beats, dub} = emberRhythm(ingredients)
     // A pinprick of glass.
     this.tone(at(0), 0.25, {
       frequency: 3100,
@@ -384,7 +389,7 @@ export default class FusionSound {
       })
     }
     // Each is dragged in with a whoosh.
-    for (const drag of drags) {
+    for (const drag of drags.slice(0, ingredients)) {
       this.hiss(at(drag), until(drag, implosion), {
         filter: 'bandpass',
         frequency: 500,
@@ -394,24 +399,24 @@ export default class FusionSound {
         attack: until(drag + 0.05, implosion),
       })
     }
-    // The burst: a crack, a deep boom and a gong ringing out.
+    // The burst: a crack, a deep boom and a gong ringing out, standing out over the inhale it ends.
     this.hiss(at(implosion), 0.06, {
       filter: 'highpass',
       frequency: 3000,
-      volume: 0.06,
+      volume: 0.08,
       attack: 0.001,
     })
     this.tone(at(implosion), 1.4, {
       frequency: 120,
       end: 28,
-      volume: 0.11,
+      volume: 0.14,
       attack: 0.004,
     })
     this.hiss(at(implosion), 1, {
       filter: 'lowpass',
       frequency: 5000,
       end: 120,
-      volume: 0.08,
+      volume: 0.1,
       attack: 0.004,
     })
     this.bell(at(implosion + 0.02), 196, 0.022, 2.6)
@@ -447,7 +452,7 @@ export default class FusionSound {
         volume: 0.15 * strength,
         attack: 0.004,
       })
-      this.tone(at(beat) + 0.2, 0.26, {
+      this.tone(at(beat) + introSeconds(dub, timing), 0.26, {
         frequency: 70,
         end: 34,
         volume: 0.09 * strength,
@@ -460,7 +465,7 @@ export default class FusionSound {
         volume: 0.06 * strength,
         attack: 0.003,
       })
-      if (!(index < drags.length)) {
+      if (!(index < ingredients)) {
         continue
       }
       // It yanks its satellite in with a whoosh.
@@ -472,9 +477,9 @@ export default class FusionSound {
         volume: 0.05,
         attack: 0.03,
       })
+      this.latch(at(beat), latchPitches[latchPitches.length - ingredients + index], kinds[index])
     }
     // The last beat ignites it: a short roar and a chord.
-    const ignition = beats.at(-1)!
     this.hiss(at(ignition), 0.5, {
       filter: 'bandpass',
       frequency: 300,
@@ -487,8 +492,8 @@ export default class FusionSound {
       this.bell(at(ignition) + 0.04 + index * 0.04, frequency, 0.013, 1.1)
     }
     // Each tether lashes out with a zip.
-    for (const grab of grabs) {
-      this.hiss(at(grab), 0.07, {
+    for (let index = 0; index < ingredients; index++) {
+      this.hiss(at(grab(index)), 0.07, {
         filter: 'bandpass',
         frequency: 2400,
         end: 5000,
@@ -583,6 +588,49 @@ export default class FusionSound {
         attack: 0.002,
       })
     }
+  }
+
+  /** An ingredient latched on to the ember at `start`, charging up like a magnetic clamp: a buzzing square rises from an octave below `frequency` to an octave above it over the 50 ms leading into the beat, and a sub thump an octave below and a fizz land on it. Dry and short, nothing like the bells. A glass ball like an orb pings on the beat besides, two octaves up with a faint inharmonic overtone, over a tiny high click. */
+  private latch(start: number, frequency: number, kind: IngredientLatch) {
+    this.tone(start - 0.05, 0.075, {
+      frequency: frequency / 2,
+      end: frequency * 2,
+      volume: 0.012,
+      attack: 0.045,
+      type: 'square',
+    })
+    this.tone(start, 0.2, {
+      frequency: frequency / 2,
+      end: frequency / 2.2,
+      volume: 0.06,
+      attack: 0.002,
+    })
+    this.hiss(start, 0.04, {
+      filter: 'highpass',
+      frequency: 6000,
+      end: 3000,
+      volume: 0.04,
+      attack: 0.001,
+    })
+    if (kind !== 'glass') {
+      return
+    }
+    this.tone(start, 0.35, {
+      frequency: frequency * 4,
+      volume: 0.022,
+      attack: 0.001,
+    })
+    this.tone(start, 0.18, {
+      frequency: frequency * 4 * 2.76,
+      volume: 0.006,
+      attack: 0.001,
+    })
+    this.hiss(start, 0.012, {
+      filter: 'highpass',
+      frequency: 7000,
+      volume: 0.035,
+      attack: 0.0005,
+    })
   }
 
   /** whether a sound due at `start` is already over, like the start of an intro the sound engine was made too late for */

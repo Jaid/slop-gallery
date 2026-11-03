@@ -25,11 +25,15 @@ export type IngredientContribution = {
   frame: PortraitFrameId
   kind: 'frame'
 }
+/** how the intro’s ember latches an ingredient on, see `FusionSound`: like a magnetic clamp charging up, or, for a glass ball like an orb, the same ending in a ping of glass */
+export type IngredientLatch = 'charge' | 'glass'
 /** an item as an ingredient of a fusion: any number of contributions, none at all for the Transparent Orb, and how the portal shows it */
 export type ItemIngredient = {
   contributions: ReadonlyArray<IngredientContribution>
   /** its glow, which tints the portal and, where the ingredient contributes instructions, stands in for them by tinting the result when it is made locally, without AI */
   glow?: string
+  /** how the intro’s ember latches it on, by default charging up */
+  latch?: IngredientLatch
   /** what the portal shows of the ingredient instead of its images, like an orb’s illustration made in advance; never part of the result */
   look?: string
 }
@@ -120,6 +124,11 @@ export default class FusionRecipe {
   /** the contributed instructions to the image model, in the order of their ingredients */
   get instructions() {
     return this.contributionsOf('instruction').map(contribution => contribution.instruction)
+  }
+
+  /** how the intro’s ember latches each ingredient on, in their order */
+  get latches(): Array<IngredientLatch> {
+    return this.ingredients.map(ingredient => ingredient.latch ?? 'charge')
   }
 
   /** how the description of a result made locally, without AI, tells how it was made */

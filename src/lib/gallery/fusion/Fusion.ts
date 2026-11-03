@@ -1,5 +1,6 @@
 import type {Portrait} from '../types.ts'
 import type {FusionEffect} from './effects/index.ts'
+import type {IngredientLatch} from './FusionRecipe.ts'
 import type {PortalFrame} from './portalFrame.ts'
 import type {FusionTiming} from './timing.ts'
 
@@ -20,6 +21,8 @@ export type FusionSpec = {
   effects: ReadonlyArray<FusionEffect>
   /** the images the portal shows of the ingredients in turn, the hung portrait’s first; more can surface later, like a prop’s photograph; an ingredient with nothing to show, like the Transparent Orb, shows nothing */
   images: Array<Blob | string>
+  /** how the intro’s ember latches each ingredient on, the hung portrait first, one for each of the fusion’s 2–4 ingredients, which it yanks in on a beat of its own */
+  latches: ReadonlyArray<IngredientLatch>
   partner: FusionPartner
   /** the hung portrait, the fusion’s first ingredient, which the portal opens in front of and the result replaces */
   work: Pick<Portrait, 'height' | 'id' | 'position' | 'rotation' | 'width'>

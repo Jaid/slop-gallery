@@ -7,10 +7,10 @@ import {Group, Quaternion, Vector3} from 'three/webgpu'
 import FusionEffect from '../../src/lib/gallery/fusion/effects/base/FusionEffect.ts'
 import {brewing, portalEnvelope} from '../../src/lib/gallery/fusion/envelope.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
-import {beats, choreographed, grabs, introSeconds, introTether, introTrail, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
+import {choreographed, emberRhythm, grab, ignition, implosion, introSeconds, introTether, introTrail, laps, pulse, release, whirl, whirled, whirling} from '../../src/lib/gallery/fusion/intro.ts'
 import {introOrbitRate, orbitPoint, orbitSpeed, satellitePose} from '../../src/lib/gallery/fusion/orbit.ts'
 import {portalFrame, portalRebound, satelliteSize, touchesPortal} from '../../src/lib/gallery/fusion/portalFrame.ts'
-import {fusionTiming, imageAt, introTurns, minimumTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
+import {firstTurn, fusionPulse, fusionTiming, imageAt, introTurns, minimumTurns, nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
 
 const work = {
   id: 'work',
@@ -25,6 +25,11 @@ const surroundings = {
   sides: [6, 6] as const,
 }
 const frame = portalFrame(work, surroundings)
+/** a fusion of the hung portrait and one more ingredient, both with an image */
+const pair = {
+  images: 2,
+  ingredients: 2,
+}
 const pose = (): SatellitePose => ({
   position: new Vector3,
   quaternion: new Quaternion,
@@ -59,49 +64,120 @@ describe('portal frame', () => {
   })
 })
 describe('timeline', () => {
-  test('the minimum lasts until the images took their turns after the intro', () => {
-    const {image, intro, minimum} = fusionTiming
-    expect(minimum).toBe(intro + minimumTurns * image)
+  test('the minimum lasts until the images took their turns after the intro and the lull', () => {
+    const {image, intro, lull, minimum} = fusionTiming
+    expect(lull).toBeGreaterThan(0)
+    expect(minimum).toBe(intro + lull + minimumTurns * image)
     expect(nextTurn(minimum)).toBe(minimum)
     expect(imageAt(minimum - image / 2, 2)).toMatchObject({
       turn: introTurns + minimumTurns - 1,
       clarity: 1,
     })
   })
-  test('after the intro, the images surface one after another, over and over', () => {
-    const {intro: introEnd, image} = fusionTiming
-    expect(imageAt(introEnd - 0.1, 2)).toBeUndefined()
-    expect(imageAt(introEnd + image / 2, 2)).toEqual({
+  test('after the lull, the images surface one after another, over and over', () => {
+    const {image, intro} = fusionTiming
+    const first = firstTurn()
+    expect(imageAt(intro - 0.1, 2)).toBeUndefined()
+    expect(imageAt(intro + 0.1, 2)).toBeUndefined()
+    expect(imageAt(first - 0.001, 2)).toBeUndefined()
+    expect(imageAt(first + image / 2, 2)).toEqual({
       index: 0,
       turn: introTurns,
       clarity: 1,
     })
-    expect(imageAt(introEnd + image * 1.5, 2)).toMatchObject({
+    expect(imageAt(first + image * 1.5, 2)).toMatchObject({
       index: 1,
       turn: introTurns + 1,
       clarity: 1,
     })
-    expect(imageAt(introEnd + 0.001, 2)!.clarity).toBeLessThan(0.05)
+    expect(imageAt(first + 0.001, 2)!.clarity).toBeLessThan(0.05)
+  })
+  test('the ring of fire’s shockwave rings through the lull, and every image after it gets one of its own', () => {
+    const {image, intro} = fusionTiming
+    const first = firstTurn()
+    const lulling = portalEnvelope(first - 0.1, undefined, undefined, fusionTiming, pair)
+    expect(lulling.image).toBeUndefined()
+    expect(lulling.pulse).toBeCloseTo(first - 0.1 - intro, 9)
+    expect(lulling.pulseStrength).toBe(2)
+    const surfacing = portalEnvelope(first + 0.1, undefined, undefined, fusionTiming, pair)
+    expect(surfacing.pulse).toBeCloseTo(0.1, 9)
+    expect(surfacing.pulseStrength).toBeLessThan(1)
+    expect(portalEnvelope(first + image + 0.2, undefined, undefined, fusionTiming, pair).pulse).toBeCloseTo(0.2, 9)
+    // Without a lull, the landing’s shockwave stands in for the first image’s.
+    const hasty = {
+      ...fusionTiming,
+      lull: 0,
+    }
+    expect(portalEnvelope(intro + 0.1, undefined, undefined, hasty, pair).pulseStrength).toBe(2)
+    expect(portalEnvelope(intro + image + 0.1, undefined, undefined, hasty, pair).pulseStrength).toBeLessThan(1)
   })
   test('the portal brews after its intro, closes after the result is out and dies down when it fizzles', () => {
     // It swells while an image shows.
-    expect(portalEnvelope(fusionTiming.intro + fusionTiming.image / 2, undefined, undefined, fusionTiming, 2).size).toBeGreaterThan(1.1)
+    expect(portalEnvelope(firstTurn() + fusionTiming.image / 2, undefined, undefined, fusionTiming, pair).size).toBeGreaterThan(1.1)
     const success = {
       kind: 'success' as const,
       at: 5,
     }
-    const climax = portalEnvelope(5 + fusionTiming.climax / 2, success, undefined, fusionTiming, 2)
+    const climax = portalEnvelope(5 + fusionTiming.climax / 2, success, undefined, fusionTiming, pair)
     expect(climax.image).toMatchObject({result: true})
     const emergedAt = 5 + fusionTiming.climax
-    expect(portalEnvelope(emergedAt, success, emergedAt, fusionTiming, 2).flash).toBeGreaterThan(0.8)
-    expect(portalEnvelope(emergedAt + fusionTiming.afterglow, success, emergedAt, fusionTiming, 2).size).toBe(0)
+    expect(portalEnvelope(emergedAt, success, emergedAt, fusionTiming, pair).flash).toBeGreaterThan(0.8)
+    expect(portalEnvelope(emergedAt + fusionTiming.afterglow, success, emergedAt, fusionTiming, pair).size).toBe(0)
     const failure = {
       kind: 'failure' as const,
       at: 4,
     }
-    const fizzled = portalEnvelope(4 + fusionTiming.fizzle, failure, undefined, fusionTiming, 2)
+    const fizzled = portalEnvelope(4 + fusionTiming.fizzle, failure, undefined, fusionTiming, pair)
     expect(fizzled.size).toBe(0)
     expect(fizzled.embers).toBe(1)
+  })
+})
+describe('rhythm', () => {
+  test('every peak of the ceremony falls on the pulse: the burst, the ignition, the landing, every turn and the result flipping out', () => {
+    const {climax, image, intro, lull, minimum} = fusionTiming
+    expect(introSeconds(pulse, fusionTiming)).toBe(fusionPulse)
+    expect(introSeconds(implosion, fusionTiming)).toBe(1.5)
+    expect(introSeconds(ignition, fusionTiming)).toBe(3)
+    expect(intro).toBe(4.5)
+    expect(firstTurn()).toBe(6)
+    expect([image, lull, climax]).toEqual([fusionPulse, fusionPulse, fusionPulse])
+    expect(minimum).toBe(12)
+    expect(minimum + climax).toBe(13.5)
+  })
+  test('for each number of ingredients, the ember’s beats divide the pulse between the burst and the ignition evenly', () => {
+    for (const ingredients of [2, 3, 4]) {
+      const {beats, dub, turns} = emberRhythm(ingredients)
+      expect(beats).toHaveLength(ingredients + 1)
+      expect(beats.at(-1)).toBe(ignition)
+      const moments = [implosion, ...beats]
+      for (const [index, beat] of beats.entries()) {
+        expect(beat - moments[index]).toBeCloseTo(pulse / (ingredients + 1), 9)
+      }
+      // The second thump of a beat comes before the next beat.
+      expect(dub).toBeLessThan(pulse / (ingredients + 1))
+      expect(turns).toHaveLength(ingredients)
+    }
+    expect(emberRhythm(2).beats).toEqual([2, 2.5, 3])
+    expect(emberRhythm(3).beats).toEqual([1.875, 2.25, 2.625, 3])
+  })
+  test('the intro shows the image of each ingredient once, on its beat', () => {
+    for (const ingredients of [2, 3, 4]) {
+      const shown: Array<number> = []
+      for (let elapsed = 0; elapsed < fusionTiming.intro; elapsed += 0.005) {
+        const {image} = portalEnvelope(elapsed, undefined, undefined, fusionTiming, {
+          images: ingredients,
+          ingredients,
+        })
+        if (!(image && 'index' in image && image.clarity > 0.9 && shown.at(-1) !== image.index)) {
+          continue
+        }
+        expect(image.turn).toBe(image.index)
+        shown.push(image.index)
+      }
+      expect(shown).toEqual(Array.from({length: ingredients}, (_, index) => index))
+    }
+    // The turns after the lull count on from every turn the intro can show.
+    expect(introTurns).toBe(4)
   })
 })
 describe('orbit', () => {
@@ -111,6 +187,7 @@ describe('orbit', () => {
     quaternion: facing.setFromAxisAngle(new Vector3(0, 1, 0), work.rotation),
   }
   const satellite: SatelliteOrbit = {
+    beat: emberRhythm(2).beats[0],
     index: 0,
     phase: -2.3,
     scale: 0.5,
@@ -149,6 +226,7 @@ describe('intro', () => {
   const facing = new Quaternion
   facing.setFromAxisAngle(new Vector3(0, 1, 0), work.rotation)
   const satellites: Array<SatelliteOrbit> = [{
+    beat: emberRhythm(2).beats[0],
     index: 0,
     phase: -Math.PI / 2 - 0.7,
     scale: 0.5,
@@ -161,6 +239,7 @@ describe('intro', () => {
       quaternion: facing,
     },
   }, {
+    beat: emberRhythm(2).beats[1],
     index: 1,
     phase: Math.PI / 2 - 0.7,
     scale: 0.7,
@@ -186,7 +265,7 @@ describe('intro', () => {
     }
   })
   test('keeps everything above the floor, clear of the wall while it whirls and moving smoothly', () => {
-    const setOff = introSeconds(beats[2], fusionTiming)
+    const setOff = introSeconds(ignition, fusionTiming)
     for (const satellite of satellites) {
       let last: Vector3 | undefined
       for (let elapsed = 0; elapsed < end + 0.5; elapsed += 1 / 120) {
@@ -207,7 +286,7 @@ describe('intro', () => {
   test('shows each image once, then settles into the brewing portal', () => {
     const shown = new Map<number, number>
     for (let elapsed = 0; elapsed < end; elapsed += 0.01) {
-      const {image} = portalEnvelope(elapsed, undefined, undefined, fusionTiming, 2)
+      const {image} = portalEnvelope(elapsed, undefined, undefined, fusionTiming, pair)
       if (!(image && 'index' in image && image.clarity > 0.9)) {
         continue
       }
@@ -215,26 +294,26 @@ describe('intro', () => {
       shown.set(image.index, (shown.get(image.index) ?? 0) + 1)
     }
     expect(shown.keys().toArray().toSorted((a, b) => a - b)).toEqual([0, 1])
-    const last = portalEnvelope(just, undefined, undefined, fusionTiming, 2)
+    const last = portalEnvelope(just, undefined, undefined, fusionTiming, pair)
     const brewed = brewing(end, fusionTiming, 2)
     for (const key of ['size', 'energy', 'lens', 'spin'] as const) {
       expect(Math.abs(last[key] - brewed[key])).toBeLessThan(0.05)
     }
-    expect(portalEnvelope(0, undefined, undefined, fusionTiming, 2).size).toBeLessThan(0.1)
+    expect(portalEnvelope(0, undefined, undefined, fusionTiming, pair).size).toBeLessThan(0.1)
   })
-  test('whirls both an extra lap on tethers from the last beat on, lets go of them at full speed and sets both circling freely', () => {
+  test('whirls both extra laps on tethers from the last beat on, lets go of them at full speed and sets both circling freely', () => {
     expect(whirled(whirl)).toBe(0)
     expect(whirling(release)).toBeCloseTo(1, 9)
-    expect(whirled(choreographed)).toBeCloseTo(Math.PI * 2, 9)
-    expect(whirled(choreographed + 1)).toBeCloseTo(Math.PI * 2, 9)
+    expect(whirled(choreographed)).toBeCloseTo(laps * Math.PI * 2, 9)
+    expect(whirled(choreographed + 1)).toBeCloseTo(laps * Math.PI * 2, 9)
     let angle = 0
     for (let t = whirl; t < choreographed + 0.5; t += 0.005) {
       expect(whirled(t)).toBeGreaterThanOrEqual(angle)
       angle = whirled(t)
     }
     for (const index of [0, 1]) {
-      expect(introTether(index, introSeconds(grabs[index], fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
-      expect(introTether(index, introSeconds(grabs[index] + 0.1, fusionTiming), fusionTiming)?.reach).toBeCloseTo(1, 6)
+      expect(introTether(index, introSeconds(grab(index), fusionTiming) - 1e-3, fusionTiming)).toBeUndefined()
+      expect(introTether(index, introSeconds(grab(index) + 0.1, fusionTiming), fusionTiming)?.reach).toBeCloseTo(1, 6)
       expect(introTether(index, introSeconds(release + 0.1, fusionTiming), fusionTiming)).toBeUndefined()
       expect(introTether(index, end + 3, fusionTiming)).toBeUndefined()
     }
@@ -253,11 +332,11 @@ describe('intro', () => {
       expect(introTrail(index, just, fusionTiming)!.reach).toBeLessThan(0.01)
       expect(introTrail(index, end, fusionTiming)).toBeUndefined()
     }
-    const landing = portalEnvelope(end, undefined, undefined, fusionTiming, 2)
+    const landing = portalEnvelope(end, undefined, undefined, fusionTiming, pair)
     expect(landing.flash).toBeGreaterThan(1)
     expect(landing.burst).toBe(0)
     expect(landing.burstStrength).toBeGreaterThan(1)
-    expect(portalEnvelope(end + 2, undefined, undefined, fusionTiming, 2).flash).toBeLessThan(0.01)
+    expect(portalEnvelope(end + 2, undefined, undefined, fusionTiming, pair).flash).toBeLessThan(0.01)
   })
 })
 /** an effect that goes on for 0.2 s after the result flipped out, showing nothing */
@@ -280,13 +359,15 @@ const spec = () => ({
     id: 'prop',
   },
   images: ['work.jxl'],
+  latches: ['charge', 'charge'] as const,
   effects: [],
 })
 describe('fusion', () => {
   const timing = {
     intro: 0.08,
+    lull: 0.04,
     image: 0.02,
-    minimum: 0.2,
+    minimum: 0.3,
     climax: 0.04,
     afterglow: 0.03,
     fizzle: 0.04,
@@ -371,12 +452,13 @@ describe('fusion', () => {
       frame,
       timing,
     })
-    await new Promise(resolve => setTimeout(resolve, (timing.intro + timing.image * 1.4) * 1000))
+    const first = firstTurn(timing)
+    await new Promise(resolve => setTimeout(resolve, (first + timing.image * 1.4) * 1000))
     expect(fusion.cancel()).toBe(true)
     expect(fusion.signal.aborted).toBe(true)
-    expect(fusion.canceledAt).toBeGreaterThan(timing.intro + timing.image)
+    expect(fusion.canceledAt).toBeGreaterThan(first + timing.image)
     expect(fusion.outcome?.kind).toBe('failure')
-    expect(fusion.outcome!.at).toBeCloseTo(timing.intro + timing.image * Math.ceil((fusion.canceledAt! - timing.intro) / timing.image), 9)
+    expect(fusion.outcome!.at).toBeCloseTo(first + timing.image * Math.ceil((fusion.canceledAt! - first) / timing.image), 9)
     expect(fusion.outcome!.at).toBeLessThan(timing.minimum)
     expect(fusion.cancel()).toBe(false)
     await fusion.fail()
@@ -397,34 +479,37 @@ describe('fusion', () => {
   })
 })
 describe('breaking off', () => {
-  test('waits for the end of the intro, then for the next turn of the images', () => {
+  test('waits for the end of the intro, not at all during the lull, then for the next turn of the images', () => {
     const {intro, image} = fusionTiming
+    const first = firstTurn()
     expect(nextTurn(0.5)).toBe(intro)
     expect(nextTurn(intro)).toBe(intro)
-    expect(nextTurn(intro + 0.1)).toBeCloseTo(intro + image, 9)
-    expect(nextTurn(intro + image * 2.5)).toBeCloseTo(intro + image * 3, 9)
+    expect(nextTurn(intro + 0.1)).toBe(intro + 0.1)
+    expect(nextTurn(first)).toBe(first)
+    expect(nextTurn(first + 0.1)).toBeCloseTo(first + image, 9)
+    expect(nextTurn(first + image * 2.5)).toBeCloseTo(first + image * 3, 9)
   })
   test('makes the portal recoil at once with a blaze, a shockwave and sparks, then flicker on charred until it fizzles', () => {
-    const elapsed = fusionTiming.intro + fusionTiming.image * 0.6
+    const elapsed = firstTurn() + fusionTiming.image * 0.6
     const failure = {
       kind: 'failure' as const,
       at: nextTurn(elapsed),
     }
-    const calm = portalEnvelope(elapsed, failure, undefined, fusionTiming, 2)
-    const recoil = portalEnvelope(elapsed, failure, undefined, fusionTiming, 2, elapsed)
+    const calm = portalEnvelope(elapsed, failure, undefined, fusionTiming, pair)
+    const recoil = portalEnvelope(elapsed, failure, undefined, fusionTiming, pair, elapsed)
     expect(recoil.flash).toBeGreaterThan(1)
     expect(recoil.pulse).toBe(0)
     expect(recoil.pulseStrength).toBeGreaterThan(1.5)
     expect(recoil.burst).toBe(0)
     expect(recoil.embers).toBeGreaterThan(0.5)
     expect(recoil.light).toBeGreaterThan(calm.light + 50)
-    const charred = portalEnvelope(elapsed + 0.55, failure, undefined, fusionTiming, 2, elapsed)
+    const charred = portalEnvelope(elapsed + 0.55, failure, undefined, fusionTiming, pair, elapsed)
     expect(elapsed + 0.55).toBeLessThan(failure.at)
     expect(charred.flash).toBeLessThan(0.01)
     expect(charred.embers).toBeCloseTo(0.3, 1)
     // Before it was broken off, nothing changes.
-    expect(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, 2, elapsed)).toEqual(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, 2))
-    expect(portalEnvelope(failure.at + fusionTiming.fizzle, failure, undefined, fusionTiming, 2, elapsed).size).toBe(0)
+    expect(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, pair, elapsed)).toEqual(portalEnvelope(elapsed - 0.1, failure, undefined, fusionTiming, pair))
+    expect(portalEnvelope(failure.at + fusionTiming.fizzle, failure, undefined, fusionTiming, pair, elapsed).size).toBe(0)
   })
   test('a body reaches into the portal when its capsule comes within the disc', () => {
     const [x, y, z] = frame.center

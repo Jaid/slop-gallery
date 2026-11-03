@@ -28,7 +28,7 @@ export default abstract class Orb {
   /** the glass with whatever the orb holds inside, for a ball of the given radius */
   abstract createMaterial(options: OrbGlassOptions): OrbGlassMaterial
 
-  /** the orb as an ingredient of a fusion in the environment of `seed`: it contributes its frame and its effect, if it has them */
+  /** the orb as an ingredient of a fusion in the environment of `seed`: it contributes its frame and its effect, if it has them, and is latched on with a ping of its glass */
   ingredient(seed: number): ItemIngredient {
     const contributions: Array<IngredientContribution> = []
     if (this.frame) {
@@ -43,6 +43,9 @@ export default abstract class Orb {
         effect: this.effect,
       })
     }
-    return {contributions}
+    return {
+      contributions,
+      latch: 'glass',
+    }
   }
 }

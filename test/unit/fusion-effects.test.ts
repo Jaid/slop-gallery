@@ -66,6 +66,7 @@ describe('fusion effects', () => {
         consumed: true,
       },
       images: ['/hung.jxl'],
+      latches: ['charge', 'glass'] as const,
       effects: [ghostsEffect],
     }, {frame})
     expect(fusion.afterglow).toBe(ghostsEffect.afterglow)
@@ -80,6 +81,7 @@ describe('fusion effects', () => {
         consumed: true,
       },
       images: ['/hung.jxl'],
+      latches: ['charge', 'glass'] as const,
       effects: [ghostsEffect],
     }, {frame})
     const show = ghostsEffect.show(fusion)
