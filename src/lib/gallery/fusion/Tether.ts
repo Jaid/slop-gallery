@@ -3,7 +3,7 @@ import type {Node} from 'three/webgpu'
 import {cameraPosition, cross, exp, float, mix, mx_noise_float, positionGeometry, sin, smoothstep, uniform, uv, vec2, vec3} from 'three/tsl'
 import {AdditiveBlending, Color, Mesh, MeshBasicNodeMaterial, PlaneGeometry, Vector3} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /** how far the ribbon reaches beyond the knot, in meters, so the knot’s glow is round */
 const lead = 0.16

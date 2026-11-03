@@ -3,7 +3,7 @@ import type {Node} from 'three/webgpu'
 import {attribute, cameraWorldMatrix, cos, cross, dot, exp, float, mix, positionGeometry, sin, smoothstep, uniform, uv, vec3, vec4} from 'three/tsl'
 import {AdditiveBlending, Color, InstancedBufferAttribute, InstancedMesh, MeshBasicNodeMaterial, PlaneGeometry, Vector3} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /** how many motes stream in */
 const count = 280

@@ -1,7 +1,7 @@
 import {attribute, cameraWorldMatrix, color, float, min, mix, time, uv, vec3, vec4} from 'three/tsl'
 import {InstancedBufferAttribute, InstancedMesh, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 import fountain, {jetFlightTime, jetLanding, jetPoint, jetVelocity, sheetLanding} from './config.ts'
 
 export type Droplet = {

@@ -3,7 +3,7 @@ import type {Node, TextureNode} from 'three/webgpu'
 import {atan, cameraProjectionMatrix, cameraViewMatrix, cameraWorldMatrix, cos, exp, float, log, max, mix, modelWorldMatrix, mx_fractal_noise_float, mx_noise_float, positionGeometry, rotate, screenUV, sin, smoothstep, texture, uniform, uv, vec2, vec3, vec4, viewportSharedTexture} from 'three/tsl'
 import {AdditiveBlending, Color, DataTexture, Group, Mesh, MeshBasicNodeMaterial, PlaneGeometry, SRGBColorSpace} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /** how far the quad reaches from the portal’s middle, in radii of its disc, for the halo, the lens and the shockwaves */
 const reach = 3.2

@@ -1,7 +1,7 @@
 import {attribute, cameraWorldMatrix, cos, cross, exp, float, max, mix, positionGeometry, select, sin, smoothstep, uniform, uv, vec3, vec4} from 'three/tsl'
 import {AdditiveBlending, Color, InstancedBufferAttribute, InstancedMesh, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /** how many sparks spiral into the portal at a time */
 const inflowing = 160

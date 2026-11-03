@@ -4,7 +4,7 @@ import type {Node} from 'three/webgpu'
 import {cameraPosition, cos, cross, exp, float, mix, mx_noise_float, positionGeometry, sin, smoothstep, uniform, uv, vec3} from 'three/tsl'
 import {AdditiveBlending, Color, Mesh, MeshBasicNodeMaterial, PlaneGeometry, Vector3} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /** how wide the trail is at a width of 1, in meters */
 const breadth = 0.46

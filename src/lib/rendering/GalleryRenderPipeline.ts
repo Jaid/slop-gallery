@@ -22,7 +22,6 @@ import {floorReflectionBlur, floorReflectionGrazing, floorReflectionLevel, floor
 import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
-import MaterialOutputsNode from './MaterialOutputsNode.ts'
 import {gradeMood} from './moodGrade.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
@@ -46,22 +45,6 @@ export type GalleryRenderPipelineOptions = {
   /** how much of the sun the air around the camera holds, which scales the sun shafts; 0 where the sun never reaches but its shadow map has no walls */
   volumetricLightReach?: () => number
   zoom?: () => number
-}
-
-/**
- * MRT outputs for a soft, depth-less transparent sprite, like a water droplet or a puff of mist: its color blends as usual, but its geometry buffers carry alpha 0, so the normal and motion of the surface behind it stay in place.
- *
- * Without this, the sprite’s whole quad – including the fully transparent part around the soft disc – writes its camera-facing normal over the background’s, and the ambient occlusion, reading that normal against the background’s depth, darkens the quad to a black rectangle.
- */
-export class TransparentSpriteOutputsNode extends MaterialOutputsNode {
-  constructor() {
-    super({
-      normal: vec4(normalView, 0),
-      // The velocity node’s declaration lacks the node extensions every other node has.
-      velocity: vec4(velocity as unknown as Node<'vec2'>, 0, 0),
-      diffuseColor: vec4(0),
-    })
-  }
 }
 
 /** All depth-dependent work stays in the current frame; one antialiasing resolve (TRAA by default) antialiases the finished composite. */

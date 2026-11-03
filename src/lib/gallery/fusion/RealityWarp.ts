@@ -3,7 +3,7 @@ import type {Node} from 'three/webgpu'
 import {cameraProjectionMatrix, cameraViewMatrix, cameraWorldMatrix, exp, float, max, modelWorldMatrix, positionGeometry, rotate, smoothstep, texture, uniform, uv, vec2, vec3, vec4, viewportSharedTexture} from 'three/tsl'
 import {Mesh, MeshBasicNodeMaterial, PlaneGeometry} from 'three/webgpu'
 
-import {TransparentSpriteOutputsNode} from '../../rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
 
 /**
  * A wide stretch of the view around a fusion’s portal, bent as if the portal swallowed space itself: pulled toward the middle and twisted like water down a drain, darkened toward the middle and split into its colors, or, with a negative pull, pushed back out while a ripple runs outward over it.

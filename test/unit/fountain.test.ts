@@ -17,7 +17,7 @@ import RevolvedProfileGeometry from '../../src/lib/gallery/RevolvedProfileGeomet
 import {triangleCount} from '../../src/lib/geometry.ts'
 import FountainMarbleMaterial from '../../src/lib/materials/FountainMarbleMaterial.ts'
 import FountainWaterMaterial from '../../src/lib/materials/FountainWaterMaterial.ts'
-import {TransparentSpriteOutputsNode} from '../../src/lib/rendering/GalleryRenderPipeline.ts'
+import TransparentSpriteOutputsNode from '../../src/lib/rendering/TransparentSpriteOutputsNode.ts'
 
 await RAPIER.init()
 const down = new Vector3(0, -1, 0)
