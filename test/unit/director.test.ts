@@ -537,7 +537,7 @@ test('broken off while its result is being made ready, the fusion keeps the orig
     director.dispose()
   }
 })
-test('the result wears the frame a thrown ingredient contributed wherever it arrives, and without one that of the room it arrives in', async () => {
+test('the result wears the frame a thrown ingredient contributed wherever it arrives, and without one that of the room it arrives in, rolled as the portal opens', async () => {
   const items: Array<[ThrownItem, PortraitFrameId | undefined]> = [[framing(testOrb, 'lodge-tramp'), 'lodge-tramp'], [framing(apple, 'cell-coffer'), 'cell-coffer'], [testOrb, undefined], [apple, undefined]]
   for (const [item, frame] of items) {
     useGallery.setState(original, true)
@@ -557,11 +557,15 @@ test('the result wears the frame a thrown ingredient contributed wherever it arr
     }, '')
     try {
       const job = director.fuseItem('a', item)
+      // Known long before the result, so the portal can have it ready.
+      const [fusion] = director.opened
+      const expected = frame ?? arrivalFrame(fusion.frame.center, position, 'a', environmentSeed)
+      expect(fusion.resultFrame).toBe(expected)
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
       const result = useGallery.getState().portraits.find(p => p.id === 'a')!
       expect(result.source).not.toBe(a)
-      expect(result.frame).toBe(frame ?? arrivalFrame(result.position, position, 'a', environmentSeed))
+      expect(result.frame).toBe(expected)
     } finally {
       director.dispose()
     }

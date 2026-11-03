@@ -1,3 +1,4 @@
+import type {PortraitFrameId} from '../../frames/frameParameter.ts'
 import type {Portrait} from '../types.ts'
 import type {FusionEffect} from './effects/index.ts'
 import type {IngredientLatch} from './FusionRecipe.ts'
@@ -68,6 +69,8 @@ export default class Fusion {
   outcome?: FusionOutcome
   /** the fused image, once it is in, or the hung portrait’s own where nothing was contributed to fuse it with */
   result?: Blob | string
+  /** the frame the result will wear, or the default frame for none, which the director rolls as the portal opens, so the portal has it ready by the time the result flips out */
+  resultFrame?: PortraitFrameId
   /** aborted once the player breaks the fusion off, which makes the image model give up */
   readonly signal: AbortSignal
   readonly spec: FusionSpec

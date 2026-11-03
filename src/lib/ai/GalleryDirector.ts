@@ -153,7 +153,7 @@ export default class GalleryDirector {
       images: recipe.looks,
       latches: recipe.latches,
       effects: recipe.effects,
-    })
+    }, recipe)
     notify(this.usingAi ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
       await this.brew(a, fusion, recipe, current, {
@@ -206,7 +206,7 @@ export default class GalleryDirector {
       latches: recipe.latches,
       effects: recipe.effects,
       color: recipe.glow,
-    })
+    }, recipe)
     for (const look of recipe.pendingLooks) {
       void look.then(image => fusion.addImage(image), () => {})
     }
@@ -261,7 +261,7 @@ export default class GalleryDirector {
    * Makes the result of `recipe` while `fusion` shows it and, if `current` still holds afterward, replaces the hung portrait `a` with it, dropping the portrait `remove` and using up the prop `consume`.
    * Where the recipe leaves `a` unchanged, as nothing but its own image was contributed, no image model is asked: `a` itself comes back out of the portal as it went in.
    * The result flips out of the portal as a loose portrait once the fusion’s climax is over; a failure shows once the fusion fizzled out, like one the player broke off by jumping into its portal, which gives up on the image at once.
-   * A new image’s frame takes its shape, whatever the model made of the shape it was asked for, at the area of `a`’s frame. The result wears the frame an ingredient contributed, otherwise the frame of the room it arrives in.
+   * A new image’s frame takes its shape, whatever the model made of the shape it was asked for, at the area of `a`’s frame. The result wears the frame the fusion rolled as its portal opened.
    */
   private async brew(a: Portrait, fusion: Fusion, recipe: FusionRecipe, current: () => boolean, {canceled, consume, description, failure, remove}: {
     /** the notice right as the player breaks the fusion off */
@@ -330,12 +330,11 @@ export default class GalleryDirector {
       await failed()
       return
     }
-    const launch = fusion.launch()
-    // It flips out of the portal loose, for the player to hang wherever they like, in the frame an ingredient contributed or that of the room the portal releases it into.
+    // It flips out of the portal loose, for the player to hang wherever they like.
     const released: Portrait = {
       ...a,
-      ...launch,
-      frame: recipe.frame ?? arrivalFrame(launch.position, a.position, a.id),
+      ...fusion.launch(),
+      frame: fusion.resultFrame,
       fusing: false,
       fusionJob: undefined,
       flavorJob: undefined,
@@ -400,8 +399,10 @@ export default class GalleryDirector {
     }
   }
 
-  private startFusion(spec: FusionSpec) {
+  /** Opens the portal of a fusion of `recipe` and rolls the frame its result will wear right away, so the portal has it ready by the end: the frame an ingredient contributed, otherwise that of the room the portal releases the result into. */
+  private startFusion(spec: FusionSpec, recipe: FusionRecipe) {
     const fusion = this.openFusion(spec)
+    fusion.resultFrame = recipe.frame ?? arrivalFrame(fusion.launch().position, spec.work.position, spec.work.id)
     this.fusions.add(fusion)
     return fusion
   }

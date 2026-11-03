@@ -4,10 +4,11 @@ import type {PortalPalette} from '#src/lib/gallery/fusion/PortalCore.ts'
 import type {Texture} from 'three/webgpu'
 
 import {clamp} from 'math'
-import {Color, Group, PointLight, Vector3} from 'three/webgpu'
+import {Color, Group, Mesh, PointLight, Vector3} from 'three/webgpu'
 
 import FusionSound from '#src/lib/audio/FusionSound.ts'
 import SoundEngine from '#src/lib/audio/SoundEngine.ts'
+import {portraitFrame} from '#src/lib/frames/index.ts'
 import {useGallery} from '#src/lib/gallery.ts'
 import {portalEnvelope} from '#src/lib/gallery/fusion/envelope.ts'
 import {decorateIntro, introTether, introTrail} from '#src/lib/gallery/fusion/intro.ts'
@@ -51,6 +52,8 @@ export default class PortalShow {
   private phase = 0
   /** whether the recoil of a fusion the player broke off has sounded */
   private recoiled = false
+  /** the frame the result will wear, shrunk to nothing, see {@link rehearseFrame} */
+  private rehearsal?: Mesh
   private readonly satellites: Satellites
   private sound?: FusionSound
   private stage: Stage = 'brewing'
@@ -86,6 +89,8 @@ export default class PortalShow {
     }
     this.images.clear()
     this.visuals.dispose()
+    // The frame’s materials are shared by every work wearing it.
+    this.rehearsal?.geometry.dispose()
   }
 
   /** Brings everything to `elapsed` seconds into the fusion. */
@@ -94,6 +99,7 @@ export default class PortalShow {
     const {frame, outcome, timing} = fusion
     const delta = this.last === undefined ? 0 : clamp(elapsed - this.last, 0, 0.1)
     this.last = elapsed
+    this.rehearsal ??= this.rehearseFrame()
     const envelope = portalEnvelope(elapsed, outcome, fusion.emergedAt, timing, {
       images: fusion.spec.images.length,
       ingredients: fusion.spec.latches.length,
@@ -240,6 +246,24 @@ export default class PortalShow {
     const sound = new FusionSound(audio, fusion.frame.center)
     sound.open(fusion.timing, fusion.spec.latches, fusion.elapsed())
     return sound
+  }
+
+  /**
+   * Draws the frame the result will wear in every pass from the portal’s first frame on, at a scale of 0, so it covers no pixel, and as `Portrait` draws it, so its pipelines compile in the background while the portal brews; otherwise the result would flip out as a bare image and only get its frame seconds later.
+   * The director rolls the frame as the portal opens, before this first runs.
+   */
+  private rehearseFrame() {
+    const {frame: portal, resultFrame, spec} = this.fusion
+    const frame = portraitFrame(resultFrame)
+    const mesh = new Mesh(frame.createGeometry(spec.work.width, spec.work.height), frame.materials)
+    mesh.name = 'fusion-frame-rehearsal'
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    mesh.frustumCulled = false
+    mesh.position.fromArray(portal.center)
+    mesh.scale.setScalar(0)
+    this.root.add(mesh)
+    return mesh
   }
 
   /** Shows the image or the result the envelope asks for, once its image is decoded. */
