@@ -118,9 +118,9 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return this.room.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
-  /** The frame the works wear that hang in the room’s slots or arrive in the room in the game of `seed`, which picks one where the room has several, or undefined for the default frame. */
-  frame(seed: number) {
-    return this.room.frame && pickFrame(seed, this.room.frame)
+  /** The frame the work with the id `work` wears hanging in one of the room’s slots or arriving in the room in the game of `seed`, its own roll where the room has several, or undefined for the default frame. */
+  frame(seed: number, work: string) {
+    return this.room.frame && pickFrame(seed, this.room.frame, work)
   }
 
   /** What the ground under the world position sounds like. */
@@ -139,9 +139,9 @@ export default class PlacedRoom<Kind extends Room = Room> {
     })).toArray()
   }
 
-  /** The portrait slots with global ids in world meters, as the placement code takes them, each with the room’s frame in the game of `seed`. */
-  slots(seed: number): Array<PortraitSlot> {
-    const frame = this.frame(seed)
+  /** The portrait slots with global ids in world meters, as the placement code takes them, each with the room’s frames. */
+  slots(): Array<PortraitSlot> {
+    const {frame} = this.room
     return this.room.slots.entries().map(([id, {area, position, priority = 0, labelAbove, wallId, ...slot}]) => ({
       id: this.room.globalId(id),
       ...slot,

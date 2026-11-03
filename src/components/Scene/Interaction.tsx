@@ -10,7 +10,7 @@ import {Raycaster, Vector2, Vector3} from 'three/webgpu'
 import OrbitViewing from '#component/OrbitViewing'
 import PlacementPreview from '#component/PlacementPreview'
 import {portraitFrame} from '#src/lib/frames/index.ts'
-import {arrivalFrame, cameraPose, useGallery} from '#src/lib/gallery.ts'
+import {arrivalFrame, cameraPose, upcomingWorkId, useGallery} from '#src/lib/gallery.ts'
 
 import useInteractionDiagnostics from './interaction/useInteractionDiagnostics.ts'
 import useInteractionEvents from './interaction/useInteractionEvents.ts'
@@ -29,8 +29,8 @@ export default function Interaction() {
   const held = useGallery(s => s.held)
   const artwork = useGallery(s => s.portraits.find(portrait => portrait.id === s.held))
   const dragging = useGallery(s => s.dragging)
-  // A dropped image wears the frame of the room it lands in, which changes along with the wall it would hang on.
-  const arriving = useGallery(s => (s.dragging && s.placement ? arrivalFrame(s.placement.position, cameraPose.position) : undefined))
+  // A dropped image wears its roll of the frames of the room it lands in, which changes along with the wall it would hang on.
+  const arriving = useGallery(s => (s.dragging && s.placement ? arrivalFrame(s.placement.position, cameraPose.position, upcomingWorkId()) : undefined))
   useInteractionEvents({
     camera,
     controls,

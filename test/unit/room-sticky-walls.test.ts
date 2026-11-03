@@ -13,7 +13,7 @@ test('portraits stick to every wall but the stairways’, the passages’, the t
   }
 })
 test('every portrait slot hangs in front of a sticky wall of its own room, within its width', () => {
-  for (const slot of slopGallery.portraitSlots(1)) {
+  for (const slot of slopGallery.portraitSlots()) {
     const wall = sticky.find(value => value.id === slot.wallId)
     expect(wall?.room && slot.id.startsWith(`${wall.room}-`)).toBe(true)
     const u = (slot.position[0] - wall!.center[0]) * Math.cos(wall!.rotation) - (slot.position[2] - wall!.center[2]) * Math.sin(wall!.rotation)

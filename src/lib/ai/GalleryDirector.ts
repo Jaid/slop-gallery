@@ -324,7 +324,7 @@ export default class GalleryDirector {
     const released: Portrait = {
       ...a,
       ...launch,
-      frame: recipe.frame ?? arrivalFrame(launch.position, a.position),
+      frame: recipe.frame ?? arrivalFrame(launch.position, a.position, a.id),
       fusing: false,
       fusionJob: undefined,
       flavorJob: undefined,

@@ -70,7 +70,7 @@ export type RoomOptions = {
   ambience?: Record<string, RoomAmbience>
   /** the camera bookmarks by their id within the room, in snake_case */
   cameras?: Record<string, RoomCamera>
-  /** the frame the works wear that hang in the room’s slots or arrive in the room, or several, of which every game picks one, the default frame if left out */
+  /** the frame the works wear that hang in the room’s slots or arrive in the room, or several, of which every work draws its own, the default frame if left out */
   frame?: FrameChoice
   /** the lamps by their id within the room, in snake_case, positioned relative to the room’s origin */
   lamps?: Record<string, Lamp>
@@ -146,7 +146,7 @@ export default abstract class Room {
    * Worlds check the fences of their rooms in order and take the first one that matches, so a fence may overlap those of the rooms checked before it.
    */
   abstract readonly fence: Geofence
-  /** the frame the works wear that hang in the room’s slots or arrive in the room, or several, of which every game picks one, or undefined for the default frame */
+  /** the frame the works wear that hang in the room’s slots or arrive in the room, or several, of which every work draws its own, or undefined for the default frame */
   readonly frame: FrameChoice | undefined
   /** how high the ceiling of a room around a rectangular floor plan hangs over its floor, the walls stopping 30 cm short of it */
   readonly height?: number

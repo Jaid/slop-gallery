@@ -6,6 +6,7 @@ import readPermalink from 'read-permalink'
 import world from '#src/worlds/current.ts'
 
 import {environmentRoll} from '../environmentSeed.ts'
+import {pickFrame} from '../frames/frameChoice.ts'
 
 const portraitSets = ['classic'] as const
 
@@ -35,7 +36,7 @@ export function readPortraitSet(input: URL | string = typeof location === 'undef
 export const portraitSet = readPortraitSet()
 
 /**
- * The default works hung in the slots, each in a slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size and the frame of its slot, so the same work hangs larger or smaller, and in another room’s frame, from one seed to the next.
+ * The default works hung in the slots, each in a slot of its ratio, the free ones of higher priority first and among equal ones drawn by the environment `seed`. A work takes the size of its slot and its own roll of the slot’s frames, so the same work hangs larger or smaller, and in another frame, from one seed to the next.
  * Where a ratio has fewer slots than works, the seed also draws which of its works hang; the rest stay in the catalog. Works whose ratio has no slot at all are an error.
  */
 export function hangDefaultWorks(slots: ReadonlyArray<PortraitSlot>, artworks: ReadonlyArray<Artwork>, seed: number): Array<Portrait> {
@@ -61,7 +62,7 @@ export function hangDefaultWorks(slots: ReadonlyArray<PortraitSlot>, artworks: R
       hung: true,
       wallId: slot.wallId,
       ...slot.labelAbove ? {labelAbove: true} : {},
-      ...slot.frame ? {frame: slot.frame} : {},
+      ...slot.frame ? {frame: pickFrame(seed, slot.frame, artwork.id)} : {},
     }
   })
 }
@@ -71,5 +72,5 @@ export default function defaultPortraits(seed: number): Array<Portrait> {
   if (!portraitSet) {
     return []
   }
-  return hangDefaultWorks(world.portraitSlots(seed), world.artworks, seed)
+  return hangDefaultWorks(world.portraitSlots(), world.artworks, seed)
 }

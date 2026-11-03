@@ -6,7 +6,6 @@ import {create} from 'zustand'
 
 import world from '#src/worlds/current.ts'
 
-import {environmentSeed} from '../gameSeed.ts'
 import {asPortrait, slotArea, slotAreas, slotFrame} from '../placement/portraitSlots.ts'
 import {wallPosition} from '../placement/wallGeometry.ts'
 
@@ -60,7 +59,7 @@ export const usePortraitSlots = create<PortraitSlotState>(() => ({
   aimed: null,
   dragging: null,
   template: ['1:1', slotAreas[2], false],
-  slots: world.portraitSlots(environmentSeed),
+  slots: world.portraitSlots(),
 }))
 
 const nextRatio = (ratio: PortraitRatio, step: -1 | 1) => ratioCycle[(ratioCycle.indexOf(ratio) + step + ratioCycle.length) % ratioCycle.length]

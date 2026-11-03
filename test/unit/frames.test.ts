@@ -76,7 +76,7 @@ const roomChoices = rooms.values().flatMap(room => (room.frame ? [room.frame] : 
 /** the frame choices of the orbs that bring one */
 const orbChoices = orbs.flatMap(orb => (orb.frame ? [orb.frame] : []))
 describe('frame choices', () => {
-  test('a single frame is always picked, and of several, every seed picks one for the whole game, which one depending on the seed', () => {
+  test('a single frame is always picked, and of several, every seed picks one, which one depending on the seed', () => {
     expect(pickFrame(5, 'lodge-tramp')).toBe('lodge-tramp')
     expect(choiceFrames('lodge-tramp')).toEqual(['lodge-tramp'])
     for (const choice of [...roomChoices, ...orbChoices]) {
@@ -98,36 +98,48 @@ describe('frame choices', () => {
   })
 })
 describe('room frames', () => {
-  test('every slot carries the frame its room wears in the game, and every default work wears the frame of its slot', () => {
-    for (const seed of seeds.slice(0, 4)) {
-      for (const world of [slopGallery, sandbox]) {
-        for (const room of world.rooms) {
-          const frame = room.frame(seed)
-          expect(frame).toBe(room.room.frame && pickFrame(seed, room.room.frame))
-          for (const slot of room.slots(seed)) {
-            expect(slot.frame).toBe(frame)
-          }
+  test('every slot carries the frames of its room, and every default work wears its own roll of them', () => {
+    for (const world of [slopGallery, sandbox]) {
+      for (const room of world.rooms) {
+        for (const slot of room.slots()) {
+          expect(slot.frame).toBe(room.room.frame)
         }
       }
-      const slots = slopGallery.portraitSlots(seed)
+    }
+    const slots = slopGallery.portraitSlots()
+    for (const seed of seeds.slice(0, 4)) {
       for (const portrait of hangDefaultWorks(slots, artworks, seed)) {
-        const slot = slots.find(candidate => candidate.wallId === portrait.wallId && candidate.position.every((value, axis) => value === portrait.position[axis]))!
-        expect(portrait.frame).toBe(slot.frame)
-        expect(portrait.frame).toBe(slopGallery.roomById(slopGallery.walls.find(wall => wall.id === portrait.wallId)!.room)!.frame(seed))
+        const room = slopGallery.roomById(slopGallery.walls.find(wall => wall.id === portrait.wallId)!.room)!
+        expect(portrait.frame).toBe(room.frame(seed, portrait.id))
+        expect(portrait.frame).toBe(room.room.frame && pickFrame(seed, room.room.frame, portrait.id))
       }
     }
   })
+  test('the works of a room with several frames wear all of them between them', () => {
+    const several = slopGallery.rooms.filter(room => room.room.frame && choiceFrames(room.room.frame).length > 1)
+    expect(several.length).toBeGreaterThan(0)
+    const works = Array.from({length: 24}, (_, index) => `work-${index}`)
+    for (const room of several) {
+      const worn = new Set(works.map(work => room.frame(1, work)))
+      expect(worn.size).toBe(choiceFrames(room.room.frame!).length)
+    }
+    // Every work draws for itself, not the same frame in every room.
+    const positions = new Set(several.map(room => choiceFrames(room.room.frame!).indexOf(room.frame(1, 'work-0')!)))
+    expect(positions.size).toBeGreaterThan(1)
+  })
   test('rooms frame the works arriving in them, and a work arriving outside of every room takes the frame of the room it came from', () => {
     for (const seed of seeds.slice(0, 4)) {
-      for (const room of slopGallery.rooms) {
-        const inside = room.spawn.position
-        const lifted: Vec3 = [inside[0], inside[1] + 1.2, inside[2]]
-        expect(arrivalFrame(lifted, lifted, seed)).toBe(room.frame(seed))
+      for (const work of ['arrival-a', 'arrival-b']) {
+        for (const room of slopGallery.rooms) {
+          const inside = room.spawn.position
+          const lifted: Vec3 = [inside[0], inside[1] + 1.2, inside[2]]
+          expect(arrivalFrame(lifted, lifted, work, seed)).toBe(room.frame(seed, work))
+        }
+        const lobby = slopGallery.room('lobby')
+        const outside: Vec3 = [1e4, 0, 1e4]
+        expect(slopGallery.roomAt(outside)).toBeUndefined()
+        expect(arrivalFrame(outside, lobby.spawn.position, work, seed)).toBe(lobby.frame(seed, work))
       }
-      const lobby = slopGallery.room('lobby')
-      const outside: Vec3 = [1e4, 0, 1e4]
-      expect(slopGallery.roomAt(outside)).toBeUndefined()
-      expect(arrivalFrame(outside, lobby.spawn.position, seed)).toBe(lobby.frame(seed))
     }
   })
 })

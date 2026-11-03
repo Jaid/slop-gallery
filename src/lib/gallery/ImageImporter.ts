@@ -215,7 +215,7 @@ export default class ImageImporter {
             p.position = [pose.position[0] + pose.direction[0] * distance, Math.max(world.placement.floorHeight([pose.position[0] + pose.direction[0] * distance, pose.position[1], pose.position[2] + pose.direction[2] * distance]) + 0.8, pose.position[1] + pose.direction[1] * distance + count * 0.15), pose.position[2] + pose.direction[2] * distance]
           }
           // Where it hangs or lands decides its frame, which may be another room’s than the player’s, through a doorway.
-          p.frame = arrivalFrame(p.position, pose.position)
+          p.frame = arrivalFrame(p.position, pose.position, p.id)
           s.add(p)
           count++
           this.onImport(p)

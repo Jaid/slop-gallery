@@ -1,3 +1,4 @@
+import type {FrameChoice} from '../frames/frameChoice.ts'
 import type {PortraitFrameId} from '../frames/frameParameter.ts'
 import type {ItemIngredient} from './fusion/FusionRecipe.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
@@ -56,8 +57,8 @@ export type Artwork = Pick<Portrait, 'creator' | 'description' | 'id' | 'narrati
 }
 /** a spot on a wall reserved for one default work of matching ratio; players rehang works by wall collisions instead */
 export type PortraitSlot = {
-  /** the frame of the slot’s room, which its work wears, the default frame if left out */
-  frame?: PortraitFrameId
+  /** the frames of the slot’s room, of which its work wears its own roll, the default frame if left out */
+  frame?: FrameChoice
   height: number
   id: string
   /** whether the slot hangs low and its work’s placard goes above the frame */

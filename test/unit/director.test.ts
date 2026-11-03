@@ -550,7 +550,7 @@ test('the result wears the frame a thrown ingredient contributed wherever it arr
       await job
       const result = useGallery.getState().portraits.find(p => p.id === 'a')!
       expect(result.source).not.toBe(a)
-      expect(result.frame).toBe(frame ?? arrivalFrame(result.position, position, environmentSeed))
+      expect(result.frame).toBe(frame ?? arrivalFrame(result.position, position, 'a', environmentSeed))
     } finally {
       director.dispose()
     }
@@ -639,7 +639,7 @@ for (const ai of [false, true]) {
         fusing: false,
         position: fusion.frame.center,
       })
-      expect(portrait.frame).toBe(arrivalFrame(portrait.position, before.position, environmentSeed))
+      expect(portrait.frame).toBe(arrivalFrame(portrait.position, before.position, 'a', environmentSeed))
       expect(portrait.frame).not.toBe('halloween-lantern')
       expect(useGallery.getState().consumed).toEqual(['prop-orb-clear'])
       expect(useGallery.getState().notice).toContain('came back as it went in')

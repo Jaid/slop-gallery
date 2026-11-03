@@ -153,10 +153,16 @@ export async function loadBlob(source: Blob | string) {
   return response.blob()
 }
 
-/** The frame of a work arriving at `position`, which `from` looks at, in the game of `seed`: that of the room the work arrives in or, where that lies outside of every room, like beyond a wall, that of the room it was made from. */
-export function arrivalFrame(position: Vec3, from: Vec3, seed = environmentSeed) {
-  return world.frameAt(world.roomAt(position) ? position : from, seed)
+/** The frame the work with the id `work` wears arriving at `position`, which `from` looks at, in the game of `seed`: its roll of the frames of the room it arrives in or, where that lies outside of every room, like beyond a wall, of the room it was made from. */
+export function arrivalFrame(position: Vec3, from: Vec3, work: string, seed = environmentSeed) {
+  return world.frameAt(world.roomAt(position) ? position : from, seed, work)
 }
+
+/** the id the next new work gets, drawn ahead so the placement preview of a dropped image can show the frame it will arrive in */
+let upcomingId = composeId()
+
+/** The id the next new work gets, see {@link takeWorkId}. */
+export const upcomingWorkId = () => upcomingId
 
 /** A new work 1.6 m in front of the pose, facing it, in the frame of the room it arrives in. */
 export function newPortrait(source: Blob, title: string, width: number, height: number, pose: {
@@ -166,9 +172,10 @@ export function newPortrait(source: Blob, title: string, width: number, height: 
   const d = pose.direction
   const p = pose.position
   const position: Vec3 = [p[0] + d[0] * 1.6, Math.max(world.placement.floorHeight([p[0] + d[0] * 1.6, p[1], p[2] + d[2] * 1.6]) + 0.8, p[1] + d[1] * 1.6), p[2] + d[2] * 1.6]
-  const frame = arrivalFrame(position, p)
+  const id = takeWorkId()
+  const frame = arrivalFrame(position, p, id)
   return {
-    id: composeId(),
+    id,
     title,
     creator: 'You · guest artist',
     description: 'A new arrival. Every collection starts with a little curiosity.',
@@ -236,4 +243,11 @@ export function handleGalleryKey(event: KeyboardEvent) {
 export async function importDroppedFiles(files: Array<File>, x: number, y: number) {
   const s = useGallery.getState()
   return s.importFiles?.(files, s.importTarget?.(x, y))
+}
+
+/** The id for a new work, the one {@link upcomingWorkId} told, drawing the next. */
+function takeWorkId() {
+  const id = upcomingId
+  upcomingId = composeId()
+  return id
 }
