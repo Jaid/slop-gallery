@@ -8,7 +8,9 @@ import {Box3, Frustum, Group, Matrix4, Mesh, PerspectiveCamera, Vector3} from 't
 
 import lobbyLayout from '../../src/lib/gallery/lobby.ts'
 import {ownerRoom, portals, roomContaining, roomsAt, screenRect, updatePickupRoom, visibleRegions, visibleRooms} from '../../src/lib/gallery/roomVisibility.ts'
-import relations from '../../src/worlds/gallery/relations.ts'
+import {openingTop, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import relations, {openings} from '../../src/worlds/gallery/relations.ts'
 import {rooms} from './fixtures/gallery.ts'
 
 const viewProjection = (position: Vec3, target: Vec3) => {
@@ -150,6 +152,30 @@ test('rooms behind openings only show through them', () => {
   // The door into the Lobby covers only part of the screen.
   expect((right - left) * (top - bottom)).toBeLessThan(4)
   expect(visibleRegions(['vesper'], viewProjection([-14, 1.6, 0], [-20, 1.6, 0])).keys().toArray()).toEqual(['vesper'])
+})
+test('a camera in a room’s threshold beyond one of its openings sees through it', () => {
+  // The Lodge owns half of the doorway passage to the Corridor, 1.6 m past its bay’s back wall; from its far end, looking up the passage, the Corridor once showed nothing but the sky.
+  const dumped: Vec3 = [-24.638, -3.38, -43.796]
+  expect(roomsAt(dumped)).toEqual(['lodge'])
+  expect(visibleRegions(['lodge'], viewProjection(dumped, [-25.116, -3.7, -48.335])).has('corridor')).toBe(true)
+  for (const {rooms: pair, holes} of openings) {
+    for (const [wallId, name] of holes) {
+      const wall = slopGallery.walls.find(value => value.id === wallId)!
+      const hole = wall.holes!.find(value => value.name === name)!
+      const other = pair.find(room => room !== wall.room)!
+      const bottom = hole.bottom ?? 0
+      const y = wall.center[1] + bottom + Math.min(1.6, (openingTop(hole, hole.u) - bottom) / 2)
+      for (let step = 1; step <= 30; step++) {
+        const depth = step / 10
+        const position = wallPosition(wall, hole.u, y, -depth)
+        if (roomsAt(position).join() !== wall.room) {
+          continue
+        }
+        const sees = visibleRegions([wall.room as GalleryRoomId], viewProjection(position, wallPosition(wall, hole.u, y, -depth - 5))).has(other)
+        expect(`${wallId} ${name} ${depth} m behind: ${sees ? 'sees' : 'misses'} ${other}`).toBe(`${wallId} ${name} ${depth} m behind: sees ${other}`)
+      }
+    }
+  }
 })
 test('of a box reaching behind the camera, only the part in front of it shows', () => {
   const matrix = viewProjection([0, 1.6, 0], [10, 1.6, 0])

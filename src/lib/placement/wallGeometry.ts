@@ -117,6 +117,19 @@ export function wallCoordinates(targetWall: Pick<Wall, 'center' | 'curveRadius' 
   return u
 }
 
+/** How far a position lies in front of a wall, out into its room, like the `offset` of {@link wallPosition}; negative behind it. */
+export function wallOffset(targetWall: Pick<Wall, 'center' | 'curveRadius' | 'rotation'>, [x, , z]: Vec3) {
+  const sin = Math.sin(targetWall.rotation)
+  const cos = Math.cos(targetWall.rotation)
+  const along = (x - targetWall.center[0]) * cos - (z - targetWall.center[2]) * sin
+  const depth = (x - targetWall.center[0]) * sin + (z - targetWall.center[2]) * cos
+  const radius = targetWall.curveRadius
+  if (!radius) {
+    return depth
+  }
+  return radius - Math.sign(radius) * Math.hypot(along, depth - radius)
+}
+
 /** Why an artwork of this size, centered at `position`, would cover an opening or a reservation of its wall, or an empty string if it covers neither. */
 export function obstructionIssue(targetWall: Wall, position: Vec3, width: number, height: number, labelAbove = false) {
   const {u, halfWidth, bottom, top} = footprint(targetWall, position, width, height, labelAbove)

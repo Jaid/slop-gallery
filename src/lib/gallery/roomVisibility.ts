@@ -1,10 +1,11 @@
+import type {Wall, WallOpening} from '#src/lib/placement/wallGeometry.ts'
 import type {GalleryRoomId as RoomId} from '#src/worlds/gallery/index.ts'
 import type {Vec3} from './types.ts'
 import type {Frustum, Matrix4, Object3D} from 'three/webgpu'
 
 import {Box3, Vector3} from 'three/webgpu'
 
-import {openingTop, wallPosition} from '#src/lib/placement/wallGeometry.ts'
+import {openingTop, wallCoordinates, wallOffset, wallPosition} from '#src/lib/placement/wallGeometry.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 import relations, {openings} from '#src/worlds/gallery/relations.ts'
 
@@ -22,6 +23,25 @@ type Portal = {
 const sightDepth = 3
 // Doorframes, trims and the reveal of thick walls stay inside the portal.
 const portalDepth = 0.8
+/** how far a box may reach in front of a wall and still count as lying behind it */
+const behindTolerance = 0.01
+/** Whether the box’s floor plan lies behind the wall and reaches across the hole’s width. Its middle counts too, since the corners of a box around a round room, like the air of a round vestibule, lie behind its ring wall. */
+const behindHole = (wall: Wall, hole: WallOpening, {min, max}: Box3) => {
+  let from = Number.POSITIVE_INFINITY
+  let to = Number.NEGATIVE_INFINITY
+  const middle: Vec3 = [(min.x + max.x) / 2, 0, (min.z + max.z) / 2]
+  for (const point of [middle, ...[min.x, max.x].flatMap(x => [min.z, max.z].map((z): Vec3 => [x, 0, z]))]) {
+    if (wallOffset(wall, point) > behindTolerance) {
+      return false
+    }
+    const u = wallCoordinates(wall, point)
+    from = Math.min(from, u)
+    to = Math.max(to, u)
+  }
+  return from < hole.u + hole.width / 2 && to > hole.u - hole.width / 2
+}
+/** The floor mirrors what lies above it below its surface, and the reflection must show what lies behind an opening too. */
+const withReflection = (box: Box3, bottom: number, top: number) => box.expandByPoint(new Vector3(box.min.x, bottom - (top - bottom), box.min.z)).expandByPoint(new Vector3(box.max.x, top, box.max.z))
 const holeBox = (wallId: string, name: string) => {
   const wall = slopGallery.walls.find(value => value.id === wallId)
   const hole = wall?.holes?.find(value => value.name === name)
@@ -33,10 +53,14 @@ const holeBox = (wallId: string, name: string) => {
   const box = new Box3
   for (const u of [hole.u - hole.width / 2, hole.u + hole.width / 2]) {
     for (const offset of [-portalDepth, portalDepth]) {
-      // The floor mirrors the opening below its surface, and the reflection must show what lies behind it too.
-      for (const y of [bottom - (top - bottom), top]) {
-        box.expandByPoint(new Vector3(...wallPosition(wall, u, y, offset)))
-      }
+      box.expandByPoint(new Vector3(...wallPosition(wall, u, bottom, offset)))
+    }
+  }
+  withReflection(box, bottom, top)
+  // A room’s air behind its own wall’s opening is a threshold it owns in the passage beyond, like the Lodge’s half of the doorway passage to the Corridor. A camera there stands in that room alone, but must still see through the opening, however far the threshold reaches past the portal’s depth.
+  for (const threshold of slopGallery.roomById(wall.room)?.air ?? []) {
+    if (behindHole(wall, hole, threshold)) {
+      box.union(withReflection(threshold.clone(), threshold.min.y, threshold.max.y))
     }
   }
   return box
