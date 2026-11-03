@@ -133,6 +133,38 @@ describe('mood mixer', () => {
     expect(mixer.tintOf(lamp).equals(noTint)).toBe(false)
     expect(mixer.tintOf(portal)).toBe(noTint)
   })
+  test('cutting a mood drops it and its loop at once, ignoring its fade', () => {
+    const mixer = new MoodMixer
+    const mood = new TestMood('test', {
+      in: 1,
+      out: 10,
+    })
+    run(mixer, mood, 1, output)
+    expect(mixer.amount).toBe(1)
+    mixer.cut()
+    expect(mixer.amount).toBe(0)
+    expect(mixer.mood).toBeNull()
+    expect(mixer.tintOf(new PointLight).equals(noTint)).toBe(true)
+    expect(mood.loops[0].stopped).toBe(1)
+    mixer.cut()
+    expect(mood.loops[0].stopped).toBe(1)
+  })
+  test('snapping shows a mood in full at once, with its loop, and snapping to none drops it', () => {
+    const mixer = new MoodMixer
+    const mood = new TestMood('test', {
+      in: 10,
+      out: 10,
+    })
+    mixer.snap(mood, output)
+    expect(mixer.amount).toBe(1)
+    expect(mixer.mood).toBe(mood)
+    expect(mood.loops[0].started).toBe(1)
+    expect(mood.loops[0].levels.at(-1)).toBe(1)
+    mixer.snap(null)
+    expect(mixer.amount).toBe(0)
+    expect(mixer.mood).toBeNull()
+    expect(mood.loops[0].stopped).toBe(1)
+  })
   test('the loop starts once there is an output, follows the strength and stops with its mood', () => {
     const mixer = new MoodMixer
     const mood = new TestMood('test')

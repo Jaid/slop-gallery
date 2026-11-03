@@ -52,11 +52,31 @@ export default class MoodMixer {
     return this.current
   }
 
-  /** Lets the mood go at once, with its loop. */
-  dispose() {
+  /** Lets the mood go at once, with its loop, without waiting for its fade. */
+  cut() {
+    if (!this.current) {
+      return
+    }
     this.progress = 0
     this.release(0.3)
     this.paint()
+  }
+
+  dispose() {
+    this.cut()
+  }
+
+  /** Shows `target` in full at once, without waiting for any fade, sounding its loop on `output` once there is one; with none, lets the mood showing go at once. */
+  snap(target: Mood | null, output?: AudioOutput) {
+    if (this.current !== target) {
+      this.cut()
+    }
+    if (!target) {
+      return
+    }
+    this.current = target
+    this.progress = 1
+    this.update(target, 0, output)
   }
 
   /** What a light is multiplied by now: the lamps’ tint or the fill’s, or nothing for a light with `userData.untinted`, which keeps its own color through every mood, like a fusion portal’s glow. */
