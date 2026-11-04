@@ -92,11 +92,10 @@ describe('URL options', () => {
       expect(readAlbedo(search)).toBe(false)
     }
   })
-  test('?anti_aliasing accepts known methods and false only', () => {
+  test('?anti_aliasing accepts traa and false only', () => {
     expect(readAntiAliasing('?anti_aliasing=traa')).toBe('traa')
-    expect(readAntiAliasing('?anti_aliasing=smaa')).toBe('smaa')
     expect(readAntiAliasing('?anti_aliasing=false')).toBe(false)
-    for (const search of ['', '?anti_aliasing=', '?anti_aliasing=TRAA', '?anti_aliasing=msaa', '?anti_aliasing=true', '?antiAliasing=traa']) {
+    for (const search of ['', '?anti_aliasing=', '?anti_aliasing=TRAA', '?anti_aliasing=smaa', '?anti_aliasing=true', '?antiAliasing=traa']) {
       expect(readAntiAliasing(search)).toBeUndefined()
     }
   })
@@ -104,7 +103,6 @@ describe('URL options', () => {
     expect(getAntiAliasing(true, undefined)).toBe('traa')
     expect(getAntiAliasing(false, undefined)).toBe(false)
     expect(getAntiAliasing(true, false)).toBe(false)
-    expect(getAntiAliasing(false, 'smaa')).toBe('smaa')
     expect(getAntiAliasing(false, 'traa')).toBe('traa')
   })
   test('only a bare ?intro_narration, true or 1 plays the welcome narration', () => {

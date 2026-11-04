@@ -64,7 +64,7 @@ _time:10m "resource_attr:service.name":="gallery"
 
 ## Performance capture workflow
 
-Performance reports carry `room`, `locked`, `graphics.profile` and the effective shadows/postprocessing/floor-reflections/noise-textures flags, plus `graphics.anti_aliasing` (`traa`, `smaa` or `none`). Dimensions and DPR are metric values, not labels. Room, lock, graphics and output changes split the window; use the new workload distribution names, not retained unsuffixed final-frame gauges.
+Performance reports carry `room`, `locked`, `graphics.profile` and the effective shadows/postprocessing/floor-reflections/noise-textures flags, plus `graphics.anti_aliasing` (`traa` or `none`). Dimensions and DPR are metric values, not labels. Room, lock, graphics and output changes split the window; use the new workload distribution names, not retained unsuffixed final-frame gauges.
 
 The gallery renderer opts into timestamp queries only when telemetry is enabled. It traces actual `init()` and `compileAsync()` calls. The load-time pipeline warmup (see the rendering readme) runs as ordinary frames behind the loading screen, not as `compileAsync()`.
 

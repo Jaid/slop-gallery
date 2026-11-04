@@ -9,7 +9,6 @@ import {depthAwareBlend} from 'three/addons/tsl/display/depthAwareBlend.js'
 import {gaussianBlur} from 'three/addons/tsl/display/GaussianBlurNode.js'
 import {godrays} from 'three/addons/tsl/display/GodraysNode.js'
 import {ao} from 'three/addons/tsl/display/GTAONode.js'
-import {smaa} from 'three/addons/tsl/display/SMAANode.js'
 import {ssgi} from 'three/addons/tsl/display/SSGINode.js'
 import {ssr} from 'three/addons/tsl/display/SSRNode.js'
 import {sss} from 'three/addons/tsl/display/SSSNode.js'
@@ -298,26 +297,20 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       // The canvas is opaque, so alpha carries the inspection bloom mask through the antialiasing resolve. The mask is still applied BEFORE temporal reconstruction, never as a raw, jittered stencil over antialiased color.
       current = vec4(current.rgb, float(1).sub(background))
     }
-    // Own the materialized composite explicitly; Three's TRAANode, SMAANode and GaussianBlurNode do not dispose an implicit RTT.
+    // Own the materialized composite explicitly; Three's TRAANode and GaussianBlurNode do not dispose an implicit RTT.
     let composite: ReturnType<typeof rtt> | undefined
-    const materialize = () => {
+    if (antiAliasing === 'traa') {
       composite = own(rtt(current, null, null, {depthBuffer: false}))
       composite.name = 'galleryComposite'
-      return composite
-    }
-    if (antiAliasing === 'traa') {
-      const temporal = own(traa(materialize(), depth, scenePass.getTextureNode('velocity'), camera))
+      const temporal = own(traa(composite, depth, scenePass.getTextureNode('velocity'), camera))
       // The resolve is an opaque colorNode material, which forces alpha to 1. Without blending it is no longer opaque and keeps the resolved mask.
       ;(temporal as typeof temporal & {_resolveMaterial: NodeMaterial})._resolveMaterial.blending = NoBlending
       // The native accessor is missing from @types/three.
       current = (temporal as typeof temporal & {getTextureNode: () => TextureNode}).getTextureNode()
-    } else if (antiAliasing === 'smaa') {
-      // Like TRAA, SMAA expects linear color before the output transform.
-      current = own(smaa(materialize())).getTextureNode()
     }
     if (heavy && settings.bloom) {
       let mask: Node<'float'> = current.a.saturate()
-      if (antiAliasing === 'traa' && composite) {
+      if (composite) {
         // TRAA clips only RGB, so the resolved mask can keep stale history after focus changes. The current mask, dilated by about 2 px, keeps the antialiased edge but never lets glow back onto distant background.
         const source = composite
         const reach = vec2(1.5).div(vec2(source.size(int(0)) as Node<'uvec2'>))

@@ -1,7 +1,7 @@
 import optis from 'optis'
 import readPermalink from 'read-permalink'
 
-const antiAliasingMethods = ['traa', 'smaa'] as const
+const antiAliasingMethods = ['traa'] as const
 
 export type AntiAliasing = typeof antiAliasingMethods[number] | false
 

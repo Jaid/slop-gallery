@@ -98,13 +98,13 @@ const sections: Array<Section> = [
     ],
   },
   {
-    title: 'Antialiasing',
+    title: 'Temporal antialiasing',
     toggle: {
       fallback: 'traa',
       key: 'antiAliasing',
       off: false,
     },
-    controls: [select('antiAliasing', 'Method', [['traa', 'TRAA'], ['smaa', 'SMAA']])],
+    controls: [],
   },
   {
     title: 'Mirror reflections',

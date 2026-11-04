@@ -335,7 +335,7 @@ async function verifyModes(renderer: WebGPURenderer) {
     return render.call(this, object, view)
   }
   const observations: Array<{
-    antiAliasing: false | string
+    antiAliasing: AntiAliasing
     aperture: number
     focus: number
     gaussian: number
@@ -345,7 +345,7 @@ async function verifyModes(renderer: WebGPURenderer) {
   try {
     renderer.setOutputRenderTarget(target)
     renderer.setRenderTarget(target)
-    for (const antiAliasing of [false, 'smaa', 'traa'] as const) {
+    for (const antiAliasing of [false, 'traa'] as const) {
       let zoom = 0
       let focus = 0
       const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {

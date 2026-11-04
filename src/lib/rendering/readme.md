@@ -9,7 +9,7 @@ current-frame scene color + depth + normals + velocity
   → ambient occlusion
   → Knot focus isolation / aperture blur / sharp foreground composite
   → inspection background mask packed into alpha
-  → one antialiasing resolve (TRAA, SMAA or none)
+  → one antialiasing resolve (TRAA or none)
   → bloom from the resolved color, masked by the resolved alpha
   → Z zoom tilt-shift and vignette
   → output color transform
@@ -17,12 +17,7 @@ current-frame scene color + depth + normals + velocity
 
 ## Antialiasing
 
-`?anti_aliasing` picks the resolve: `traa`, `smaa` or `false`. Without it, heavy graphics use TRAA and fast graphics use none. The renderer has `antialias: false` and the scene pass is single-sampled for GTAO, so these are the only antialiasing paths.
-
-- `traa` is temporal. It jitters the camera, needs the velocity MRT and calms shimmering materials such as `bismuth_staircase` and `magnetite_field`.
-- `smaa` (1× medium, color edges) is a current-frame filter: no ghosting or camera jitter, but no subpixel stability either.
-
-Both run on linear color before the output transform. Any choice other than `false` in fast graphics mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
+Heavy graphics resolve with TRAA and fast graphics without antialiasing, unless `?anti_aliasing` says `traa` or `false`. The renderer has `antialias: false` and the scene pass is single-sampled for GTAO, so TRAA is the only antialiasing path. It jitters the camera, needs the velocity MRT, runs on linear color before the output transform and calms shimmering materials such as `bismuth_staircase` and `magnetite_field`. In fast graphics, `?anti_aliasing=traa` mounts a light pipeline (scene pass and the resolve only, no knot focus or other heavy effects) that renders every frame.
 
 ## Wireframe
 
@@ -94,8 +89,8 @@ bun test/browser/run.ts knotBokeh.ts --standalone
 bun test/browser/run.ts bloomStability.ts --standalone
 ```
 
-`bloomStability.ts` renders a perfectly still scene of subpixel HDR filaments and specks and reports the temporal deviation of the bloom halo under TRAA and SMAA. It also compares the halo of a one-pixel firefly against a glowing speck. SMAA is the zero-jitter reference. Before bloom moved behind the resolve, TRAA halos deviated by 10.3% of their mean glow; after, by 0.1%.
+`bloomStability.ts` renders a perfectly still scene of subpixel HDR filaments and specks and reports the temporal deviation of the bloom halo with and without TRAA. It also compares the halo of a one-pixel firefly against a glowing speck. The pipeline without antialiasing is the zero-jitter reference. Before bloom moved behind the resolve, TRAA halos deviated by 10.3% of their mean glow; after, by 0.1%.
 
 `BROWSER_TEST_ORIGIN` can select a different already-open origin. The fixture bundles its own dependencies and only creates detached canvases and renderers; it does not navigate, change focus, resize the game, simulate input, or mutate the live scene. The independent bundle can emit Three's multiple-instance warning.
 
-Coverage includes foreground exclusion without TRAA, normalization, empty coverage, focus fades/re-entry, background highlight expansion, the complete heavy pipeline with mesh/camera motion, odd-sized target recreation, and real render-submission counts for walking, zoom, V-viewing, overlap, fades and re-entry under all three AA choices. Render iterations await animation frames so frame-scoped nodes update. WebGPU readbacks retain 256-byte row padding; pixel comparisons explicitly remove it.
+Coverage includes foreground exclusion without TRAA, normalization, empty coverage, focus fades/re-entry, background highlight expansion, the complete heavy pipeline with mesh/camera motion, odd-sized target recreation, and real render-submission counts for walking, zoom, V-viewing, overlap, fades and re-entry with and without TRAA. Render iterations await animation frames so frame-scoped nodes update. WebGPU readbacks retain 256-byte row padding; pixel comparisons explicitly remove it.

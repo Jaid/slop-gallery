@@ -69,7 +69,7 @@ function buildScene() {
     },
   }
 }
-async function measure(renderer: WebGPURenderer, antiAliasing: 'smaa' | 'traa') {
+async function measure(renderer: WebGPURenderer, antiAliasing: AntiAliasing) {
   const {scene, camera, dispose} = buildScene()
   const pipeline = new GalleryRenderPipeline(renderer, scene, camera, {
     heavy: true,
@@ -211,13 +211,13 @@ async function verifyBloomStability() {
     await renderer.init()
     const {device} = renderer.backend as typeof renderer.backend & {device: GPUDevice}
     device.addEventListener('uncapturederror', event => errors.push(event.error.message))
-    const smaa = await measure(renderer, 'smaa')
+    const none = await measure(renderer, false)
     const traa = await measure(renderer, 'traa')
     const glowSpeck = await measureSpeck(renderer, 16)
     const firefly = await measureSpeck(renderer, 2000)
     await device.queue.onSubmittedWorkDone()
     assert(errors.length === 0, errors.join('\n'))
-    for (const result of [smaa, traa]) {
+    for (const result of [none, traa]) {
       assert(result.meanGlow > 0.005, `The halo lost its bloom: ${JSON.stringify(result)}`)
       // Jittered bloom input measured 10.3%; resolved input 0.1%.
       assert(result.relativeFlicker < 0.01, `A still scene produced a flickering halo: ${JSON.stringify(result)}`)
@@ -227,7 +227,7 @@ async function verifyBloomStability() {
     // Without the luminance cap, the firefly halo measured 3.25 instead of 0.073 (glowing speck: 0.046).
     assert(firefly < glowSpeck * 2, `A firefly flashed an oversized halo: ${firefly} vs ${glowSpeck}`)
     return {
-      smaa,
+      none,
       traa,
       speckHalo: {
         glowSpeck,
