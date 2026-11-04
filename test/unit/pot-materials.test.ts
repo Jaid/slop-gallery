@@ -1,6 +1,10 @@
 import {expect, test} from 'bun:test'
 
+import {MeshPhysicalNodeMaterial} from 'three/webgpu'
+
 import decorationResources from '../../src/lib/gallery/plantDecorations/DecorationResources.ts'
+import CeladonMaterial from '../../src/lib/materials/CeladonMaterial.ts'
+import PorcelainMaterial from '../../src/lib/materials/PorcelainMaterial.ts'
 import PotMaterials from '../../src/lib/materials/PotMaterials.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 
@@ -46,6 +50,37 @@ test('switching finishes reuses shared geometry and caches independent material 
   expect(resources.pot('atelier')).toBe(pot)
   expect(fast.soil.map).toBeNull()
   expect(heavy.soil.map).not.toBeNull()
+})
+test('celadon and ivory keep their glazed physical finishes in every graphics mode', () => {
+  for (const noiseTextures of [false, true]) {
+    const materials = new PotMaterials(noiseTextures)
+    try {
+      const {celadon, ivory} = materials.shells
+      expect(celadon).toBeInstanceOf(CeladonMaterial)
+      expect(celadon).toBeInstanceOf(MeshPhysicalNodeMaterial)
+      expect(celadon.colorNode).not.toBeNull()
+      expect(celadon.roughnessNode).not.toBeNull()
+      expect(celadon.normalNode).not.toBeNull()
+      expect(celadon.clearcoat).toBe(1)
+      expect(celadon.metalness).toBe(0)
+      expect(ivory).toBeInstanceOf(PorcelainMaterial)
+      expect(ivory).toBeInstanceOf(MeshPhysicalNodeMaterial)
+      expect(ivory.colorNode).not.toBeNull()
+      expect(ivory.normalNode).not.toBeNull()
+      expect(ivory.iridescence).toBeGreaterThan(0)
+      expect(ivory.iridescenceNode ?? null).toBeNull()
+      expect(ivory.iridescenceThicknessNode).not.toBeNull()
+      expect(ivory.iridescenceThicknessMinimum).toBe(200)
+      expect(ivory.iridescenceThicknessMaximum).toBe(420)
+      for (const material of [celadon, ivory]) {
+        expect(material.map).toBeNull()
+        expect(material.bumpMap).toBeNull()
+        expect(material.roughnessMap).toBeNull()
+      }
+    } finally {
+      materials.dispose()
+    }
+  }
 })
 test('each finish set releases exactly its own materials and textures', () => {
   for (const noiseTextures of [false, true]) {

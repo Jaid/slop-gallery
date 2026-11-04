@@ -1,5 +1,7 @@
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
+import CeladonMaterial from './CeladonMaterial.ts'
+import PorcelainMaterial from './PorcelainMaterial.ts'
 import SoilTextures from './SoilTextures.ts'
 import TerracottaTextures from './TerracottaTextures.ts'
 
@@ -24,15 +26,8 @@ export default class PotMaterials {
         color: '#b47249',
         roughness: 0.87,
       }),
-      ivory: new MeshStandardNodeMaterial({
-        color: '#e5dfcd',
-        roughness: 0.43,
-      }),
-      celadon: new MeshStandardNodeMaterial({
-        color: '#73978b',
-        roughness: 0.23,
-        metalness: 0.1,
-      }),
+      ivory: new PorcelainMaterial,
+      celadon: new CeladonMaterial,
       noir: new MeshStandardNodeMaterial({
         color: '#303735',
         roughness: 0.56,
