@@ -8,20 +8,23 @@ import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry} from 
 import useGraphicsMode from 'use-graphics-mode'
 
 import BenchSeat from '#component/BenchSeat'
+import KnotShowcase from '#component/KnotShowcase'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonPedestal, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
+import {environmentSeed} from '#src/lib/gameSeed.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
+import salonKnot from '#src/rooms/salon/knot.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
 
-/** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot, a coffered skylight overhead and a sculpture pedestal. */
+/** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
 export default function SalonRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture
@@ -43,6 +46,7 @@ export default function SalonRoom({glass, stone, wood}: {
   }), []))
   const isHeavy = useGraphicsMode()
   const pedestal = usePedestal()
+  const knots = useMemo(() => [salonKnot(environmentSeed)], [])
   // The Lobby vault’s cast glass, divided into the same panes as the bars below it.
   const skylight = useDisposable(useMemo(() => new VaultGlassMaterial({
     heavy: isHeavy,
@@ -65,6 +69,7 @@ export default function SalonRoom({glass, stone, wood}: {
     {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gold} wall={wall} />)}
     <Ottoman />
     <Pedestal {...pedestal} position={salonPedestal} />
+    <KnotShowcase knots={knots} />
   </group>
 }
 

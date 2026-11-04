@@ -150,17 +150,17 @@ for (const chunk of chunks) {
     fail(`${chunk.facadeModule ?? chunk.name} imports the Knot material chunk of ${knotChunks.get(leaked)}.`)
   }
 }
-// The Exhibition’s showcased Knots load their materials once they mount and their announcements once they first speak.
-const exhibition = closure(chunkOf('src/rooms/exhibition/components/ExhibitionRoom/index.tsx').fileName)
-if (exhibition.has(worldChunks.get('knottingham')!)) {
-  fail('The Exhibition loads the Knottingham world with it.')
+// The Salon’s showcased Knot loads its material once it mounts and its announcements once it first speaks.
+const salon = closure(chunkOf('src/rooms/salon/components/SalonRoom/index.tsx').fileName)
+if (salon.has(worldChunks.get('knottingham')!)) {
+  fail('The Salon loads the Knottingham world with it.')
 }
-const exhibitionKnot = [...exhibition].find(other => knotChunks.has(other))
-if (exhibitionKnot) {
-  fail(`The Exhibition loads the Knot material of ${knotChunks.get(exhibitionKnot)} with it.`)
+const salonKnot = [...salon].find(other => knotChunks.has(other))
+if (salonKnot) {
+  fail(`The Salon loads the Knot material of ${knotChunks.get(salonKnot)} with it.`)
 }
-const exhibitionSources = await Promise.all([...exhibition].map(read))
-if (exhibitionSources.some(code => announcementPath.test(code))) {
-  fail('The Exhibition loads the Knots’ announcements with it.')
+const salonSources = await Promise.all([...salon].map(read))
+if (salonSources.some(code => announcementPath.test(code))) {
+  fail('The Salon loads the Knots’ announcements with it.')
 }
 console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand, and ${files.length - named.length} of ${files.length} files are named by their content.`)
