@@ -41,7 +41,7 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
       <div className={css.actions}>
         <div className={css.play}>
           <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}</button>
-          <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
+          <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>Reroll seed</button></Branch>
         </div>
         <MenuOptions className={css.options} />
       </div>
@@ -54,7 +54,7 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
         <h1 id='menu-title' tabIndex={-1} ref={heading}><Branch if={paused} then={room.title} else={world.title} /></h1>
         <Branch not={stage === 'unfocus'}><p className={css.tagline}>{tagline}</p></Branch>
         <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={stage === 'reset' ? startNewGame : enterGallery}>{enterButtonLabel(s.ready, stage)}<Icon name='arrow' size={18} /></button>
-        <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
+        <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>Reroll seed</button></Branch>
         <Branch not={stage === 'unfocus'}>
           <MenuOptions />
           <Branch if={settings.available}><OpenRouterConnection {...settings} /></Branch>
@@ -71,7 +71,7 @@ function enterButtonLabel(ready: boolean, stage: PauseMenuStage) {
     return `Opening ${world.title}…`
   }
   if (stage === 'reset') {
-    return 'New game'
+    return 'Reroll seed'
   }
   if (stage === 'first') {
     return world.enterLabel

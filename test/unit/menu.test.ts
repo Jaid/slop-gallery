@@ -89,7 +89,7 @@ describe('minimal menu', () => {
 })
 function primaryActionLabel(stage: MenuStage) {
   if (stage === 'reset') {
-    return 'New game'
+    return 'Reroll seed'
   }
   if (stage === 'first') {
     return 'Enter gallery'
@@ -120,7 +120,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     expect(html).toContain(`data-stage="${stage}"`)
     expect(html).toContain(primaryActionLabel(stage))
     expect(html.includes('data-testid="minimap"')).toBe(stage === 'pause')
-    expect(html.includes('New game')).toBe(stage === 'return' || stage === 'reset')
+    expect(html.includes('Reroll seed')).toBe(stage === 'return' || stage === 'reset')
     expect(html.includes('Your position')).toBe(stage === 'pause')
     if (stage === 'pause') {
       expect(html.match(/data-testid="minimap"/gu)).toHaveLength(2)
@@ -139,7 +139,7 @@ test.each(['first', 'reset', 'return', 'pause', 'unfocus'] as const)('renders th
     Object.assign(useGallery.getInitialState(), initial)
   }
 })
-test('New game forgets the stored seed and reloads', () => {
+test('Reroll seed forgets the stored seed and reloads', () => {
   const locationDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'location')
   let reloads = 0
   Object.defineProperty(globalThis, 'location', {
@@ -216,7 +216,7 @@ test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in v
     expect(html).toMatch(/id="enter-gallery"[^>]*>Play</u)
     expect(html).toContain('Mute audio')
     expect(html).toContain('Heavy graphics')
-    expect(html.includes('New game')).toBe(stage === 'return')
+    expect(html.includes('Reroll seed')).toBe(stage === 'return')
     expect(html).not.toContain('OpenRouter')
     expect(html).not.toContain('Good taste.')
     expect(html).not.toContain('data-testid="minimap"')

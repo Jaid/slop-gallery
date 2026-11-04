@@ -185,7 +185,7 @@ test.skipIf(Bun.env.LIVE_TEST !== 'true')('production gallery: visible WebGPU, p
     const reloaded = await snapshot(page)
     expect(reloaded.portraits.find(p => p.id === 'orange')!.title).toBe('A Slightly Larger Tomorrow')
     expect(reloaded.menuStage).toBe('return')
-    await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), clickText(page, 'New game')])
+    await Promise.all([page.waitForNavigation({waitUntil: 'domcontentloaded'}), clickText(page, 'Reroll seed')])
     await page.waitForFunction(() => globalThis.slopGallery?.snapshot?.().ready)
     const newGame = await snapshot(page)
     expect(newGame.menuStage).toBe('first')

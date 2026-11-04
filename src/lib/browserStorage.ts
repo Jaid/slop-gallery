@@ -1,7 +1,7 @@
 import {currentWorldInfo} from '#src/worlds/index.ts'
 
 /**
- * Everything the browser keeps between visits. Nothing else is saved: a reload starts the game over in the environment of the same seed, until New game forgets it.
+ * Everything the browser keeps between visits. Nothing else is saved: a reload starts the game over in the environment of the same seed, until Reroll seed forgets it.
  */
 const keys = {
   /** the OpenRouter API key */
