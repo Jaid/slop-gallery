@@ -119,12 +119,12 @@ test('every profile shares the AO radius and strength, and Cinematic raises the 
     ambientOcclusionTemporalFiltering: false,
     ambientOcclusionThickness: 2,
   })
-  expect(fast.ambientOcclusionResolutionScale).toBe(0.75)
+  expect(fast.ambientOcclusionResolutionScale).toBe(1)
   expect(fast.ambientOcclusionSamples).toBe(16)
   expect(fast.ambientOcclusionRadius).toBe(0.5)
   expect(fast.ambientOcclusionScale).toBe(1)
   expect(heavy.ambientOcclusionRadius).toBe(0.5)
-  expect(heavy.ambientOcclusionResolutionScale).toBe(0.75)
+  expect(heavy.ambientOcclusionResolutionScale).toBe(1)
   expect(heavy.ambientOcclusionSamples).toBe(16)
   expect(heavy.ambientOcclusionScale).toBe(1)
   expect(heavy.ambientOcclusionThickness).toBe(1)
