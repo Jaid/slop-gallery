@@ -38,10 +38,6 @@ jobs:
         ref: ${{ github.event.pull_request.head.sha || github.sha }}
     - name: buildSite
       uses: ./.github/actions/buildSite
-      with:
-        openRouterApiKey: ${{ secrets.OPENROUTER_API_KEY }}
-        voiceSamplesUrl: ${{ vars.VOICE_SAMPLES_URL }}
-        allowSilence: true
     # The Cloudflare project’s production branch is named production, so a deployment to main is a preview too.
     - name: deploy
       id: deploy

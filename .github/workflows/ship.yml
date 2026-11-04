@@ -27,9 +27,6 @@ jobs:
       uses: actions/checkout@v7.0.1
     - name: buildSite
       uses: ./.github/actions/buildSite
-      with:
-        openRouterApiKey: ${{ secrets.OPENROUTER_API_KEY }}
-        voiceSamplesUrl: ${{ vars.VOICE_SAMPLES_URL }}
     # production is the Cloudflare project’s production branch, which no Git branch carries, so only this workflow deploys to slop.gallery.
     - name: deploy
       uses: cloudflare/wrangler-action@v4.1.3
