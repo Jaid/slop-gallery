@@ -1,0 +1,67 @@
+name: buildSite
+description: Builds the site to dist on ubuntu-24.04 runners, with the voice samples and encoded images passed on from build to build in a cache
+inputs:
+  openRouterApiKey:
+    description: the OpenRouter API key that voices the samples missing from the caches
+    default: ''
+  voiceSamplesUrl:
+    description: a .tar.zst of a voice sample store (temp/vite-plugin-import-voice-sample/store) that seeds the voice samples when no cache is left
+    default: ''
+  allowSilence:
+    description: If `true`, voice samples replaced by silence only warn instead of failing the build.
+    default: 'false'
+runs:
+  using: composite
+  steps:
+  - name: setupBun
+    uses: oven-sh/setup-bun@v2.2.0
+    with:
+      bun-version: 1.4.4
+  - name: setupMediaTools
+    uses: ./.github/actions/setupMediaTools
+  - name: install
+    shell: bash
+    run: bun install --frozen-lockfile
+  # The voice samples cost an OpenRouter request each and the images seconds of encoding each, so every build passes on what it made to the next.
+  - name: restoreBuildCaches
+    id: restoreBuildCaches
+    uses: actions/cache/restore@v6.1.0
+    with:
+      path: |
+        temp/vite-plugin-import-voice-sample
+        temp/vite-plugin-jxl
+      key: build-caches-${{ github.run_id }}
+      restore-keys: build-caches-
+  # Seeding speaks with the takes the site already has instead of new ones.
+  - name: seedVoiceSamples
+    if: steps.restoreBuildCaches.outputs.cache-matched-key == '' && inputs.voiceSamplesUrl != ''
+    shell: bash
+    env:
+      url: ${{ inputs.voiceSamplesUrl }}
+    run: |
+      mkdir --parents temp/vite-plugin-import-voice-sample/store
+      curl --silent --show-error --location --fail "$url" | tar --extract --zstd --directory temp/vite-plugin-import-voice-sample/store
+  - name: build
+    shell: bash
+    env:
+      OPENROUTER_API_KEY: ${{ inputs.openRouterApiKey }}
+      allowSilence: ${{ inputs.allowSilence }}
+    run: |
+      set -o pipefail
+      bun run build 2>&1 | tee "$RUNNER_TEMP/build.log"
+      # Without OPENROUTER_API_KEY, voice samples missing from the caches are silent.
+      if silenced=$(grep --only-matching --extended-regexp '[0-9]+ voice samples? (was|were) replaced by silence' "$RUNNER_TEMP/build.log"); then
+        if [ "$allowSilence" != true ]; then
+          echo "::error::$silenced"
+          exit 1
+        fi
+        echo "::warning::$silenced"
+      fi
+  - name: saveBuildCaches
+    if: steps.restoreBuildCaches.outputs.cache-matched-key != format('build-caches-{0}', hashFiles('temp/vite-plugin-import-voice-sample/**', 'temp/vite-plugin-jxl/**'))
+    uses: actions/cache/save@v6.1.0
+    with:
+      path: |
+        temp/vite-plugin-import-voice-sample
+        temp/vite-plugin-jxl
+      key: build-caches-${{ hashFiles('temp/vite-plugin-import-voice-sample/**', 'temp/vite-plugin-jxl/**') }}
