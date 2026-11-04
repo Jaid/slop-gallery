@@ -32,7 +32,7 @@ const throwLift = 2
 
 /**
  * The physics side of carrying a prop: while carried, its body is out of the simulation altogether, so nothing collides with it, not even the player, and whoever carries it shows it by its own object. Only letting go asks the world where the prop fits.
- * Shared by sculptures, the apple and detachable foliage. A canceled pluck leaves a leaf attached where it was; a canceled re-grab leaves a loose leaf where it lay.
+ * Shared by sculptures, orbs and detachable foliage. A canceled pluck leaves a leaf attached where it was; a canceled re-grab leaves a loose leaf where it lay.
  */
 export default class GrabbableBody {
   readonly placement: PropPlacement

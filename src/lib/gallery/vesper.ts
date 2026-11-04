@@ -19,7 +19,7 @@ export const vesper = {
   height: 5.8,
 } as const satisfies FloorRectangle & {height: number}
 
-/** how far the middle of the square the orb pedestals stand round lies north of the room’s middle, as far as the apple’s pedestal lies south of it */
+/** how far the middle of the square the orb pedestals stand round lies north of the room’s middle */
 const orbSquareShift = 5
 /** how far each orb pedestal stands from the middle of their square along both axes, which leaves a walk of nearly 2 m between neighboring plinths */
 const orbSquareSpread = 1.2

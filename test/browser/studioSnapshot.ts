@@ -5,7 +5,7 @@ import {backdropLightness, gray, snapshotSize, snapshotWindow} from '../../src/l
 import StudioSnapshotRenderer from '../../src/lib/rendering/StudioSnapshotRenderer.ts'
 
 /**
- * Photographs the apple of the Props with the studio after the gallery’s own kind of renderer has drawn its shared gold, like a throw in the game does, and checks the WebP: nothing but the backdrop outside the 960 px window, the object reaching its edge, and the gray contrasting with the object: dark behind a white ball, light behind a charcoal one.
+ * Photographs a gold apple with the studio after the gallery’s own kind of renderer has drawn its shared gold, like a throw in the game does, and checks the WebP: nothing but the backdrop outside the 960 px window, the object reaching its edge, and the gray contrasting with the object: dark behind a white ball, light behind a charcoal one.
  */
 export default async function verifyStudioSnapshot() {
   const main = new WebGPURenderer({canvas: document.createElement('canvas')})
@@ -17,7 +17,7 @@ export default async function verifyStudioSnapshot() {
   const charcoal = new MeshBasicNodeMaterial({color: '#262626'})
   const timings: Record<string, number> = {}
   try {
-    // The apple as in Props, inside a moved and turned parent like a rigid body’s object.
+    // A gold apple with a stalk, inside a moved and turned parent like a rigid body’s object.
     const body = new Group
     body.position.set(-14, 1.57, 1)
     body.quaternion.setFromEuler(new Euler(0.7, 1.9, 0.3))
