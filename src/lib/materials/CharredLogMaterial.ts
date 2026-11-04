@@ -1,8 +1,9 @@
 import type {Node} from 'three/webgpu'
 
-import {bumpMap, color, float, materialReference, max, mix, mx_noise_float, mx_worley_noise_vec2, normalGeometry, positionGeometry, smoothstep, time, vec3} from 'three/tsl'
+import {color, float, materialReference, max, mix, mx_noise_float, mx_worley_noise_vec2, normalGeometry, positionGeometry, smoothstep, time, vec3} from 'three/tsl'
 import {MeshStandardNodeMaterial, NodeMaterialInstance} from 'three/webgpu'
 
+import {heightNormal} from './filters.ts'
 import fireColor from './fireColor.ts'
 
 /** a number of the log being drawn, from its own material instance */
@@ -10,7 +11,7 @@ const logValue = (name: 'halfLength' | 'inward' | 'radius') => materialReference
 /**
  * A burning log for a `LogGeometry` lying on its side, turned by 90° around z so its y axis runs along the log.
  *
- * The log is charred into alligator checks stretched along the grain, with a dull silvery sheen; only a few patches of bark survive on its cool outer flank. Where it faces the flames or the coal bed below, the checks glow orange from within and pulse as the flames lick past. The glow fades toward the sawn ends, which show growth rings inside a charred rim.
+ * The log is charred into alligator checks stretched along the grain, its cool top crusted with pale, clumping ash; only a few patches of bark survive on its outer flank. Where it faces the flames or the coal bed below, the checks glow orange from within and pulse as the flames lick past. The glow fades toward the sawn ends, which show growth rings inside a charred rim.
  *
  * Every log is a {@link NodeMaterialInstance} of this one material, which reads each log’s `inward`, `halfLength` and `radius` from the log’s own material, so all logs share a single shader build; see {@link createCharredLogMaterial}.
  */
@@ -45,9 +46,10 @@ class CharredLogMaterial extends MeshStandardNodeMaterial {
     const bark = smoothstep(0.55, 0.85, facing.add(patches.mul(0.5)).negate()).mul(smoothstep(-0.1, 0.3, downward.negate()))
     const barkColor = mix(color('#3b2618'), color('#22160e'), mx_noise_float(p.mul(vec3(30, 3, 30))).mul(0.5).add(0.5))
     const charColor = mix(color('#2b2622'), color('#070504'), crack)
-    // A little ash dusts the top, away from the hottest checks.
-    const ash = smoothstep(0.4, 0.9, n.x).mul(smoothstep(0.15, 0.7, mx_noise_float(p.mul(14)))).mul(bark.oneMinus()).mul(crack.oneMinus()).mul(0.45)
-    const side = mix(mix(charColor, barkColor, bark), color('#4d4843'), ash)
+    // A crust of pale ash clumps over the cool top, unbroken over the checks and away from the bark.
+    const ashMask = smoothstep(0.3, 0.65, mx_noise_float(p.mul(18)).mul(0.5).add(0.5)).mul(smoothstep(0, 0.8, n.x)).mul(crack.oneMinus()).mul(bark.oneMinus())
+    const ashColor = mix(color('#69685f'), color('#302b29'), mx_noise_float(p.mul(55)).mul(0.5).add(0.5))
+    const side = mix(mix(charColor, barkColor, bark), ashColor, ashMask.mul(0.55))
     // Sawn ends: growth rings around the pith, charred from the rim inward.
     const radiusNode = logValue('radius')
     const across = p.xz.length().div(radiusNode)
@@ -57,7 +59,7 @@ class CharredLogMaterial extends MeshStandardNodeMaterial {
     this.colorNode = mix(side, sawn, end)
     this.roughnessNode = mix(mix(float(0.86), float(0.97), max(crack, bark)), float(0.9), end)
     this.emissiveNode = fireColor(glow.mul(end.oneMinus())).mul(2.6)
-    this.normalNode = bumpMap(crack.oneMinus().mul(end.oneMinus()), float(0.05))
+    this.normalNode = heightNormal(crack.mul(-0.003).add(mx_noise_float(p.mul(110)).mul(0.0003)).mul(end.oneMinus()))
   }
 }
 let shared: CharredLogMaterial | undefined
