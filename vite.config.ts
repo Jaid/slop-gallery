@@ -1,8 +1,7 @@
 import type {AcceptedPlugin} from 'postcss'
 import type {ConfigEnv, UserConfig, UserConfigFn} from 'vite'
 
-import babelPlugin from '@rolldown/plugin-babel'
-import reactPlugin, {reactCompilerPreset} from '@vitejs/plugin-react'
+import reactPlugin from '@vitejs/plugin-react'
 import postcssAutoprefixer from 'autoprefixer'
 import cssnano from 'cssnano-preset-advanced'
 import postcssNormalize from 'postcss-normalize'
@@ -45,10 +44,7 @@ const getCommonConfig = () => {
         select: selectWorld,
         selectorArguments: [worldParameters, worldRooms],
       }),
-      reactPlugin(),
-      babelPlugin({
-        presets: [reactCompilerPreset()],
-      }),
+      reactPlugin({compiler: true}),
       mediaMixinsPlugin(),
     ],
     css: {
