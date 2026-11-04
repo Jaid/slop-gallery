@@ -117,8 +117,14 @@ for (const chunk of initial) {
 const read = (chunk: string) => Bun.file(join(directory, chunk)).text()
 const initialSources = await Promise.all([...initial].map(read))
 const initialCode = initialSources.join('\n')
-// Every announcement goes by its path, like entries/<id> for a Knot’s title.
-if (knots.some(knot => initialCode.includes(`"entries/${knot.id}"`))) {
+// Every announcement goes by its path, like entries/<id> for a Knot’s title, in whichever quotes the minifier picked, template literals included.
+const announcementPath = new RegExp(`[\`"']entries/(?:${knots.map(knot => RegExp.escape(knot.id)).join('|')})[\`"']`, 'u')
+// Otherwise the checks for where they load would pass on any build.
+const everySource = await Promise.all(chunks.map(chunk => read(chunk.fileName)))
+if (!everySource.some(code => announcementPath.test(code))) {
+  fail('No chunk holds the Knots’ announcements by their paths.')
+}
+if (announcementPath.test(initialCode)) {
   fail('The Knots’ announcements load with the page.')
 }
 for (const [id, worldChunk] of worldChunks) {
@@ -154,7 +160,7 @@ if (exhibitionKnot) {
   fail(`The Exhibition loads the Knot material of ${knotChunks.get(exhibitionKnot)} with it.`)
 }
 const exhibitionSources = await Promise.all([...exhibition].map(read))
-if (knots.some(knot => exhibitionSources.some(code => code.includes(`"entries/${knot.id}"`)))) {
+if (exhibitionSources.some(code => announcementPath.test(code))) {
   fail('The Exhibition loads the Knots’ announcements with it.')
 }
 console.log(`Verified the build: ${initial.size} chunks load with the page, ${knotChunks.size} Knot materials and ${worldIds.length} worlds load on demand, and ${files.length - named.length} of ${files.length} files are named by their content.`)
