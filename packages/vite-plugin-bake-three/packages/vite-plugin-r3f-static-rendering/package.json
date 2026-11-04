@@ -24,8 +24,8 @@
     "disposable-lifetime": "workspace:*",
     "magic-string": "1.4.5",
     "vite-plugin-bake-core": "workspace:*",
-    "@babel/traverse": "8.0.10",
-    "@babel/types": "8.0.10"
+    "@babel/traverse": "8.1.0",
+    "@babel/types": "8.1.0"
   },
   "peerDependencies": {
     "react": "^19.3.1",

@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "math": "0.1.0",
-    "three-mesh-bvh": "0.9.17"
+    "three-mesh-bvh": "0.9.18"
   },
   "peerDependencies": {
     "three": "^0.187.0"

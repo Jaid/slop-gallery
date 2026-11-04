@@ -22,6 +22,6 @@
     "@babel/template": "8.0.0"
   },
   "peerDependencies": {
-    "@babel/core": "^8.0.10"
+    "@babel/core": "^8.1.0"
   }
 }
