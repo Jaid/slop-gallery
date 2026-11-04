@@ -1,6 +1,8 @@
 import type {RouteOpening, RouteOutline} from './passages/RoutedPassage.ts'
 import type {Vec3} from './types.ts'
 
+import {mulberry32} from 'math/random'
+
 import {corniceBands, openingCasingFronts, vaultShellThickness, wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {easedRampGradient} from './easedRamp.ts'
 import lodge from './lodge.ts'
@@ -307,6 +309,27 @@ const landingOutline: RouteOutline = {
     [linkWestX, runLeftZ],
   ],
 }
+/** A broken edge round the point in plan: `corners` corners, unevenly spaced and at uneven distances about `radius` out, where flags broke off or held. */
+function brokenRing([x, z]: readonly [number, number], radius: number, corners: number, seed: number) {
+  const state = mulberry32.create(seed)
+  const random = () => mulberry32.sample(state)
+  return Array.from({length: corners}, (_, corner) => {
+    const angle = (corner + (random() - 0.5) * 0.6) / corners * Math.PI * 2
+    const out = radius * (0.94 + random() * 0.14)
+    return [x + Math.cos(angle) * out, z + Math.sin(angle) * out] as const
+  })
+}
+const craterCenter: Vec3 = [linkX, platformY, runLeftZ - 1.6]
+const craterRadius = 0.8
+/**
+ * The little crater broken into the landing’s paving, on the connecting tunnel’s axis 1.6 m out from its doorway, where whatever rolls down the tunnel crosses the landing. The paving breaks along `outline`, about `radius` meters round its middle; the flags inside it tip into the crater, their broken ends hanging over the rubble under the paving, which sinks toward its middle, `depth` meters under the floor: too high a step for an orb that fell in to roll back out, low enough for a player to step out.
+ */
+export const fortressCrater = {
+  center: craterCenter,
+  radius: craterRadius,
+  depth: 0.45,
+  outline: brokenRing([craterCenter[0], craterCenter[2]], craterRadius, 23, 4243),
+}
 export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width, {
   openings: [...curveOpenings, {
     ...vaultOpening(fortressLinkWidth, mouthHeight),
@@ -316,6 +339,7 @@ export const fortressCurve = new RoutedPassage('curve', 'fortress', route, width
     casing: false,
   }],
   outlines: [outline, landingOutline],
+  pits: [fortressCrater.outline],
 })
 /** From the curve west to the Lodge’s east wall, where it turns into the Lodge’s timber. */
 export const fortressApproach = new Passage('approach', 'fortress', [[approachX, lodge.tunnelZ], [lodge.center[0] + lodge.size[0] / 2, lodge.tunnelZ]], lodge.floorY, width, approachHeight)
@@ -350,4 +374,21 @@ export const fortressLinkStart = {
   heading: Math.PI / 2,
   y: platformY,
   height: mouthHeight,
+}
+/** where the face of the tunnel’s east wall stands */
+const linkEastFace = linkEastX - wallFace
+/** how far the guard stone stands out from the tunnel’s east wall at the doorway; it runs along the wall twice as far, so its face slants by 26.6° */
+const guardStoneProjection = 0.8
+/**
+ * The guard stone at the foot of the tunnel’s east wall where it opens onto the landing, like those that fend wheels off a gateway’s jambs: a wedge along the wall, its `corners` in plan from where it leaves the wall to its blunt end, flush with the landing’s face of the doorway’s wall, standing up to `top` from under the floor at `bottom`.
+ * Whatever rolls down the tunnel comes out of its last corner along that wall, the outside of the corner; the wedge’s slanting face turns it toward the crater.
+ */
+export const fortressGuardStone = {
+  corners: [[linkEastFace, runLeftZ - wallFace + guardStoneProjection * 2], [linkEastFace, runLeftZ - wallFace], [linkEastFace - guardStoneProjection, runLeftZ - wallFace]],
+  bottom: platformY - 0.1,
+  top: platformY + 0.4,
+} as const satisfies {
+  bottom: number
+  corners: ReadonlyArray<readonly [x: number, z: number]>
+  top: number
 }

@@ -11,7 +11,7 @@ import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/galler
 import {corniceBands, vaultShellThickness, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionMouth} from '../../src/lib/gallery/bastion.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressCurve, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
+import {fortressCrater, fortressCurve, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
 import {fortressLink, fortressNetwork} from '../../src/lib/gallery/fortressNetwork.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
@@ -22,6 +22,7 @@ import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {openingArc} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery, roomAt} from './fixtures/gallery.ts'
+import {addFortressCrater} from './helpers/fortressCrater.ts'
 
 await RAPIER.init()
 const {route} = fortressLink
@@ -214,13 +215,14 @@ for (const returning of [false, true]) {
           }
         }
       }
-      // from the middle of the curve’s landing, a couple of meters north of the doorway
-      const entrance = fortressCurve.route.at(fortressCurve.route.project(route.start[0], route.start[1] - 2)!.along)
-      const path = [entrance.point, ...Array.from({length: Math.ceil(route.length / 0.4)}, (_, i) => route.at(i * 0.4).point), route.end.point, bastionMouth.path[1]]
+      addFortressCrater(world)
+      // from the level landing a couple of meters north of the doorway, round the crater in front of it and clear of the guard stone beside it, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater
+      const [craterX, entranceY, craterZ] = fortressCrater.center
+      const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[craterX + 1.5, craterZ - 1.3, true], [craterX + 1.37, craterZ + 0.8, true], ...Array.from({length: Math.ceil(route.length / 0.4)}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const), route.end.point, bastionMouth.path[1]]
       if (returning) {
         path.reverse()
       }
-      const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? bastionMouth.floorY : entrance.y) + 0.04, path[0][1]))
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? bastionMouth.floorY : entranceY) + 0.04, path[0][1]))
       const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
       const motor = new EgoMotor(RAPIER, world, body, collider)
       const facing = new Quaternion
@@ -237,7 +239,7 @@ for (const returning of [false, true]) {
           facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(-dx, -dz))
           motor.step(world.timestep, {
             forward: true,
-            sprint,
+            sprint: sprint && !path[target][2],
           }, facing)
           world.step()
           expect(position.y).toBeGreaterThan(-6.1)
@@ -250,7 +252,7 @@ for (const returning of [false, true]) {
           motor.step(world.timestep, {}, facing)
           world.step()
         }
-        expect(body.translation().y).toBeCloseTo((returning ? entrance.y : bastionMouth.floorY) + 0.02, 2)
+        expect(body.translation().y).toBeCloseTo((returning ? entranceY : bastionMouth.floorY) + 0.02, 2)
         expect(motor.grounded).toBe(true)
       } finally {
         motor.dispose()

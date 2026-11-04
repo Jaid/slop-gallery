@@ -30,6 +30,8 @@ export type RoutedPassageOptions = {
   openings?: ReadonlyArray<RouteOpening>
   /** at most one for each side */
   outlines?: ReadonlyArray<RouteOutline>
+  /** holes broken through its paving, each an outline in plan that lies on its floor */
+  pits?: ReadonlyArray<ReadonlyArray<Point>>
 }
 /** an outline with the stretch along the route it stands in for its side’s walls on, and where straight across from the route its walls turn their inner corners */
 type PlacedOutline = RouteOutline & {
@@ -80,12 +82,14 @@ export default class RoutedPassage {
   readonly name: string
   /** the outlines, each with the stretch along the route it stands in for its side’s walls on */
   readonly outlines: ReadonlyArray<PlacedOutline>
+  /** the holes broken through its paving, each an outline in plan */
+  readonly pits: ReadonlyArray<ReadonlyArray<Point>>
   /** where the vault’s ribs stand, in meters along the route */
   readonly ribs: ReadonlyArray<number>
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {openings = [], outlines = []}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {openings = [], outlines = [], pits = []}: RoutedPassageOptions = {}) {
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }
@@ -150,6 +154,10 @@ export default class RoutedPassage {
       }]
     }
     this.walls = walls
+    if (pits.some(pit => pit.length < 3 || pit.some(([x, z]) => this.stationAt(x, z) === undefined))) {
+      throw new RangeError(`The pits of ${this.name} need at least three corners, all on its floor.`)
+    }
+    this.pits = pits
   }
 
   /** Boxes around the passage’s air, from its floor to its ceiling, each piece cut into as many as it takes for none to reach more than `slack` meters past the passage’s walls. */

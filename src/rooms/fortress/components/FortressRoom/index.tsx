@@ -15,10 +15,11 @@ import lodgeTimber from '#src/lib/gallery/lodgeTimber.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
+import FortressCrater from '#src/rooms/fortress/components/FortressCrater/index.tsx'
 
 const lanterns = Object.values(fortressLanterns)
 
-/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Cinnabar. */
+/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Cinnabar, with the crater in the landing where the link opens. */
 export default function FortressRoom({material, wood}: {
   material: NodeMaterial
   wood: Texture
@@ -35,6 +36,7 @@ export default function FortressRoom({material, wood}: {
     <CoveredRoute lanterns={fortressLinkLanterns} material={material} passage={fortressLink} />
     <CoveredPassage material={material} passage={fortressMouth} />
     <CoveredRoute lanterns={lanterns} material={material} passage={fortressCurve} />
+    <FortressCrater stone={material} />
     <CoveredPassage material={material} passage={fortressApproach} transition={fortressTransition} />
     <TimberTransition floor={floor} lining={lining} timber={timber} transition={fortressTransition} />
   </group>

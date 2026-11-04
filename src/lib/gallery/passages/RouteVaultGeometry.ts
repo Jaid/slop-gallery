@@ -1,7 +1,8 @@
 import type {RouteStation} from './PassageRoute.ts'
 import type RoutedPassage from './RoutedPassage.ts'
 
-import {BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2} from 'three/webgpu'
+import {Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
+import {BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMaterial, Shape, ShapeUtils, Vector2} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 import {vaultShellThickness} from '../architectureDimensions.ts'
@@ -12,7 +13,8 @@ type Section = (station: RouteStation) => ReadonlyArray<Profile>
 
 const ribDepth = 0.22
 const ribThickness = 0.085
-const pavingThickness = 0.24
+/** how thick the slab of a routed passage’s paving is, under its floor */
+export const pavingThickness = 0.24
 /** An odd count leaves a level facet along the crown, wide enough for a lantern’s canopy to sit flush. */
 const archSegments = 33
 /** Points around a half ellipse over the spring, `halfSpan` to either side of `middle` and `rise` high, from its left foot over its crown to its right foot, or back with `reverse`; as wide as it is high, it is a semicircle. */
@@ -83,6 +85,51 @@ function sweep(runs: ReadonlyArray<ReadonlyArray<RouteStation>>, section: Sectio
   }
   return parts
 }
+/** The paving with the passage’s pits broken through it, their outlines’ faces left standing as the broken edges of its slab. */
+function breakPits(paving: BufferGeometry, passage: RoutedPassage) {
+  if (!passage.pits.length) {
+    return paving
+  }
+  const evaluator = new Evaluator
+  evaluator.useGroups = false
+  // The swept strips carry no uvs; the paving’s material maps by world position.
+  evaluator.attributes = ['position', 'normal']
+  const material = new MeshBasicNodeMaterial
+  const brushes: Array<Brush> = []
+  const brush = (part: BufferGeometry) => {
+    const result = new Brush(part, material)
+    result.updateMatrixWorld(true)
+    brushes.push(result)
+    return result
+  }
+  let retained: BufferGeometry | undefined
+  try {
+    let result = brush(paving)
+    for (const pit of passage.pits) {
+      const floors = pit.map(([x, z]) => passage.floorAt(x, z)!)
+      const bottom = Math.min(...floors) - pavingThickness - 0.1
+      // Drawn with its y turned to −z, it is extruded upward once it lies down.
+      const outline = new ExtrudeGeometry(new Shape(pit.map(([x, z]) => new Vector2(x, -z))), {
+        depth: Math.max(...floors) + 0.1 - bottom,
+        bevelEnabled: false,
+      })
+      const cutter = brush(outline.rotateX(-Math.PI / 2).translate(0, bottom, 0))
+      result = evaluator.evaluate(result, cutter, SUBTRACTION, brush(new BufferGeometry))
+    }
+    retained = result.geometry
+    retained.computeBoundingBox()
+    retained.computeBoundingSphere()
+    return retained
+  } finally {
+    for (const item of brushes) {
+      item.disposeCacheData()
+      if (item.geometry !== retained) {
+        item.geometry.dispose()
+      }
+    }
+    material.dispose()
+  }
+}
 
 /**
  * The stone barrel vault, its ribs and its paving swept along a {@link RoutedPassage}, in world space.
@@ -90,7 +137,7 @@ function sweep(runs: ReadonlyArray<ReadonlyArray<RouteStation>>, section: Sectio
  * Where an outline widens the passage, the vault spans out to its walls as a half ellipse as high as the barrel, creased where the outline turns its corners, like a groin.
  */
 export default class RouteVaultGeometry {
-  /** the slab under the floor, flush with the passage’s walls */
+  /** the slab under the floor, flush with the passage’s walls, broken through by its pits */
   readonly paving: BufferGeometry
   readonly ribs: BufferGeometry
   readonly shell: BufferGeometry
@@ -125,7 +172,7 @@ export default class RouteVaultGeometry {
     }
     this.shell = mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
     this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - ribDepth / 2, along + ribDepth / 2), ring(-ribThickness, 0), true)))
-    this.paving = mergeParts(sweep(runs(0, route.length), station => {
+    this.paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))
       return [
         [[-left, 0], [right, 0]],
@@ -133,7 +180,7 @@ export default class RouteVaultGeometry {
         [[right, -pavingThickness], [-left, -pavingThickness]],
         [[-left, -pavingThickness], [-left, 0]],
       ]
-    }))
+    })), passage)
   }
 
   dispose() {

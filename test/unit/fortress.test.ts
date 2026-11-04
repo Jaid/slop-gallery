@@ -23,6 +23,7 @@ import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometr
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, insideGallery, roomAt} from './fixtures/gallery.ts'
+import {addFortressCrater} from './helpers/fortressCrater.ts'
 import {addOculusRailings} from './helpers/oculusRailings.ts'
 
 await RAPIER.init()
@@ -402,6 +403,7 @@ describe('the Fortress’ route round the Oculus', () => {
           }
         }
         addOculusRailings(world)
+        addFortressCrater(world)
         const bridgeX = tower.x + 5
         const bridge = towerFloorHeight(bridgeX, tower.z)!
         // Through the doorway and round the mouth’s elbow, like a player, at a walk; it ends before the timber transition’s saddle.
