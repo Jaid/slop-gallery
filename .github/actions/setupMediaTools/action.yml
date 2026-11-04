@@ -12,11 +12,15 @@ runs:
   steps:
   # vite-plugin-jxl encodes images with cjxl, which apt only has in an older release. libjxl builds no packages for Ubuntu 26.04, but those for 24.04 install on it.
   - name: installSystemPackages
+    id: installSystemPackages
     shell: bash
     env:
       libjxlVersion: ${{ inputs.libjxlVersion }}
     run: |
-      curl --silent --show-error --location --fail --output "$RUNNER_TEMP/libjxl.tar" "https://github.com/libjxl/libjxl/releases/download/v$libjxlVersion/jxl-debs-amd64-ubuntu-24.04.tar"
+      # The ImageMagick build links against the system’s libraries, so its cache only fits the same release.
+      . /etc/os-release
+      echo "system=$ID-$VERSION_ID" >> "$GITHUB_OUTPUT"
+      curl --silent --show-error --location --fail --retry 5 --retry-all-errors --output "$RUNNER_TEMP/libjxl.tar" "https://github.com/libjxl/libjxl/releases/download/v$libjxlVersion/jxl-debs-amd64-ubuntu-24.04.tar"
       tar --extract --file "$RUNNER_TEMP/libjxl.tar" --directory "$RUNNER_TEMP" --wildcards 'jxl_*.deb' 'libjxl_*.deb' 'libjxl-dev_*.deb'
       sudo apt-get update
       sudo apt-get install --yes --no-install-recommends ffmpeg build-essential pkg-config libpng-dev libjpeg-dev liblcms2-dev libbrotli-dev zlib1g-dev "$RUNNER_TEMP"/jxl_*.deb "$RUNNER_TEMP"/libjxl_*.deb "$RUNNER_TEMP"/libjxl-dev_*.deb
@@ -26,7 +30,7 @@ runs:
     uses: actions/cache@v6.1.0
     with:
       path: ~/imagemagick
-      key: imagemagick-${{ inputs.imageMagickVersion }}-libjxl-${{ inputs.libjxlVersion }}-${{ runner.os }}-${{ runner.arch }}-${{ env.ImageOS }}
+      key: imagemagick-${{ inputs.imageMagickVersion }}-libjxl-${{ inputs.libjxlVersion }}-${{ runner.arch }}-${{ steps.installSystemPackages.outputs.system }}
   - name: buildImageMagick
     if: steps.cacheImageMagick.outputs.cache-hit != 'true'
     shell: bash
