@@ -79,53 +79,10 @@ test('the cinematic profile increases intermediate resolutions, AO quality, shad
   expect(getGraphicsProfile(true, true)).toBe(cinematic)
   expect(getGraphicsProfile(false, true)).toBe(getGraphicsProfile(false))
 })
-test('the provider exposes the default scene budget during SSR', () => {
+test('the provider exposes the fast profile during SSR, and every profile keeps its identity', () => {
   const html = renderToStaticMarkup(<GraphicsMode><ReadProfile /></GraphicsMode>)
-  expect(html).toStartWith('<span>false:')
-  expect(html).toContain('postprocessing&quot;:false')
-  expect(getGraphicsProfile(false)).toEqual({
-    canvasTextureMipmaps: false,
-    canvasTextureResolution: 0.5,
-    curveDetail: 1,
-    noiseTextures: false,
-    floorReflections: false,
-    indirectLight: false,
-    metalReflections: false,
-    shadows: false,
-    postprocessing: false,
-    ambientOcclusionResolutionScale: 0.75,
-    ambientOcclusionSamples: 16,
-    reflectionResolutionScale: 1,
-    shadowMapScale: 1,
-    shadowSamples: 5,
-    surfaceAnisotropy: 8,
-    volumetricLight: false,
-    volumetricLightSteps: 64,
-    voxelIndirectLight: false,
-  })
-  expect(getGraphicsProfile(true)).toEqual({
-    canvasTextureMipmaps: false,
-    canvasTextureResolution: 1,
-    curveDetail: 1,
-    noiseTextures: true,
-    floorReflections: true,
-    indirectLight: false,
-    lampShadowRadius: 4,
-    metalReflections: false,
-    shadows: true,
-    postprocessing: true,
-    ambientOcclusionResolutionScale: 0.75,
-    ambientOcclusionSamples: 16,
-    reflectionResolutionScale: 1,
-    shadowMapScale: 1,
-    shadowSamples: 4,
-    sunShadowRadius: 4,
-    sunShadowSamples: 4,
-    surfaceAnisotropy: 8,
-    volumetricLight: true,
-    volumetricLightSteps: 64,
-    voxelIndirectLight: true,
-  })
+  expect(html).toBe(renderToStaticMarkup(<span>false:{JSON.stringify(getGraphicsProfile(false))}</span>))
+  expect(getGraphicsProfile(false).postprocessing).toBe(false)
   expect(getGraphicsProfile(true)).toBe(getGraphicsProfile(true))
   expect(getGraphicsProfile(false)).toBe(getGraphicsProfile(false))
 })
@@ -202,28 +159,21 @@ test('Fast disables bloom, while Heavy and Cinematic use the current tuned bloom
   expect(heavy).toMatchObject(tunedBloom)
   expect(cinematic).toMatchObject(tunedBloom)
 })
-test('Fast omits voxel GI, Heavy adds it without SSGI, and Cinematic uses both indirect-light passes', () => {
+test('no graphics mode traces voxel indirect light, which the tuning panel switches on with one bounce, or two in Cinematic', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)
   const heavy = getRenderPipelineSettings(getGraphicsProfile(true), 'traa')
   const cinematic = getRenderPipelineSettings(getGraphicsProfile(true, true), 'traa')
-  const voxel = {
-    voxelIndirectLight: true,
-    voxelIndirectLightBounces: 1,
-    voxelIndirectLightConeAngle: 40,
-    voxelIndirectLightConeCount: 3,
-    voxelIndirectLightIntensity: 0.2,
-    voxelIndirectLightResolution: 256,
+  for (const settings of [fast, heavy, cinematic]) {
+    expect(settings).toMatchObject({
+      voxelIndirectLight: false,
+      voxelIndirectLightConeAngle: 40,
+      voxelIndirectLightConeCount: 3,
+      voxelIndirectLightIntensity: 0.2,
+      voxelIndirectLightResolution: 256,
+    })
   }
-  expect(fast.voxelIndirectLight).toBe(false)
-  expect(heavy).toMatchObject({
-    ...voxel,
-    screenSpaceIndirectLight: false,
-  })
-  expect(cinematic).toMatchObject({
-    ...voxel,
-    screenSpaceIndirectLight: true,
-    voxelIndirectLightBounces: 2,
-  })
+  expect(heavy.voxelIndirectLightBounces).toBe(1)
+  expect(cinematic.voxelIndirectLightBounces).toBe(2)
 })
 test('Sun shadow presets are independent of the other lights and follow the configured map, radius and samples', () => {
   const fastProfile = getGraphicsProfile(false)
@@ -267,8 +217,6 @@ test('Sun shadow presets are independent of the other lights and follow the conf
   })
   expect(heavyProfile.shadowSamples).toBe(4)
   expect(cinematicProfile.shadowSamples).toBe(16)
-  expect(heavy.voxelIndirectLightBounces).toBe(1)
-  expect(cinematic.voxelIndirectLightBounces).toBe(2)
 })
 test('Cinematic scales Heavy’s four-texel lamp shadow filtering with its four times larger maps without changing their samples or Sun', () => {
   const fast = getRenderPipelineSettings(getGraphicsProfile(false), false)

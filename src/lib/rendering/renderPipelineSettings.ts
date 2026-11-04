@@ -168,7 +168,8 @@ export function getRenderPipelineSettings(profile: GraphicsProfile, antiAliasing
     volumetricLightMaxDensity: 1,
     volumetricLightResolutionScale: 0.25,
     volumetricLightSteps: profile.volumetricLightSteps,
-    voxelIndirectLight: profile.voxelIndirectLight && world.voxelIndirectLight,
+    // Voxel cone tracing cost about 4 ms of GPU time per frame at 1080p and 11 ms at 2160p for faint light, so no world has it; the tuning panel of `?development` switches it on.
+    voxelIndirectLight: false,
     voxelIndirectLightBounces: profile.voxelIndirectLightBounces ?? 1,
     voxelIndirectLightConeAngle: 40,
     voxelIndirectLightConeCount: 3,

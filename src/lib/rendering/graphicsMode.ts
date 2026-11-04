@@ -67,9 +67,7 @@ export type GraphicsProfile = {
   volumetricLight: boolean
   /** Number of raymarching samples for volumetric sunlight. */
   volumetricLightSteps: number
-  /** whether voxel cone tracing supplies indirect lighting, independently of screen-space GI */
-  voxelIndirectLight: boolean
-  /** optional voxel GI bounce count; the normal default is one */
+  /** how often the voxel indirect light bounces once the tuning panel switches it on, once by default */
   voxelIndirectLightBounces?: number
 }
 
@@ -129,7 +127,6 @@ const fastProfile: GraphicsProfile = {
   surfaceAnisotropy: 8,
   volumetricLight: false,
   volumetricLightSteps: 64,
-  voxelIndirectLight: false,
 }
 const heavyProfile: GraphicsProfile = {
   canvasTextureMipmaps: false,
@@ -152,7 +149,6 @@ const heavyProfile: GraphicsProfile = {
   surfaceAnisotropy: 8,
   volumetricLight: true,
   volumetricLightSteps: 64,
-  voxelIndirectLight: true,
 }
 // Cinematic raises intermediate and shadow-map resolutions, AO quality, texture filtering, curve tessellation, indirect light and metal reflections for non-realtime rendering.
 const cinematicProfile: GraphicsProfile = {
