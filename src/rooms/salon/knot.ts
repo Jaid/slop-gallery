@@ -6,7 +6,7 @@ import {common, ethereal, knots, prime, rare} from 'knot-materials'
 import {environmentPick, environmentWeightedPick} from '#src/lib/environmentSeed.ts'
 import {pedestalHeight} from '#src/lib/gallery/PedestalGeometry.ts'
 import {salonPedestal} from '#src/lib/gallery/salon.ts'
-import {knotStandingHeight, standingKnotSkin} from '#src/lib/physics/standingKnot.ts'
+import {knotStandingHeight, standingKnotSink} from '#src/lib/physics/standingKnot.ts'
 
 /** how likely each rarity is for the Salon’s Knot; the Knot is then picked among the rarity’s */
 export const salonKnotRarityChances = [
@@ -19,8 +19,8 @@ export const salonKnotRarityChances = [
 /** how tall the Salon’s Knot stands on its pedestal, in meters */
 export const salonKnotHeight = 1
 
-/** the Knots that keep their balance at the Salon’s size: those whose shader pushes their surface out no further than the contact skin a standing Knot allows */
-export const salonKnots = knots.filter(knot => (knot.displacement ?? 0) * salonKnotHeight / knotStandingHeight <= standingKnotSkin)
+/** the Knots that stand at the Salon’s size without sinking visibly into the pedestal: those whose shader pushes their surface out no further than a standing Knot may sink */
+export const salonKnots = knots.filter(knot => (knot.displacement ?? 0) * salonKnotHeight / knotStandingHeight <= standingKnotSink)
 
 const knotsByRarity = Map.groupBy(salonKnots, knot => knot.rarity)
 

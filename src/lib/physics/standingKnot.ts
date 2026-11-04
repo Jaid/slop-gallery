@@ -4,8 +4,10 @@ export const knotStandingRoll = Math.PI / 2
 /** how tall an unscaled Knot stands at {@link knotStandingRoll}, in meters: the span of its vertices along x */
 export const knotStandingHeight = 1.4668
 
-/** the thickest contact skin a standing Knot still keeps its balance with, in meters; a thicker one rounds off the narrow edge it stands on, so it topples */
-export const standingKnotSkin = 0.01
+/**
+ * how deep a standing Knot’s displaced surface may sink into what it stands on, in meters. A standing Knot takes no contact skin for its displacement: Fiber’s Rapier predicts contacts only 2 mm ahead, and a skin thicker than that rounds off the narrow edge it stands on, so it topples.
+ */
+export const standingKnotSink = 0.01
 
 /**
  * A Knot of `height` standing at {@link knotStandingRoll}, measured from its undisplaced collider `vertices`: the scale that makes it that tall, its collider vertices at that scale and how far its origin rises over the foot it stands on.

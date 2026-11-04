@@ -101,12 +101,11 @@ export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKno
       const {entry, position: [x, y, z], rotation: yaw = 0} = knot
       const {geometry} = resources.items[index]
       const {lift, scale, vertices} = stances[index]
-      // The shader’s displacement reaches out by as much at the Knot’s scale.
-      const skin = (entry.displacement ?? 0) * scale
       const {coreMaterial} = material
       const id = propId(knot)
-      return <GrabbableProp key={id} id={id} colliders={false} orbit={{radius: geometry.boundingSphere!.radius * scale}} position={[x, y + lift + skin, z]} rotation={[0, yaw, knotStandingRoll]} title={`${entry.title} · ${entry.modelTitle}`} type='dynamic'>
-        <ConvexHullCollider args={[vertices]} contactSkin={skin} />
+      return <GrabbableProp key={id} id={id} colliders={false} orbit={{radius: geometry.boundingSphere!.radius * scale}} position={[x, y + lift, z]} rotation={[0, yaw, knotStandingRoll]} title={`${entry.title} · ${entry.modelTitle}`} type='dynamic'>
+        {/* No contact skin for the displacement, which would topple it, see standingKnotSink. */}
+        <ConvexHullCollider args={[vertices]} />
         <InteractiveObject id={id} action='Listen' inspectable title={entry.title} onActivate={() => narrateModel(id)}>
           <mesh castShadow material={material} name={`knot-${entry.id}`} raycast={resources.raycast} receiveShadow scale={scale}>
             <primitive attach='geometry' object={geometry} />
