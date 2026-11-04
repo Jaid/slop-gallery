@@ -23,7 +23,6 @@ const slack = 0.35
  */
 export default class Fortress extends Room {
   override readonly air = chunkBoxes(fortressNetwork.flatMap(passage => passage.chunks(slack)), fortressOrigin)
-  override readonly color = '#6e675d'
   override readonly description = 'Cold stone. Long shadows. Light through iron bars.'
   // Height-bounded because the west wing passes under Cinnabar and above Lodge. It also takes precedence over the Oculus’ apse box.
   override readonly fence = new Geofence(this.air.map(box => ({

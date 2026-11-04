@@ -12,7 +12,6 @@ import {planWall} from '../lib/walls.ts'
 /** Knottingham’s exhibition hall, laid out around the middle of its floor. Its size follows the Knots the URL selects. */
 export default class Arena extends Room {
   override readonly air: Box3
-  override readonly color = '#5d242b'
   override readonly description = 'Light, motion and impossible materials.'
   override readonly fence: Geofence
   override readonly id = 'arena'

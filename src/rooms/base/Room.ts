@@ -28,11 +28,6 @@ export type RoomWall = Omit<Wall, 'baseboardMiters' | 'holes' | 'id' | 'miters' 
   /** the openings through the wall by their names within it, in snake_case, along the wall from its center */
   holes?: Record<string, Omit<WallOpening, 'name'>>
 }
-/** a rectangle on the floor plan, centered on its x and z */
-export type FloorRectangle = {
-  center: readonly [x: number, z: number]
-  size: FloorSize
-}
 /** the extent of a rectangle on the floor plan along x and z */
 export type FloorSize = readonly [width: number, depth: number]
 export type PointLamp = LampBase & {
@@ -136,8 +131,6 @@ export default abstract class Room {
   abstract readonly air: Arrayable<Box3>
   readonly ambience: ReadonlyMap<string, RoomAmbience>
   readonly cameras: ReadonlyMap<string, RoomCamera>
-  /** the room’s flavor color as #rrggbb */
-  abstract readonly color: string
   /** a sentence shown below the title */
   abstract readonly description: string
   /**

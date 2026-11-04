@@ -91,15 +91,6 @@ export default class FrameProfile {
     return this.curve(points, material)
   }
 
-  /** A straight run by the offsets, an arris where it ends. */
-  by(dr: number, dz: number, options: {
-    material?: number
-    smooth?: boolean
-  } = {}) {
-    const [r, z] = this.end
-    return this.line(r + dr, z + dz, options)
-  }
-
   /** A straight run to the point, an arris where it ends. */
   line(r: number, z: number, {material, smooth = false}: {
     material?: number

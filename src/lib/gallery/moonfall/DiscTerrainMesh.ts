@@ -173,16 +173,6 @@ export default class DiscTerrainMesh {
     }
   }
 
-  /** height of the triangulated surface, or undefined outside the disc */
-  heightAt(x: number, z: number) {
-    for (let t = 0; t < this.triangles.length; t += 3) {
-      const weights = this.barycentric(t, x, z)
-      if (weights?.every(weight => weight >= -1e-9)) {
-        return weights[0] * this.ys[this.triangles[t]] + weights[1] * this.ys[this.triangles[t + 1]] + weights[2] * this.ys[this.triangles[t + 2]]
-      }
-    }
-  }
-
   private addTriangle(a: number, b: number, c: number) {
     const t = this.triangles.length
     this.triangles.push(a, b, c)
@@ -198,25 +188,6 @@ export default class DiscTerrainMesh {
     this.zs.push(z)
     this.ys.push(y)
     return this.xs.length - 1
-  }
-
-  private barycentric(t: number, x: number, z: number) {
-    const a = this.triangles[t]
-    const b = this.triangles[t + 1]
-    const c = this.triangles[t + 2]
-    const area = this.orient(a, b, c)
-    if (area === 0) {
-      return
-    }
-    const ax = this.xs[a]
-    const az = this.zs[a]
-    const bx = this.xs[b]
-    const bz = this.zs[b]
-    const cx = this.xs[c]
-    const cz = this.zs[c]
-    const wa = ((bx - x) * (cz - z) - (bz - z) * (cx - x)) / area
-    const wb = ((cx - x) * (az - z) - (cz - z) * (ax - x)) / area
-    return [wa, wb, 1 - wa - wb] as const
   }
 
   /** positive when d lies inside the circumcircle of the counterclockwise triangle a, b, c */
@@ -308,10 +279,6 @@ export default class DiscTerrainMesh {
     if (b !== -1) {
       this.halfedges[b] = a
     }
-  }
-
-  private orient(a: number, b: number, c: number) {
-    return (this.xs[b] - this.xs[a]) * (this.zs[c] - this.zs[a]) - (this.zs[b] - this.zs[a]) * (this.xs[c] - this.xs[a])
   }
 
   /** Finds the sample in triangle t that the current surface approximates worst. */

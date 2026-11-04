@@ -24,7 +24,6 @@ export default class Exhibition extends Room {
     // The displays, with their stairways from the balcony.
     ...tunnelDisplays.flatMap(({stairway}) => stairway.air.map(air => floorBox(air.size, air.bottom - originY, air.top - air.bottom, [air.center[0] - originX, air.center[1] - originZ]))),
   ]
-  override readonly color = '#4f6166'
   override readonly description = 'Sealed behind glass. Lit like evidence.'
   // Everything under the tunnel, the displays and their stairways, up into the slab of the ground floor; it comes after the Oculus, which keeps the middle of the balcony both share.
   override readonly fence = new Geofence([{

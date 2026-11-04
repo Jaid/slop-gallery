@@ -17,7 +17,6 @@ const {size, height} = banquet
 
 export default class Banquet extends Room {
   override readonly air = floorBox(size, 0, height)
-  override readonly color = '#af9294'
   override readonly description = 'A change of perspective is encouraged.'
   // Everything over its floor plan from the slab up; it comes before the Salon, so the wall they share is the Banquet’s.
   override readonly fence = new Geofence([{

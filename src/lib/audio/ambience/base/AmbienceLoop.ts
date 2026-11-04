@@ -74,7 +74,6 @@ export default abstract class AmbienceLoop {
   readonly title: string
   private graph?: Graph
   private level = 1
-  private output?: AudioOutput
 
   constructor({id, title, gain = 1}: AmbienceLoopOptions) {
     this.id = id
@@ -123,16 +122,6 @@ export default abstract class AmbienceLoop {
     this.envelope(graph, oscillator, start, duration, volume)
   }
 
-  /** Crossfades into a fresh graph on the same output, for a recipe that changed; does nothing while stopped. */
-  restart(fade = 0.4) {
-    const {graph, output} = this
-    if (!graph || !output) {
-      return
-    }
-    this.stop(fade)
-    this.start(output)
-  }
-
   /** Connects the loop’s level to the output, returning the last node before it. A plain loop goes straight through, centered. */
   protected route(level: GainNode, _context: BaseAudioContext): AudioNode {
     return level
@@ -159,7 +148,6 @@ export default abstract class AmbienceLoop {
     if (this.graph) {
       return
     }
-    this.output = output
     const {context, master} = output
     const level = new GainNode(context, {gain: this.gain * this.level})
     const bus = new GainNode(context, {gain: 0})

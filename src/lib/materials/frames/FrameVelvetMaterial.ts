@@ -16,11 +16,6 @@ export const oxblood: FrameVelvet = {
   crushed: '#86101f',
   sheen: '#d4243c',
 }
-export const midnight: FrameVelvet = {
-  pile: '#0b1430',
-  crushed: '#1d2b5a',
-  sheen: '#5470c4',
-}
 
 /**
  * Velvet for the liners, slips and upholstery of frames: pile brushed along each member, crushed lighter in drifting patches, with a soft sheen at grazing angles instead of a highlight. The nap fades to its average before it could shimmer.

@@ -1,8 +1,6 @@
 import type {GalleryState, GalleryStore, SlopGalleryTelemetryOptions} from './types.ts'
-import type {EgoTelemetryOptions} from 'telemethree-ego'
 import type {Attributes, Span, SpanOptions} from 'victoria-browser-client'
 
-import EgoTelemetry from 'telemethree-ego'
 import VictoriaClient from 'victoria-browser-client'
 
 import world from '#src/worlds/current.ts'
@@ -144,13 +142,6 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
       this.startup = undefined
       this.session = undefined
     }
-  }
-
-  createEgo(options: Omit<EgoTelemetryOptions, 'telemetry'>) {
-    return new EgoTelemetry({
-      ...options,
-      telemetry: this,
-    })
   }
 
   event(name: string, attributes: Attributes = {}, message = `Gallery event: ${name}`) {

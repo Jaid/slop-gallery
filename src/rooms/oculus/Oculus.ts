@@ -25,7 +25,6 @@ export default class Oculus extends Room {
     // The box around the apse, over the platform that fills it.
     floorBox([oculus.size[0], oculusApse.depth], platformHeight, height - platformHeight, [0, -(oculus.size[1] + oculusApse.depth) / 2]),
   ]
-  override readonly color = '#7e9298'
   override readonly description = 'Borrowed light from the gallery above.'
   // Everything under its floor plan and the apse, up into the slab of the Lobby above; it comes before the Exhibition, so the middle of the balcony is the Oculus’, and after the Fortress, which curves round the apse through the corners of its box.
   override readonly fence = new Geofence([{

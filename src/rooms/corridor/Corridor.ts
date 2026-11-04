@@ -25,7 +25,6 @@ const landing = chunkBoxes(corridorLanding.chunks(slack), origin)
 /** Laid out around the middle of its long hall, at the height of its floor. */
 export default class Corridor extends Room {
   override readonly air = [...passage, ...flight, ...landing]
-  override readonly color = '#8c6747'
   override readonly description = 'Timber, turns and the long way back to Sienna.'
   // Each box of the passage’s, the flight’s and the landing’s air at every height, as nothing lies above or below them; it comes after the Lodge and the Sienna, which own the thresholds at either end.
   override readonly fence = new Geofence(this.air.map(box => footprint([box])))

@@ -25,7 +25,6 @@ export default class Lodge extends Room {
     // The box around the bay off the north wall.
     floorBox(lodgeBay.bounds.size, 0, lodge.height, [lodgeBay.bounds.center[0] - lodge.center[0], lodgeBay.bounds.center[1] - lodge.center[1]]),
   ]
-  override readonly color = '#936d47'
   override readonly description = 'Weathered stone. Warm timber. A way back through the corridor.'
   override readonly fence = new Geofence([
     // The room with its bay, and the doorway’s half by the Corridor, at every height, as nothing lies above or below them.

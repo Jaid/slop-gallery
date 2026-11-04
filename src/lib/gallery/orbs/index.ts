@@ -15,4 +15,3 @@ export const orbs = [halloweenOrb, horrorOrb, spookOrb, transparentOrb] as const
 export const promptOrbs = [halloweenOrb, horrorOrb, spookOrb] as const
 
 export type {default as Orb} from './base/Orb.ts'
-export type {default as PromptOrb} from './base/PromptOrb.ts'

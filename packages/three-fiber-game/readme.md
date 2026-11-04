@@ -117,7 +117,7 @@ export default function App() {
 }
 ```
 
-`WebgpuRendererOptions` excludes compatibility switches. Legacy `gl` and `flat` Canvas props are not exposed. Browser rendering requires native WebGPU in a secure context.
+`WebgpuRendererOptions` excludes compatibility switches, and Canvas’ `gl` and `flat` props are not exposed. Browser rendering requires native WebGPU in a secure context.
 
 ## Peer dependencies and bundler setup
 

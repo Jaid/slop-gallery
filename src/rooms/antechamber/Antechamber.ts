@@ -19,7 +19,6 @@ const size: FloorSize = [8, 8]
 export default class Antechamber extends Room {
   // Up to the crown of the dome.
   override readonly air = floorBox(size, 0, antechamberDomeCrownY)
-  override readonly color = '#d4be90'
   override readonly description = 'A pause between the peculiar and the profound.'
   // Everything over its floor plan from the slab up, the dome included.
   override readonly fence = new Geofence([{

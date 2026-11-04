@@ -38,10 +38,6 @@ export default class PlacedRoom<Kind extends Room = Room> {
     return [this.origin[0], this.origin[2]]
   }
 
-  get color() {
-    return this.room.color
-  }
-
   get description() {
     return this.room.description
   }
@@ -106,16 +102,6 @@ export default class PlacedRoom<Kind extends Room = Room> {
       id: this.room.globalId(id),
       position: this.toWorld(camera.position),
     })).toArray()
-  }
-
-  /** Whether the world position lies inside the room’s fence. */
-  contains(position: Vec3) {
-    return this.fence.contains(position)
-  }
-
-  /** New, still silent emitters of the room’s ambient sounds, each at its world position. */
-  createAmbience() {
-    return this.room.ambience.values().map(({emitter: Emitter, position}) => new Emitter(this.toWorld(position))).toArray()
   }
 
   /** The frame the work with the id `work` wears hanging in one of the room’s slots or arriving in the room in the game of `seed`, its own roll where the room has several, or undefined for the default frame. */

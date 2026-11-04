@@ -25,7 +25,7 @@ try {
 }
 ```
 
-For postprocessing, pass `pipeline`, a Three `RenderPipeline` owned by the same renderer. Arbitrary render callbacks and the former structural `CaptureRenderer` API have been removed. Native WebGPU is required; renderers using Three’s WebGL fallback are rejected. Initialize the renderer before capturing. The service does not own or dispose your renderer, scene or pipeline.
+For postprocessing, pass `pipeline`, a Three `RenderPipeline` owned by the same renderer. Native WebGPU is required; renderers using Three’s WebGL fallback are rejected. Initialize the renderer before capturing. The service does not own or dispose your renderer, scene or pipeline.
 
 `captureFrame` is bound to its instance and can be passed directly as a callback. Each instance lazily allocates one RGBA8 render target and resizes it to the renderer’s current physical drawing-buffer dimensions, including pixel ratio. Empty or invalid dimensions reject instead of producing a misleading image.
 

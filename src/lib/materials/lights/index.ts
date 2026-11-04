@@ -2,7 +2,6 @@ import type {NodeMaterial} from 'three/webgpu'
 
 import IndoorLightsNode from './IndoorLightsNode.ts'
 
-export {default as FilteredLightsNode} from './base/FilteredLightsNode.ts'
 export {default as IndoorLightsNode, reachesIndoors} from './IndoorLightsNode.ts'
 
 const indoors = new IndoorLightsNode

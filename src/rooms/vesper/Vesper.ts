@@ -21,7 +21,6 @@ const {size, height} = vesper
 export default class Vesper extends Room {
   // Up to the ridge of the lantern.
   override readonly air = floorBox(size, 0, vesperLanternRidgeY)
-  override readonly color = '#7b9986'
   override readonly description = 'Old masters. New misunderstandings.'
   // Everything over its floor plan from the slab up, the cove and the lantern included; it comes before the Cinnabar, so the wall they share is the Vesper’s.
   override readonly fence = new Geofence([{

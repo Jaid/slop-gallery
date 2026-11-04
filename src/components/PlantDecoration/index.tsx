@@ -24,5 +24,3 @@ export default function PlantDecoration({plant, pot, position, rotation = 0, sol
     <group position={[0, potDefinition(pot).soilHeight, 0]}><Plant kind={plant} /></group>
   </group>
 }
-
-export {type PlantKind, type PotKind} from '#src/lib/gallery/plantDecorations/catalog.ts'

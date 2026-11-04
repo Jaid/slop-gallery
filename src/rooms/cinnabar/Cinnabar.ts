@@ -20,7 +20,6 @@ export default class Cinnabar extends Room {
     // The round vestibule north of its arch, as high, where the Fortress arrives.
     floorBox([radius * 2, radius * 2], 0, 5.8, [vestibuleX - cinnabar.center[0], vestibuleZ - cinnabar.center[1]]),
   ]
-  override readonly color = '#8e2f24'
   override readonly description = 'Pompeian red, polished terrazzo and a round eye on the sky.'
   // Everything over its floor plan and its vestibule’s from the slab up, the rooflights included; the Fortress’ western mouth passes underneath, below the slab, and its curve under the vestibule. It comes before the Fortress, so the vestibule’s wall with the arch onto the approach is the Cinnabar’s.
   override readonly fence = new Geofence(this.air.map(box => ({

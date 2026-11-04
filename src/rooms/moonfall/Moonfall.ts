@@ -25,7 +25,6 @@ const bottom = craterTerrain.lowest()
 export default class Moonfall extends Room {
   // Reaches down to the deepest air in the crater.
   override readonly air = floorBox(plan.size, bottom, 5.8 - bottom)
-  override readonly color = '#264c54'
   override readonly description = 'Down the stairs. Out of the ordinary.'
   override readonly fence = new Geofence([
     // Everything under its floor plan, up to just over its ceiling; it comes before the Corridor, whose stairs climb over a corner of it.

@@ -25,7 +25,6 @@ const opening = [lobby.opening.center[0], lobby.opening.center[1] - (lobby.north
 export default class Lobby extends Room {
   // Up to the crown of the vault.
   override readonly air = floorBox(size, 0, lobbyVault.springY + lobbyVault.outerRadius)
-  override readonly color = '#c6c7ae'
   override readonly description = 'Nothing here is quite as it seems.'
   // Everything over its floor plan from the slab up, the vault and the glazed floor over the Oculus included.
   override readonly fence = new Geofence([{

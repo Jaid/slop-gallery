@@ -22,7 +22,6 @@ export default class Sienna extends Room {
     // The vestibule west of its arch, lower, where the Corridor arrives.
     floorBox(siennaVestibule.size, 0, siennaVestibule.height, [siennaVestibule.center[0] - sienna.center[0], siennaVestibule.center[1] - sienna.center[1]]),
   ]
-  override readonly color = '#674b37'
   override readonly description = 'Low light. Rich textures. Questionable company.'
   // Everything over its floor plan and its vestibule’s from the slab up; it comes before the Corridor, so the vestibule’s wall with the arch between them is the Sienna’s.
   override readonly fence = new Geofence(this.air.map(box => ({

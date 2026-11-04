@@ -14,7 +14,6 @@ import walls from './walls.ts'
 /** Lit through its skylight, without lamps of its own. */
 export default class Salon extends Room {
   override readonly air = floorBox(salon.size, 0, 5.8)
-  override readonly color = '#7d2a31'
   override readonly description = 'Hung frame to frame. Judged elbow to elbow.'
   // Everything over its floor plan from the slab up, the skylight included.
   override readonly fence = new Geofence([{

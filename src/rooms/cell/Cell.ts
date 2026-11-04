@@ -28,7 +28,6 @@ export const cellLed = {
 /** The Sandbox’s one room: a sealed hall with the Arena’s marble underfoot, papered like the Sienna under a gabled ceiling glazed with roof lights, which let in the moon, and the Sienna’s chandelier, laid out around the middle of its floor. Beyond the arch through its north wall, a short passage leads on to a round room where its layout stands a pedestal for every item it holds, upholstered in the Arena’s velvet and lit by an LED panel in the middle of its ceiling, or a door closes the arch while it holds none. */
 export default class Cell extends Room {
   override readonly air: Array<Box3>
-  override readonly color = '#5d242b'
   override readonly description = 'Nothing in it yet.'
   override readonly fence: Geofence
   /** edge length of the floor’s marble tiles, which run whole from wall to wall */
