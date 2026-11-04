@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import PedestalGeometry from '../../src/lib/gallery/PedestalGeometry.ts'
+import PedestalGeometry, {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import LimestoneMaterial from '../../src/lib/materials/LimestoneMaterial.ts'
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
@@ -30,10 +30,10 @@ afterEach(() => {
   world.free()
 })
 describe('sculpture pedestals', () => {
-  test('preserves the support height and footprint with finite, bounded geometry', () => {
+  test('keeps the support height and footprint with finite, bounded geometry', () => {
     const bounds = geometry.stone.boundingBox!
     expect(bounds.min.y).toBeCloseTo(0, 6)
-    expect(bounds.max.y).toBeCloseTo(1.35, 6)
+    expect(bounds.max.y).toBeCloseTo(pedestalHeight, 6)
     expect(bounds.getSize(new Vector3).x).toBeCloseTo(1.16, 6)
     expect(bounds.getSize(new Vector3).z).toBeCloseTo(1.16, 6)
     let triangles = 0
@@ -52,7 +52,7 @@ describe('sculpture pedestals', () => {
       }
       expect(unitNormals).toBe(true)
       expect(part.boundingBox!.min.y).toBeGreaterThanOrEqual(-1e-6)
-      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(1.350001)
+      expect(part.boundingBox!.max.y).toBeLessThanOrEqual(pedestalHeight + 1e-6)
       triangles += triangleCount(part)
       expect(part.index).not.toBeNull()
       bytes += part.index!.array.byteLength + Object.values(part.attributes).reduce((sum, attribute) => sum + attribute.array.byteLength, 0)
@@ -63,7 +63,7 @@ describe('sculpture pedestals', () => {
   test('matches visible flutes, collars, ledges and chamfers with physical collision on all four faces', () => {
     const meshes = [geometry.stone, geometry.bronze, geometry.reveals].map(part => new Mesh(part, material))
     for (let side = 0; side < 4; side++) {
-      for (const y of [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.83, 1.133, 1.16, 1.22, 1.3, 1.346]) {
+      for (const y of [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.6, 0.783, 0.81, 0.87, 0.95, 0.996]) {
         for (const x of [0.013, 0.047, 0.079, 0.141, 0.3291, 0.42, 0.466, 0.562]) {
           const origin = new Vector3(x, y, 2)
           origin.applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
@@ -87,20 +87,20 @@ describe('sculpture pedestals', () => {
     expect(depth(0.047) - depth(0)).toBeCloseTo(0.022, 5)
   })
   test('keeps a dropped sculpture resting on the cap', () => {
-    const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.8, 0))
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, pedestalHeight + 0.45, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455), body)
     for (let i = 0; i < 240; i++) {
       world.step()
     }
-    expect(body.translation().y).toBeCloseTo(1.4225, 2)
+    expect(body.translation().y).toBeCloseTo(pedestalHeight + 0.0725, 2)
     expect(Math.abs(body.linvel().y)).toBeLessThan(0.01)
   })
   test('lets go of a flat prop held into the new cap short of it, not inside it', () => {
-    const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, 1.43, 0))
+    const body = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, pedestalHeight + 0.08, 0))
     world.createCollider(RAPIER.ColliderDesc.cuboid(0.345, 0.0725, 0.455).setEnabled(false), body)
     const placement = new PropPlacement(world, body)
     world.step()
-    const position = placement.reach([0, 1.4, 1.8], [0, 1.2, 0.35])!
+    const position = placement.reach([0, pedestalHeight + 0.05, 1.8], [0, pedestalHeight - 0.15, 0.35])!
     expect(position).not.toBeNull()
     expect(placement.hasRoom(position)).toBe(true)
     expect(position[2]).toBeGreaterThan(1)
@@ -109,7 +109,7 @@ describe('sculpture pedestals', () => {
     test(`picks up a settled three-part prop from direction ${x}, ${z}, including after canceling`, () => {
       // Separate parts, not a single bounding box: a lower part spawned inside the cap
       // can settle below it and trap the whole prop.
-      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1.43, 0).setCcdEnabled(true))
+      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, pedestalHeight + 0.08, 0).setCcdEnabled(true))
       for (const [width, height, depth, y] of [[0.64, 0.095, 0.86, 0], [0.69, 0.025, 0.91, -0.06], [0.69, 0.025, 0.91, 0.06]] as const) {
         world.createCollider(RAPIER.ColliderDesc.cuboid(width / 2, height / 2, depth / 2).setTranslation(0, y, 0).setFriction(0.8).setRestitution(0.32), body)
       }
@@ -120,7 +120,7 @@ describe('sculpture pedestals', () => {
         world.step()
       }
       expect(body.isSleeping()).toBe(true)
-      expect(body.translation().y).toBeCloseTo(1.4225, 2)
+      expect(body.translation().y).toBeCloseTo(pedestalHeight + 0.0725, 2)
       const resting = body.translation()
       for (let attempt = 0; attempt < 2; attempt++) {
         expect(controller.grab()).toBe(true)
@@ -130,7 +130,7 @@ describe('sculpture pedestals', () => {
           expect(body.translation()).toEqual(resting)
         } else {
           // Held level toward the pedestal’s middle, it comes to rest against the cap’s edge.
-          expect(controller.release([x * 1.8, 1.4, z * 1.8], [x * 0.35, 1.4, z * 0.35], true)).toBe(false)
+          expect(controller.release([x * 1.8, pedestalHeight + 0.05, z * 1.8], [x * 0.35, pedestalHeight + 0.05, z * 0.35], true)).toBe(false)
           const released = body.translation()
           expect(Math.hypot(released.x - resting.x, released.z - resting.z)).toBeGreaterThan(0.8)
           expect(controller.placement.hasRoom([released.x, released.y, released.z])).toBe(true)

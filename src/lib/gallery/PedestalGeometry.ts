@@ -62,27 +62,28 @@ function block(width: number, bottom: number, top: number, bevel: number, fluted
 }
 
 /** how high a pedestal’s cap stands over its foot, which whatever it carries rests on */
-export const pedestalHeight = 1.35
+export const pedestalHeight = 1
+/** where the fluted shaft ends under the upper collar, which with the cap’s moldings above it takes the top 23 cm */
+const shaftTop = pedestalHeight - 0.23
 
 /** A fluted stone plinth with a stepped foot, recessed collars and a beveled cap. */
 export default class PedestalGeometry {
   readonly bronze = mergeParts([
     block(0.974, 0.232, 0.242, 0.002),
-    block(0.974, 1.128, 1.138, 0.002),
+    block(0.974, shaftTop + 0.008, shaftTop + 0.018, 0.002),
   ])
   readonly reveals = mergeParts([
     block(0.94, 0.23, 0.25, 0.002),
-    block(0.94, 1.12, 1.14, 0.002),
+    block(0.94, shaftTop, shaftTop + 0.02, 0.002),
   ])
-  // Preserve the original 1.16 m footprint and 1.35 m sculpture support height.
   readonly stone = mergeParts([
     block(1.16, 0, 0.105, 0.012),
     block(1.09, 0.105, 0.185, 0.018),
     block(1.01, 0.185, 0.23, 0.007),
-    block(0.96, 0.25, 1.12, 0.005, true),
-    block(1.01, 1.14, 1.19, 0.007),
-    block(1.085, 1.19, 1.255, 0.014),
-    block(1.16, 1.255, pedestalHeight, 0.012),
+    block(0.96, 0.25, shaftTop, 0.005, true),
+    block(1.01, shaftTop + 0.02, shaftTop + 0.07, 0.007),
+    block(1.085, shaftTop + 0.07, shaftTop + 0.135, 0.014),
+    block(1.16, shaftTop + 0.135, pedestalHeight, 0.012),
   ])
   // Fixed concave colliders follow the actual flutes, ledges and beveled edges.
   readonly collision = [this.stone, this.bronze, this.reveals].map(colliderGeometry)
