@@ -3,7 +3,7 @@ import {afterEach, beforeEach, describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import PedestalGeometry, {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
+import PedestalGeometry, {pedestalHeight, pedestalScale} from '../../src/lib/gallery/PedestalGeometry.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 import LimestoneMaterial from '../../src/lib/materials/LimestoneMaterial.ts'
 import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
@@ -13,6 +13,8 @@ await RAPIER.init()
 let geometry: PedestalGeometry
 let world: RAPIER.World
 const material = new MeshBasicMaterial
+/** how far the cap reaches out from the pedestal’s axis */
+const capReach = 1.16 / 2 * pedestalScale
 beforeEach(() => {
   geometry = new PedestalGeometry
   world = new RAPIER.World({
@@ -34,8 +36,8 @@ describe('sculpture pedestals', () => {
     const bounds = geometry.stone.boundingBox!
     expect(bounds.min.y).toBeCloseTo(0, 6)
     expect(bounds.max.y).toBeCloseTo(pedestalHeight, 6)
-    expect(bounds.getSize(new Vector3).x).toBeCloseTo(1.16, 6)
-    expect(bounds.getSize(new Vector3).z).toBeCloseTo(1.16, 6)
+    expect(bounds.getSize(new Vector3).x).toBeCloseTo(1.16 * pedestalScale, 6)
+    expect(bounds.getSize(new Vector3).z).toBeCloseTo(1.16 * pedestalScale, 6)
     let triangles = 0
     let bytes = 0
     for (const part of [geometry.stone, geometry.bronze, geometry.reveals]) {
@@ -62,9 +64,12 @@ describe('sculpture pedestals', () => {
   })
   test('matches visible flutes, collars, ledges and chamfers with physical collision on all four faces', () => {
     const meshes = [geometry.stone, geometry.bronze, geometry.reveals].map(part => new Mesh(part, material))
+    const heights = [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.83, 1.133, 1.16, 1.22, 1.3, 1.346].map(measured => measured * pedestalScale)
+    // Just off a flute’s bottom and its end: a ray exactly along a trimesh edge can slip past Rapier.
+    const offsets = [0.013, 0.048, 0.078, 0.141, 0.3291, 0.42, 0.466, 0.562].map(measured => measured * pedestalScale)
     for (let side = 0; side < 4; side++) {
-      for (const y of [0.004, 0.053, 0.12, 0.2, 0.237, 0.247, 0.4, 0.6, 0.783, 0.81, 0.87, 0.95, 0.996]) {
-        for (const x of [0.013, 0.047, 0.079, 0.141, 0.3291, 0.42, 0.466, 0.562]) {
+      for (const y of heights) {
+        for (const x of offsets) {
           const origin = new Vector3(x, y, 2)
           origin.applyAxisAngle(new Vector3(0, 1, 0), side * Math.PI / 2)
           const direction = new Vector3(0, 0, -1)
@@ -81,10 +86,10 @@ describe('sculpture pedestals', () => {
     }
     const stone = meshes[0]
     const depth = (x: number) => {
-      const fluteProbe = new Raycaster(new Vector3(x, 0.7, 2), new Vector3(0, 0, -1))
+      const fluteProbe = new Raycaster(new Vector3(x * pedestalScale, 0.7, 2), new Vector3(0, 0, -1))
       return fluteProbe.intersectObject(stone)[0].distance
     }
-    expect(depth(0.047) - depth(0)).toBeCloseTo(0.022, 5)
+    expect(depth(0.047) - depth(0)).toBeCloseTo(0.022 * pedestalScale, 5)
   })
   test('keeps a dropped sculpture resting on the cap', () => {
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0, pedestalHeight + 0.45, 0))
@@ -103,7 +108,7 @@ describe('sculpture pedestals', () => {
     const position = placement.reach([0, pedestalHeight + 0.05, 1.8], [0, pedestalHeight - 0.15, 0.35])!
     expect(position).not.toBeNull()
     expect(placement.hasRoom(position)).toBe(true)
-    expect(position[2]).toBeGreaterThan(1)
+    expect(position[2]).toBeGreaterThan(capReach + 0.455)
   })
   for (const [x, z] of [[0, 1], [0, -1], [1, 0], [-1, 0], [-0.96, 0.28]] as const) {
     test(`picks up a settled three-part prop from direction ${x}, ${z}, including after canceling`, () => {
@@ -132,7 +137,7 @@ describe('sculpture pedestals', () => {
           // Held level toward the pedestal’s middle, it comes to rest against the cap’s edge.
           expect(controller.release([x * 1.8, pedestalHeight + 0.05, z * 1.8], [x * 0.35, pedestalHeight + 0.05, z * 0.35], true)).toBe(false)
           const released = body.translation()
-          expect(Math.hypot(released.x - resting.x, released.z - resting.z)).toBeGreaterThan(0.8)
+          expect(Math.hypot(released.x - resting.x, released.z - resting.z)).toBeGreaterThan(capReach + 0.345)
           expect(controller.placement.hasRoom([released.x, released.y, released.z])).toBe(true)
           expect(body.isDynamic()).toBe(true)
           expect(body.linvel().y).toBe(2)
