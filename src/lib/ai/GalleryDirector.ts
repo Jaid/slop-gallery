@@ -154,7 +154,6 @@ export default class GalleryDirector {
       latches: recipe.latches,
       effects: recipe.effects,
     }, recipe)
-    notify(this.usingAi ? 'The alchemy is underway. Both originals stay safe until it succeeds.' : 'A local collage is taking shape. No AI and no upload.')
     try {
       await this.brew(a, fusion, recipe, current, {
         canceled: 'You canceled the fusion. Both originals are still here.',
