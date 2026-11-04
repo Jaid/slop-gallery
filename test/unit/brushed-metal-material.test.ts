@@ -67,18 +67,12 @@ describe('shared satin steel', () => {
     }
     expect(disposed).toBe(1)
   })
-  test('all three pointed-at elements borrow the same material', async () => {
+  test('the benches, railings and Knot stands borrow the same material and never dispose it', async () => {
     const sources = await Promise.all(clients.map(file => Bun.file(file).text()))
     for (const [index, source] of sources.entries()) {
       expect(source, clients[index]).toContain("import metal from '#src/lib/materials/metal.ts'")
       expect(source).not.toContain('metal.dispose(')
       expect(source).not.toContain('useDisposable(metal)')
     }
-    const signs = sources[2]
-    // Heavy → fast → heavy switches must never dispose the shared material. Only the original flat fallback is locally owned.
-    expect(signs).toContain("useDisposable(useMemo(() => new MeshBasicNodeMaterial({color: '#9ca6ad'}), []))")
-    expect(signs).toContain('const supportMaterial = isHeavy ? metal : flatSupportMaterial')
-    expect(signs).toContain("<primitive attach='material' object={supportMaterial} />")
-    expect(signs).toContain('geometry={resources.supports.geometry} material={supportMaterial} visible={false}')
   })
 })

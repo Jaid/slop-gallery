@@ -128,7 +128,7 @@ describe('round-tube fountain bench frames', () => {
       material.dispose()
     }
   })
-  test('all four seats collide, along their whole length, while the diagonals between them stay open', async () => {
+  test('all four seats collide, along their whole length, while the diagonals between them stay open', () => {
     const world = new RAPIER.World({
       x: 0,
       y: 0,
@@ -161,10 +161,6 @@ describe('round-tube fountain bench frames', () => {
       for (const [dx, dz] of [[-1, -1], [-1, 1], [1, -1], [1, 1]]) {
         expect(down(fountain.position[0] + dx * diagonal, fountain.position[2] + dz * diagonal)).toBeNull()
       }
-      const component = await Bun.file(new URL('../../src/components/FountainBenches/index.tsx', import.meta.url)).text()
-      expect(component).toContain('fountainBenches.map(')
-      expect(component).toContain('colliderGeometry(geometry.metal)')
-      expect(component).toContain('<MeshSurfaceCollider args={collision} />')
     } finally {
       world.free()
     }

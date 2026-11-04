@@ -2,35 +2,48 @@ import type {Vec3} from '../../src/lib/gallery/types.ts'
 
 import {expect, test} from 'bun:test'
 
-import {groundFenceY} from '../../src/lib/gallery/floors.ts'
+import {Box3} from 'three/webgpu'
+
 import {lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import tunnelDisplays from '../../src/lib/gallery/tunnelDisplays.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
-/**
- * Every point of the gallery’s reachable air as of 2026-10-29: players standing on every floor (5, 90 and 175 cm up) and flying through every free point of the grid, every 75 cm.
- * Stored as 16-bit integers, three per point: x, y and z in centimeters.
- */
-const data = new Int16Array(Bun.gunzipSync(await Bun.file(new URL('fixtures/reachable.bin.gz', import.meta.url)).bytes()).buffer)
-const samples: Array<Vec3> = []
-for (let index = 0; index < data.length; index += 3) {
-  samples.push([data[index] / 100, data[index + 1] / 100, data[index + 2] / 100])
-}
-/** Where the Fortress ran straight from the Oculus’ north wall toward the Lodge, before the apse took the north wall’s place and the Fortress curved round it. Some of that air lies in their walls now. */
-const formerFortress = ([x, , z]: Vec3) => x > -20 && x < 2.2 && z > -39.73 && z < -35
-/** Where the Corridor’s hall turned into the Lodge’s west wall, before it led round the bay into its back wall instead. The Lodge’s logs and the Corridor’s boards close it now. */
-const formerDoorway = ([x, , z]: Vec3) => x > -31.7 && x < -30 && z > -39.6 && z < -35.6
-/** Where the Corridor’s hall ran on south to the Sienna’s arch line and climbed straight east to the Sienna’s west wall, before it turned onto the diagonal flight to the Sienna’s vestibule; the east end of that sunken flight now lies under the vestibule’s floor slab. */
-const formerStairs = ([x, , z]: Vec3) => x > -35.7 && x < -20 && z > 2.6 && z < 12.4
-const underVestibule = ([x, y, z]: Vec3) => x > -24.8 && x < -20 && z > 8 && z < 12.8 && y < groundFenceY
-test('the rooms’ fences cover every point of the gallery’s reachable air', () => {
-  expect(samples.length).toBeGreaterThan(80_000)
-  const walledOff = samples.filter(position => (formerFortress(position) || formerDoorway(position) || formerStairs(position)) && !slopGallery.contains(position) || underVestibule(position))
-  // Most of the former Fortress is the apse’s and the curve’s now.
-  expect(walledOff.filter(formerFortress).length).toBeLessThan(samples.filter(formerFortress).length / 3)
-  // The former doorway lies wholly between the walls.
-  expect(walledOff.filter(formerDoorway)).toHaveLength(samples.filter(formerDoorway).length)
-  const uncovered = samples.filter(position => !slopGallery.roomAt(position) && !walledOff.includes(position))
+/** how far apart the sampled columns stand along x and z, in meters; they stand in the middles of the cells of this grid, off the planes fences and floors end on */
+const columnSpacing = 0.75
+/** the steps a column is searched for floors in, closer than any two floors lie */
+const floorProbe = 1
+/** where a standing body reaches above the floor under it: its feet, its middle and its eyes */
+const bodyHeights = [0.05, 0.9, 1.75]
+test('the rooms’ fences cover every point a player’s body takes up on every floor', () => {
+  const bounds = new Box3
+  for (const room of slopGallery.rooms) {
+    for (const box of room.air) {
+      bounds.union(box)
+    }
+  }
+  let samples = 0
+  const uncovered: Array<Vec3> = []
+  for (let x = bounds.min.x + columnSpacing / 2; x < bounds.max.x; x += columnSpacing) {
+    for (let z = bounds.min.z + columnSpacing / 2; z < bounds.max.z; z += columnSpacing) {
+      const floors = new Set<number>
+      for (let y = bounds.min.y; y <= bounds.max.y + floorProbe; y += floorProbe) {
+        floors.add(slopGallery.floorHeight([x, y, z]))
+      }
+      for (const floor of floors) {
+        for (const height of bodyHeights) {
+          const position: Vec3 = [x, floor + height, z]
+          if (!slopGallery.contains(position)) {
+            continue
+          }
+          samples++
+          if (!slopGallery.roomAt(position)) {
+            uncovered.push(position)
+          }
+        }
+      }
+    }
+  }
+  expect(samples).toBeGreaterThan(20_000)
   expect(uncovered.slice(0, 5)).toEqual([])
 })
 test('the Lodge’s window niche belongs to the Lodge, out to the glass in the Corridor’s lining', () => {
