@@ -33,10 +33,11 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
     heading.current?.focus({preventScroll: true})
   }, [])
   if (intro) {
-    const [titleStart, ...titleRest] = world.title.split(' ')
     return <section className={clsx(css.container, css.intro)} aria-labelledby='menu-title' data-stage={stage} data-testid='menu-overlay'>
-      {/* The icon in the middle of the screen, between the title’s first word and the rest */}
-      <h1 id='menu-title' className={css.title} tabIndex={-1} ref={heading}><span className={css.titleStart}>{titleStart}</span><span className={css.space}> </span><img className={css.logo} alt='' height={128} src={icon} width={128} /><span className={css.titleEnd}>{titleRest.join(' ')}</span></h1>
+      <header className={css.header}>
+        <img className={css.logo} alt='' height={128} src={icon} width={128} />
+        <h1 id='menu-title' tabIndex={-1} ref={heading}>{world.title}</h1>
+      </header>
       <div className={css.actions}>
         <div className={css.play}>
           <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}</button>
