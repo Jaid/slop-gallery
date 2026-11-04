@@ -7,7 +7,7 @@ import {Euler} from 'three/webgpu'
 
 import {AnimationClock} from '#src/lib/frozenTime.ts'
 import {galleryEvents, setCameraFocused} from '#src/lib/gallery.ts'
-import {endIntro, introDirection} from '#src/lib/gallery/intro.ts'
+import {endIntro, hearIntro, introDirection} from '#src/lib/gallery/intro.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 
@@ -15,7 +15,7 @@ import pauseMenu from '#src/lib/pauseMenu.ts'
 const maxDelta = 0.1
 
 /**
- * Circles the camera on the world’s intro orbit while the first menu shows, one turn a minute, which way the game’s seed decides. Once the player enters, the player stands with its eyes right where the camera was, looking the same way, and falls from there.
+ * Circles the camera on the world’s intro orbit while the first menu shows, one turn a minute, which way the game’s seed decides, with every sound of the world heard from it. Once the player enters, the player stands with its eyes right where the camera was, looking the same way, and falls from there.
  *
  * Mount it after the Player: the player’s own spawn releases the camera on mounting, and the player writes the camera before this does every frame.
  */
@@ -24,6 +24,7 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
   const [clock] = useState(() => new AnimationClock(maxDelta))
   const [rotation] = useState(() => new Euler(0, 0, 0, 'YXZ'))
   const [direction] = useState(() => introDirection(environmentSeed))
+  useEffect(hearIntro, [])
   useEffect(() => {
     setCameraFocused(true)
     const enter = () => {
