@@ -2,11 +2,12 @@ import {afterEach, expect, test} from 'bun:test'
 
 import aimDot from '../../src/lib/aimDot.ts'
 import interactionHint from '../../src/lib/interactionHint.ts'
-import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, setInspectionFocus, setPlayerZoom} from '../../src/lib/rendering/playerView.ts'
+import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getTiltShift, setInspectionFocus, setIntroBlur, setPlayerZoom} from '../../src/lib/rendering/playerView.ts'
 
 afterEach(() => {
   setInspectionFocus(0, 1, 0)
   setPlayerZoom(0)
+  setIntroBlur(0)
   interactionHint.update(null, 0, true)
 })
 test('Knot focus clamps blur amount and proximity and retains only valid positive focus distances', () => {
@@ -59,4 +60,16 @@ test('inspection focus keeps its blur factor until another one is given', () => 
   expect(getInspectionFocusBlur()).toBe(2)
   setInspectionFocus(0, 1, 0, 1)
   expect(getInspectionFocusBlur()).toBe(1)
+})
+test('the tilt-shift follows the zoom or the intro, whichever blurs more, and the intro leaves the aim dot alone', () => {
+  setIntroBlur(2)
+  expect(getTiltShift()).toBe(1)
+  expect(aimDot.getSnapshot()).toBe(true)
+  setIntroBlur(0.4)
+  setPlayerZoom(0.6)
+  expect(getTiltShift()).toBe(0.6)
+  setPlayerZoom(0.2)
+  expect(getTiltShift()).toBe(0.4)
+  setIntroBlur(0)
+  expect(getTiltShift()).toBe(0.2)
 })
