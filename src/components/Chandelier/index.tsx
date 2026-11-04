@@ -8,8 +8,8 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
 
 import ChandelierGeometry from '#src/lib/gallery/ChandelierGeometry.ts'
-import BrassMaterial from '#src/lib/materials/BrassMaterial.ts'
 import CandleFlameMaterial from '#src/lib/materials/CandleFlameMaterial.ts'
+import HammeredBrassMaterial from '#src/lib/materials/HammeredBrassMaterial.ts'
 import {chandelierCanopyTop, chandelierLampY, chandelierPhysics, chandelierRod, chandelierStemCenter, chandelierStemHalfHeight} from '#src/lib/physics/chandelier.ts'
 import {useLamp} from '#src/lib/rendering/lamps.ts'
 
@@ -27,7 +27,7 @@ export default function Chandelier({lamp: lampId, rod = 0}: {
   const fixture = useRef<RapierRigidBody>(null!)
   const pivot: [number, number, number] = rod > 0 ? [0, chandelierCanopyTop + rod, 0] : chandelierPhysics.anchor
   useSphericalJoint(anchor, fixture, [[0, 0, 0], pivot])
-  const brass = useDisposable(useMemo(() => new BrassMaterial, []))
+  const brass = useDisposable(useMemo(() => new HammeredBrassMaterial, []))
   const flame = useDisposable(useMemo(() => new CandleFlameMaterial, []))
   const geometry = useDisposable(useMemo(() => new ChandelierGeometry({rod}), [rod]))
   const source = useRef<Object3D>(null)

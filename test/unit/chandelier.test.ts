@@ -4,9 +4,27 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Quaternion, Vector3} from 'three/webgpu'
 
 import ChandelierGeometry from '../../src/lib/gallery/ChandelierGeometry.ts'
+import HammeredBrassMaterial from '../../src/lib/materials/HammeredBrassMaterial.ts'
 import {chandelierCanopyTop, chandelierPhysics, chandelierRod} from '../../src/lib/physics/chandelier.ts'
 
 await RAPIER.init()
+test('the chandelier keeps its polished-brass base but adds hammering and patina', async () => {
+  const material = new HammeredBrassMaterial
+  try {
+    expect(material.name).toBe('Hammered antique brass')
+    expect(material.metalness).toBe(1)
+    expect(material.metalnessNode).not.toBeNull()
+    expect(material.colorNode).not.toBeNull()
+    expect(material.roughnessNode).not.toBeNull()
+    expect(material.normalNode).not.toBeNull()
+    expect(material.envMap).not.toBeNull()
+  } finally {
+    material.dispose()
+  }
+  const source = await Bun.file('src/components/Chandelier/index.tsx').text()
+  expect(source).toContain("import HammeredBrassMaterial from '#src/lib/materials/HammeredBrassMaterial.ts'")
+  expect(source).toContain('new HammeredBrassMaterial')
+})
 /** How far a projectile of `mass` swings the fixture out at most, hung from its canopy or from a rod `rod` meters long over it, and, with `canopy`, how far its canopy moves sideways at most, checking that it settles within `settle` seconds. */
 function simulate(mass: number, miss = false, fixture = chandelierPhysics, {canopy, rod = 0, settle = 45}: {
   canopy?: {
