@@ -27,13 +27,6 @@ import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
-/** Polished hard like the Banquet’s marble, so the red walls and the skylight mirror clearly in it. */
-const polish = {
-  strength: 0.4,
-  grazingStrength: 0.2,
-  loss: 0,
-  roughness: 0.1,
-} as const
 
 /** The Salon: walls frescoed in Pompeian red over a black socle and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
 export default function SalonRoom({glass, stone, wood}: {
@@ -64,7 +57,7 @@ export default function SalonRoom({glass, stone, wood}: {
     border: blackTerrazzo,
     inset: salonTerrazzo.border,
     reflections: floorReflections,
-    ...polish,
+    ...salonTerrazzo.polish,
   }), [floorReflections]))
   const floor = useMemo(() => ({
     slab: terrazzo,

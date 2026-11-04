@@ -127,7 +127,7 @@ describe('the Salon', () => {
       }
     }
   })
-  test('its terrazzo builds its surface nodes, polished as hard as the Banquet’s marble, its border on the brass inlays’ line', () => {
+  test('its terrazzo builds its surface nodes, polished hard but mirroring half as strongly as the Banquet’s marble, its border on the brass inlays’ line', () => {
     for (const reflections of [true, false]) {
       const floor = new TerrazzoFloorMaterial({
         center: room.center,
@@ -154,15 +154,13 @@ describe('the Salon', () => {
       border: blackTerrazzo,
       inset: salonTerrazzo.border,
       reflections: true,
-      strength: 0.4,
-      grazingStrength: 0.2,
-      loss: 0,
-      roughness: 0.1,
+      ...salonTerrazzo.polish,
     })
     try {
       expect(polished.reflection).not.toBeNull()
       expect(polished.reflectionTarget).not.toBeNull()
       expect(polished.roughness).toBe(0.1)
+      expect(salonTerrazzo.polish.strength).toBe(0.2)
     } finally {
       polished.dispose()
     }

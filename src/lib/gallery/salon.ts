@@ -97,6 +97,13 @@ export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonB
 export const salonTerrazzo = {
   /** how far from the walls’ center lines the border reaches in, on the inlays’ line */
   border: 1.25,
+  /** polished hard, so the red walls and the skylight mirror clearly in it, though only half as strongly as in the Banquet’s marble */
+  polish: {
+    strength: 0.2,
+    grazingStrength: 0.1,
+    loss: 0,
+    roughness: 0.1,
+  },
 } as const
 
 /** where a sculpture pedestal stands on the floor, on the room’s axis, centered on the line of the glass wall’s north end */
