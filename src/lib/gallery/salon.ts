@@ -77,9 +77,9 @@ export function wainscotFields(start: number, end: number) {
   return Array.from({length: count}, (_, i) => [start + pitch * (i + 0.5), pitch - margin * 2] as const).filter(([, width]) => width > 0.1)
 }
 
-/** A double-sided velvet ottoman, centered a little south of the room center so it faces the north wall from a distance. */
+/** A double-sided velvet ottoman on the room’s axis, centered on the line of the glass wall’s south end, facing the pedestal on the line of its north end. */
 export const salonBench = {
-  position: [salon.center[0], 0, salon.center[1] + 0.8] as Vec3,
+  position: [salon.center[0], 0, salonWindow.z + salonWindow.width / 2] as Vec3,
   width: 3.2,
   depth: 0.9,
   legHeight: 0.28,
@@ -99,8 +99,8 @@ export const salonTerrazzo = {
   border: 1.25,
 } as const
 
-/** where a sculpture pedestal stands on the floor, on the room’s axis in its north half, between the ottoman and the north wall */
-export const salonPedestal: Vec3 = [salon.center[0], 0, salon.center[1] - 5]
+/** where a sculpture pedestal stands on the floor, on the room’s axis, centered on the line of the glass wall’s north end */
+export const salonPedestal: Vec3 = [salon.center[0], 0, salonWindow.z - salonWindow.width / 2]
 
 /**
  * Wall-local u ranges a horizontal band of wall dressing can run along without crossing a walk-through opening or its trim.
