@@ -12,6 +12,7 @@ import SiennaWainscot from '#component/SiennaWainscot'
 import Box from '#src/components/Scene/primitives.tsx'
 import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
 import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaCeilingPlanks, siennaRugSize, siennaRugThickness, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern} from '#src/lib/gallery/sienna.ts'
+import rugFringeGeometry from '#src/lib/gallery/sienna/RugFringeGeometry.ts'
 import PersianRugMaterial from '#src/lib/materials/PersianRugMaterial.ts'
 import PlankFloorMaterial from '#src/lib/materials/PlankFloorMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
@@ -36,6 +37,7 @@ export default function SiennaRoom({joinery}: {
   const floor = useDisposable(useMemo(() => new PlankFloorMaterial(undefined, false), []))
   const ceiling = useDisposable(useMemo(() => new PlankMaterial(siennaCeilingPlanks), []))
   const rug = useDisposable(useMemo(() => new PersianRugMaterial(siennaRugSize), []))
+  const fringe = useDisposable(useMemo(() => rugFringeGeometry(...siennaRugSize), []))
   const reflection = floor.reflectionTarget
   const [vestibuleWidth, vestibuleDepth] = siennaVestibule.size
   return <>
@@ -54,6 +56,9 @@ export default function SiennaRoom({joinery}: {
       {siennaCeilingBeamOffsets(room.size[0]).map(x => <Box key={x} material={joinery.z} name='sienna-ceiling-beam' position={[x, siennaCeilingBeamY(room.height), 0]} size={[siennaCeilingBeam.width, siennaCeilingBeam.height, room.size[1]]} />)}
       <mesh material={rug} name='sienna-carpet' position={[0, siennaRugThickness / 2, 0]} receiveShadow>
         <boxGeometry args={[siennaRugSize[0], siennaRugThickness, siennaRugSize[1]]} />
+      </mesh>
+      <mesh geometry={fringe} name='sienna-carpet-fringe' position={[0, 0.004, 0]} receiveShadow>
+        <meshStandardNodeMaterial color='#b9a888' roughness={0.92} />
       </mesh>
       <Chandelier lamp='sienna-chandelier' />
     </group>
