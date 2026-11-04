@@ -210,7 +210,7 @@ test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in v
         setParams: () => {},
       }),
     }))
-    expect(html).toMatch(/<h1[^>]*><span[^>]*>Slop<\/span> <img[^>]*> <span[^>]*>Gallery<\/span><\/h1>/u)
+    expect(html).toMatch(/<h1[^>]*><span[^>]*>Slop<\/span><span[^>]*> <\/span><img[^>]*><span[^>]*>Gallery<\/span><\/h1>/u)
     expect(html).toMatch(/id="enter-gallery"[^>]*>Play</u)
     expect(html).toContain('Mute audio')
     expect(html).toContain('Heavy graphics')

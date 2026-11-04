@@ -67,23 +67,32 @@
     &:focus
       outline: none
 
-// The icon in a narrow middle column, the words leaning on it from both sides
+// The icon in the middle of the screen, the words leaning on it from both sides. All of it inline, as grid or flex items would copy as lines of their own: selected and copied, the title reads as its words with one space between them.
 .title
-  display: grid
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)
-  align-items: center
   align-self: stretch
-  gap: 0.35em
+  white-space: nowrap
+  user-select: text
+
+// Each half of the width, less half the icon and its margin
+.titleStart, .titleEnd
+  display: inline-block
+  width: calc(50% - 1em)
 
 .titleStart
-  justify-self: end
+  text-align: end
 
 .titleEnd
-  justify-self: start
+  text-align: start
+
+// the space between the words, which only copying sees
+.space
+  font-size: 0
 
 .logo
   width: 1.3em
   height: auto
+  margin-inline: 0.35em
+  vertical-align: middle
   filter: drop-shadow(0 4px 16px rgb(0 0 0 / 50%))
 
 // Play (and New game) above the settings, both rows as wide as the wider one, their buttons sharing it evenly
