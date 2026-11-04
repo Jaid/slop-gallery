@@ -24,8 +24,8 @@ export const salonKnotHeight = 1
 /** the Knots that stand at the Salon’s size without sinking visibly into the pedestal: those whose shader pushes their surface out no further than a standing Knot may sink */
 export const salonKnots = knots.filter(knot => (knot.displacement ?? 0) * salonKnotHeight / knotStandingHeight <= standingKnotSink)
 
-const [signX, signZ] = [17, -23]
-/** the Knot’s nameplate on its stand, out on the floor between the pedestal and the ottoman, east of the room’s axis, facing the ottoman */
+const [signX, signZ] = [17, -21.6]
+/** the Knot’s nameplate on its stand, out on the floor near the ottoman, east of the room’s axis, facing the ottoman */
 export const salonKnotSign = {
   position: [signX, knotSign.elevation, signZ] as Vec3,
   // Facing +z at no rotation, turned toward the ottoman’s middle.
