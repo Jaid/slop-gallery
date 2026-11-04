@@ -67,12 +67,19 @@
     &:focus
       outline: none
 
+// The icon in a narrow middle column, the words leaning on it from both sides
 .title
-  display: flex
-  flex-wrap: wrap
+  display: grid
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr)
   align-items: center
-  justify-content: center
+  align-self: stretch
   gap: 0.35em
+
+.titleStart
+  justify-self: end
+
+.titleEnd
+  justify-self: start
 
 .logo
   width: 1.3em
