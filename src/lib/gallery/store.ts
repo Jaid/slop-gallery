@@ -1,4 +1,4 @@
-import type {NarrationState, Placement, Portrait, Vec3} from './types.ts'
+import type {FusionRemains, NarrationState, Placement, Portrait, Vec3} from './types.ts'
 
 import {create} from 'zustand'
 
@@ -39,6 +39,8 @@ type State = {
   placement: Placement | null
   portraits: Array<Portrait>
   ready: boolean
+  /** what fusions leave of the props they use up, like the clear glass of themed orbs, from the moment their portals open */
+  remains: ReadonlyArray<FusionRemains>
   remove: (id: string) => void
   revision: number
   /** the id of the room of the current world the player is in, or was in last when in a passage */
@@ -53,6 +55,7 @@ export const useGallery = create<State>((set, get) => ({
   activeLabel: null,
   held: null,
   consumed: [],
+  remains: [],
   locked: false,
   ready: false,
   dragging: false,

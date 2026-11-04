@@ -3,9 +3,10 @@ import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
 
 import {environmentPick, environmentSample} from '../../../environmentSeed.ts'
+import {transparentOrb} from '../transparent/TransparentOrb.ts'
 import Orb from './Orb.ts'
 
-/** An orb filled with a scene of its own, which contributes its prompt as an instruction and its frame to the fusion of a portrait it is thrown into, while the fusion’s portal shows its photograph, which lies in the orb’s folder. */
+/** An orb filled with a scene of its own, which contributes its prompt as an instruction and its frame to the fusion of a portrait it is thrown into, while the fusion’s portal shows its photograph, which lies in the orb’s folder. A success empties it of its scene, and its clear glass flips back out of the portal as a Transparent Orb. */
 export default abstract class PromptOrb extends Orb {
   /** how many of its adjectives a prompt may name, one of which the environment seed picks */
   readonly adjectiveCounts: ReadonlyArray<number> = [3, 4, 5]
@@ -24,6 +25,8 @@ export default abstract class PromptOrb extends Orb {
   abstract readonly photo: string
   /** the opening sentence of the prompt, which sets the scene for the image model */
   abstract readonly premise: string
+  /** the clear glass the orb leaves once a success emptied it */
+  override readonly remains = transparentOrb
 
   /** The orb contributes its prompt as an instruction, its frame and its effect, if it has one, and shows in the portal by its glow and its photograph. */
   override ingredient(seed: number): ItemIngredient {

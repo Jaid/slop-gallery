@@ -17,20 +17,23 @@ import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 
 import {propObjects} from '../Scene/GrabbableProp.tsx'
 
-type Satellite = {
-  body: RapierRigidBody
-  /** whether the fusion used it up, which leaves it to vanish with its prop */
-  consumed?: boolean
+/** something the portal holds and moves by the group inside its rigid body’s object, while its body is out of the physics */
+type Held = {
   /** the group inside its rigid body’s object, which the fusion moves */
   group: Object3D
   id: string
-  kind: 'portrait' | 'prop' | 'work'
-  orbit: SatelliteOrbit
   /** where it is this frame, in the world */
   pose: SatellitePose
   /** seconds into the fusion that it was handed back, after which it grows back to its size, from `releasedScale` */
   released?: number
   releasedScale: number
+}
+type Satellite = Held & {
+  body: RapierRigidBody
+  /** whether the fusion used it up, which leaves it to vanish with its prop */
+  consumed?: boolean
+  kind: 'portrait' | 'prop' | 'work'
+  orbit: SatelliteOrbit
 }
 
 /** seconds a satellite takes to grow back to its size once it is handed back */
@@ -39,6 +42,8 @@ const regrowth = 0.4
 const propSize = 0.6
 /** seconds after the result that the portal spits a prop back out, once the result has risen clear of where the prop appears */
 const spitDelay = 0.35
+/** the angular velocity a prop spat out of the portal tumbles off with, in radians per second around the world axes */
+const spitSpin: Vec3 = [4, 3, 2]
 const holderInverse = new Matrix4
 const matrix = new Matrix4
 const scaleVector = new Vector3
@@ -66,23 +71,42 @@ const tumbleAxis = (id: string) => {
   const axis = new Vector3(Math.cos(turn), 0.8, Math.sin(turn))
   return axis.normalize()
 }
+/** Grows what the portal handed back to its size, from the scale it had then, overshooting a little. */
+function regrow({group, released = 0, releasedScale}: Held, elapsed: number) {
+  group.scale.setScalar(releasedScale + (1 - releasedScale) * easeOutBack(clamp((elapsed - released) / regrowth, 0, 1)))
+}
 
 /**
  * The work and what was thrown into it while they orbit a fusion’s portal. The fusion moves each by the group inside its rigid body’s object, whose body is out of the physics meanwhile, and hands it back when it is done with it.
  * The work returns to its wall when the fusion fails or is aborted and flips out of the portal as the result otherwise; a loose work thrown into it is spat out on failure and consumed on success; a prop is spat back out, unless a success consumes it, like an orb.
+ * What a success leaves of a prop it consumes, like a themed orb’s clear glass, the portal holds hidden in its middle from the moment it enters the world, and spits it out after the result in the prop’s stead.
  */
 export default class Satellites {
   /** where each satellite is in the world this frame, by its orbit’s index, for the tethers and the trails; empty once it is handed back */
   readonly centers: Array<Vector3 | undefined> = []
   private readonly fusion: Fusion
   private list?: Array<Satellite>
+  /** what a success leaves of the prop it consumes, once it entered the world */
+  private remains?: Held
 
   constructor(fusion: Fusion) {
     this.fusion = fusion
   }
 
-  /** Hands back whatever is still held: the work snaps back to its wall, the rest drops where it is. */
+  /** Hands back whatever is still held: the work snaps back to its wall, the rest drops where it is, and the remains of a consumed prop are spat out right away, unless the fusion leaves none. */
   dispose() {
+    const {remains} = this
+    if (remains) {
+      if (remains.released === undefined && this.leavesRemains()) {
+        this.spit(remains)
+      }
+      if (remains.released === undefined) {
+        // It leaves the world with the fusion that didn’t use the prop up, unseen.
+        remains.group.visible = false
+      } else {
+        remains.group.scale.setScalar(1)
+      }
+    }
     for (const satellite of this.list ?? []) {
       // Gone with its prop, invisible in the portal’s middle until then.
       if (satellite.consumed) {
@@ -115,7 +139,7 @@ export default class Satellites {
       }
       if (satellite.released !== undefined) {
         this.centers[satellite.orbit.index] = undefined
-        satellite.group.scale.setScalar(satellite.releasedScale + (1 - satellite.releasedScale) * easeOutBack(clamp((elapsed - satellite.released) / regrowth, 0, 1)))
+        regrow(satellite, elapsed)
         continue
       }
       satellitePose(frame, timing, satellite.orbit, elapsed, outcome, satellite.pose)
@@ -148,19 +172,14 @@ export default class Satellites {
           continue
         }
         if (satellite.kind === 'prop' && elapsed >= fusion.emergedAt + spitDelay) {
-          // Spat back out toward the room, a little to the side, below the result’s flight.
-          const [nx, , nz] = frame.normal
-          const [tx, , tz] = frame.tangent
-          satellite.pose.position.fromArray(frame.center).add(offset.set(nx * 0.45, -0.25, nz * 0.45))
-          satellite.pose.scale = 0.05
-          this.place(satellite)
-          this.handBack(satellite, [nx * 2.4 + tx * 0.9, 1.6, nz * 2.4 + tz * 0.9], [4, 3, 2], elapsed)
+          this.spit(satellite, elapsed)
           continue
         }
       }
       this.place(satellite)
       this.centers[satellite.orbit.index] = satellite.pose.position
     }
+    this.updateRemains(elapsed)
   }
 
   private handBack(satellite: Satellite, velocity: Vec3, spin: Vec3, elapsed?: number) {
@@ -195,8 +214,14 @@ export default class Satellites {
     return offset.setFromMatrixPosition(holder.matrixWorld).distanceTo(satellite.orbit.home.position) > 0.3
   }
 
-  /** Moves the satellite’s group to its pose in the world, through its rigid body’s object. */
-  private place({group, pose}: Satellite) {
+  /** Whether the fusion leaves the remains of the prop it consumes in the world: once its result is out, if the director kept them, as the success did use the prop up. */
+  private leavesRemains() {
+    const id = this.fusion.spec.partner.remains
+    return this.fusion.emergedAt !== undefined && useGallery.getState().remains.some(remains => remains.id === id)
+  }
+
+  /** Moves the group to its pose in the world, through its rigid body’s object. */
+  private place({group, pose}: Held) {
     matrix.compose(pose.position, pose.quaternion, scaleVector.setScalar(Math.max(pose.scale, 1e-4)))
     const holder = group.parent
     if (holder) {
@@ -263,5 +288,56 @@ export default class Satellites {
       }
     }
     return list
+  }
+
+  /** Spits what it holds out of the portal toward the room, a little to the side, below the result’s flight, `elapsed` seconds into the fusion, or right away. */
+  private spit(held: Held, elapsed?: number) {
+    const {center, normal: [nx, , nz], tangent: [tx, , tz]} = this.fusion.frame
+    held.pose.position.fromArray(center).add(offset.set(nx * 0.45, -0.25, nz * 0.45))
+    held.pose.scale = 0.05
+    this.place(held)
+    held.released = elapsed ?? Number.NEGATIVE_INFINITY
+    held.releasedScale = held.group.scale.x
+    propObjects.get(held.id)?.unleash([nx * 2.4 + tx * 0.9, 1.6, nz * 2.4 + tz * 0.9], spitSpin)
+  }
+
+  /**
+   * Holds the remains of the prop a success consumes in the portal’s middle once they entered the world, held by the portal from the start, too small to cover a pixel but drawn, so their pipelines compile while the portal brews.
+   * Once the result is out, they flip out in the prop’s stead, as a prop that wasn’t consumed would; a fusion that didn’t use the prop up never shows them, as the director takes them out of the world again.
+   */
+  private updateRemains(elapsed: number) {
+    const {emergedAt, frame, spec} = this.fusion
+    const id = spec.partner.remains
+    if (!id) {
+      return
+    }
+    if (!this.remains) {
+      const prop = propObjects.get(id)
+      if (!prop?.seized()) {
+        return
+      }
+      this.remains = {
+        id,
+        group: prop.group,
+        pose: {
+          position: new Vector3(...frame.center),
+          quaternion: new Quaternion,
+          scale: 0,
+        },
+        releasedScale: 1,
+      }
+      this.place(this.remains)
+      prop.group.visible = true
+    }
+    const {remains} = this
+    if (remains.released !== undefined) {
+      regrow(remains, elapsed)
+      return
+    }
+    if (emergedAt !== undefined && elapsed >= emergedAt + spitDelay && this.leavesRemains()) {
+      this.spit(remains, elapsed)
+      return
+    }
+    this.place(remains)
   }
 }

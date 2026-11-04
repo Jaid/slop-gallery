@@ -14,6 +14,8 @@ export type FusionPartner = {
   id: string
   /** a loose portrait, which the result replaces along with the hung one; or an item, which the portal spits back out unless it is consumed */
   kind: 'item' | 'portrait'
+  /** for an item a success uses up, the prop id of what it leaves of the item (see `FusionRemains`), which the portal holds hidden in its middle and spits out after the result */
+  remains?: string
 }
 export type FusionSpec = {
   /** the swirl’s color, like an orb’s glow; the portal’s own otherwise */

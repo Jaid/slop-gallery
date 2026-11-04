@@ -1,6 +1,7 @@
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {Vec3} from '#src/lib/gallery.ts'
 import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
+import type {Orb} from '#src/lib/gallery/orbs/index.ts'
 import type {Mood} from '#src/lib/moods/index.ts'
 import type {GrabbableBodyOptions} from '#src/lib/physics/GrabbableBody.ts'
 import type {CollisionEnterPayload, RapierRigidBody, RigidBodyProps} from '@react-three/rapier'
@@ -37,7 +38,7 @@ export type PropHandle = {
   /** Photographs the prop as it is now in the studio, as a WebP, which it contributes to a fusion by default. */
   snapshot: () => Promise<Blob>
   title: string
-  /** Hands the prop back to the physics where its `group` is, flying off with the velocities. */
+  /** Hands the prop back to the physics where its `group` is, flying off with the velocities, and shows it if it was withheld. */
   unleash: (velocity: Vec3, spin: Vec3) => void
 }
 export const propObjects = new Map<string, PropHandle>
@@ -95,9 +96,13 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3
+  /** the orb a fusion that uses the prop up leaves of it, which flips out of the portal after the result, like a themed orb’s clear glass */
+  remains?: Orb
   /** For props drawn elsewhere, e.g. by an instanced batch, whose children are only invisible stand-ins: builds what the studio photographs when the prop is thrown into a portrait. */
   snapshotSubject?: () => SnapshotSubject
   title: string
+  /** whether the prop enters the world held by a fusion’s portal, as what the fusion leaves of an item it uses up: seized, out of the physics and invisible until the portal shows it in its middle, from the very first frame */
+  withheld?: boolean
 }
 
 /**
@@ -110,9 +115,11 @@ export default function GrabbableProp(props: GrabbablePropProps) {
 }
 
 /** The prop while it is still in the world. */
-function PresentProp({id, title, consumable, ingredient, mood, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject, ...props}: GrabbablePropProps) {
+function PresentProp({id, title, consumable, ingredient, mood, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, withheld = false, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
+  /** whether a fusion holds the prop, from the start if it is withheld */
+  const seized = useRef(withheld)
   const controller = useRef<GrabbableBody | null>(null)
   /** the line the carried prop was last shown on, which letting go of it continues from */
   const shownOn = useRef<HoldLine | null>(null)
@@ -135,6 +142,12 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       snapshotSubject,
     }
   }, [canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, snapshotSubject])
+  // Hidden before any frame is drawn, since its portal only shows it once it is registered.
+  useLayoutEffect(() => {
+    if (seized.current && group.current) {
+      group.current.visible = false
+    }
+  }, [])
   // Settings are read once per registration, so inline objects don’t re-register every render.
   const orbitSettings = useRef(orbit)
   const {world} = useRapier()
@@ -151,27 +164,31 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
     controller.current = carried
     const prop = group.current
     const rigidBody = body.current
-    let seized = false
+    // A withheld prop stays out of the physics until its portal hands it out.
+    if (seized.current) {
+      rigidBody.setEnabled(false)
+    }
     const handle: PropHandle = {
       body: rigidBody,
       group: prop,
       mood,
       title,
       seize: () => {
-        if (seized || carried.active) {
+        if (seized.current || carried.active) {
           return false
         }
-        seized = true
+        seized.current = true
         clearBodyThrow(rigidBody)
         rigidBody.setEnabled(false)
         return true
       },
-      seized: () => seized,
+      seized: () => seized.current,
       unleash: (velocity, spin) => {
-        if (!seized) {
+        if (!seized.current) {
           return
         }
-        seized = false
+        seized.current = false
+        prop.visible = true
         handBack(rigidBody, prop, velocity, spin)
       },
       snapshot: async () => {
@@ -187,9 +204,9 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
           subject.dispose()
         }
       },
-      canGrab: () => !seized && !carried.active && (callbacks.current.canGrab?.() ?? true),
+      canGrab: () => !seized.current && !carried.active && (callbacks.current.canGrab?.() ?? true),
       grab: () => {
-        if (seized || !carried.grab()) {
+        if (seized.current || !carried.grab()) {
           const message = callbacks.current.blockedMessage?.()
           if (message) {
             notify(message)
@@ -275,6 +292,7 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       id,
       title,
       consumable,
+      remains,
       ingredient: () => ingredient ?? {
         contributions: [
           {
@@ -285,7 +303,8 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       },
     })
   }
-  return <RigidBody ccd colliders='cuboid' friction={0.8} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
+  // A withheld prop’s colliders are built from its children while they are hidden.
+  return <RigidBody ccd colliders='cuboid' friction={0.8} includeInvisible={withheld} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
     <group
       name={id} userData={{
         pickup: true,

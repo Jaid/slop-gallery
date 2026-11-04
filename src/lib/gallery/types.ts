@@ -2,6 +2,7 @@ import type {FrameChoice} from '../frames/frameChoice.ts'
 import type {PortraitFrameId} from '../frames/frameParameter.ts'
 import type {PlacementIssue} from '../placement/wallGeometry.ts'
 import type {ItemIngredient} from './fusion/FusionRecipe.ts'
+import type {Orb} from './orbs/index.ts'
 import type {Quat as MathQuat, Vec3 as MathVec3} from 'math'
 import type {NarrationTiming} from 'use-narrator/core'
 
@@ -47,7 +48,17 @@ export type ThrownItem = {
   id: string
   /** The item as an ingredient, with what it contributes to the fusion, by default a studio photograph of it as it is now. Called once, after the portrait is reserved for the fusion. */
   ingredient: () => ItemIngredient
+  /** the orb a success that uses it up leaves of it, which flips out of the portal after the result, like the clear glass of a themed orb */
+  remains?: Orb
   title: string
+}
+/** what a fusion leaves of an item it uses up, an orb of its own, like the clear glass of a themed orb: it enters the world hidden in the portal’s middle as the portal opens, flips out after the result and leaves the world again if the fusion didn’t use the item up after all */
+export type FusionRemains = {
+  /** its prop’s id, unique in the world */
+  id: string
+  orb: Orb
+  /** where it enters the world, in the portal’s middle */
+  position: MathVec3
 }
 /** the aspect ratios of default works and their slots, as width:height */
 export type PortraitRatio = '1:1' | '2:3' | '3:2' | '9:16' | '16:9'

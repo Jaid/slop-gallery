@@ -17,6 +17,9 @@ import {telemetry} from '../telemetry/index.ts'
 import {hasAccess} from './openRouterAccess.ts'
 import {tieredModel} from './settings.ts'
 
+/** how many remains fusions have left in the world so far, which numbers their prop ids */
+let remainsCount = 0
+
 export default class GalleryDirector {
   readonly narrator: PortraitNarration
   private controller = new AbortController
@@ -173,7 +176,10 @@ export default class GalleryDirector {
     }
   }
 
-  /** Fuses the hung portrait `portrait` with the thrown `item` and whatever it contributes: a studio photograph of it by default, an orb’s prompt or nothing at all, which leaves the portrait as it was. The item stays in the room, unless a success uses it up, like an orb. */
+  /**
+   * Fuses the hung portrait `portrait` with the thrown `item` and whatever it contributes: a studio photograph of it by default, an orb’s prompt or nothing at all, which leaves the portrait as it was. The item stays in the room, unless a success uses it up, like an orb.
+   * What the item leaves of itself once used up, like a themed orb’s clear glass, enters the world as the portal opens, hidden in the portal until it flips out after the result, so it is built and compiled by then; it leaves the world again unless the success used the item up.
+   */
   async fuseItem(portrait: string, item: ThrownItem) {
     if (this.controller.signal.aborted) {
       return
@@ -194,18 +200,34 @@ export default class GalleryDirector {
     // Asked for once the portrait is reserved, like a prop’s studio photograph, which is taken now.
     const ingredient = itemIngredient(item.title, item.ingredient())
     const recipe = new FusionRecipe([portraitIngredient(a), ingredient])
+    const remains = item.consumable && item.remains ? {
+      id: `${item.id}-remains-${++remainsCount}`,
+      orb: item.remains,
+    } : undefined
     const fusion = this.startFusion({
       work: a,
       partner: {
         kind: 'item',
         id: item.id,
         consumed: item.consumable ?? false,
+        ...remains ? {remains: remains.id} : {},
       },
       images: recipe.looks,
       latches: recipe.latches,
       effects: recipe.effects,
       color: recipe.glow,
     }, recipe)
+    if (remains) {
+      useGallery.setState(state => ({
+        remains: [
+          ...state.remains,
+          {
+            ...remains,
+            position: [...fusion.frame.center],
+          },
+        ],
+      }))
+    }
     for (const look of recipe.pendingLooks) {
       void look.then(image => fusion.addImage(image), () => {})
     }
@@ -225,6 +247,10 @@ export default class GalleryDirector {
     } finally {
       this.endFusion(fusion)
       this.releaseFusion(portrait, token)
+      // Only a success that used the item up leaves its remains.
+      if (remains && !useGallery.getState().consumed.includes(item.id)) {
+        useGallery.setState(state => ({remains: state.remains.filter(entry => entry.id !== remains.id)}))
+      }
       if (!(this.controller.signal.aborted as boolean)) {
         this.narrator.ready(portrait)
       }

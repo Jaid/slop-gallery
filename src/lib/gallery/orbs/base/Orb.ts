@@ -19,6 +19,8 @@ export default abstract class Orb {
   abstract readonly id: string
   /** what comes over the world while the player holds the orb, if anything */
   readonly mood?: Mood
+  /** the orb a success that used this one up leaves of it, which flips out of the portal after the result, if any */
+  readonly remains?: Orb
   abstract readonly title: string
 
   get propId() {

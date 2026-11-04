@@ -13,6 +13,7 @@ import {arrivalFrame} from '../../src/lib/gallery/actions.ts'
 import Fusion from '../../src/lib/gallery/fusion/Fusion.ts'
 import {portalFrame} from '../../src/lib/gallery/fusion/portalFrame.ts'
 import {nextTurn} from '../../src/lib/gallery/fusion/timing.ts'
+import {transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {environmentSeed} from '../../src/lib/gameSeed.ts'
 import samplePortraits from './fixtures/portraits.ts'
@@ -592,6 +593,102 @@ test('a success uses up a thrown orb, but not one the player caught again, nor a
       director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
       await job
       expect(useGallery.getState().consumed).toEqual(consumed)
+    } finally {
+      director.dispose()
+    }
+  }
+})
+/** an orb like a themed one, whose success leaves its clear glass */
+const filledOrb: ThrownItem = {
+  ...testOrb,
+  remains: transparentOrb,
+}
+test('the remains of a thrown orb enter the world in the portal’s middle as it opens and stay once the success used the orb up', async () => {
+  useGallery.setState({
+    consumed: [],
+    remains: [],
+  })
+  const director = new TestDirector({
+    ...defaults,
+    ai: false,
+  }, '')
+  try {
+    const job = director.fuseItem('a', filledOrb)
+    const [fusion] = director.opened
+    const id = fusion.spec.partner.remains!
+    expect(id).toStartWith('prop-orb-test-remains-')
+    expect(useGallery.getState().remains).toEqual([
+      {
+        id,
+        orb: transparentOrb,
+        position: fusion.frame.center,
+      },
+    ])
+    director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+    await job
+    expect(useGallery.getState().consumed).toEqual(['prop-orb-test'])
+    expect(useGallery.getState().remains.map(remains => remains.id)).toEqual([id])
+    // Another orb’s remains are a prop of their own.
+    useGallery.getState().update('a', {hung: true})
+    const next = director.fuseItem('a', {
+      ...filledOrb,
+      id: 'prop-orb-test-2',
+    })
+    expect(director.opened[1].spec.partner.remains).not.toBe(id)
+    director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+    await next
+    expect(useGallery.getState().remains).toHaveLength(2)
+  } finally {
+    director.dispose()
+  }
+})
+const remainsEndings = {
+  'a failed fusion': (director: TestDirector) => director.result.reject(new Error('Provider unavailable')),
+  'a fusion broken off': (director: TestDirector) => director.opened[0].cancel(),
+  'a success whose orb the player caught again': (director: TestDirector) => {
+    useGallery.setState({held: filledOrb.id})
+    director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+  },
+  'a fusion whose director is disposed': (director: TestDirector) => {
+    director.dispose()
+    director.result.resolve(new Blob(['late'], {type: 'image/webp'}))
+  },
+}
+for (const [ending, end] of Object.entries(remainsEndings)) {
+  test(`${ending} leaves no remains of the orb`, async () => {
+    useGallery.setState({
+      consumed: [],
+      remains: [],
+      held: null,
+    })
+    const director = new TestDirector(defaults, 'test', brief)
+    const job = director.fuseItem('a', filledOrb)
+    expect(useGallery.getState().remains).toHaveLength(1)
+    end(director)
+    await job
+    expect(useGallery.getState().consumed).toEqual([])
+    expect(useGallery.getState().remains).toEqual([])
+    director.dispose()
+  })
+}
+test('an item without remains, or one a success doesn’t use up, leaves none', async () => {
+  for (const item of [testOrb, {
+    ...apple,
+    remains: transparentOrb,
+  }]) {
+    useGallery.setState({remains: []})
+    useGallery.getState().update('a', {hung: true})
+    const director = new TestDirector({
+      ...defaults,
+      ai: false,
+    }, '')
+    try {
+      const job = director.fuseItem('a', item)
+      expect(director.opened[0].spec.partner.remains).toBeUndefined()
+      expect(useGallery.getState().remains).toEqual([])
+      director.result.resolve(new Blob(['result'], {type: 'image/webp'}))
+      await job
+      expect(useGallery.getState().remains).toEqual([])
     } finally {
       director.dispose()
     }
