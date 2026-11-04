@@ -93,6 +93,12 @@ export const salonBench = {
 /** Ottoman leg centers relative to its position, inset from the corners. */
 export const salonBenchLegs = [-1, 1].flatMap(x => [-1, 1].map(z => [x * (salonBench.width / 2 - 0.12), z * (salonBench.depth / 2 - 0.12)] as const))
 
+/** The terrazzo floor: a light field within a dark border, which the brass inlays divide at the same distance from the walls as every stone floor’s. */
+export const salonTerrazzo = {
+  /** how far from the walls’ center lines the border reaches in, on the inlays’ line */
+  border: 1.25,
+} as const
+
 /** where a sculpture pedestal stands on the floor, on the room’s axis in its north half, between the ottoman and the north wall */
 export const salonPedestal: Vec3 = [salon.center[0], 0, salon.center[1] - 5]
 

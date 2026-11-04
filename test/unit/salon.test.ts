@@ -2,10 +2,10 @@ import {beforeEach, describe, expect, test} from 'bun:test'
 
 import {wallFace} from '../../src/lib/gallery/architecture.ts'
 import {portraitLabelLayout} from '../../src/lib/gallery/portraitLabel.ts'
-import {salonBench, salonCeiling, salonPedestal, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
+import {salonBench, salonCeiling, salonPedestal, salonSkylight, salonTerrazzo, salonWainscot, wainscotFields, wallDressingSpans} from '../../src/lib/gallery/salon.ts'
 import salonWindow from '../../src/lib/gallery/salonWindow.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
-import ParquetFloorMaterial, {herringboneBlock, salonParquet} from '../../src/lib/materials/ParquetFloorMaterial.ts'
+import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '../../src/lib/materials/TerrazzoFloorMaterial.ts'
 import {insideOpening, placementIssue, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
@@ -127,55 +127,53 @@ describe('the Salon', () => {
       }
     }
   })
-})
-describe('herringbone parquet', () => {
-  test('every point lies in exactly one block, which contains it', () => {
-    const {ratio} = salonParquet
-    for (let i = 0; i < 4000; i++) {
-      const x = Math.sin(i * 12.9898) * 120
-      const y = Math.cos(i * 78.233) * 120
-      const block = herringboneBlock(x, y, ratio)
-      expect(block.along).toBeGreaterThanOrEqual(-1e-9)
-      expect(block.along).toBeLessThan(ratio + 1e-9)
-      expect(block.across).toBeGreaterThanOrEqual(-1e-9)
-      expect(block.across).toBeLessThan(1 + 1e-9)
-      // Reconstruct the block’s origin from its identity and check that the point is inside it.
-      const originX = block.step + block.chain * ratio + (block.vertical ? ratio : 0)
-      const originY = block.step - block.chain * ratio + (block.vertical ? 1 - ratio : 0)
-      const [width, height] = block.vertical ? [1, ratio] : [ratio, 1]
-      expect(x).toBeGreaterThanOrEqual(originX - 1e-9)
-      expect(x).toBeLessThan(originX + width + 1e-9)
-      expect(y).toBeGreaterThanOrEqual(originY - 1e-9)
-      expect(y).toBeLessThan(originY + height + 1e-9)
-    }
-  })
-  test('blocks touch along whole edges, in the herringbone pattern', () => {
-    const {ratio} = salonParquet
-    // Just right of a horizontal block’s end is the vertical block that it butts into.
-    const horizontal = herringboneBlock(0.5, 0.5, ratio)
-    expect(horizontal.vertical).toBe(false)
-    const neighbor = herringboneBlock(ratio + 0.5, 0.5, ratio)
-    expect(neighbor.vertical).toBe(true)
-    expect(neighbor.chain).toBe(horizontal.chain)
-    expect(neighbor.step).toBe(horizontal.step)
-  })
-  test('builds its surface nodes and rejects impossible blocks', () => {
+  test('its terrazzo builds its surface nodes, polished as hard as the Banquet’s marble, its border on the brass inlays’ line', () => {
     for (const reflections of [true, false]) {
-      const material = new ParquetFloorMaterial(salonParquet, reflections)
+      const floor = new TerrazzoFloorMaterial({
+        center: room.center,
+        size: room.size,
+        field: venetianTerrazzo,
+        border: blackTerrazzo,
+        inset: salonTerrazzo.border,
+        reflections,
+      })
       try {
-        expect(material.colorNode?.isNode).toBe(true)
-        expect(material.normalNode?.isNode).toBe(true)
-        expect(material.roughnessNode?.isNode).toBe(true)
-        expect(Boolean(material.reflection)).toBe(reflections)
+        for (const node of [floor.colorNode, floor.roughnessNode, floor.normalNode]) {
+          expect(node?.isNode).toBe(true)
+        }
+        expect(Boolean(floor.reflection)).toBe(reflections)
+        expect(floor.mirrored.value).toBe(1)
       } finally {
-        material.dispose()
+        floor.dispose()
       }
     }
-    for (const options of [{ratio: 1}, {ratio: 4.5}, {width: 0}]) {
-      expect(() => new ParquetFloorMaterial({
-        ...salonParquet,
-        ...options,
+    const polished = new TerrazzoFloorMaterial({
+      center: room.center,
+      size: room.size,
+      field: venetianTerrazzo,
+      border: blackTerrazzo,
+      inset: salonTerrazzo.border,
+      reflections: true,
+      strength: 0.4,
+      grazingStrength: 0.2,
+      loss: 0,
+      roughness: 0.1,
+    })
+    try {
+      expect(polished.reflection).not.toBeNull()
+      expect(polished.reflectionTarget).not.toBeNull()
+      expect(polished.roughness).toBe(0.1)
+    } finally {
+      polished.dispose()
+    }
+    for (const shape of [{size: [0, 1] as const}, {radius: 0}]) {
+      expect(() => new TerrazzoFloorMaterial({
+        center: [0, 0],
+        ...shape,
+        field: venetianTerrazzo,
       })).toThrow(RangeError)
     }
+    // The border lies inside the brass inlays, which every stone floor lays 1.25 m from the walls.
+    expect(salonTerrazzo.border).toBe(1.25)
   })
 })

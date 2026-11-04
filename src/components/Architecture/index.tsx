@@ -17,8 +17,8 @@ import ArchitecturalConcreteMaterial from '#src/lib/materials/ArchitecturalConcr
 import {createArchitecturalGlassMaterials, disposeArchitecturalGlassMaterials} from '#src/lib/materials/ArchitecturalGlassMaterials.ts'
 import BanquetMaterials from '#src/lib/materials/BanquetMaterials.ts'
 import CastleStoneMaterial from '#src/lib/materials/CastleStoneMaterial.ts'
-import CinnabarMaterials from '#src/lib/materials/CinnabarMaterials.ts'
 import DamaskWallpaperMaterial from '#src/lib/materials/DamaskWallpaperMaterial.ts'
+import FrescoMaterials from '#src/lib/materials/FrescoMaterials.ts'
 import JoineryWoodMaterial from '#src/lib/materials/JoineryWoodMaterial.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
@@ -83,8 +83,8 @@ export default function Architecture() {
   }), [joineryPanel, joineryX, joineryZ])
   // The Banquet’s walls are painted with gilt boiserie, laid out around each wall’s doorways.
   const banquet = useDisposable(useMemo(() => new BanquetMaterials, []))
-  // The Cinnabar’s are frescoed in Pompeian red over a black socle, their panels laid out around each wall’s doorways too.
-  const cinnabar = useDisposable(useMemo(() => new CinnabarMaterials, []))
+  // The Salon’s are frescoed in Pompeian red over a black socle, their panels laid out around each wall’s openings too.
+  const salon = useDisposable(useMemo(() => new FrescoMaterials('salon'), []))
   // The Oculus and the Exhibition are cast in dark concrete, board-formed walls over troweled floors.
   const oculusMaterial = useDisposable(useMemo(() => new ArchitecturalConcreteMaterial, []))
   const wallMaterial = (wall: Wall) => {
@@ -124,8 +124,8 @@ export default function Architecture() {
     if (wall.room === 'antechamber') {
       return marmorino
     }
-    if (wall.room === 'cinnabar') {
-      return cinnabar.surface(wall)
+    if (wall.room === 'salon') {
+      return salon.surface(wall)
     }
     return banquet.surface(wall)
   }

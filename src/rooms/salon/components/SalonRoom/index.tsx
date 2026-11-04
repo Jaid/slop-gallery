@@ -5,7 +5,7 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry} from 'three/webgpu'
-import useGraphicsMode from 'use-graphics-mode'
+import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import BenchSeat from '#component/BenchSeat'
 import KnotShowcase from '#component/KnotShowcase'
@@ -14,17 +14,26 @@ import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
-import {salonBench, salonBenchLegs, salonCeiling, salonPedestal, salonSkylight, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
+import {salonBench, salonBenchLegs, salonCeiling, salonPedestal, salonSkylight, salonTerrazzo, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
 import gold from '#src/lib/materials/gold.ts'
+import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '#src/lib/materials/TerrazzoFloorMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
+import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import salonKnot from '#src/rooms/salon/knot.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
+/** Polished hard like the Banquet’s marble, so the red walls and the skylight mirror clearly in it. */
+const polish = {
+  strength: 0.4,
+  grazingStrength: 0.2,
+  loss: 0,
+  roughness: 0.1,
+} as const
 
-/** The Salon: Prussian blue walls hung frame to frame, oak herringbone underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
+/** The Salon: walls frescoed in Pompeian red over a black socle and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
 export default function SalonRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture
@@ -45,6 +54,20 @@ export default function SalonRoom({glass, stone, wood}: {
     roughness: 0.7,
   }), []))
   const isHeavy = useGraphicsMode()
+  const {floorReflections} = useGraphicsModeValue(getGraphicsProfile)
+  const terrazzo = useDisposable(useMemo(() => new TerrazzoFloorMaterial({
+    center: room.center,
+    size: room.size,
+    field: venetianTerrazzo,
+    border: blackTerrazzo,
+    inset: salonTerrazzo.border,
+    reflections: floorReflections,
+    ...polish,
+  }), [floorReflections]))
+  const floor = useMemo(() => ({
+    slab: terrazzo,
+    reflection: terrazzo.reflectionTarget ?? undefined,
+  }), [terrazzo])
   const pedestal = usePedestal()
   const knots = useMemo(() => [salonKnot(environmentSeed)], [])
   // The Lobby vault’s cast glass, divided into the same panes as the bars below it.
@@ -58,7 +81,7 @@ export default function SalonRoom({glass, stone, wood}: {
       <RigidBody colliders={false} type='fixed'>
         <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
-      <RoomFloor glass={glass} room={room} stone={stone} wood={wood} />
+      <RoomFloor glass={glass} materials={floor} room={room} stone={stone} wood={wood} />
       {/* The slab, cut around the skylight’s opening. */}
       {[-1, 1].map(side => <group key={side}>
         <Box material={plaster} position={[0, salonCeiling.y, side * (room.size[1] + openingZ) / 4]} size={[room.size[0], salonCeiling.thickness, (room.size[1] - openingZ) / 2]} />

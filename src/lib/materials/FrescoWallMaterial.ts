@@ -1,10 +1,10 @@
-import type {FrescoLayout} from '../gallery/cinnabar.ts'
+import type {FrescoLayout} from '../gallery/fresco.ts'
 import type {Node} from 'three/webgpu'
 
 import {atan, color, float, max, mix, mx_noise_float, normalLocal, positionLocal, select, vec2, vec3} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import {cinnabarFresco} from '../gallery/cinnabar.ts'
+import {pompeianFresco} from '../gallery/fresco.ts'
 import {heightNormal, inside, line, visibleDetail} from './filters.ts'
 
 type Float = Node<'float'>
@@ -20,10 +20,10 @@ const palette = {
 /**
  * Lime fresco in the Pompeian manner, painted on one wall: a black socle under a field of cinnabar red, black bands dividing the field into panels, an ochre fillet along the socle, an ochre stalk down every band and an ochre line framing every panel, and a black frieze under the cornice.
  *
- * It is painted in the wall’s own coordinates, so a wall’s bands and panels are laid out around its doorways, see `frescoLayout`; only the face into the room is painted, the reveals of its doorways stay plain red. The red is burnished lime: soft clouds of two reds under a fine grain, with a little sheen. Lines are filtered against the pixel footprint and thin to their average before they could shimmer.
+ * It is painted in the wall’s own coordinates, so a wall’s bands and panels are laid out around its openings, see `frescoLayout`; only the face into the room is painted, the reveals of its openings stay plain red. The red is burnished lime: soft clouds of two reds under a fine grain, with a little sheen. Lines are filtered against the pixel footprint and thin to their average before they could shimmer.
  * On a curved wall, given its `curveRadius`, the coordinates run along its curve; round a ring, the wash takes no notice of the seam where its ends meet, and the bands and panels go on through it.
  */
-export default class CinnabarWallMaterial extends MeshStandardNodeMaterial {
+export default class FrescoWallMaterial extends MeshStandardNodeMaterial {
   constructor({bands, panels, period, curveRadius}: FrescoLayout & {
     /** the wall’s signed bend radius, if it curves */
     curveRadius?: number
@@ -33,7 +33,7 @@ export default class CinnabarWallMaterial extends MeshStandardNodeMaterial {
       metalness: 0,
       envMapIntensity: 0.35,
     })
-    const {socle, fillet, band, stalk, frieze, frameInset, frameRise, frameLine} = cinnabarFresco
+    const {socle, fillet, band, stalk, frieze, frameInset, frameRise, frameLine} = pompeianFresco
     const {x, y: height, z} = positionLocal
     // Bent, a point of the wall turned this far round the center of its bend, which lies at z = radius in front of the wall’s middle.
     const turn = curveRadius ? atan(x.div(curveRadius), float(1).sub(z.div(curveRadius))).toVar('frescoTurn') : float(0)

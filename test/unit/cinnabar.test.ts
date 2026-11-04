@@ -3,18 +3,17 @@ import {describe, expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {DoubleSide, Matrix3, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {bastionApproach, bastionArch} from '../../src/lib/gallery/bastion.ts'
-import cinnabar, {cinnabarFresco, cinnabarRooflight, cinnabarTerrazzo, cinnabarVestibule, frescoLayout, isRing} from '../../src/lib/gallery/cinnabar.ts'
+import cinnabar, {cinnabarRooflight, cinnabarVestibule} from '../../src/lib/gallery/cinnabar.ts'
 import {cinnabarRoundVestibule, cinnabarVestibuleFloor, vestibuleArches} from '../../src/lib/gallery/cinnabarVestibule.ts'
+import {isRing} from '../../src/lib/gallery/fresco.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import salon, {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
-import CinnabarWallMaterial from '../../src/lib/materials/CinnabarWallMaterial.ts'
-import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '../../src/lib/materials/TerrazzoFloorMaterial.ts'
 import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import {openings} from '../../src/worlds/gallery/relations.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
@@ -22,8 +21,6 @@ import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fix
 await RAPIER.init()
 const room = rooms.find(candidate => candidate.id === 'cinnabar')!
 const wallById = (id: string) => walls.find(wall => wall.id === id)!
-/** the positions sorted and rounded to micrometers, for comparing layouts */
-const rounded = (list: ReadonlyArray<number>) => list.toSorted((a, b) => a - b).map(at => Math.round(at * 1e6) + 0)
 describe('the Cinnabar', () => {
   test('mirrors the Salon across the Lobby’s north extension, north of the Vesper, which mirrors the Banquet', () => {
     const salonRoom = rooms.find(candidate => candidate.id === 'salon')!
@@ -104,103 +101,6 @@ describe('the Cinnabar', () => {
     expect(salonCeiling.underside - depth - bead).toBeGreaterThan(5)
     expect(room.room.sunlit).toBe(true)
     expect(room.room.hasVolumetricSun).toBe(true)
-  })
-  test('the fresco lays its bands and panels out around each wall’s doorways, a band flanking every doorway and every panel framed but the pierced ones', () => {
-    const {band, openingMargin, panelLength, socle, frieze} = cinnabarFresco
-    expect(frieze[1]).toBeLessThan(5.5 - 0.47)
-    expect(socle).toBeGreaterThan(0.44)
-    for (const id of ['north', 'east', 'south', 'west']) {
-      const wall = wallById(`cinnabar-${id}`)
-      const {bands, panels} = frescoLayout(wall)
-      const end = wall.width / 2 - wallFace
-      // Panels tile the wall face from corner to corner, a band between any two of them, each about a panel long unless a doorway stands in it.
-      expect(panels[0].u[0]).toBeCloseTo(-end, 9)
-      expect(panels.at(-1)!.u[1]).toBeCloseTo(end, 9)
-      for (const [index, panel] of panels.entries()) {
-        if (index) {
-          const gap = panel.u[0] - panels[index - 1].u[1]
-          expect(gap).toBeCloseTo(band, 9)
-          expect(bands.some(at => Math.abs(at - (panel.u[0] - band / 2)) < 1e-9)).toBe(true)
-        }
-        if (panel.pierced) {
-          continue
-        }
-        expect(panel.u[1] - panel.u[0]).toBeGreaterThan(panelLength * 0.6)
-        expect(panel.u[1] - panel.u[0]).toBeLessThan(panelLength * 1.5)
-      }
-      expect(bands).toHaveLength(panels.length - 1)
-      // Bands are symmetric about the wall’s middle, and stand off the doorways’ casings by the margin.
-      expect(rounded(bands.map(at => -at))).toEqual(rounded(bands))
-      for (const hole of wall.holes ?? []) {
-        const pierced = panels.find(panel => panel.pierced && panel.u[0] < hole.u && hole.u < panel.u[1])!
-        expect(pierced).toBeDefined()
-        expect(pierced.u[0]).toBeCloseTo(hole.u - hole.width / 2 - wallOpeningTrim - openingMargin, 9)
-        expect(pierced.u[1]).toBeCloseTo(hole.u + hole.width / 2 + wallOpeningTrim + openingMargin, 9)
-      }
-      expect(panels.filter(panel => panel.pierced)).toHaveLength(wall.holes?.length ?? 0)
-    }
-    // One panel on either side of the arch on the north wall, three across the blank south wall and four down the east and west walls.
-    expect(frescoLayout(wallById('cinnabar-north')).panels).toHaveLength(3)
-    expect(frescoLayout(wallById('cinnabar-north')).period).toBeUndefined()
-    expect(frescoLayout(wallById('cinnabar-east')).panels).toHaveLength(4)
-    expect(frescoLayout(wallById('cinnabar-south')).panels.map(panel => panel.pierced)).toEqual([false, false, false])
-    expect(frescoLayout(wallById('cinnabar-west')).panels).toHaveLength(4)
-  })
-  test('its materials build their surface nodes', () => {
-    const wall = new CinnabarWallMaterial(frescoLayout(wallById('cinnabar-south')))
-    try {
-      for (const node of [wall.colorNode, wall.roughnessNode, wall.normalNode]) {
-        expect(node?.isNode).toBe(true)
-      }
-    } finally {
-      wall.dispose()
-    }
-    for (const reflections of [true, false]) {
-      const floor = new TerrazzoFloorMaterial({
-        center: room.center,
-        size: room.size,
-        field: venetianTerrazzo,
-        border: blackTerrazzo,
-        inset: cinnabarTerrazzo.border,
-        reflections,
-      })
-      try {
-        for (const node of [floor.colorNode, floor.roughnessNode, floor.normalNode]) {
-          expect(node?.isNode).toBe(true)
-        }
-        expect(Boolean(floor.reflection)).toBe(reflections)
-        expect(floor.mirrored.value).toBe(1)
-      } finally {
-        floor.dispose()
-      }
-    }
-    // The Cinnabar’s polish mirrors as strongly and clearly as the Banquet’s marble.
-    const polished = new TerrazzoFloorMaterial({
-      center: room.center,
-      size: room.size,
-      field: venetianTerrazzo,
-      border: blackTerrazzo,
-      inset: cinnabarTerrazzo.border,
-      reflections: true,
-      strength: 0.4,
-      grazingStrength: 0.2,
-      loss: 0,
-      roughness: 0.1,
-    })
-    try {
-      expect(polished.reflection).not.toBeNull()
-      expect(polished.reflectionTarget).not.toBeNull()
-      expect(polished.roughness).toBe(0.1)
-    } finally {
-      polished.dispose()
-    }
-    expect(() => new TerrazzoFloorMaterial({
-      center: [0, 0],
-      size: [0, 1],
-      field: venetianTerrazzo,
-    })).toThrow(RangeError)
-    // The border lies inside the brass inlays, which every stone floor lays 1.25 m from the walls.
-    expect(cinnabarTerrazzo.border).toBe(1.25)
   })
 })
 describe('the Cinnabar’s vestibule', () => {
@@ -347,74 +247,11 @@ describe('the Cinnabar’s vestibule', () => {
       }
     }
   })
-  test('its wall is frescoed all round without a corner, its panels running on through the seam where its ends meet', () => {
-    const {band, openingMargin, panelLength} = cinnabarFresco
-    const {bands, panels, period} = frescoLayout(ring)
-    expect(period).toBeCloseTo(ring.width, 9)
-    for (const at of [...bands, ...panels.map(panel => panel.u[0])]) {
-      expect(Math.abs(at)).toBeLessThanOrEqual(period! / 2 + 1e-9)
-    }
-    // Round the ring, panels and bands take turns, as many of each.
-    expect(bands).toHaveLength(panels.length)
-    const wrap = (u: number) => u - period! * Math.floor(u / period!)
-    const starts = panels.toSorted((a, b) => wrap(a.u[0]) - wrap(b.u[0]))
-    for (const [index, panel] of starts.entries()) {
-      const next = starts[(index + 1) % starts.length]
-      const gap = wrap(next.u[0] - panel.u[1])
-      expect(gap).toBeCloseTo(band, 9)
-      expect(bands.some(at => Math.abs(wrap(at - panel.u[1] - band / 2 + period! / 2) - period! / 2) < 1e-9)).toBe(true)
-    }
-    // A bay round each arch, as wide as in the room; one narrow panel between both arches, and round the far side three of about a panel’s length.
-    for (const hole of ring.holes!) {
-      const bay = panels.find(panel => panel.pierced && Math.abs(wrap((panel.u[0] + panel.u[1]) / 2 - hole.u + period! / 2) - period! / 2) < 1e-9)!
-      expect(bay.u[1] - bay.u[0]).toBeCloseTo(hole.width + (wallOpeningTrim + openingMargin) * 2, 9)
-    }
-    const plain = panels.filter(panel => !panel.pierced).map(panel => panel.u[1] - panel.u[0]).toSorted((a, b) => a - b)
-    expect(plain).toHaveLength(4)
-    expect(plain[0]).toBeLessThan(panelLength / 2)
-    for (const length of plain.slice(1)) {
-      expect(length).toBeCloseTo(plain[1], 9)
-      expect(length).toBeGreaterThan(panelLength * 0.6)
-      expect(length).toBeLessThan(panelLength * 1.5)
-    }
-    const material = new CinnabarWallMaterial({
-      ...frescoLayout(ring),
-      curveRadius: ring.curveRadius,
-    })
-    try {
-      for (const node of [material.colorNode, material.roughnessNode, material.normalNode]) {
-        expect(node?.isNode).toBe(true)
-      }
-    } finally {
-      material.dispose()
-    }
-  })
-  test('its ceiling’s rooflight is a round opening in whole panes, well inside its wall, under its slab, and its terrazzo borders the round wall', () => {
+  test('its ceiling’s rooflight is a round opening in whole panes, well inside its wall, under its slab', () => {
     const {bead, depth, frame, glassY, pane} = rooflight
     expect(rooflight.radius * 2 / pane % 1).toBeCloseTo(0, 9)
     expect(rooflight.radius + frame).toBeLessThan(radius - 1)
     expect(glassY).toBeLessThan(salonCeiling.underside)
     expect(salonCeiling.underside - depth - bead).toBeGreaterThan(5)
-    const floor = new TerrazzoFloorMaterial({
-      center: cinnabarVestibule.center,
-      radius,
-      field: venetianTerrazzo,
-      border: blackTerrazzo,
-      inset: cinnabarTerrazzo.border,
-      reflections: true,
-    })
-    try {
-      for (const node of [floor.colorNode, floor.roughnessNode, floor.normalNode]) {
-        expect(node?.isNode).toBe(true)
-      }
-      expect(floor.reflectionTarget).not.toBeNull()
-    } finally {
-      floor.dispose()
-    }
-    expect(() => new TerrazzoFloorMaterial({
-      center: [0, 0],
-      radius: 0,
-      field: venetianTerrazzo,
-    })).toThrow(RangeError)
   })
 })
