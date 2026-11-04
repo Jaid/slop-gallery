@@ -50,7 +50,7 @@
   margin: 1rem 0 0 1rem
   padding: 0.85rem 1.5rem
 
-// The intro behind it stays in full view, without the backdrop filter: only faint shades at the top and the bottom keep the title and the buttons readable over a bright scene.
+// The intro behind it stays in full view, without the backdrop filter: only faint shades at the top and the bottom help the title and the buttons over a bright scene.
 .container.intro
   display: flex
   flex-direction: column
@@ -59,7 +59,6 @@
   padding: 3rem 1rem
   background: linear-gradient(rgb(0 0 0 / 45%), transparent 22%, transparent 75%, rgb(0 0 0 / 50%))
   backdrop-filter: none
-  text-shadow: 0 1px 12px rgb(0 0 0 / 70%)
   // a bold title outlined in black, its outline painted under the letters, so it stays readable over any part of the scene
   h1
     margin: 0
@@ -82,7 +81,6 @@
 .logo
   width: clamp(48px, 8vh, 80px)
   height: auto
-  filter: drop-shadow(0 4px 16px rgb(0 0 0 / 50%))
   user-select: none
 
 // Play (and New game) above the settings, both rows as wide as the wider one, their buttons sharing it evenly
