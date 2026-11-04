@@ -1,7 +1,7 @@
 import {expect, test} from 'bun:test'
 
 import {narratorCharacter, narratorTraits, narratorVoice, narratorVoices} from '../../src/lib/audio/narratorCharacter.ts'
-import {effectiveSeed, environmentPick, environmentRoll, environmentSample, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
+import {effectiveSeed, environmentPick, environmentRoll, environmentSample, environmentWeightedPick, isSeed, maximumSeed, parseSeed, readSeedOverride, rollSeed} from '../../src/lib/environmentSeed.ts'
 import {orbs, promptOrbs} from '../../src/lib/gallery/orbs/index.ts'
 import {potPlacements, pottedPlantKind, pottedPlantKinds} from '../../src/lib/gallery/plantDecorations/placements.ts'
 
@@ -78,6 +78,20 @@ test('samples pick distinct items in list order, the same for the same seed and 
   expect(environmentSample(1, 'letters', items, 0)).toEqual([])
   expect(environmentSample(1, 'letters', items, 8)).toEqual(items)
   expect(() => environmentSample(1, 'letters', items, 9)).toThrow()
+})
+test('weighted picks follow their weights and depend only on seed and ID', () => {
+  const counts = new Map<string, number>
+  const seeds = 4000
+  for (let seed = 0; seed < seeds; seed++) {
+    const pick = environmentWeightedPick(seed, 'weighted', [['a', 3], ['b', 1], ['never', 0]])
+    counts.set(pick, (counts.get(pick) ?? 0) + 1)
+  }
+  expect(counts.get('never')).toBeUndefined()
+  expect(counts.get('a')! / seeds).toBeCloseTo(0.75, 1)
+  expect(environmentWeightedPick(9, 'weighted', [['a', 1], ['b', 1]])).toBe(environmentWeightedPick(9, 'weighted', [['a', 1], ['b', 1]]))
+  expect(() => environmentWeightedPick(1, 'empty', [])).toThrow()
+  expect(() => environmentWeightedPick(1, 'weightless', [['a', 0]])).toThrow()
+  expect(() => environmentWeightedPick(1, 'negative', [['a', 2], ['b', -1]])).toThrow()
 })
 for (const orb of promptOrbs) {
   test(`the ${orb.title}’s prompt names 3 to 5 of its adjectives in their order, never two synonyms, the same for the same seed`, () => {

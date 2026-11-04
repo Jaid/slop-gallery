@@ -6,27 +6,15 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-import KnotLabels from '#component/KnotLabels'
-import KnotShowcase from '#component/KnotShowcase'
 import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
-import {narrate} from '#src/lib/gallery.ts'
 import DisplayPedestalGeometry from '#src/lib/gallery/DisplayPedestalGeometry.ts'
 import {tunnelSlope} from '#src/lib/gallery/lowerGallery.ts'
-import {environmentSeed} from '#src/lib/gameSeed.ts'
-import exhibitionKnots, {exhibitionPedestal, exhibitionPedestalLobes, exhibitionSlots} from '#src/rooms/exhibition/knots.ts'
+import {exhibitionPedestal, exhibitionPedestalLobes, exhibitionSlots} from '#src/rooms/exhibition/exhibits.ts'
 
 type PedestalMaterials = Record<'cap' | 'reveal' | 'stone', Material>
 
-/** The Exhibition’s six Knots, which the environment’s seed picks, each floating over a half-round pedestal against its display’s back wall, with its nameplate on the lower sidecar merged into the pedestal’s north flank. */
-export default function ExhibitionKnots({material}: {material: Material}) {
-  const knots = useMemo(() => exhibitionKnots(environmentSeed), [])
-  const signs = useMemo(() => knots.map((knot, index) => ({
-    entry: {
-      ...knot.entry,
-      label: exhibitionSlots[index].label,
-    },
-    ...exhibitionSlots[index].sign,
-  })), [knots])
+/** The Exhibition’s six half-round pedestals against their displays’ back walls, each with the lower sidecar for a nameplate merged into its north flank, waiting for their exhibits. */
+export default function ExhibitionPedestals({material}: {material: Material}) {
   const reveal = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#1f2628',
     roughness: 0.85,
@@ -45,10 +33,8 @@ export default function ExhibitionKnots({material}: {material: Material}) {
     [-1]: usePedestalGeometry(-1),
     1: usePedestalGeometry(1),
   }
-  return <group name='exhibition-knots'>
+  return <group name='exhibition-pedestals'>
     {exhibitionSlots.map(slot => <Pedestal key={slot.id} geometry={pedestals[slot.direction]} materials={materials} name={`${slot.id}-pedestal`} position={slot.pedestal} />)}
-    <KnotShowcase knots={knots} />
-    <KnotLabels signs={signs} onActivate={entry => narrate(`prop-knot-${entry.id}`)} />
   </group>
 }
 
