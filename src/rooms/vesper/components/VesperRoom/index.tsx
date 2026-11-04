@@ -19,7 +19,7 @@ const exhibits = [...orbs, transparentOrb, transparentOrb].map((orb, index, all)
   }
 })
 
-/** Opens up into a coved ceiling crowned by a glazed lantern instead of a flat ceiling, so the sun reaches inside, over the orbs on their column pedestals in two rows between the middle of its north half and its own middle. */
+/** Opens up into a coved ceiling crowned by a glazed lantern instead of a flat ceiling, so the sun reaches inside, over the orbs on their column pedestals in rows of two from its north half into its south half. */
 export default function VesperRoom({glass, stone, wood}: Omit<Parameters<typeof RoomFloor>[0], 'room'>) {
   return <group name='vesper-room'>
     <group position={[room.center[0], 0, room.center[1]]}>

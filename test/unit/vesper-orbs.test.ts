@@ -1,21 +1,25 @@
 import {expect, test} from 'bun:test'
 
 import {columnPedestalRadius} from '../../src/lib/gallery/ColumnPedestalGeometry.ts'
+import {floorTile} from '../../src/lib/gallery/floors.ts'
 import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import {vesper, vesperOrbPedestals} from '../../src/lib/gallery/vesper.ts'
 import {floorHeight, roomAt} from './fixtures/gallery.ts'
 
-test('the Vesper stands its orbs on column pedestals in two rows between the middle of its north half and its own middle, at least one for every kind, clear of the walls and of each other', () => {
+test('the Vesper stands its orbs on column pedestals in rows of two in the middle of floor tiles from its north half into its south half, at least one for every kind, clear of the walls and of each other', () => {
   expect(vesperOrbPedestals.length).toBeGreaterThanOrEqual(orbs.length)
   const [centerX, centerZ] = vesper.center
   const middleX = vesperOrbPedestals.reduce((sum, {position: [x]}) => sum + x, 0) / vesperOrbPedestals.length
   const middleZ = vesperOrbPedestals.reduce((sum, {position: [, , z]}) => sum + z, 0) / vesperOrbPedestals.length
   expect(middleX).toBeCloseTo(centerX, 9)
-  expect(middleZ).toBeLessThan(centerZ - 3)
+  expect(middleZ).toBeLessThan(centerZ)
   for (const [index, {position, rotation}] of vesperOrbPedestals.entries()) {
     const [x, y, z] = position
     expect(roomAt([x, 1.7, z])).toBe('vesper')
     expect(y).toBe(floorHeight([x, 1.7, z]))
+    // In the middle of a floor tile, as far from its seams on every side.
+    expect((x - centerX + vesper.size[0] / 2) % floorTile).toBeCloseTo(floorTile / 2, 9)
+    expect((z - centerZ + vesper.size[1] / 2) % floorTile).toBeCloseTo(floorTile / 2, 9)
     // Room enough to walk round it, short of the walls.
     expect(vesper.size[0] / 2 - Math.abs(x - centerX) - columnPedestalRadius.foot).toBeGreaterThan(3)
     expect(vesper.size[1] / 2 - Math.abs(z - centerZ) - columnPedestalRadius.foot).toBeGreaterThan(3)
