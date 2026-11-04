@@ -1,0 +1,94 @@
+name: pages
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+# A newer push replaces the deployment of an older one still building.
+concurrency:
+  group: pages-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  deploy:
+    # Pull requests from forks get no secrets.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    # main goes to slop.gallery, a pull request to a preview at pr-<number>.slop-gallery.pages.dev and any other branch to one at <branch>.slop-gallery.pages.dev.
+    environment:
+      name: ${{ github.event_name != 'pull_request' && github.ref_name == 'main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+    env:
+      branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
+    steps:
+    - name: requireToken
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      run: |
+        if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+          echo "::error::The repository secret CLOUDFLARE_API_TOKEN, a Cloudflare API token with Cloudflare Pages: Edit, is missing."
+          exit 1
+        fi
+    # A pull request’s head, not its merge commit, so the preview shows what was pushed.
+    - name: checkout
+      uses: actions/checkout@v7.0.1
+      with:
+        ref: ${{ github.event.pull_request.head.sha || github.sha }}
+    - name: setupBun
+      uses: oven-sh/setup-bun@v2.2.0
+      with:
+        bun-version: 1.4.4
+    - name: setupMediaTools
+      uses: ./.github/actions/setupMediaTools
+    - name: install
+      run: bun install --frozen-lockfile
+    # The voice samples cost an OpenRouter request each and the images seconds of encoding each, so every build passes on what it made to the next.
+    - name: restoreBuildCaches
+      id: restoreBuildCaches
+      uses: actions/cache/restore@v6.1.0
+      with:
+        path: |
+          temp/vite-plugin-import-voice-sample
+          temp/vite-plugin-jxl
+        key: build-caches-${{ github.run_id }}
+        restore-keys: build-caches-
+    # Without any cache, the voice samples come from the repository variable VOICE_SAMPLES_URL, a .tar.zst of a voice sample store (temp/vite-plugin-import-voice-sample/store), so the deployment speaks with the takes the site already has instead of new ones.
+    - name: seedVoiceSamples
+      if: steps.restoreBuildCaches.outputs.cache-matched-key == '' && vars.VOICE_SAMPLES_URL != ''
+      env:
+        url: ${{ vars.VOICE_SAMPLES_URL }}
+      run: |
+        mkdir --parents temp/vite-plugin-import-voice-sample/store
+        curl --silent --show-error --location --fail "$url" | tar --extract --zstd --directory temp/vite-plugin-import-voice-sample/store
+    - name: build
+      env:
+        OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      run: |
+        set -o pipefail
+        bun run build 2>&1 | tee "$RUNNER_TEMP/build.log"
+        # Without OPENROUTER_API_KEY, voice samples missing from the caches are silent. That may do for a preview, but never for production.
+        if silenced=$(grep --only-matching --extended-regexp '[0-9]+ voice samples? (was|were) replaced by silence' "$RUNNER_TEMP/build.log"); then
+          if [ "$branch" = main ]; then
+            echo "::error::$silenced"
+            exit 1
+          fi
+          echo "::warning::$silenced"
+        fi
+    - name: saveBuildCaches
+      if: steps.restoreBuildCaches.outputs.cache-matched-key != format('build-caches-{0}', hashFiles('temp/vite-plugin-import-voice-sample/**', 'temp/vite-plugin-jxl/**'))
+      uses: actions/cache/save@v6.1.0
+      with:
+        path: |
+          temp/vite-plugin-import-voice-sample
+          temp/vite-plugin-jxl
+        key: build-caches-${{ hashFiles('temp/vite-plugin-import-voice-sample/**', 'temp/vite-plugin-jxl/**') }}
+    - name: deploy
+      id: deploy
+      uses: cloudflare/wrangler-action@v4.1.3
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: 94b07787e8a720b65196137d6224ec90
+        packageManager: bun
+        wranglerVersion: 4.157.0
+        command: pages deploy dist --project-name=slop-gallery --branch=${{ env.branch }} --commit-dirty=false

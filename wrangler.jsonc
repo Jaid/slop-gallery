@@ -1,10 +1,5 @@
 {
   "$schema": "https://raw.esm.sh/wrangler/config-schema.json",
   "name": "slop-gallery",
-  "pages_build_output_dir": "dist",
-  "vars": {
-    "SKIP_DEPENDENCY_INSTALL": "1",
-    "BUN_VERSION": "1.4.4"
-  },
-  "no_bundle": true
+  "pages_build_output_dir": "dist"
 }
