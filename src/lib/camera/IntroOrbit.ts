@@ -22,19 +22,27 @@ export default class IntroOrbit {
   readonly radius: number
   /** the angle the camera starts at, in radians around the y axis, 0 on the +z side of the point and π/2 on the +x side */
   readonly start: number
+  /** the radius of what the camera looks at, which stays in focus while the background beyond it blurs */
+  readonly subject: number
+  /** the seconds after the player last turned the camera before it circles on its own again */
+  readonly takeover: number
   /** the point the camera looks at, in world meters */
   readonly target: Vec3
 
-  constructor({elevation, period = 60, radius, start = 0, target}: {
+  constructor({elevation, period = 60, radius, start = 0, subject, takeover = 3, target}: {
     elevation: number
     period?: number
     radius: number
     start?: number
+    subject: number
+    takeover?: number
     target: Vec3
   }) {
-    if (!(radius > 0) || !(period > 0) || ![elevation, start, ...target].every(Number.isFinite)) {
-      throw new RangeError('An intro orbit needs a positive radius and period and finite coordinates.')
+    if (!(radius > 0) || !(subject > 0) || !(period > 0) || !(takeover >= 0) || ![elevation, start, ...target].every(Number.isFinite)) {
+      throw new RangeError('An intro orbit needs a positive radius, subject and period, a takeover of at least 0 s and finite coordinates.')
     }
+    this.subject = subject
+    this.takeover = takeover
     this.elevation = elevation
     this.period = period
     this.radius = radius
@@ -42,9 +50,28 @@ export default class IntroOrbit {
     this.target = target
   }
 
-  /** The camera’s pose `time` seconds after the intro began, circling in `direction`. */
+  /** the camera’s distance from the point it looks at, in meters */
+  get distance() {
+    return Math.hypot(this.radius, this.elevation)
+  }
+
+  /** how fast the camera circles on its own, in radians per second */
+  get speed() {
+    return 2 * Math.PI / this.period
+  }
+
+  /** The angle of the camera circling on its own in `direction`, `time` seconds after the intro began. */
+  angleAt(time: number, direction: IntroDirection = 1) {
+    return this.start + direction * this.speed * time
+  }
+
+  /** The camera’s pose `time` seconds after the intro began, circling on its own in `direction`. */
   pose(time: number, direction: IntroDirection = 1): IntroPose {
-    const angle = this.start + direction * 2 * Math.PI * time / this.period
+    return this.poseAt(this.angleAt(time, direction))
+  }
+
+  /** The camera’s pose at `angle` on the ring, in radians around the y axis like {@link start}. */
+  poseAt(angle: number): IntroPose {
     const [x, y, z] = this.target
     return {
       position: [x + Math.sin(angle) * this.radius, y + this.elevation, z + Math.cos(angle) * this.radius],
