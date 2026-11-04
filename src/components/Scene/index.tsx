@@ -5,6 +5,7 @@ import {useEffect, useLayoutEffect, useRef} from 'react'
 import AmbienceEmitterMarkers from '#component/AmbienceEmitterMarkers'
 import AmbienceListener from '#component/AmbienceListener'
 import Fusions from '#component/Fusions'
+import IntroCamera from '#component/IntroCamera'
 import Lamps from '#component/Lamps'
 import LightLevels from '#component/LightLevels'
 import LightMarkers from '#component/LightMarkers'
@@ -17,6 +18,7 @@ import Skybox from '#component/Skybox'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {isShowingAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import {useGallery} from '#src/lib/gallery.ts'
+import {useIntro} from '#src/lib/gallery/intro.ts'
 import {isEditingPortraitSlots, isShowingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {pendingRooms} from '#src/lib/gallery/roomLoading.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
@@ -36,6 +38,7 @@ const {Scene: WorldScene} = world
  */
 export default function Scene() {
   const uiHidden = useHiddenUi(state => state.hidden)
+  const introOrbit = useIntro(state => state.orbit)
   return <>
     <WorldScene />
     <Skybox />
@@ -53,6 +56,8 @@ export default function Scene() {
     <LightLevels />
     <AmbienceListener />
     <Player />
+    {/* After the Player, whose spawn releases the camera and which writes it before the intro every frame */}
+    <Branch if={introOrbit !== null}><IntroCamera orbit={introOrbit!} /></Branch>
     <Interaction />
     <WebmcpBridge />
     <Ready />

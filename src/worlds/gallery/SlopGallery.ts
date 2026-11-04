@@ -5,6 +5,8 @@ import type {RoomPlacement} from '../base/World.ts'
 
 import {lazy} from 'react'
 
+import IntroOrbit from '#src/lib/camera/IntroOrbit.ts'
+import fountain from '#src/lib/gallery/fountain/config.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import showcasedKnots from '#src/lib/gallery/showcasedKnots.ts'
 import {GalleryPlacementSpace} from '#src/lib/placement/GalleryPlacementSpace.ts'
@@ -60,6 +62,14 @@ export default class SlopGallery extends World<GalleryRoom> {
   override readonly artworks = artworks
   override readonly defaultRoom = 'lobby'
   override readonly id = 'gallery'
+  /** Round the Lobby’s fountain, past its benches and looking down on its basin, starting from the south-east between two benches. Eyes 3.4 m up drop the entering player 1.8 m onto the floor. */
+  override readonly introOrbit = new IntroOrbit({
+    target: [fountain.position[0], fountain.position[1] + 0.9, fountain.position[2]],
+    radius: 6.2,
+    elevation: 2.5,
+    period: 60,
+    start: Math.PI / 4,
+  })
   override readonly Minimap = minimap
   override readonly narratesIntroduction = true
   override readonly placement: GalleryPlacementSpace

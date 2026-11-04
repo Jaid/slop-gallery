@@ -1,3 +1,4 @@
+import type IntroOrbit from '#src/lib/camera/IntroOrbit.ts'
 import type {Artwork, PlayerPose, Vec3} from '#src/lib/gallery/types.ts'
 import type {PlacementSpace} from '#src/lib/placement/base/PlacementSpace.ts'
 import type {Wall} from '#src/lib/placement/wallGeometry.ts'
@@ -38,6 +39,8 @@ export default abstract class World<Kind extends Room = Room> {
   /** the rooms’ fences in world meters by room id, in the order of {@link rooms} */
   readonly geofences: Geofences<Kind['id'], Geofence>
   abstract readonly id: WorldId
+  /** where the camera circles behind the first menu until the player first enters, there and then taking over the camera’s pose, or undefined for none, the default */
+  readonly introOrbit: IntroOrbit | undefined = undefined
   /** the map of the world in the pause menu, once for its lower floors and once for its upper ones */
   abstract readonly Minimap: ComponentType<{lower: boolean}>
   /** whether the welcome narration may play once the player first looks around */

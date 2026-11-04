@@ -11,6 +11,7 @@ import Menu from '#component/Menu'
 
 import {readAiSettings} from '../../src/lib/ai/settings.ts'
 import {setApiKey, toggleSound} from '../../src/lib/gallery/actions.ts'
+import {useIntro} from '../../src/lib/gallery/intro.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {startNewGame} from '../../src/lib/gameSeed.ts'
 import pauseMenu from '../../src/lib/pauseMenu.ts'
@@ -35,6 +36,8 @@ beforeEach(() => {
     },
   })
   useGallery.setState(useGallery.getInitialState(), true)
+  // The menus after the intro, unless a test brings it back. Server rendering reads the stores’ initial states.
+  Object.assign(useIntro.getInitialState(), {orbit: null})
 })
 afterEach(() => {
   useGallery.setState(state, true)
@@ -187,5 +190,62 @@ test.each(['lobby', 'oculus'] as const)('pause heading identifies the %s room an
   } finally {
     snapshot.mockRestore()
     Object.assign(useGallery.getInitialState(), initial)
+  }
+})
+test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in view with only the title, Play, audio and graphics', stage => {
+  const initial = {...useGallery.getInitialState()}
+  const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
+    stage,
+    locked: false,
+  })
+  Object.assign(useGallery.getInitialState(), {ready: true})
+  Object.assign(useIntro.getInitialState(), {orbit: slopGallery.introOrbit})
+  try {
+    const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
+      isHeavy: true,
+      onChange: () => {},
+      children: createElement(Menu, {
+        available: true,
+        params: readAiSettings(),
+        setParams: () => {},
+      }),
+    }))
+    expect(html).toContain('>Slop Gallery</h1>')
+    expect(html).toMatch(/id="enter-gallery"[^>]*>Play</u)
+    expect(html).toContain('Mute audio')
+    expect(html).toContain('Heavy graphics')
+    expect(html.includes('New game')).toBe(stage === 'return')
+    expect(html).not.toContain('OpenRouter')
+    expect(html).not.toContain('Good taste.')
+    expect(html).not.toContain('data-testid="minimap"')
+    // The title comes before the buttons.
+    expect(html.indexOf('id="menu-title"')).toBeLessThan(html.indexOf('id="enter-gallery"'))
+  } finally {
+    snapshot.mockRestore()
+    Object.assign(useGallery.getInitialState(), initial)
+    Object.assign(useIntro.getInitialState(), {orbit: null})
+  }
+})
+test('the pause menu after the intro keeps the OpenRouter section', () => {
+  const snapshot = spyOn(pauseMenu, 'getServerSnapshot').mockReturnValue({
+    stage: 'pause',
+    locked: false,
+  })
+  Object.assign(useIntro.getInitialState(), {orbit: slopGallery.introOrbit})
+  try {
+    const html = renderToStaticMarkup(createElement(GraphicsModeProvider, {
+      isHeavy: true,
+      onChange: () => {},
+      children: createElement(Menu, {
+        available: true,
+        params: readAiSettings(),
+        setParams: () => {},
+      }),
+    }))
+    expect(html).toContain('OpenRouter')
+    expect(html).not.toMatch(/id="enter-gallery"[^>]*>Play</u)
+  } finally {
+    snapshot.mockRestore()
+    Object.assign(useIntro.getInitialState(), {orbit: null})
   }
 })

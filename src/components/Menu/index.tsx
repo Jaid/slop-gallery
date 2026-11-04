@@ -2,6 +2,7 @@ import type useGalleryAI from '#src/lib/useGalleryAI.ts'
 import type {PauseMenuStage} from 'use-pause-menu'
 
 import Branch from 'branch-component'
+import clsx from 'clsx'
 import {useEffect, useRef} from 'react'
 import usePauseMenu from 'use-pause-menu'
 
@@ -11,6 +12,7 @@ import MenuOptions from '#component/MenuOptions'
 import Minimap from '#component/Minimap'
 import OpenRouterConnection from '#component/OpenRouterConnection'
 import {enterGallery, useGallery} from '#src/lib/gallery.ts'
+import {useIntro} from '#src/lib/gallery/intro.ts'
 import {startNewGame} from '#src/lib/gameSeed.ts'
 import pauseMenu from '#src/lib/pauseMenu.ts'
 import world from '#src/worlds/current.ts'
@@ -24,9 +26,21 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
   const paused = stage === 'pause'
   const tagline = paused ? world.roomTagline(room) : world.tagline
   const heading = useRef<HTMLHeadingElement>(null)
+  // Until the player first enters, the menu leaves the intro in full view: the title above it, the buttons below.
+  const intro = useIntro(state => state.orbit !== null) && (stage === 'first' || stage === 'return')
   useEffect(() => {
     heading.current?.focus({preventScroll: true})
   }, [])
+  if (intro) {
+    return <section className={clsx(css.container, css.intro)} aria-labelledby='menu-title' data-stage={stage} data-testid='menu-overlay'>
+      <h1 id='menu-title' tabIndex={-1} ref={heading}>{world.title}</h1>
+      <div className={css.actions}>
+        <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}<Icon name='arrow' size={18} /></button>
+        <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
+        <MenuOptions className={css.options} />
+      </div>
+    </section>
+  }
   return <section className={css.container} aria-labelledby='menu-title' data-stage={stage} data-testid='menu-overlay'>
     <div className={css.layout}>
       <Branch if={paused}><Minimap lower={false} /></Branch>
