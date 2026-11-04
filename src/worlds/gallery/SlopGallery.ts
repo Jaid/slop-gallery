@@ -62,11 +62,11 @@ export default class SlopGallery extends World<GalleryRoom> {
   override readonly artworks = artworks
   override readonly defaultRoom = 'lobby'
   override readonly id = 'gallery'
-  /** Round the Lobby’s fountain, past its benches and looking down on its basin, starting from the south-east between two benches. Eyes 3.4 m up drop the entering player 1.8 m onto the floor. */
+  /** Round the Lobby’s fountain, past its benches and looking down on its basin, starting from the south-east between two benches. Eyes 4 m up drop the entering player 2.4 m onto the floor. */
   override readonly introOrbit = new IntroOrbit({
     target: [fountain.position[0], fountain.position[1] + 0.9, fountain.position[2]],
     radius: 6.2,
-    elevation: 2.5,
+    elevation: 3.1,
     period: 60,
     start: Math.PI / 4,
   })

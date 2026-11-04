@@ -40,14 +40,15 @@ test('the intro turns once a minute, looking at the fountain, either way the see
   const directions = new Set(Array.from({length: 64}, (_, seed) => introDirection(seed)))
   expect([...directions].toSorted((a, b) => a - b)).toEqual([-1, 1])
 })
-test('the player taking over the intro’s camera stands inside the Lobby, clear of the fountain and its benches, and falls one to two meters', () => {
+test('the player taking over the intro’s camera stands inside the Lobby, clear of the fountain and its benches, and falls two to two and a half meters', () => {
   for (const {position} of samples) {
     const feet = [position[0], position[1] - defaultEgoOptions.eyeHeight, position[2]] as [number, number, number]
     expect(slopGallery.contains(feet)).toBe(true)
     expect(slopGallery.roomAt(feet)?.id).toBe('lobby')
     const fall = feet[1] - slopGallery.floorHeight(feet)
-    expect(fall).toBeGreaterThanOrEqual(1)
-    expect(fall).toBeLessThanOrEqual(2)
+    expect(position[1] - slopGallery.floorHeight(feet)).toBeCloseTo(4, 9)
+    expect(fall).toBeGreaterThanOrEqual(2)
+    expect(fall).toBeLessThanOrEqual(2.5)
     // Beyond the benches, 4 m out and 0.8 m deep, with the capsule’s radius to spare; within the Lobby’s walls just as well.
     expect(Math.hypot(feet[0] - fountain.position[0], feet[2] - fountain.position[2])).toBeGreaterThan(4.4 + defaultEgoOptions.radius)
     expect(Math.abs(feet[0])).toBeLessThan(8 - defaultEgoOptions.radius)
