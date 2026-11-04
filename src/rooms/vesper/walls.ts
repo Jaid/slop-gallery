@@ -21,9 +21,10 @@ const east = planWall(size, 'east', height)
 export default {
   north: planWall(size, 'north', height),
   west: planWall(size, 'west', height),
+  // The arch through to the Sienna, in the middle.
   south: planWall(size, 'south', height, {
     holes: {
-      sienna: doorway(-3.8),
+      sienna: doorway(0),
     },
   }),
   // The arch through to the Lobby, cut where the Lobby’s west wall has it.

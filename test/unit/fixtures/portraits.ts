@@ -228,7 +228,7 @@ const samplePortraits: Array<Portrait> = [
     source: '/art/frog.jxl',
     narration: {audio: '/audio/frog.opus'},
     position: [
-      -14,
+      -10.35,
       2.5,
       7.78,
     ],

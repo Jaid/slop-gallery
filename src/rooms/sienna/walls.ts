@@ -24,10 +24,11 @@ const vestibuleWall = (side: PlanSide, wall: Partial<RoomWall> = {}): RoomWall =
 }
 
 export default {
+  // The arch through to the Vesper, in the middle.
   north: planWall(sienna.size, 'north', height, {
     holes: {
       vesper: {
-        u: 3.8,
+        u: 0,
         width: 2.8,
         height: 3.8,
         profile: 'arch',
