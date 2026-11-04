@@ -216,9 +216,9 @@ for (const returning of [false, true]) {
         }
       }
       addFortressCrater(world)
-      // from the level landing a couple of meters north of the doorway, round the crater in front of it and clear of the guard stone beside it, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater
+      // from the level landing west of the crater in front of the doorway, round its edge into the doorway, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater
       const [craterX, entranceY, craterZ] = fortressCrater.center
-      const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[craterX + 1.5, craterZ - 1.3, true], [craterX + 1.37, craterZ + 0.8, true], ...Array.from({length: Math.ceil(route.length / 0.4)}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const), route.end.point, bastionMouth.path[1]]
+      const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[craterX - 1.8, craterZ, true], [craterX - 1.3, route.start[1] - 0.4, true], ...Array.from({length: Math.ceil(route.length / 0.4)}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const), route.end.point, bastionMouth.path[1]]
       if (returning) {
         path.reverse()
       }

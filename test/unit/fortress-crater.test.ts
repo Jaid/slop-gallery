@@ -8,12 +8,11 @@ import {mulberry32} from 'math/random'
 import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionApproach, bastionRun} from '../../src/lib/gallery/bastion.ts'
 import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressCrater, fortressCurve, fortressGuardStone, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
+import {fortressCrater, fortressCurve, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
 import {rubbleShelf} from '../../src/lib/gallery/FortressCraterGeometry.ts'
-import {fortressLink, fortressNetwork} from '../../src/lib/gallery/fortressNetwork.ts'
+import {fortressNetwork} from '../../src/lib/gallery/fortressNetwork.ts'
 import {orbRadius} from '../../src/lib/gallery/orbs/index.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import RouteVaultGeometry, {pavingThickness} from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
@@ -87,9 +86,10 @@ const inCrater = ({x, y, z}: {
   y: number
   z: number
 }) => y < floorY + orbRadius / 2 && Math.hypot(x - centerX, z - centerZ) < reach
-test('the crater breaks through the landing’s paving on the link’s axis, 1.6 m out from its doorway', () => {
+test('the crater breaks through the landing’s paving on the link’s axis, its edge 10 cm short of the doorway’s line', () => {
   expect(centerX).toBe(fortressLinkStart.point[0])
-  expect(centerZ).toBeCloseTo(fortressLinkStart.point[1] - 1.6, 9)
+  expect(Math.max(...fortressCrater.outline.map(([, z]) => z))).toBeLessThan(fortressLinkStart.point[1] - 0.1 + 1e-9)
+  expect(Math.max(...fortressCrater.outline.map(([, z]) => z))).toBeGreaterThan(fortressLinkStart.point[1] - 0.2)
   expect(floorY).toBe(fortressLinkStart.y)
   expect(fortressCurve.pits).toEqual([fortressCrater.outline])
   const material = new MeshBasicMaterial({side: DoubleSide})
@@ -115,8 +115,8 @@ test('the crater breaks through the landing’s paving on the link’s axis, 1.6
   } finally {
     material.dispose()
   }
-  expect(reach).toBeLessThan(fortressCrater.radius * 1.15)
-  expect(Math.min(...fortressCrater.outline.map(([x, z]) => Math.hypot(x - centerX, z - centerZ)))).toBeGreaterThan(fortressCrater.radius * 0.85)
+  expect(reach).toBeLessThan(fortressCrater.radius * 1.05 + 1e-9)
+  expect(Math.min(...fortressCrater.outline.map(([x, z]) => Math.hypot(x - centerX, z - centerZ)))).toBeGreaterThan(fortressCrater.radius * 0.95)
 })
 test('the rubble meets the broken edge at the paving’s underside, and the broken ends of the tipped flags hang too high over it for an orb that fell in to roll back out, but low enough for a player to step out', () => {
   const position = fortressCraterGeometry.rubble.getAttribute('position')
@@ -138,20 +138,6 @@ test('the rubble meets the broken edge at the paving’s underside, and the brok
   // Tipped into the crater, the flags reach no higher than a little over the floor where they bend up with its edge.
   fortressCraterGeometry.flags.computeBoundingBox()
   expect(fortressCraterGeometry.flags.boundingBox!.max.y).toBeLessThan(0.03)
-})
-test('the guard stone runs along the face of the link’s east wall, the outside of its last corner, and narrows its doorway, standing higher than an orb', () => {
-  const [start, wallEnd, tip] = fortressGuardStone.corners
-  const eastFace = fortressLinkStart.point[0] + fortressLink.width / 2 - wallFace
-  expect(start[0]).toBeCloseTo(eastFace, 9)
-  expect(wallEnd[0]).toBeCloseTo(eastFace, 9)
-  // The tunnel turns left out of the strip into its run north to the doorway, so its east wall is the outside of that corner.
-  expect(fortressLink.route.pieces[1].kind).toBe('arc')
-  expect(start[1]).toBeGreaterThan(wallEnd[1])
-  expect(tip[1]).toBe(wallEnd[1])
-  // It leaves the doorway more than 2.5 m wide at the floor.
-  expect(tip[0] - (fortressLinkStart.point[0] - fortressLink.width / 2 + wallFace)).toBeGreaterThan(2.5)
-  expect(fortressGuardStone.top - floorY).toBeGreaterThan(orbRadius * 2.5)
-  expect(fortressGuardStone.bottom).toBeLessThan(floorY)
 })
 /**
  * Throws an orb at each of the points, 1.5 s apart, from where the climb’s approach turns east toward the Cinnabar, a little off its corner, as high as a player’s eyes, looking back south through the screen’s arch down the run; `apart`, they pass through each other.

@@ -4,15 +4,15 @@ import {mulberry32} from 'math/random'
 import {ExtrudeGeometry, Float32BufferAttribute, BufferGeometry as Geometry, IcosahedronGeometry, Matrix4, Shape, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {fortressCrater, fortressGuardStone} from './fortress.ts'
+import {fortressCrater} from './fortress.ts'
 import {pavingThickness} from './passages/RouteVaultGeometry.ts'
 
 /** how many rings the rubble’s surface is laid in from its middle out to the broken edge */
-const rings = 10
+const rings = 14
 /** how far the rubble’s surface strays up or down from its bowl, at most, in meters */
 const roughness = 0.03
 /** how deep under the floor the rubble lies under the tipped flags, below the underside of the paving */
-export const rubbleShelf = 0.3
+export const rubbleShelf = 0.28
 /** how far out from the middle to the broken edge the rubble sinks into a pit, under the broken ends of the tipped flags */
 const pit = 0.6
 /** how far out from the middle to the broken edge the tipped flags broke off, at least and at most */
@@ -24,13 +24,7 @@ const thicknessRange = [0.06, 0.09] as const
 /** how far apart the tipped flags lie at their sides, along the broken edge */
 const cracks = 0.015
 /** the broken flags lying in the pit */
-const shards = 6
-
-/** The collider of the guard stone that turns orbs toward the crater: its outline in plan from under the floor up to its top, square where its mesh is chamfered. */
-export function guardStoneHull() {
-  const {bottom, corners, top} = fortressGuardStone
-  return new Float32Array(corners.flatMap(([x, z]) => [x, bottom, z, x, top, z]))
-}
+const shards = 10
 
 /**
  * The Fortress’ crater, in its own frame with the floor’s level round its middle at the origin, inside the hole broken through the paving: the flags that tipped into it from its edge, the rubble under them that sinks into a pit down to its `depth` in its middle, and a few shards lying in the pit.
