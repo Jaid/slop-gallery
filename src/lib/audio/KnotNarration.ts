@@ -1,5 +1,5 @@
 import type {KnotCandidateData, KnotEntry} from 'knot-materials/types.ts'
-import type {AudioHandle, Narrator} from 'use-narrator/core'
+import type {AudioHandle, NarrationReference, Narrator} from 'use-narrator/core'
 
 import {knotAnnouncementPaths, knotCandidateAnnouncementPath} from 'knot-materials/announcements.ts'
 
@@ -21,19 +21,12 @@ export default class KnotNarration {
         repeat: false,
       }),
       this.recording(paths.item, item.title, options),
-    ].filter((handle): handle is AudioHandle => handle !== undefined)
+    ]
   }
 
   enqueueCandidate(candidate: KnotCandidateData, options: Options) {
     const path = knotCandidateAnnouncementPath(candidate)
-    const audio = this.resolve(path)
-    if (!audio) {
-      return
-    }
-    return this.narrator.push({
-      audio,
-      title: candidate.title,
-    }, {
+    return this.narrator.push(this.announcement(path, candidate.title), {
       id: options.id,
       signal: options.signal,
       key: path,
@@ -47,16 +40,24 @@ export default class KnotNarration {
     })
   }
 
-  private recording(path: string, title: string, options: Options) {
+  /** The bundled recording, or the browser’s voice where the build left it out (see VOICE_SAMPLES in vite.config.ts); never paid generation for a Knot’s title. */
+  private announcement(path: string, title: string): NarrationReference {
     const audio = this.resolve(path)
-    // Missing bundled narration stays silent: never start paid generation for a knot title.
-    if (!audio) {
-      return
+    if (audio) {
+      return {
+        audio,
+        title,
+      }
     }
-    return this.narrator.push({
-      audio,
+    return {
+      text: title,
       title,
-    }, {
+      synthesize: 'browser',
+    }
+  }
+
+  private recording(path: string, title: string, options: Options) {
+    return this.narrator.push(this.announcement(path, title), {
       id: options.id,
       signal: options.signal,
       once: path,

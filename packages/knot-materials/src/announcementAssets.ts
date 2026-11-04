@@ -903,7 +903,7 @@ import announcement900 from "voice:knot-entries__wrought_nebula/iris" with {emot
 import announcement901 from "voice:knot-entries__zebrawood/iris" with {emotion: 'loud', format: 'opus', language: 'en', text: "Zebrawood"}
 import announcement902 from "voice:knot-entries__zero_point_lather/iris" with {emotion: 'loud', format: 'opus', language: 'en', text: "Quantum Foam"}
 
-const recordings = new Map<string, string>([
+const recordings = new Map<string, string | undefined>([
   ["candidates/claude_fable/candidate", announcement0],
   ["candidates/claude_fable/slug/claude-fable-5.1", announcement1],
   ["candidates/claude_haiku/candidate", announcement2],

@@ -17,7 +17,11 @@ const setup = (resolve: (id: string) => string | undefined = id => id) => {
     const player = new FakePlayback(reference instanceof Blob ? 'blob' : String(reference))
     players.push(player)
     return player
-  }, createSpeech: () => {
+  }, createSpeech: speech => {
+    const player = new FakePlayback(`browser:${speech.text}`)
+    players.push(player)
+    return player
+  }, synthesize: () => {
     throw new Error('Knot narration must not generate speech.')
   }})
   const announcements = new KnotNarration(narrator, resolve)
@@ -146,11 +150,15 @@ test('model interaction queues just the model; candidate surfaces replay indepen
   await drain()
   expect(players.at(-1)!.name).toBe('candidates/glm/candidate')
 })
-test('missing recordings stay silent and never request generated narration', async () => {
-  const {narrator, announcements, players} = setup(() => {})
-  expect(announcements.enqueue(item, {id: item.id})).toEqual([])
-  expect(announcements.enqueueCandidate(glm.data, {id: 'glm'})).toBeUndefined()
-  await flush()
-  expect(players).toHaveLength(0)
-  expect(narrator.hasSpoken(knotAnnouncementPaths(item).model)).toBe(false)
+test('the browser’s voice reads the titles of missing recordings, which are never generated', async () => {
+  const {narrator, announcements, players, drain} = setup(() => {})
+  announcements.enqueue(item, {id: item.id})
+  announcements.enqueueCandidate(glm.data, {id: 'glm'})
+  await drain()
+  expect(players.map(p => p.name)).toEqual([`browser:${item.modelTitle}`, `browser:${item.title}`, `browser:${glm.data.title}`])
+  expect(narrator.hasSpoken(knotAnnouncementPaths(item).model)).toBe(true)
+  expect(narrator.hasSpoken(knotAnnouncementPaths(item).item)).toBe(true)
+  announcements.enqueue(item, {id: item.id})
+  await drain()
+  expect(players).toHaveLength(3)
 })

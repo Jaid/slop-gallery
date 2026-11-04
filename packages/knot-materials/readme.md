@@ -156,7 +156,9 @@ Knottingham announcements are generated through `vite-plugin-import-voice-sample
 
 `src/announcementAssets.ts` contains one static Iris import for every candidate, model, and knot title in `knotAnnouncements(knotCandidates)`. Each import uses loud delivery and Opus output, while the existing announcement path IDs remain unchanged for `KnotNarration`.
 
-There are no per-knot announcement audio assets in this package. Adding catalogue entries therefore only requires keeping the announcement import inventory in sync; runtime playback never initiates speech generation.
+There are no per-knot announcement audio assets in this package. Adding catalogue entries therefore only requires keeping the announcement import inventory in sync (`bun scripts/updateAnnouncements.ts`); runtime playback never initiates speech generation.
+
+A recording may be `undefined`: Slop Gallery only builds them with `VOICE_SAMPLES=true` (see its `vite.config.ts`), and leaves out any its OpenRouter requests fail for. `KnotNarration` then has the browser’s own voice read the title.
 
 ## Validation
 

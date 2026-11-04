@@ -19,7 +19,7 @@ export function announcementAssetsSource() {
     '/* eslint-disable perfectionist/sort-imports, stylistic/quotes */',
     ...imports,
     '',
-    'const recordings = new Map<string, string>([',
+    'const recordings = new Map<string, string | undefined>([',
     ...rows,
     '])',
     'const knotAnnouncementUrl = (id: string) => recordings.get(id)',

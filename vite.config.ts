@@ -9,7 +9,7 @@ import bakeBranchComponentPlugin from 'rolldown-plugin-bake-branch-component'
 import hoistPopularConstantsPlugin from 'rolldown-plugin-hoist-popular-constants'
 import thematicChunksPlugin from 'rolldown-plugin-thematic-chunks'
 import {deprecations as sassDeprecations} from 'sass-embedded'
-import {mergeConfig} from 'vite'
+import {loadEnv, mergeConfig} from 'vite'
 import bakeThreePlugin from 'vite-plugin-bake-three'
 import browserslistTargetPlugin from 'vite-plugin-browserslist-target'
 import importVoiceSamplePlugin from 'vite-plugin-import-voice-sample'
@@ -25,7 +25,8 @@ import rapierWasmPlugin from '#src/lib/vite/rapierWasmPlugin.ts'
 import worldChunksPlugin from '#src/lib/vite/worldChunksPlugin.ts'
 import {defaultWorld, selectWorld, worldIds, worldParameters, worldRooms, worlds} from '#src/worlds/index.ts'
 
-const getCommonConfig = () => {
+const getCommonConfig = (context: ConfigEnv) => {
+  const env = loadEnv(context.mode, process.cwd(), '')
   const config: UserConfig = {
     build: {
       chunkSizeWarningLimit: 5000,
@@ -34,7 +35,9 @@ const getCommonConfig = () => {
     plugins: [
       browserslistTargetPlugin(),
       importVoiceSamplePlugin({
-        // Builds without OpenRouter access get silence for uncached samples instead of failing.
+        // The Knots’ announcements in Grok’s Iris voice cost an OpenRouter request each, so only VOICE_SAMPLES=true includes them; without them, the browser’s own voice reads the titles.
+        enabled: env.VOICE_SAMPLES === 'true',
+        // A sample that cannot be fetched is read by the browser’s voice as well.
         optional: true,
       }),
       titlePlugin(worlds[defaultWorld].title),
@@ -180,6 +183,6 @@ const getProductionConfig = () => {
   }
   return config
 }
-const config: UserConfigFn = context => mergeConfig(getCommonConfig(), (context.mode === 'production' ? getProductionConfig : getDevelopmentConfig)(context))
+const config: UserConfigFn = context => mergeConfig(getCommonConfig(context), (context.mode === 'production' ? getProductionConfig : getDevelopmentConfig)(context))
 
 export default config
