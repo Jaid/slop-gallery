@@ -98,6 +98,10 @@
 
 .intro .actions button
   background: rgb(0 0 0 / 45%)
+
+// The intro’s background blur in Heavy graphics leaves the near floor behind the buttons sharp, so they blur it themselves; in Fast graphics, nothing blurs.
+.intro.heavy .actions button
+  backdrop-filter: blur(4px)
   &:hover
     background: rgb(0 0 0 / 60%)
 
