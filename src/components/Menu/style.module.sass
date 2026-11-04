@@ -67,27 +67,29 @@
     &:focus
       outline: none
 
-// the icon above the title
-.header
-  display: grid
-  justify-items: center
-  gap: 0.75rem
+.title
+  display: flex
+  flex-wrap: wrap
+  align-items: center
+  justify-content: center
+  gap: 0.35em
 
 .logo
-  width: clamp(72px, 12vh, 128px)
+  width: 1.3em
   height: auto
   filter: drop-shadow(0 4px 16px rgb(0 0 0 / 50%))
 
-// Play (and New game) above the settings
+// Play (and New game) above the settings, both rows as wide as the wider one, their buttons sharing it evenly
 .actions
   display: grid
-  justify-items: center
+  width: max-content
+  max-width: 100%
   gap: 0.75rem
 
 .play
-  display: flex
-  flex-wrap: wrap
-  justify-content: center
+  display: grid
+  grid-auto-columns: minmax(0, 1fr)
+  grid-auto-flow: column
   gap: 0.75rem
 
 .intro .actions button
@@ -96,8 +98,9 @@
     background: rgb(0 0 0 / 60%)
 
 .intro .enter, .intro .newGame
+  justify-content: center
   margin: 0
 
 .intro .options
-  grid-template-columns: repeat(2, 10rem)
+  grid-template-columns: repeat(2, minmax(10rem, 1fr))
   margin: 0

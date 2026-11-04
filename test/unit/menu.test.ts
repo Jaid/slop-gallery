@@ -210,7 +210,7 @@ test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in v
         setParams: () => {},
       }),
     }))
-    expect(html).toContain('>Slop Gallery</h1>')
+    expect(html).toMatch(/<h1[^>]*>Slop <img[^>]*> Gallery<\/h1>/u)
     expect(html).toMatch(/id="enter-gallery"[^>]*>Play</u)
     expect(html).toContain('Mute audio')
     expect(html).toContain('Heavy graphics')
@@ -218,9 +218,7 @@ test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in v
     expect(html).not.toContain('OpenRouter')
     expect(html).not.toContain('Good taste.')
     expect(html).not.toContain('data-testid="minimap"')
-    // The icon, then the title, then Play above the settings.
-    expect(html.indexOf('<img')).toBeGreaterThan(-1)
-    expect(html.indexOf('<img')).toBeLessThan(html.indexOf('id="menu-title"'))
+    // The title, then Play above the settings.
     expect(html.indexOf('id="menu-title"')).toBeLessThan(html.indexOf('id="enter-gallery"'))
     expect(html.indexOf('id="enter-gallery"')).toBeLessThan(html.indexOf('Mute audio'))
   } finally {
