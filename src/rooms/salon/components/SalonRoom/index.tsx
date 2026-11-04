@@ -8,11 +8,13 @@ import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial, PlaneGeometry} from 
 import useGraphicsMode, {useGraphicsModeValue} from 'use-graphics-mode'
 
 import BenchSeat from '#component/BenchSeat'
+import KnotLabels from '#component/KnotLabels'
 import KnotShowcase from '#component/KnotShowcase'
 import Pedestal, {usePedestal} from '#component/Pedestal'
 import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
+import {narrate} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonPedestal, salonSkylight, salonTerrazzo, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
@@ -20,7 +22,7 @@ import gold from '#src/lib/materials/gold.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '#src/lib/materials/TerrazzoFloorMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
-import salonKnot from '#src/rooms/salon/knot.ts'
+import salonKnot, {salonKnotSign} from '#src/rooms/salon/knot.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('salon')
@@ -70,6 +72,13 @@ export default function SalonRoom({glass, stone, wood}: {
   }), [terrazzo])
   const pedestal = usePedestal()
   const knots = useMemo(() => [salonKnot(environmentSeed)], [])
+  const signs = useMemo(() => knots.map(({entry}) => ({
+    entry: {
+      ...entry,
+      label: '#01',
+    },
+    ...salonKnotSign,
+  })), [knots])
   // The Lobby vault’s cast glass, divided into the same panes as the bars below it.
   const skylight = useDisposable(useMemo(() => new VaultGlassMaterial({
     heavy: isHeavy,
@@ -93,6 +102,7 @@ export default function SalonRoom({glass, stone, wood}: {
     <Ottoman />
     <Pedestal {...pedestal} position={salonPedestal} />
     <KnotShowcase knots={knots} />
+    <KnotLabels signs={signs} onActivate={entry => narrate(`prop-knot-${entry.id}`)} />
   </group>
 }
 

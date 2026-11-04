@@ -3,12 +3,13 @@ import {expect, test} from 'bun:test'
 import RAPIER from '@dimforge/rapier3d-compat'
 import {common, ethereal, knots, prime, rare} from 'knot-materials'
 import KnotResources from 'knot-materials/KnotResources.ts'
+import {knotSign} from 'knot-materials/signs.ts'
 import {Euler, Quaternion, Vector3} from 'three/webgpu'
 
 import PedestalGeometry, {pedestalHeight} from '../../src/lib/gallery/PedestalGeometry.ts'
-import {salonPedestal} from '../../src/lib/gallery/salon.ts'
+import {salonBench, salonPedestal} from '../../src/lib/gallery/salon.ts'
 import {knotStandingHeight, knotStandingRoll, standingKnotSink, standKnot} from '../../src/lib/physics/standingKnot.ts'
-import salonKnot, {salonKnotHeight, salonKnotRarityChances, salonKnots} from '../../src/rooms/salon/knot.ts'
+import salonKnot, {salonKnotHeight, salonKnotRarityChances, salonKnots, salonKnotSign} from '../../src/rooms/salon/knot.ts'
 
 await RAPIER.init()
 /** the integration parameters `<Physics>` of @react-three/rapier sets by default, which predict contacts much closer than Rapier’s own */
@@ -142,4 +143,16 @@ test('a contact skin thicker than Fiber’s prediction distance topples a standi
     pedestal.dispose()
     resources.dispose()
   }
+})
+test('the Knot’s nameplate stands on the Salon’s floor between the pedestal and the ottoman, facing the ottoman', () => {
+  const {position: [x, y, z], rotation} = salonKnotSign
+  expect(y).toBe(knotSign.elevation)
+  expect(z).toBeGreaterThan(salonPedestal[2] + 1.5)
+  expect(z).toBeLessThan(salonBench.position[2] - salonBench.depth / 2 - 1.5)
+  // Facing +z at no rotation, turned toward the ottoman’s middle.
+  const facing = [Math.sin(rotation), Math.cos(rotation)]
+  const toBench = [salonBench.position[0] - x, salonBench.position[2] - z]
+  const length = Math.hypot(...toBench)
+  expect(facing[0]).toBeCloseTo(toBench[0] / length, 9)
+  expect(facing[1]).toBeCloseTo(toBench[1] / length, 9)
 })
