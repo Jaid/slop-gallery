@@ -5,5 +5,7 @@
     <circle cx="2" cy="-8" r="0.2777"/>
     <circle cx="2" cy="-4" r="0.2777"/>
     <circle cx="-2" cy="-4" r="0.2777"/>
+    <circle cx="2" cy="0" r="0.2777"/>
+    <circle cx="-2" cy="0" r="0.2777"/>
   </g>
 </svg>
