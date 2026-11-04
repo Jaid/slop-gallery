@@ -9,7 +9,7 @@ import {PointerLockControls} from 'three/addons/controls/PointerLockControls.js'
 import {PerspectiveCamera, Vector3} from 'three/webgpu'
 
 import inspectionPointerSensitivity from '#src/lib/camera/inspectionPointerSensitivity.ts'
-import OrbitInspection from '#src/lib/camera/OrbitInspection.ts'
+import OrbitInspection, {orbitKeySpeed, orbitPointerSpeed} from '#src/lib/camera/OrbitInspection.ts'
 import {cameraPose, galleryEvents, isTextInput, setCameraFocused, useGallery} from '#src/lib/gallery.ts'
 import {orbitables} from '#src/lib/gallery/orbitables.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
@@ -17,7 +17,6 @@ import portraitOrbit from '#src/lib/gallery/portraitOrbit.ts'
 import {setInspectionFocus} from '#src/lib/rendering/playerView.ts'
 
 const inspectionDistanceSpeed = 0.45
-const inspectionOrbitSpeed = 1.5
 const inspectionFocusSpeed = 8
 
 type Target = {
@@ -180,7 +179,7 @@ export default function OrbitViewing() {
       if (!controls.isLocked || document.pointerLockElement !== renderer.domElement) {
         return
       }
-      const sensitivity = inspectionPointerSensitivity(0.0015 * controls.pointerSpeed, precisionPointer.current, event.shiftKey)
+      const sensitivity = inspectionPointerSensitivity(orbitPointerSpeed * controls.pointerSpeed, precisionPointer.current, event.shiftKey)
       session.current?.orbit.addInput(event.movementX * sensitivity, -event.movementY * sensitivity)
     }
     const blur = () => {
@@ -220,10 +219,13 @@ export default function OrbitViewing() {
       focusAmount.current = 0
     }
     if (!current) {
-      setInspectionFocus(focusAmount.current, 1, 0)
-      if (!focusAmount.current && focusPipelineActive.current) {
-        focusPipelineActive.current = false
-        galleryEvents.dispatchEvent(new Event('inspection-focus-end'))
+      // Only its own fade writes the focus, which another owner, like the intro, keeps otherwise.
+      if (focusPipelineActive.current) {
+        setInspectionFocus(focusAmount.current, 1, 0)
+        if (!focusAmount.current) {
+          focusPipelineActive.current = false
+          galleryEvents.dispatchEvent(new Event('inspection-focus-end'))
+        }
       }
       return
     }
@@ -232,7 +234,7 @@ export default function OrbitViewing() {
       const distanceDirection = Number(distanceKeys.current.has('KeyS')) - Number(distanceKeys.current.has('KeyW'))
       const orbitDirection = Number(orbitKeys.current.has('KeyD')) - Number(orbitKeys.current.has('KeyA'))
       current.orbit.adjustDistance(distanceDirection * inspectionDistanceSpeed * delta)
-      current.orbit.addInput(orbitDirection * inspectionOrbitSpeed * pointerSpeed * delta, 0)
+      current.orbit.addInput(orbitDirection * orbitKeySpeed * pointerSpeed * delta, 0)
     } else {
       distanceKeys.current.clear()
       orbitKeys.current.clear()

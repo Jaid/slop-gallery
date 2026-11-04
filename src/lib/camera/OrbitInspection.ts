@@ -6,11 +6,22 @@ import {Matrix4, Quaternion, Spherical, Vector3} from 'three/webgpu'
 const up = new Vector3(0, 1, 0)
 const identity = new Quaternion
 export const inspectionFov = 50
+/** how far an orbit turns per pixel the pointer moves, in radians, before the player’s pointer speed */
+export const orbitPointerSpeed = 0.0015
+/** how fast A and D circle an orbit, in radians per second, before the player’s pointer speed */
+export const orbitKeySpeed = 1.5
 const minDistanceFactor = 0.5
 const maxDistanceFactor = 1.75
 
 /** How the camera orbits one object. Distances are measured from the orbit’s center, in meters. */
 export type OrbitSettings = {
+  /** how the orbit circles on its own while left alone, like behind the intro’s menu; never unless set */
+  autoRotation?: {
+    /** the seconds after the last input before it circles on its own again; it circles from the start */
+    delay: number
+    /** in radians per second, positive turning the way the pointer moving right does */
+    speed: number
+  }
   /** how strongly the background blurs, relative to the default lens; 0 keeps it sharp */
   blur?: number
   /** the height the camera stays 18 cm below; no limit unless set */
@@ -21,6 +32,8 @@ export type OrbitSettings = {
   facing?: [number, number, number]
   /** the height the camera stays 18 cm above; no limit unless set */
   floorY?: number
+  /** the field of view while orbiting, {@link inspectionFov} unless set */
+  fov?: number
   /** the farthest S gets, 1.75 times the default distance unless set */
   maxDistance?: number
   /** the closest W gets, half the default distance unless set */
@@ -43,6 +56,8 @@ export default class OrbitInspection {
   private readonly aimOffset = new Quaternion
   private readonly destination = new Spherical
   private distanceFactor = 1
+  /** the seconds since the last input that turned the orbit */
+  private idle = Infinity
   private readonly lookRotation = new Quaternion
   private readonly matrix = new Matrix4
   private readonly offset = new Vector3
@@ -82,16 +97,15 @@ export default class OrbitInspection {
     this.phi = start.phi
   }
 
+  /** Turns the orbit by the player’s input, which holds off its circling on its own for a while. */
   addInput(yaw: number, pitch: number) {
     if (this.returning || !Number.isFinite(yaw) || !Number.isFinite(pitch)) {
       return
     }
-    const {yawLimit = Infinity, pitchLimit = Infinity} = this.settings
-    // Limited turns are measured from the start, so a large input can’t wrap around past the limit. The target only moves by
-    // the clamped change; resetting it to the start’s angle could put it a full turn away from the camera, which would spin.
-    const offset = deltaAngle(this.startTheta, this.theta)
-    this.theta += Number.isFinite(yawLimit) ? clamp(offset + yaw, -yawLimit, yawLimit) - offset : yaw
-    this.phi = clamp(this.phi - pitch, Math.max(0.05, this.startPhi - pitchLimit), Math.min(Math.PI - 0.05, this.startPhi + pitchLimit))
+    if (yaw || pitch) {
+      this.idle = 0
+    }
+    this.turn(yaw, pitch)
   }
 
   adjustDistance(amount: number) {
@@ -124,7 +138,14 @@ export default class OrbitInspection {
       return false
     }
     const blend = 1 - Math.exp(-Math.min(delta, 0.06) * 10)
-    const fov = this.returning ? this.originalFov : inspectionFov
+    const fov = this.returning ? this.originalFov : this.settings.fov ?? inspectionFov
+    const {autoRotation} = this.settings
+    if (autoRotation && !this.returning) {
+      this.idle += delta
+      if (this.idle >= autoRotation.delay) {
+        this.turn(autoRotation.speed * Math.min(delta, 0.1), 0)
+      }
+    }
     if (this.returning) {
       this.orbiting = false
       // Return around the object, not straight through it after a half orbit.
@@ -188,5 +209,13 @@ export default class OrbitInspection {
 
   private lookAt(center: Vector3) {
     return this.lookRotation.setFromRotationMatrix(this.matrix.lookAt(this.camera.position, center, up))
+  }
+  private turn(yaw: number, pitch: number) {
+    const {yawLimit = Infinity, pitchLimit = Infinity} = this.settings
+    // Limited turns are measured from the start, so a large input can’t wrap around past the limit. The target only moves by
+    // the clamped change; resetting it to the start’s angle could put it a full turn away from the camera, which would spin.
+    const offset = deltaAngle(this.startTheta, this.theta)
+    this.theta += Number.isFinite(yawLimit) ? clamp(offset + yaw, -yawLimit, yawLimit) - offset : yaw
+    this.phi = clamp(this.phi - pitch, Math.max(0.05, this.startPhi - pitchLimit), Math.min(Math.PI - 0.05, this.startPhi + pitchLimit))
   }
 }

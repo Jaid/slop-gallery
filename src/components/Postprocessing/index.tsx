@@ -10,7 +10,7 @@ import {getSunReach} from '#src/lib/gallery/sunReach.ts'
 import {activateRenderPipeline, releaseRenderPipeline} from '#src/lib/rendering/activeRenderPipeline.ts'
 import {useCustomGraphics} from '#src/lib/rendering/customGraphics.ts'
 import GalleryRenderPipeline from '#src/lib/rendering/GalleryRenderPipeline.ts'
-import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getTiltShift} from '#src/lib/rendering/playerView.ts'
+import {getInspectionFocus, getInspectionFocusBlur, getInspectionFocusDistance, getInspectionFocusProximity, getPlayerZoom} from '#src/lib/rendering/playerView.ts'
 import {getRenderPipelineStructure} from '#src/lib/rendering/renderPipelineSettings.ts'
 import TunableRenderPipeline from '#src/lib/rendering/TunableRenderPipeline.ts'
 
@@ -55,7 +55,7 @@ const Postprocessing = ({focus = false, heavy = true, settings, tunable = false}
     const options = {
       heavy,
       volumetricLightReach: getSunReach,
-      zoom: getTiltShift,
+      zoom: getPlayerZoom,
       focus: focus ? {
         amount: getInspectionFocus,
         blur: getInspectionFocusBlur,

@@ -247,4 +247,45 @@ describe('hold-to-orbit camera', () => {
     expect(a.camera.fov).toBeCloseTo(b.camera.fov, 8)
     expect(a.camera.position.distanceTo(center)).toBeGreaterThan(2)
   })
+  test('circles on its own at its speed, holds off for its delay after the last input and keeps a set field of view, as behind the intro’s menu', () => {
+    const {camera} = setup()
+    const orbit = new OrbitInspection(camera, center, {
+      radius: 0.85,
+      distance: 5,
+      pitchLimit: 0,
+      fov: 75,
+      autoRotation: {
+        delay: 3,
+        speed: 0.5,
+      },
+    })
+    const angle = () => Math.atan2(camera.position.x - center.x, camera.position.z - center.z)
+    const turned = (from: number) => Math.atan2(Math.sin(angle() - from), Math.cos(angle() - from))
+    settle(orbit)
+    const start = angle()
+    const height = camera.position.y
+    for (let i = 0; i < 60; i++) {
+      orbit.update(center, 1 / 60)
+    }
+    expect(turned(start)).toBeCloseTo(0.5, 2)
+    expect(camera.fov).toBe(75)
+    expect(camera.position.y).toBeCloseTo(height, 5)
+    expect(camera.position.distanceTo(center)).toBeCloseTo(5, 5)
+    orbit.addInput(-0.4, 0)
+    // It follows the input within 2.5 s, and still holds there half a second later.
+    for (let i = 0; i < 150; i++) {
+      orbit.update(center, 1 / 60)
+    }
+    const held = angle()
+    for (let i = 0; i < 29; i++) {
+      orbit.update(center, 1 / 60)
+    }
+    expect(turned(held)).toBeCloseTo(0, 3)
+    // From 3 s on, it circles again.
+    for (let i = 0; i < 60; i++) {
+      orbit.update(center, 1 / 60)
+    }
+    expect(turned(held)).toBeGreaterThan(0.3)
+    expect(camera.position.y).toBeCloseTo(height, 5)
+  })
 })

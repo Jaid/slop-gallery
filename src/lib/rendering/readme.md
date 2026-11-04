@@ -11,7 +11,7 @@ current-frame scene color + depth + normals + velocity
   → inspection background mask packed into alpha
   → one antialiasing resolve (TRAA or none)
   → bloom from the resolved color, masked by the resolved alpha
-  → Z zoom tilt-shift (also behind the intro’s menu) and vignette
+  → Z zoom tilt-shift and vignette
   → output color transform
 ```
 
