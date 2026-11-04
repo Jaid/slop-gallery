@@ -3,22 +3,23 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, closed]
   workflow_dispatch:
-# A newer push replaces the deployment of an older one still building.
+# A newer push replaces the deployment of an older one still building, and closing a pull request its last one.
 concurrency:
   group: pages-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 jobs:
   deploy:
     # Pull requests from forks get no secrets.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name != 'pull_request' || github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     permissions:
       contents: read
-    # Only previews: main goes to main.slop-gallery.pages.dev and main-<8-character commit hash>.slop-gallery.pages.dev, a pull request to pr-<number>.slop-gallery.pages.dev and any other branch to <branch>.slop-gallery.pages.dev. The ship workflow puts a state on slop.gallery.
+    # Only previews: main goes to main.slop.gallery, main.slop-gallery.pages.dev and main-<8-character commit hash>.slop-gallery.pages.dev, a pull request to pr-<number>.slop.gallery and pr-<number>.slop-gallery.pages.dev and any other branch to <branch>.slop-gallery.pages.dev. The ship workflow puts a state on slop.gallery.
     environment:
       name: preview
-      url: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+      url: ${{ (env.branch == 'main' || github.event_name == 'pull_request') && format('https://{0}.slop.gallery', env.branch) || steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
     env:
       branch: ${{ github.event_name == 'pull_request' && format('pr-{0}', github.event.pull_request.number) || github.ref_name }}
     steps:
@@ -27,7 +28,7 @@ jobs:
         CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       run: |
         if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
-          echo "::error::The repository secret CLOUDFLARE_API_TOKEN, a Cloudflare API token with Cloudflare Pages: Edit, is missing."
+          echo "::error::The repository secret CLOUDFLARE_API_TOKEN, a Cloudflare API token with Cloudflare Pages: Edit and DNS: Edit on slop.gallery, is missing."
           exit 1
         fi
     # A pull request’s head, not its merge commit, so the preview shows what was pushed.
@@ -51,11 +52,17 @@ jobs:
         packageManager: bun
         wranglerVersion: 4.157.0
         command: pages deploy dist --project-name=slop-gallery --branch=${{ env.branch }} --commit-dirty=false
+    # Only these, as Pages custom domains have no wildcards, so every other branch would leave a domain behind with no event to remove it.
+    - name: attachDomain
+      if: env.branch == 'main' || github.event_name == 'pull_request'
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      run: bun scripts/previewDomain.ts attach "$branch"
     - name: shortenCommit
       id: shortenCommit
       if: env.branch == 'main'
       run: echo "hash=${GITHUB_SHA::8}" >> "$GITHUB_OUTPUT"
-    # Keeps every state of main reachable after the next push replaces it on main.slop-gallery.pages.dev. The files are already uploaded, so this costs only the deployment itself.
+    # Keeps every state of main reachable after the next push replaces it on main.slop.gallery. The files are already uploaded, so this costs only the deployment itself.
     - name: deployCommit
       if: env.branch == 'main'
       uses: cloudflare/wrangler-action@v4.1.3
@@ -65,3 +72,25 @@ jobs:
         packageManager: bun
         wranglerVersion: 4.157.0
         command: pages deploy dist --project-name=slop-gallery --branch=main-${{ steps.shortenCommit.outputs.hash }} --commit-dirty=false
+  detachDomain:
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+    # The default branch’s script, not the pull request’s, which may predate it.
+    - name: checkout
+      uses: actions/checkout@v7.0.1
+      with:
+        ref: ${{ github.event.repository.default_branch }}
+        sparse-checkout: scripts/previewDomain.ts
+        sparse-checkout-cone-mode: false
+    - name: setupBun
+      uses: oven-sh/setup-bun@v2.2.0
+      with:
+        bun-version: 1.4.4
+    - name: detachDomain
+      env:
+        CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        alias: pr-${{ github.event.pull_request.number }}
+      run: bun scripts/previewDomain.ts detach "$alias"
