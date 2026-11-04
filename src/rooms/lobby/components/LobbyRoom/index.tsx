@@ -19,6 +19,6 @@ export default function LobbyRoom({cladding, glass, stone, wood}: Omit<Parameter
       <LobbyVault cladding={cladding} />
     </group>
     <Fountain />
-    <FountainBenches wood={wood} />
+    <FountainBenches />
   </>
 }
