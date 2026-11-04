@@ -218,8 +218,11 @@ test.each(['first', 'return'] as const)('the %s menu stage leaves the intro in v
     expect(html).not.toContain('OpenRouter')
     expect(html).not.toContain('Good taste.')
     expect(html).not.toContain('data-testid="minimap"')
-    // The title comes before the buttons.
+    // The icon, then the title, then Play above the settings.
+    expect(html.indexOf('<img')).toBeGreaterThan(-1)
+    expect(html.indexOf('<img')).toBeLessThan(html.indexOf('id="menu-title"'))
     expect(html.indexOf('id="menu-title"')).toBeLessThan(html.indexOf('id="enter-gallery"'))
+    expect(html.indexOf('id="enter-gallery"')).toBeLessThan(html.indexOf('Mute audio'))
   } finally {
     snapshot.mockRestore()
     Object.assign(useGallery.getInitialState(), initial)

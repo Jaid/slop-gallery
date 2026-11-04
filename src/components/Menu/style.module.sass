@@ -67,10 +67,26 @@
     &:focus
       outline: none
 
+// the icon above the title
+.header
+  display: grid
+  justify-items: center
+  gap: 0.75rem
+
+.logo
+  width: clamp(72px, 12vh, 128px)
+  height: auto
+  filter: drop-shadow(0 4px 16px rgb(0 0 0 / 50%))
+
+// Play (and New game) above the settings
 .actions
+  display: grid
+  justify-items: center
+  gap: 0.75rem
+
+.play
   display: flex
   flex-wrap: wrap
-  align-items: stretch
   justify-content: center
   gap: 0.75rem
 

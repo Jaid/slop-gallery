@@ -11,6 +11,7 @@ import MenuNarration from '#component/MenuNarration'
 import MenuOptions from '#component/MenuOptions'
 import Minimap from '#component/Minimap'
 import OpenRouterConnection from '#component/OpenRouterConnection'
+import icon from '#root/assets/icon.svg'
 import {enterGallery, useGallery} from '#src/lib/gallery.ts'
 import {useIntro} from '#src/lib/gallery/intro.ts'
 import {startNewGame} from '#src/lib/gameSeed.ts'
@@ -33,10 +34,15 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
   }, [])
   if (intro) {
     return <section className={clsx(css.container, css.intro)} aria-labelledby='menu-title' data-stage={stage} data-testid='menu-overlay'>
-      <h1 id='menu-title' tabIndex={-1} ref={heading}>{world.title}</h1>
+      <header className={css.header}>
+        <img className={css.logo} alt='' height={128} src={icon} width={128} />
+        <h1 id='menu-title' tabIndex={-1} ref={heading}>{world.title}</h1>
+      </header>
       <div className={css.actions}>
-        <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}<Icon name='arrow' size={18} /></button>
-        <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
+        <div className={css.play}>
+          <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}<Icon name='arrow' size={18} /></button>
+          <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
+        </div>
         <MenuOptions className={css.options} />
       </div>
     </section>
