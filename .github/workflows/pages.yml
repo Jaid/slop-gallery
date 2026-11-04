@@ -13,7 +13,7 @@ jobs:
   deploy:
     # Pull requests from forks get no secrets.
     if: github.event_name != 'pull_request' || github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     # Only previews: main goes to main.slop.gallery, main.slop-gallery.pages.dev and main-<8-character commit hash>.slop-gallery.pages.dev, a pull request to pr-<number>.slop.gallery and pr-<number>.slop-gallery.pages.dev and any other branch to <branch>.slop-gallery.pages.dev. The ship workflow puts a state on slop.gallery.
@@ -70,7 +70,7 @@ jobs:
         command: pages deploy dist --project-name=slop-gallery --branch=main-${{ steps.shortenCommit.outputs.hash }} --commit-dirty=false
   detachDomain:
     if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read
     steps:

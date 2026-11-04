@@ -1,5 +1,5 @@
 name: buildSite
-description: Builds the site to dist on ubuntu-24.04 runners, with the encoded images passed on from build to build in a cache, and without the Knots’ voice samples, so the browser’s own voice reads their titles
+description: Builds the site to dist on ubuntu-26.04 runners, with the encoded images passed on from build to build in a cache, and without the Knots’ voice samples, so the browser’s own voice reads their titles
 runs:
   using: composite
   steps:
