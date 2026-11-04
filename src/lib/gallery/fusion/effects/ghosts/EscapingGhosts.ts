@@ -1,12 +1,13 @@
 import type {GhostExpression} from '#src/lib/materials/ghost.ts'
 import type {EscapingGhost} from './flights.ts'
 
-import {attribute, cameraWorldMatrix, cos, cross, exp, float, fwidth, max, mix, mx_noise_float, positionGeometry, select, sin, smoothstep, time, uniform, uv, vec2, vec3, vec4} from 'three/tsl'
-import {DoubleSide, InstancedBufferAttribute, InstancedMesh, MeshBasicNodeMaterial, PlaneGeometry, Vector3} from 'three/webgpu'
+import {attribute, cameraWorldMatrix, cos, cross, exp, float, fwidth, max, mix, mx_noise_float, positionGeometry, select, sin, smoothstep, time, uv, vec2, vec3, vec4} from 'three/tsl'
+import {PlaneGeometry} from 'three/webgpu'
 
 import {ghostBlink, ghostColors, ghostShape} from '#src/lib/materials/ghost.ts'
 import {rgb} from '#src/lib/materials/orb/fill.ts'
-import TransparentSpriteOutputsNode from '#src/lib/rendering/TransparentSpriteOutputsNode.ts'
+
+import EffectSprites, {instanceAttribute} from '../base/EffectSprites.ts'
 
 /** seconds a ghost takes to swell to its size once it is out */
 const swelling = 0.25
@@ -29,39 +30,14 @@ const letGo = [0.35, 0.9] as const
 
 /**
  * Ghosts escaping a fusion’s portal, the same pale ghosts under sheets that drift through the Spook Orb: each shoots out of the portal’s middle smeared like taffy, its head clean and wailing while its sheet stretches back into a tail that tapers and curls into the portal, until the tail lets go, the ghost snaps together, rises on and blurs away into wisps. Animated entirely on the GPU by the clock, each a quad from the tail’s tip to the top of its head, turned toward the camera around that line.
- * Positions are relative to the portal’s middle, which the mesh stands at.
  */
-export default class EscapingGhosts extends InstancedMesh<PlaneGeometry, MeshBasicNodeMaterial> {
-  readonly uniforms = {
-    /** seconds since the result flipped out; before that, none shows */
-    clock: uniform(-1),
-    /** out of the wall, toward the room */
-    normal: uniform(new Vector3(0, 0, 1)),
-    /** along the wall, to the right of someone facing it */
-    tangent: uniform(new Vector3(1, 0, 0)),
-  }
-
+export default class EscapingGhosts extends EffectSprites {
   constructor(ghosts: ReadonlyArray<EscapingGhost>) {
     const geometry = new PlaneGeometry(1, 1)
-    const flights = new Float32Array(ghosts.length * 4)
-    const paths = new Float32Array(ghosts.length * 4)
-    for (const [index, {angle, curl, delay, life, phase, reach, rise, size}] of ghosts.entries()) {
-      flights.set([delay, life, rise, size], index * 4)
-      paths.set([angle, reach, phase, curl], index * 4)
-    }
-    geometry.setAttribute('ghostFlight', new InstancedBufferAttribute(flights, 4))
-    geometry.setAttribute('ghostPath', new InstancedBufferAttribute(paths, 4))
-    const material = new MeshBasicNodeMaterial({
-      transparent: true,
-      depthWrite: false,
-      fog: false,
-      toneMapped: false,
-      side: DoubleSide,
-    })
-    material.name = 'fusion-ghosts'
-    material.mrtNode = new TransparentSpriteOutputsNode
-    super(geometry, material, ghosts.length)
-    this.name = 'fusion-ghosts'
+    instanceAttribute(geometry, 'ghostFlight', ghosts.map(({delay, life, rise, size}) => [delay, life, rise, size]))
+    instanceAttribute(geometry, 'ghostPath', ghosts.map(({angle, curl, phase, reach}) => [angle, reach, phase, curl]))
+    super('fusion-ghosts', geometry, ghosts.length)
+    const {material} = this
     const {clock, normal, tangent} = this.uniforms
     const flight = attribute<'vec4'>('ghostFlight', 'vec4')
     const path = attribute<'vec4'>('ghostPath', 'vec4')
@@ -137,13 +113,5 @@ export default class EscapingGhosts extends InstancedMesh<PlaneGeometry, MeshBas
     const alpha = ghostAlpha.add(haloAlpha)
     material.colorNode = ghostColor.mul(ghostAlpha).add(glow.mul(2.5).mul(haloAlpha)).div(alpha.max(0.0001))
     material.opacityNode = alpha.mul(inside)
-    // The vertex shader places every ghost, so the source quad’s bounds say nothing.
-    this.frustumCulled = false
-  }
-
-  override dispose() {
-    this.geometry.dispose()
-    this.material.dispose()
-    super.dispose()
   }
 }

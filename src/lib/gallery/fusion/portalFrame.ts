@@ -5,6 +5,8 @@ import {clamp} from 'math'
 /** where a fusion’s portal floats in front of its work and how the work and what was thrown into it orbit around it */
 export type PortalFrame = {
   center: Vec3
+  /** the floor’s height under the portal */
+  floor: number
   /** horizontal, out of the wall */
   normal: Vec3
   /** the semi-axes of the orbit: along the wall and across it, and how much higher than the portal it passes on the wall’s side, as much lower on the room’s */
@@ -58,6 +60,7 @@ export function portalFrame(work: Pick<Portrait, 'position' | 'rotation'>, {floo
   const height = clamp(work.position[1], floor + 1.55, floor + 2.05)
   return {
     center: [work.position[0] + normal[0] * distance, height, work.position[2] + normal[2] * distance],
+    floor,
     normal,
     tangent,
     radius: portalRadius,

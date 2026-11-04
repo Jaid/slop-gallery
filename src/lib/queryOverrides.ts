@@ -11,6 +11,7 @@ import {readFrame} from './frames/frameParameter.ts'
 import {readFrozenTime} from './frozenTime.ts'
 import {readPortraitSet} from './gallery/defaultPortraits.ts'
 import {readFlying} from './gallery/flyMode.ts'
+import {readFusionEffect} from './gallery/fusion/effects/forcedEffect.ts'
 import {readWeather} from './gallery/lighting.ts'
 import {readPortraitSlotEditing, readShowPortraitSlots} from './gallery/portraitSlotStore.ts'
 import {readRoom, readSpawn} from './gallery/spawn.ts'
@@ -58,6 +59,7 @@ const readers: Record<string, Reader> = {
   fov: readFov,
   frame: readFrame,
   frozen_time: readFrozenTime,
+  fusion_effect: readFusionEffect,
   graphics: readGraphicsModeName,
   intro_narration: readIntroNarration,
   // A list, which compares by its ids, joined as the query gives them.

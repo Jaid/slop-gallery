@@ -1,0 +1,109 @@
+import type {BloodDrop} from '../gallery/fusion/effects/blood/flights.ts'
+import type {PortalFrame} from '../gallery/fusion/portalFrame.ts'
+import type {AudioOutput} from './proceduralAudio.ts'
+
+import {offsetPosition} from '../gallery/fusion/effects/base/portalOffset.ts'
+import {bloodLanding, spurts} from '../gallery/fusion/effects/blood/flights.ts'
+import EffectSound from './EffectSound.ts'
+
+/** the shrieking strings: a cluster of high violins a semitone apart, in hertz */
+const shriek = [1244.51, 1318.51, 1396.91, 1479.98]
+/** where along the wall the splats are heard from, in meters, for the drops landing nearest to each */
+const splatSpots = [-1, 0, 1]
+
+/**
+ * The sound of blood spurting out of the portal of `frame`, from now on: a heartbeat’s thud and a wet gush on each spurt, a stab of shrieking violins on each and once more after them, sinking into a cello’s groan, and a wet splat for every drop where it lands on the floor, the bigger the louder, all in a dark, close room.
+ * It cleans up after itself once it has rung out.
+ */
+export default function playBloodGush(output: AudioOutput, frame: PortalFrame, drops: ReadonlyArray<BloodDrop>) {
+  const sound = new EffectSound(output, frame.center, {
+    brightness: 0.35,
+    decay: 0.6,
+    length: 2.2,
+    wet: 0.38,
+  })
+  const {now} = sound
+  for (const [index, at] of spurts.entries()) {
+    const strength = index ? 0.75 : 1
+    sound.tone(now + at, 0.32, {
+      frequency: 78,
+      end: 36,
+      volume: 0.13 * strength,
+      attack: 0.004,
+    })
+    sound.hiss(now + at, 0.55, {
+      filter: {
+        type: 'lowpass',
+        frequency: 1400,
+        end: 260,
+        q: 2.5,
+      },
+      volume: 0.1 * strength,
+      attack: 0.01,
+    })
+    sound.hiss(now + at + 0.02, 0.4, {
+      filter: {
+        type: 'bandpass',
+        frequency: 700,
+        end: 240,
+        q: 6,
+      },
+      volume: 0.07 * strength,
+      attack: 0.015,
+    })
+  }
+  for (const [index, at] of [...spurts, spurts[1] * 2].entries()) {
+    const last = index === 2
+    for (const frequency of shriek) {
+      sound.tone(now + at, last ? 1.1 : 0.34, {
+        frequency,
+        end: last ? frequency * 0.94 : undefined,
+        type: 'sawtooth',
+        vibrato: [14, 6.5],
+        filter: {
+          type: 'bandpass',
+          frequency: 2600,
+          q: 0.8,
+        },
+        volume: 0.014,
+        attack: 0.008,
+        hold: last ? 0.2 : 0.05,
+      })
+    }
+  }
+  sound.tone(now + spurts[1] * 2 + 0.1, 1.6, {
+    frequency: 116.54,
+    end: 61.74,
+    type: 'sawtooth',
+    vibrato: [2, 5],
+    filter: {
+      type: 'lowpass',
+      frequency: 700,
+      q: 1.5,
+    },
+    volume: 0.035,
+    attack: 0.15,
+  })
+  const floor = frame.floor - frame.center[1]
+  const panners = splatSpots.map(along => sound.pannerAt(offsetPosition(frame, [along, floor, 1.4])))
+  for (const drop of drops) {
+    if (drop.size < 0.014) {
+      continue
+    }
+    const {landing, speed} = bloodLanding(drop, floor)
+    const travel = drop.start[0] + drop.velocity[0] * landing
+    const panner = panners[travel < -0.5 ? 0 : (travel > 0.5 ? 2 : 1)]
+    const start = now + drop.delay + landing
+    const loudness = Math.min(1, drop.size / 0.04) * Math.min(1, 0.4 + speed / 8)
+    sound.hiss(start, 0.06 + drop.size, {
+      filter: {
+        type: 'bandpass',
+        frequency: 1900 - drop.size * 18_000,
+        q: 1.6,
+      },
+      volume: 0.045 * loudness,
+      attack: 0.002,
+    }, panner)
+  }
+  sound.finish(3)
+}
