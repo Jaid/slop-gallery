@@ -5,6 +5,7 @@ import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import {PendantGeometry} from '#src/lib/gallery/pendants/index.ts'
+import LanternMetalMaterial from '#src/lib/materials/LanternMetalMaterial.ts'
 
 type Glow = {
   color: string
@@ -29,11 +30,7 @@ export default function PendantLamps({body, glow, mounts, name}: {
 }
 
 class PendantSet {
-  readonly frameMaterial = new MeshStandardNodeMaterial({
-    color: '#34291d',
-    metalness: 0.75,
-    roughness: 0.4,
-  })
+  readonly frameMaterial = new LanternMetalMaterial
   readonly glowMaterial: MeshStandardNodeMaterial
   readonly items: Array<{
     geometry: PendantGeometry
