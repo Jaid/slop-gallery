@@ -39,7 +39,7 @@ export default function Menu(settings: ReturnType<typeof useGalleryAI>) {
       <h1 id='menu-title' className={css.title} tabIndex={-1} ref={heading}><span className={css.titleStart}>{titleStart}</span><span className={css.space}> </span><img className={css.logo} alt='' height={128} src={icon} width={128} /><span className={css.titleEnd}>{titleRest.join(' ')}</span></h1>
       <div className={css.actions}>
         <div className={css.play}>
-          <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}<Icon name='arrow' size={18} /></button>
+          <button id='enter-gallery' className={css.enter} disabled={!s.ready} type='button' onClick={enterGallery}>{s.ready ? 'Play' : enterButtonLabel(false, stage)}</button>
           <Branch if={stage === 'return'}><button className={css.newGame} disabled={!s.ready} type='button' onClick={startNewGame}>New game</button></Branch>
         </div>
         <MenuOptions className={css.options} />
