@@ -7,6 +7,7 @@ import Menu from '#component/Menu'
 import OpenRouterConnection from '#component/OpenRouterConnection'
 
 import {patchAiSettings, readAiSettings, tieredModel} from '../../src/lib/ai/settings.ts'
+import {useIntro} from '../../src/lib/gallery/intro.ts'
 import readQueryOverrides from '../../src/lib/queryOverrides.ts'
 
 test('model and narration preferences remain configurable through URL parameters', () => {
@@ -107,7 +108,16 @@ test('settings changes cannot switch AI back on when the page disabled it', () =
   expect(patchAiSettings(disabled, {ai: true}, true).ai).toBe(true)
   expect(patchAiSettings(enabled, {eager_audio: true}, true).ai).toBe(true)
 })
-const renderMenu = (available: boolean) => renderToStaticMarkup(<GraphicsModeProvider isHeavy onChange={() => {}}><Menu available={available} params={readAiSettings(available ? '' : '?ai=false')} setParams={() => {}} /></GraphicsModeProvider>)
+// The menu after the intro, which leaves out the AI options either way. Server rendering reads the store’s initial state.
+const renderMenu = (available: boolean) => {
+  const {orbit} = useIntro.getInitialState()
+  Object.assign(useIntro.getInitialState(), {orbit: null})
+  try {
+    return renderToStaticMarkup(<GraphicsModeProvider isHeavy onChange={() => {}}><Menu available={available} params={readAiSettings(available ? '' : '?ai=false')} setParams={() => {}} /></GraphicsModeProvider>)
+  } finally {
+    Object.assign(useIntro.getInitialState(), {orbit})
+  }
+}
 test('the menu hides every AI option for ?ai=false', () => {
   const hidden = renderMenu(false)
   expect(hidden).not.toContain('data-testid="connection"')

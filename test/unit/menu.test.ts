@@ -18,6 +18,7 @@ import pauseMenu from '../../src/lib/pauseMenu.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
 const state = useGallery.getState()
+const {orbit} = useIntro.getInitialState()
 beforeAll(async () => {
   // The world’s minimap loads lazily: rendering it once starts the download, so the pause stage below renders it in place.
   renderToStaticMarkup(createElement(Suspense, null, createElement(slopGallery.Minimap, {lower: false})))
@@ -41,6 +42,7 @@ beforeEach(() => {
 })
 afterEach(() => {
   useGallery.setState(state, true)
+  Object.assign(useIntro.getInitialState(), {orbit})
   if (storageDescriptor) {
     Object.defineProperty(globalThis, 'localStorage', storageDescriptor)
   } else {
