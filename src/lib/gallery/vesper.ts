@@ -20,8 +20,8 @@ export const vesper = {
   height: 5.8,
 } as const satisfies FloorRectangle & {height: number}
 
-/** where the orb pedestals stand, in floor tiles from the room’s middle along x and z, every one on a crossing of the floor’s seams a tile off the room’s axis: the four round the middle of its north half, from the north-west corner on clockwise as seen from above, then the two level with the room’s middle, east and west */
-const orbPedestalTiles = [[-1, -4], [1, -4], [1, -2], [-1, -2], [1, 0], [-1, 0]] as const
+/** where the orb pedestals stand, in floor tiles from the room’s middle along x and z, every one on a seam across the room, half a tile off its axis, so the two of each row stand 2 m apart, middle to middle: the four round the middle of its north half, from the north-west corner on clockwise as seen from above, then the two level with the room’s middle, east and west */
+const orbPedestalTiles = [[-0.5, -4], [0.5, -4], [0.5, -2], [-0.5, -2], [0.5, 0], [-0.5, 0]] as const
 /** the middle of the two rows of orb pedestals, in floor tiles from the room’s middle along z */
 const orbPedestalMiddle = (Math.min(...orbPedestalTiles.map(([, z]) => z)) + Math.max(...orbPedestalTiles.map(([, z]) => z))) / 2
 

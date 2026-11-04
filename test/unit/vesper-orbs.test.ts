@@ -22,7 +22,8 @@ test('the Vesper stands its orbs on column pedestals in two rows between the mid
     // The holder’s front foot faces out from the rows’ middle.
     expect(Math.sin(rotation) * (x - middleX) + Math.cos(rotation) * (z - middleZ)).toBeCloseTo(Math.hypot(x - middleX, z - middleZ), 9)
     for (const {position: [otherX, , otherZ]} of vesperOrbPedestals.slice(index + 1)) {
-      expect(Math.hypot(otherX - x, otherZ - z) - columnPedestalRadius.foot * 2).toBeGreaterThan(1.5)
+      // Room enough for a visitor of 30 cm half-width to pass between them.
+      expect(Math.hypot(otherX - x, otherZ - z) - columnPedestalRadius.foot * 2).toBeGreaterThan(1.2)
     }
   }
 })
