@@ -7,7 +7,7 @@ import {createHash} from 'node:crypto'
 import {parse} from '@babel/parser'
 import fs from 'fs-extra'
 import {loadEnv, normalizePath} from 'vite'
-import VoiceSampleStore, {defaultVoiceSampleTrimThreshold, voiceSampleSilenceSeconds} from 'voice-sample-store'
+import VoiceSampleStore, {defaultVoiceSampleTrimThreshold} from 'voice-sample-store'
 
 import {applyEdits, parseVoiceSampleImports, virtualVoiceSamplePrefix, voiceSourcePrefix} from './imports.ts'
 
@@ -16,6 +16,9 @@ export {voiceSourcePrefix} from './imports.ts'
 export type {VoiceSampleContents, VoiceSampleLoadType, VoiceSamplePluginOptions, VoiceSampleRequest, VoiceSampleValue} from './types.ts'
 
 const resolvedVirtualPrefix = `\0${virtualVoiceSamplePrefix}`
+// The one module every sample left out resolves to, whatever its format and type.
+const omittedId = `${resolvedVirtualPrefix}omitted`
+const omittedModule = 'export default undefined'
 type VirtualParts = {
   format: VoiceSampleFormat
   key: string
@@ -61,10 +64,16 @@ const binaryModule = (bytes: Uint8Array, nodeLike: boolean) => {
 export default function importVoiceSample(options: VoiceSamplePluginOptions = {}): Plugin {
   let config: ResolvedConfig
   let store: VoiceSampleStore
+  const enabled = options.enabled ?? true
   const requests = new Map<string, VoiceSampleRequest>
-  const silencedKeys = new Set<string>
-  const silenceReasons = new Set<string>
+  const omittedKeys = new Set<string>
+  const omissionReasons = new Set<string>
   const prepare = async (context: {warn: (message: string) => void}, key: string, request: VoiceSampleRequest) => {
+    // Invalid attributes fail even samples that are left out, so they surface before a build that includes them.
+    store.resolve(request)
+    if (!enabled) {
+      return
+    }
     try {
       return await store.prepare(request)
     } catch (error) {
@@ -73,12 +82,11 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       }
       const reason = Error.isError(error) ? error.message : String(error)
       // Uncached samples usually all fail for the same reason, so each reason is only reported once.
-      if (!silenceReasons.has(reason)) {
-        silenceReasons.add(reason)
-        context.warn(`Using ${voiceSampleSilenceSeconds} s of silence for voice samples that cannot be fetched, starting with ${JSON.stringify(request.text)}: ${reason}`)
+      if (!omissionReasons.has(reason)) {
+        omissionReasons.add(reason)
+        context.warn(`Leaving out voice samples that cannot be fetched, starting with ${JSON.stringify(request.text)}: ${reason}`)
       }
-      silencedKeys.add(key)
-      return store.prepareSilence(request)
+      omittedKeys.add(key)
     }
   }
   return {
@@ -161,6 +169,9 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         return `${resolvedVirtualPrefix + parts.format}/contents/${parts.key}`
       }
       const entry = await prepare(this, parts.key, request)
+      if (!entry) {
+        return omittedId
+      }
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
       if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
@@ -171,11 +182,14 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
       return resolved?.id ?? assetId
     },
     buildEnd() {
-      if (silencedKeys.size) {
-        this.warn(`${silencedKeys.size} voice ${silencedKeys.size === 1 ? 'sample was' : 'samples were'} replaced by silence.`)
+      if (omittedKeys.size) {
+        this.warn(`${omittedKeys.size} voice ${omittedKeys.size === 1 ? 'sample was' : 'samples were'} left out.`)
       }
     },
     async load(id) {
+      if (id === omittedId) {
+        return omittedModule
+      }
       const parts = virtualParts(id)
       if (parts?.type !== 'contents') {
         return
@@ -185,6 +199,9 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
         this.error(`Unknown voice contents module "${id}".`)
       }
       const entry = await prepare(this, parts.key, request)
+      if (!entry) {
+        return omittedModule
+      }
       this.addWatchFile(entry.rawPath)
       this.addWatchFile(entry.metadataPath)
       if (entry.path !== entry.rawPath && entry.path !== entry.metadataPath) {
@@ -200,7 +217,7 @@ export default function importVoiceSample(options: VoiceSamplePluginOptions = {}
   }
 }
 
-export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleSilenceSeconds, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
+export {defaultVoiceSampleBitrate, defaultVoiceSampleCooldown, defaultVoiceSampleTrimThreshold, styleVoiceSampleText, voiceSampleTrimMinimumSilenceSeconds, voiceSampleTrimPaddingSeconds} from 'voice-sample-store'
 export type {
   App,
   PreparedVoiceSample,

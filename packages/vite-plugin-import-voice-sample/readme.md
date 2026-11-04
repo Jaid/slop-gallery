@@ -100,7 +100,7 @@ Thus `format: 'timings', type: 'contents'` returns shifted/clamped timings direc
 
 ## Runtime values
 
-`type: 'reference'` always returns a URL. For audio formats it points at the selected audio asset; for `timings` it points at the selected raw or derived `.msgpack` metadata.
+Unless a sample is left out (see [Leaving samples out](#leaving-samples-out)), `type: 'reference'` returns a URL. For audio formats it points at the selected audio asset; for `timings` it points at the selected raw or derived `.msgpack` metadata.
 
 `type: 'contents'` materializes data into the target runtime:
 
@@ -111,7 +111,7 @@ Thus `format: 'timings', type: 'contents'` returns shifted/clamped timings direc
 
 The plugin uses Vite's per-environment consumer and resolved Node builtins to avoid emitting Node-only `Buffer` code for worker-style server targets.
 
-TypeScript does not currently specialize an ambient module's default-export type from custom import attributes. The app therefore keeps `voice:*` declared as the default/reference `string` type. The package exports helper types for explicit contents typing.
+TypeScript does not currently specialize an ambient module's default-export type from custom import attributes. The app therefore declares `voice:*` as the default/reference type, `string | undefined` if samples can be left out (see below). The package exports helper types for explicit contents typing.
 
 ## Folders
 
@@ -220,9 +220,19 @@ For the default 24 kHz sample rate this is 16,384 bit/s; at 48 kHz it is 32,768 
 
 Store/cache hits never contact OpenRouter. Cache misses use `OPENROUTER_API_KEY`. The API key is only used inside Vite and is never emitted into client code.
 
-## Optional samples
+## Leaving samples out
 
-By default, a voice sample that cannot be fetched (for example a cache miss without `OPENROUTER_API_KEY`, or a failed OpenRouter request) fails the build. With `optional: true`, the plugin logs a warning instead and substitutes one second of silence in the requested format:
+A sample that is left out imports as `undefined`, whatever its format and type, so the app can fall back to something else, like the browser’s own speech. Nothing is emitted for it.
+
+With `enabled: false`, every sample is left out: nothing is read from the folders, fetched or written. Use it to make the paid samples opt-in:
+
+```ts
+importVoiceSample({
+  enabled: process.env.VOICE_SAMPLES === 'true',
+})
+```
+
+By default, a voice sample that cannot be fetched (for example a cache miss without `OPENROUTER_API_KEY`, or a failed OpenRouter request) fails the build. With `optional: true`, the plugin logs a warning instead and leaves that sample out:
 
 ```ts
 importVoiceSample({
@@ -230,10 +240,7 @@ importVoiceSample({
 })
 ```
 
-- audio formats resolve to a silent mono WAV, PCM or Opus asset at the configured `sampleRate`
-- `timings` resolve to an empty array, or to the silence’s MessagePack metadata for `type: 'reference'`
-- the silence is shared by all fallbacks and cached in `cacheFolder`; it never enters the raw store, so the real sample is still generated once OpenRouter is reachable
-- invalid import attributes still fail the build
+A sample left out by `optional` never enters the store, so it is still generated once OpenRouter is reachable. Invalid import attributes fail the build either way.
 
 ## Vite setup
 

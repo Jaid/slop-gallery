@@ -96,7 +96,7 @@ export default class VoiceSampleStore {
   }
 
   async prepare(options: VoiceSamplePrepareOptions): Promise<PreparedVoiceSample> {
-    const request = this.#resolve(options)
+    const request = this.resolve(options)
     if (request.format === 'timings') {
       const entry = await this.#cache.getTimings(request)
       return {
@@ -120,23 +120,8 @@ export default class VoiceSampleStore {
     }
   }
 
-  /**
-   * Validates the request like prepare(), but returns one second of shared silence in the requested format without contacting OpenRouter.
-   * Timings are empty.
-   */
-  async prepareSilence(options: VoiceSamplePrepareOptions): Promise<PreparedVoiceSample> {
-    const request = this.#resolve(options)
-    const entry = await this.#cache.getSilence(request.format === 'timings' ? 'wav' : request.format)
-    return {
-      format: request.format,
-      metadata: entry.metadata,
-      metadataPath: entry.metadataPath,
-      path: request.format === 'timings' ? entry.metadataPath : entry.audioPath,
-      rawPath: entry.rawPath,
-    }
-  }
-
-  #resolve(options: VoiceSamplePrepareOptions): ResolvedVoiceSampleRequest {
+  /** Validates a request and fills in the defaults, like prepare() does before it fetches or reads anything. */
+  resolve(options: VoiceSamplePrepareOptions): ResolvedVoiceSampleRequest {
     if (typeof options.text !== 'string' || !options.text.trim()) {
       throw new TypeError('Voice sample text must be a nonempty string.')
     }

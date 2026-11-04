@@ -87,6 +87,33 @@ const outputCode = (result: Awaited<ReturnType<typeof build>>) => {
     return 'output' in item ? item.output : []
   }).filter((output): output is Rollup.OutputChunk => output.type === 'chunk').map(output => output.code).join('\n')
 }
+// The built entry’s exports as sorted entries, so an export missing altogether cannot pass for one that is undefined.
+const outputExports = async (root: string, result: Awaited<ReturnType<typeof build>>) => {
+  const file = join(root, 'output.mjs')
+  await fs.writeFile(file, outputCode(result))
+  const namespace = await import(file) as Record<string, unknown>
+  return Object.entries(namespace).toSorted(([a], [b]) => a.localeCompare(b))
+}
+const storedFiles = async (root: string) => {
+  const folder = join(root, 'temp/vite-plugin-import-voice-sample')
+  if (!await fs.pathExists(folder)) {
+    return []
+  }
+  const entries = await fs.readdir(folder, {
+    recursive: true,
+    withFileTypes: true,
+  })
+  return entries.filter(entry => entry.isFile()).map(entry => entry.name)
+}
+const everyKindEntry = `
+  import wav from 'voice:left-out-wav' with {text: 'Left out', format: 'wav', type: 'contents'}
+  import pcm from 'voice:left-out-pcm' with {text: 'Also left out', format: 'pcm', type: 'contents'}
+  import opus from 'voice:left-out-opus' with {text: 'Left out', format: 'opus'}
+  import timings from 'voice:left-out-timings' with {text: 'Left out', format: 'timings'}
+  import timingReference from 'voice:left-out-timing-reference' with {text: 'Left out', format: 'timings', type: 'reference'}
+  export {wav, pcm, opus, timings, timingReference}
+`
+const everyKindLeftOut = ['opus', 'pcm', 'timingReference', 'timings', 'wav'].map((name): [string, unknown] => [name, undefined])
 describe('vite-plugin-import-voice-sample', () => {
   test('uses Iris by default and path speaker explicitly overrides it', async () => {
     const root = await temporaryDirectory()
@@ -373,16 +400,9 @@ describe('vite-plugin-import-voice-sample', () => {
     expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(2)
     expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(2)
   })
-  test('optional replaces unfetchable samples with one second of shared silence', async () => {
+  test('optional leaves out unfetchable samples of every format and type', async () => {
     const root = await temporaryDirectory()
-    await fs.writeFile(join(root, 'entry.ts'), `
-      import wav from 'voice:silent-wav' with {text: 'Silent', format: 'wav', type: 'contents'}
-      import pcm from 'voice:silent-pcm' with {text: 'Also silent', format: 'pcm', type: 'contents'}
-      import opus from 'voice:silent-opus' with {text: 'Silent', format: 'opus'}
-      import timings from 'voice:silent-timings' with {text: 'Silent', format: 'timings'}
-      import timingReference from 'voice:silent-timing-reference' with {text: 'Silent', format: 'timings', type: 'reference'}
-      export {wav, pcm, opus, timings, timingReference}
-    `)
+    await fs.writeFile(join(root, 'entry.ts'), everyKindEntry)
     const warnings: Array<string> = []
     const result = await build({
       ...buildConfig(root),
@@ -400,26 +420,12 @@ describe('vite-plugin-import-voice-sample', () => {
         optional: true,
       })],
     })
-    expect(warnings.filter(message => message.includes('1 s of silence') && message.includes('HTTP 402'))).toHaveLength(1)
-    expect(warnings.some(message => message.includes('5 voice samples were replaced by silence.'))).toBe(true)
-    const code = outputCode(result)
-    const folder = join(root, 'temp/vite-plugin-import-voice-sample')
-    expect(await fs.readdir(join(folder, 'store'))).toHaveLength(0)
-    const cacheFiles = await fs.readdir(join(folder, 'cache'))
-    const silenceWav = cacheFiles.find(file => file.endsWith('.wav'))
-    expect(silenceWav).toBeDefined()
-    const wav = await fs.readFile(join(folder, 'cache', silenceWav!))
-    expect(wav.subarray(0, 4).toString()).toBe('RIFF')
-    expect(wav.readUInt32LE(24)).toBe(24_000)
-    expect(wav.byteLength).toBe(44 + 24_000 * 2)
-    expect(wav.subarray(44).every(byte => byte === 0)).toBe(true)
-    expect(cacheFiles.filter(file => file.endsWith('.wav'))).toHaveLength(1)
-    expect(cacheFiles.filter(file => file.endsWith('.pcm'))).toHaveLength(1)
-    expect(cacheFiles.filter(file => file.endsWith('.opus'))).toHaveLength(1)
-    expect(cacheFiles.filter(file => file.endsWith('.msgpack'))).toHaveLength(1)
-    expect(code).toMatch(/=\s*\[\]/u)
+    expect(warnings.filter(message => message.includes('Leaving out voice samples') && message.includes('HTTP 402'))).toHaveLength(1)
+    expect(warnings.some(message => message.includes('5 voice samples were left out.'))).toBe(true)
+    expect(await outputExports(root, result)).toEqual(everyKindLeftOut)
+    expect(await storedFiles(root)).toEqual([])
   })
-  test('optional fallback applies without an API key and leaves real generation for later', async () => {
+  test('optional leaves samples out without an API key and generates them once there is one', async () => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:later' with {text: 'Later', format: 'wav'}
@@ -428,7 +434,7 @@ describe('vite-plugin-import-voice-sample', () => {
     const previousKey = process.env.OPENROUTER_API_KEY
     delete process.env.OPENROUTER_API_KEY
     try {
-      await build({
+      const result = await build({
         ...buildConfig(root),
         plugins: [importVoiceSample({
           fetch: async () => {
@@ -437,6 +443,7 @@ describe('vite-plugin-import-voice-sample', () => {
           optional: true,
         })],
       })
+      expect(await outputExports(root, result)).toEqual([['default', undefined]])
     } finally {
       if (previousKey !== undefined) {
         process.env.OPENROUTER_API_KEY = previousKey
@@ -452,6 +459,31 @@ describe('vite-plugin-import-voice-sample', () => {
       })],
     })
     expect(calls).toHaveLength(1)
+  })
+  test('enabled: false leaves out every sample without fetching or storing anything', async () => {
+    const root = await temporaryDirectory()
+    await fs.writeFile(join(root, 'entry.ts'), everyKindEntry)
+    const warnings: Array<string> = []
+    const result = await build({
+      ...buildConfig(root),
+      logLevel: 'warn',
+      customLogger: {
+        ...createLogger('silent'),
+        warn: message => {
+          warnings.push(message)
+        },
+      },
+      plugins: [importVoiceSample({
+        apiKey: 'test-key',
+        enabled: false,
+        fetch: async () => {
+          throw new Error('must not fetch while disabled')
+        },
+      })],
+    })
+    expect(warnings).toEqual([])
+    expect(await outputExports(root, result)).toEqual(everyKindLeftOut)
+    expect(await fs.pathExists(join(root, 'temp'))).toBe(false)
   })
   test('unfetchable samples fail the build unless optional', async () => {
     const root = await temporaryDirectory()
@@ -473,7 +505,10 @@ describe('vite-plugin-import-voice-sample', () => {
     }
     expect(String(error)).toContain('HTTP 402')
   })
-  test('optional does not hide invalid import attributes', async () => {
+  test.each([
+    ['optional', {optional: true}],
+    ['enabled: false', {enabled: false}],
+  ] as const)('%s does not hide invalid import attributes', async (_name, leniency) => {
     const root = await temporaryDirectory()
     await fs.writeFile(join(root, 'entry.ts'), `
       import audio from 'voice:invalid' with {text: 'Invalid', format: 'wav', emotion: 'mysteriously-purple'}
@@ -486,7 +521,7 @@ describe('vite-plugin-import-voice-sample', () => {
         plugins: [importVoiceSample({
           apiKey: 'test-key',
           fetch: async () => new Response('no credits', {status: 402}),
-          optional: true,
+          ...leniency,
         })],
       })
     } catch (error_) {
