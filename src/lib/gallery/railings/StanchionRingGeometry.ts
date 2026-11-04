@@ -73,7 +73,13 @@ export default class StanchionRingGeometry {
     }
     this.posts = mergeParts(metal)
     this.postCollision = mergeParts(collision)
-    this.rope = new TubeGeometry(new RopeRing(radius, count), count * 16, 0.028, 12, true)
+    const path = new RopeRing(radius, count)
+    this.rope = new TubeGeometry(path, count * 16, 0.028, 12, true)
+    const uvAttribute = this.rope.getAttribute('uv')
+    for (let i = 0; i < uvAttribute.count; i++) {
+      // Tube u already runs by arc length, so braid repeats land every 33 mm and meet at the loop’s seam.
+      uvAttribute.setX(i, uvAttribute.getX(i) * path.getLength() * 30)
+    }
   }
 
   dispose() {

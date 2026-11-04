@@ -1,10 +1,12 @@
-import {color, mix, mx_noise_float, normalView, positionLocal, positionViewDirection} from 'three/tsl'
+import {color, float, mix, uv} from 'three/tsl'
 import {MeshPhysicalNodeMaterial} from 'three/webgpu'
 
+import {heightNormal} from './filters.ts'
+
 /**
- * The red velvet sleeve of a museum barrier rope.
+ * Braided garnet velvet for the museum barrier rope.
  *
- * Velvet has almost no mirror highlight; its fibers scatter a soft, brighter red at grazing angles instead, so the rope glows along its silhouette and stays deep crimson where it faces the viewer; the pile itself also looks lighter where it is seen from the side. Slight patches where the pile was crushed by hands read a little lighter.
+ * The pile scatters a soft red sheen instead of a mirror highlight. Tube UVs wind eight strands around the rope; u counts whole braid repeats along the loop, so the relief stays the same size on different barriers and meets at the seam. Fine braiding fades before it can shimmer.
  */
 export default class VelvetRopeMaterial extends MeshPhysicalNodeMaterial {
   constructor() {
@@ -17,11 +19,11 @@ export default class VelvetRopeMaterial extends MeshPhysicalNodeMaterial {
       sheen: 1,
       sheenRoughness: 0.5,
     })
-    this.name = 'Red velvet rope'
-    const crushed = mx_noise_float(positionLocal.mul(3.1)).mul(0.5).add(0.5).smoothstep(0.45, 0.85)
-    // Fibers seen from the side catch more light than those pointing at the viewer, which look into the dark pile.
-    const grazing = normalView.dot(positionViewDirection).abs().oneMinus().pow(2)
-    this.colorNode = mix(mix(color('#5c0410'), color('#8a0e1d'), crushed), color('#c42232'), grazing.mul(0.75))
-    this.sheenNode = mix(color('#ff2a3c'), color('#ff6a72'), crushed)
+    this.name = 'Braided garnet velvet'
+    const weave = uv().x.add(uv().y.mul(8)).mul(Math.PI * 2)
+    const braid = mix(weave.sin().mul(0.5).add(0.5), float(0.5), weave.fwidth().smoothstep(0.8, 2.5))
+    this.colorNode = mix(color('#260a18'), color('#a82a48'), braid.mul(0.6).add(0.15))
+    this.sheenNode = color('#d7637b')
+    this.normalNode = heightNormal(braid.mul(0.0007))
   }
 }

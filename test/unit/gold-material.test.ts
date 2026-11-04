@@ -56,7 +56,7 @@ describe('gold', () => {
   })
 })
 describe('the stanchion barrier', () => {
-  test('its rope is red velvet', () => {
+  test('its rope is braided garnet velvet', () => {
     const velvet = new VelvetRopeMaterial
     try {
       expect(velvet).toBeInstanceOf(MeshPhysicalNodeMaterial)
@@ -65,6 +65,7 @@ describe('the stanchion barrier', () => {
       expect(velvet.sheen).toBeGreaterThan(0)
       expect(velvet.colorNode).not.toBeNull()
       expect(velvet.sheenNode).not.toBeNull()
+      expect(velvet.normalNode).not.toBeNull()
     } finally {
       velvet.dispose()
     }
@@ -96,6 +97,11 @@ describe('the stanchion barrier', () => {
         expect(Math.abs(render.min[axis] - stand.min[axis])).toBeLessThan(0.02)
         expect(Math.abs(render.max[axis] - stand.max[axis])).toBeLessThan(0.02)
       }
+      // Braid repeats run past one turn by arc length, then return to 0 at the seam.
+      const ropeUv = fence.rope.getAttribute('uv')
+      const braidU = ropeUv.array.filter((_, i) => i % 2 === 0)
+      expect(ropeUv.getX(0)).toBe(0)
+      expect(Math.max(...braidU)).toBeGreaterThan(100)
       // Every post stands on the floor with its finial at rope height.
       const size = render.getSize(new Vector3)
       expect(render.min.y).toBeCloseTo(0, 6)
