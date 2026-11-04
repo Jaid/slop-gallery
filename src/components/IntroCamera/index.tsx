@@ -19,10 +19,9 @@ import {setInspectionFocus} from '#src/lib/rendering/playerView.ts'
 const blurFade = 0.3
 const leftKeys = new Set(['ArrowLeft', 'KeyA'])
 const rightKeys = new Set(['ArrowRight', 'KeyD'])
-
 /**
  * Circles the camera on the world’s intro orbit while the first menu shows, one turn a minute, which way the game’s seed decides, with every sound of the world heard from it.
- * It is V-inspection’s orbit, held at the intro’s height and distance and circling on its own, with its blur of the background beyond the subject: dragging with the right mouse button or holding A and D turns it, and a few seconds after the last turn, it circles on its own again.
+ * It is V-inspection’s orbit, held at the intro’s height and distance and circling on its own, with its blur of the background beyond the subject: dragging with the left mouse button anywhere but on the menu’s buttons and text or holding A and D turns it, and a few seconds after the last turn, it circles on its own again.
  * Once the player enters, the player stands with its eyes right where the camera was, looking the same way, and falls from there while the blur clears, which ends the intro.
  *
  * Mount it after the Player: the player’s own spawn releases the camera on mounting, and the player writes the camera before this does every frame.
@@ -97,7 +96,7 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
       stop()
     }
     const down = (event: PointerEvent) => {
-      if (event.button === 2 && fading.current === null) {
+      if (event.button === 0 && fading.current === null && grabsScene(event.target)) {
         state.dragging = true
       }
     }
@@ -106,21 +105,16 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
         return
       }
       // A release outside the window never arrives as a pointerup.
-      if (!(event.buttons & 2)) {
+      if (!(event.buttons & 1)) {
         state.dragging = false
         return
       }
-      state.pointer += event.movementX * inspectionPointerSensitivity(orbitPointerSpeed * pointerSpeed(), false, event.shiftKey)
+      // The scene follows the pointer like a swipe, the reverse of V-inspection’s orbit under the locked pointer.
+      state.pointer -= event.movementX * inspectionPointerSensitivity(orbitPointerSpeed * pointerSpeed(), false, event.shiftKey)
     }
     const up = (event: PointerEvent) => {
-      if (event.button === 2) {
+      if (event.button === 0) {
         state.dragging = false
-      }
-    }
-    // The right button only turns the camera here, so it never opens the browser’s menu.
-    const contextMenu = (event: MouseEvent) => {
-      if (fading.current === null) {
-        event.preventDefault()
       }
     }
     const keyDown = (event: KeyboardEvent) => {
@@ -135,7 +129,6 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
     globalThis.addEventListener('pointerdown', down, true)
     globalThis.addEventListener('pointermove', move, true)
     globalThis.addEventListener('pointerup', up, true)
-    globalThis.addEventListener('contextmenu', contextMenu, true)
     globalThis.addEventListener('keydown', keyDown)
     globalThis.addEventListener('keyup', keyUp)
     window.addEventListener('blur', stop)
@@ -144,7 +137,6 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
       globalThis.removeEventListener('pointerdown', down, true)
       globalThis.removeEventListener('pointermove', move, true)
       globalThis.removeEventListener('pointerup', up, true)
-      globalThis.removeEventListener('contextmenu', contextMenu, true)
       globalThis.removeEventListener('keydown', keyDown)
       globalThis.removeEventListener('keyup', keyUp)
       window.removeEventListener('blur', stop)
@@ -182,4 +174,12 @@ export default function IntroCamera({orbit}: {orbit: IntroOrbit}) {
     setInspectionFocus(1, focus.current.distance, focus.current.proximity, 1)
   })
   return null
+}
+
+/** Whether a press on the target grabs the scene: anywhere but on a control or on text that can be selected, like the menu’s title. */
+function grabsScene(target: EventTarget | null) {
+  if (!(target instanceof Element)) {
+    return false
+  }
+  return !target.closest('a, button, input, label, select, summary, textarea, [popover]') && getComputedStyle(target).userSelect === 'none'
 }
