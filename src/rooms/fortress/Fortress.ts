@@ -1,8 +1,11 @@
+import type {GroundSurface} from '../base/Room.ts'
+import type {Vec3} from 'math'
+
 import {Geofence} from 'geofency'
 
 import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import {bastionApex} from '#src/lib/gallery/bastion.ts'
-import {fortressOrigin} from '#src/lib/gallery/fortress.ts'
+import {fortressOrigin, fortressTransition} from '#src/lib/gallery/fortress.ts'
 import {fortressNetwork} from '#src/lib/gallery/fortressNetwork.ts'
 
 import Room from '../base/Room.ts'
@@ -61,5 +64,12 @@ export default class Fortress extends Room {
         map: upperMap,
       },
     })
+  }
+
+  /** The flagstones grind underfoot, the planks of the timber end by the Lodge sound hollow. */
+  override groundSurface([x, , z]: Vec3): GroundSurface {
+    const {center, size} = fortressTransition.floor
+    const onPlanks = Math.abs(x + fortressOrigin[0] - center[0]) <= size[0] / 2 + 1e-6 && Math.abs(z + fortressOrigin[2] - center[1]) <= size[1] / 2 + 1e-6
+    return onPlanks ? 'hollow' : 'stone'
   }
 }

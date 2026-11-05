@@ -1,3 +1,5 @@
+import type {Voice} from '../../src/lib/audio/proceduralAudio.ts'
+
 import {expect, test} from 'bun:test'
 
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
@@ -18,6 +20,8 @@ test('sound effect catalog has 21 stable unique IDs with playable recipes', () =
     }
   }
 })
+/** the voices flagstones add to the hard ground’s step */
+const grit = (voices: ReadonlyArray<Voice>) => voices.slice(3)
 test('all seven player cues are in the catalog with recipes of their own', () => {
   const cues = Object.values(playerSoundEffects)
   expect(cues).toHaveLength(7)
@@ -41,8 +45,11 @@ test('surface modifiers keep one Soft Weight family while changing material char
   const hollow = footstepVoices('hollow', 3)
   const glass = footstepVoices('glass', 3)
   const fabric = footstepVoices('fabric', 3)
-  const surfaceRecipes = new Set([generic, hollow, glass, fabric].map(recipe => JSON.stringify(recipe)))
-  expect(surfaceRecipes.size).toBe(4)
+  const stone = footstepVoices('stone', 3)
+  const surfaceRecipes = new Set([generic, hollow, glass, fabric, stone].map(recipe => JSON.stringify(recipe)))
+  expect(surfaceRecipes.size).toBe(5)
+  // Flagstones keep the hard ground’s step and add grit on top.
+  expect(stone.slice(0, 3)).toEqual(generic)
   expect(hollow[0].kind === 'oscillator' && hollow[0].frequency).toBeLessThan(generic[0].kind === 'oscillator' ? generic[0].frequency : 0)
   expect(glass[0].kind === 'oscillator' && glass[0].frequency).toBeGreaterThan(generic[0].kind === 'oscillator' ? generic[0].frequency : Infinity)
   expect(fabric.reduce((sum, voice) => sum + voice.volume, 0)).toBeLessThan(generic.reduce((sum, voice) => sum + voice.volume, 0))
@@ -96,4 +103,21 @@ test('landing strength reuses Soft Weight and scales with pre-impact fall speed'
     expect(heavy[index].volume).toBeGreaterThan(light[index].volume)
     expect(heavy[index].duration).toBe(normal[index].duration)
   }
+})
+test('flagstones grind under the sole twice and click at the heel, harder at speed and on landing, softer crouching', () => {
+  const walk = grit(footstepVoices('stone', 3))
+  expect(walk).toHaveLength(3)
+  expect(walk.filter(voice => voice.kind === 'noise')).toHaveLength(2)
+  expect(walk.every(voice => voice.kind === 'oscillator' || voice.filter.frequency > 3000)).toBe(true)
+  const sprint = grit(footstepVoices('stone', 9))
+  const sneak = grit(footstepVoices('stone', 3, {crouching: true}))
+  const landing = grit(footstepVoices('stone', 3, {strength: impactFootstepStrength(10)}))
+  for (const [index, voice] of walk.entries()) {
+    expect(sprint[index].volume).toBeGreaterThan(voice.volume)
+    expect(sneak[index].volume).toBeLessThan(voice.volume)
+    expect(landing[index].volume).toBeGreaterThan(voice.volume)
+    // The base of the step grows with the landing’s strength, the grit only by its square root.
+    expect(landing[index].volume / voice.volume).toBeCloseTo(Math.sqrt(impactFootstepStrength(10)))
+  }
+  expect(footstepVoices('stone', 3, {variation: -1})[4].delay).not.toBe(footstepVoices('stone', 3, {variation: 1})[4].delay)
 })

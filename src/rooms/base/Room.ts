@@ -11,7 +11,7 @@ import {Box3} from 'three/webgpu'
 import RoomMap from '../lib/RoomMap.ts'
 
 /** what the ground under the player’s feet is made of, which their footsteps sound like */
-export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
+export type GroundSurface = 'fabric' | 'generic' | 'glass' | 'hollow' | 'stone'
 /** an ambience emitter class whose instances can sound from any world position and in any rooms */
 export type AmbienceEmitterClass = new (position?: Vec3, rooms?: ReadonlyArray<string>) => AmbienceEmitter
 /** a looping ambient sound of a room */

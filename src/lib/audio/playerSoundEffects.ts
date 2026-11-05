@@ -4,7 +4,7 @@ import {clamp} from 'math'
 
 import {noise, osc} from './proceduralAudio.ts'
 
-export type FootstepSurface = 'fabric' | 'generic' | 'glass' | 'hollow'
+export type FootstepSurface = 'fabric' | 'generic' | 'glass' | 'hollow' | 'stone'
 
 type FootstepOptions = {
   crouching?: boolean
@@ -12,16 +12,22 @@ type FootstepOptions = {
   variation?: number
 }
 
+const generic = {
+  attack: 1,
+  body: [86, 57],
+  brightness: 1,
+  contact: [360, 180],
+  gain: 1,
+  q: 0.3,
+  tail: [125, 82],
+  duration: 1,
+} as const
 const surfaceProfiles = {
-  generic: {
-    attack: 1,
-    body: [86, 57],
-    brightness: 1,
-    contact: [360, 180],
-    gain: 1,
-    q: 0.3,
-    tail: [125, 82],
-    duration: 1,
+  generic,
+  // Flagstones: the hard ground’s step with grit grinding under the sole.
+  stone: {
+    ...generic,
+    grit: true,
   },
   hollow: {
     attack: 1,
@@ -60,6 +66,8 @@ const surfaceProfiles = {
   contact: readonly [number, number]
   duration: number
   gain: number
+  /** whether grit grinds under the sole and the heel clicks faintly, as on flagstones */
+  grit?: boolean
   q: number
   tail: readonly [number, number]
 }>
@@ -74,7 +82,7 @@ export function footstepVoices(surface: FootstepSurface, speed: number, {crouchi
   const duration = (crouching ? 0.105 - effort * 0.01 : 0.085 - effort * 0.018) * profile.duration
   const attack = (crouching ? 0.016 : 0.006) * profile.attack
   const body = (base: number, growth: number) => (base + effort * growth) * gain
-  return [
+  const steps = [
     osc(profile.body[0] * pitch, duration, body(0.002, 0.0042), {
       endFrequency: profile.body[1] * pitch,
       attack: attack * 1.5,
@@ -89,6 +97,36 @@ export function footstepVoices(surface: FootstepSurface, speed: number, {crouchi
       endFrequency: profile.tail[1] * pitch,
       attack: attack * 1.4,
       delay: duration * 0.09,
+    }),
+  ]
+  if (!('grit' in profile)) {
+    return steps
+  }
+  // A landing grinds harder, but only by the square root of its strength, since loud grit turns into a hiss.
+  const grit = (crouching ? 0.34 : 1) * Math.sqrt(clamp(strength, 0, 12)) * (0.0012 + effort * 0.0028)
+  return [
+    ...steps,
+    noise(0.024, grit * 4.8, {
+      type: 'highpass',
+      frequency: 3600 + effort * 1500,
+      q: 0.5,
+    }, {
+      attack: 0.002,
+      delay: 0.004,
+    }),
+    // The sole twists as the weight rolls over it, grinding a second time.
+    noise(0.018, grit * 2.7, {
+      type: 'bandpass',
+      frequency: 6200,
+      q: 0.8,
+    }, {
+      attack: 0.004,
+      delay: 0.03 + variation * 0.006,
+    }),
+    // The heel clicks faintly on the stone.
+    osc(1650, 0.012, grit * 0.6, {
+      endFrequency: 1100,
+      delay: 0.002,
     }),
   ]
 }

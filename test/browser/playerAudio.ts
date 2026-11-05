@@ -57,7 +57,7 @@ export default async function verify() {
     })
   }
   const steps = []
-  for (const surface of ['generic', 'hollow', 'glass', 'fabric'] as const) {
+  for (const surface of ['generic', 'hollow', 'glass', 'fabric', 'stone'] as const) {
     const slow = await render(footstepVoices(surface, 0.9), 'step')
     const walk = await render(footstepVoices(surface, 3), 'step')
     const sprint = await render(footstepVoices(surface, 9), 'step')
