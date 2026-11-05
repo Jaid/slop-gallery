@@ -28,7 +28,8 @@ export type WallOpening = {
   height: number
   /** the hole’s name within its wall, in snake_case, which openings between rooms refer to it by */
   name?: string
-  profile: 'arch' | 'rectangle'
+  /** a rectangle, an arch springing from its jambs or a round hole, as wide as it is high from its `bottom` to its `height` */
+  profile: 'arch' | 'rectangle' | 'round'
   /** how far an arch rises over the height where it springs from its jambs: half its width, a semicircle, unless it is a flatter segmental arch */
   rise?: number
   u: number
@@ -82,6 +83,17 @@ export function openingArc(hole: WallOpening) {
   }
 }
 
+/** The circle a round opening follows: its radius and its center’s height over the wall’s foot. */
+export function openingCircle(hole: WallOpening) {
+  if (hole.profile !== 'round' || Math.abs(hole.height - (hole.bottom ?? 0) - hole.width) > 1e-9) {
+    throw new RangeError('Only a round opening, as high as it is wide, has a circle.')
+  }
+  return {
+    radius: hole.width / 2,
+    center: (hole.bottom ?? 0) + hole.width / 2,
+  }
+}
+
 // This profile is shared by CSG cutters, portal trim and interaction ray tests.
 /** The height of the opening’s top over the wall’s foot at `u` along the wall, `padding` meters further out around it, like its casing; -Infinity beside it. */
 export function openingTop(hole: WallOpening, u: number, padding = 0) {
@@ -90,15 +102,24 @@ export function openingTop(hole: WallOpening, u: number, padding = 0) {
   if (x > halfWidth) {
     return -Infinity
   }
-  if (hole.profile !== 'arch') {
+  if (hole.profile === 'rectangle') {
     return hole.height + padding
   }
-  const {radius, center} = openingArc(hole)
+  const {radius, center} = hole.profile === 'round' ? openingCircle(hole) : openingArc(hole)
   return center + Math.sqrt(Math.max(0, (radius + padding) ** 2 - x ** 2))
 }
 
+/** The height of the opening’s bottom over the wall’s foot at `u` along the wall: its sill, or for a round opening, its circle’s lower half there. */
+export function openingBottom(hole: WallOpening, u: number) {
+  if (hole.profile !== 'round') {
+    return hole.bottom ?? 0
+  }
+  const {radius, center} = openingCircle(hole)
+  return center - Math.sqrt(Math.max(0, radius ** 2 - (u - hole.u) ** 2))
+}
+
 export function insideOpening(hole: WallOpening, u: number, y: number) {
-  return y >= (hole.bottom ?? 0) && y < openingTop(hole, u)
+  return y >= openingBottom(hole, u) && y < openingTop(hole, u)
 }
 
 /** The world position `offset` meters in front of a wall, at wall coordinate `u` and height `y`. */

@@ -9,6 +9,9 @@ const headDivisions = 128
 
 /** The outline of an opening in the wall’s plane: along its bottom, then over its head from the right jamb to the left one, which closes it down to the bottom again. Openings of the same profile have outlines of as many points. */
 export default function openingOutline(hole: WallOpening) {
+  if (hole.profile === 'round') {
+    throw new RangeError('A round opening has no jambs to outline down to its bottom.')
+  }
   const bottom = hole.bottom ?? 0
   const half = hole.width / 2
   const {radius, center} = openingArc(hole)

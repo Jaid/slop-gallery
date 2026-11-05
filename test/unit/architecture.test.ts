@@ -7,14 +7,17 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
-import {insideOpening, openingArc, openingTop} from '../../src/lib/placement/wallGeometry.ts'
+import {insideOpening, openingArc, openingCircle, openingTop} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement} from './fixtures/gallery.ts'
 
 await RAPIER.init()
 /** where a point of a wall’s flat layout, `u` along it and `depth` out of its center line, lies once the wall bends round its curve */
 const bent = ({curveRadius: radius}: Wall, u: number, depth: number): readonly [number, number] => (radius ? [(radius - depth) * Math.sin(u / radius), radius - (radius - depth) * Math.cos(u / radius)] : [u, depth])
-/** the area of an opening in its wall, a segmental arch’s segment over the rectangle up to where it springs */
+/** the area of an opening in its wall, a segmental arch’s segment over the rectangle up to where it springs, or a round opening’s circle */
 const openingArea = (hole: WallOpening) => {
+  if (hole.profile === 'round') {
+    return Math.PI * openingCircle(hole).radius ** 2
+  }
   const bottom = hole.bottom ?? 0
   if (hole.profile !== 'arch') {
     return hole.width * (hole.height - bottom)
@@ -166,6 +169,12 @@ describe('boolean architecture', () => {
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
                 if (hits.length === 0) {
+                  continue
+                }
+                if (hole.profile === 'round') {
+                  // Across a round opening, as far as its circle reaches at that height
+                  const {radius, center} = openingCircle(hole)
+                  expect(Math.abs(hits[0].distance - Math.sqrt(radius ** 2 - (y - center) ** 2))).toBeLessThan(0.002)
                   continue
                 }
                 const {radius, center} = openingArc(hole)

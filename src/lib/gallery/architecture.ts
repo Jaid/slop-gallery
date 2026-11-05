@@ -4,7 +4,7 @@ import {ADDITION, Brush, Evaluator, SUBTRACTION} from 'three-bvh-csg'
 import {mergeVertices, toCreasedNormals} from 'three/addons/utils/BufferGeometryUtils.js'
 import {BoxGeometry, BufferGeometry, ExtrudeGeometry, Matrix4, MeshBasicNodeMaterial, Shape, Vector3} from 'three/webgpu'
 
-import {openingArc} from '../placement/wallGeometry.ts'
+import {openingArc, openingCircle} from '../placement/wallGeometry.ts'
 import {corniceBands, openingCasingFronts, wallFace, wallOpeningTrim} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments as bendSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 
@@ -15,9 +15,15 @@ const curveSegments = 64
 const baseboardCrease = Math.PI / 6
 /** how far a straight edge of a curved wall’s face may stand off its curve, in meters: an edge of length l on radius r stands l² / 8r off */
 const bendTolerance = 0.0005
-/** The opening’s outline in the wall’s plane, `padding` meters further out around its sides and top, like its casing, from `bottom` up. */
+/** The opening’s outline in the wall’s plane, `padding` meters further out around its sides and top, like its casing, from `bottom` up, or for a round opening, all round its circle. */
 export const openingShape = (hole: WallOpening, padding = 0, bottom = hole.bottom ?? -0.5) => {
   const shape = new Shape
+  // A round opening is a circle all round, its casing as wide.
+  if (hole.profile === 'round') {
+    const {radius, center} = openingCircle(hole)
+    shape.absarc(hole.u, center, radius + padding, 0, Math.PI * 2, false)
+    return shape
+  }
   const halfWidth = hole.width / 2 + padding
   shape.moveTo(hole.u - halfWidth, bottom)
   shape.lineTo(hole.u + halfWidth, bottom)
