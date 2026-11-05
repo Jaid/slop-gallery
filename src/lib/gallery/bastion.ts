@@ -102,24 +102,29 @@ const lodgeSouthZ = lodge.center[1] + lodge.size[1] / 2
 /** where the north wall of the western climb’s mouth stands: the Bastion’s mouth mirrored across the tower */
 const climbMouthNorthZ = oculusTower.z - width / 2
 /**
- * Along the strip between the Lodge and the climb’s mouth, the connecting tunnel takes up all the room there is: the back of its vault stays behind the face of the Lodge’s south wall, and the faces of its walls in front of the back of the mouth’s vault.
- * That stands as far out behind the mouth’s north wall as the tunnel’s own behind its walls, so the back of the tunnel’s vault on that side also stays behind the face of the mouth’s wall.
+ * Along the strip between the Lodge and the climb’s mouth, the connecting tunnel has room up to the face of the Lodge’s south wall behind the back of its vault, and from its walls’ faces up to the back of the mouth’s vault.
+ * That stands as far out behind the mouth’s north wall as the tunnel’s own behind its walls, so the back of the tunnel’s vault on that side would also stay behind the face of the mouth’s wall.
  */
 const linkNorthZ = lodgeSouthZ - wallFace + vaultShellThickness + linkGap
 const linkSouthZ = climbMouthNorthZ + wallFace - vaultShellThickness - linkGap
-/** how wide the connecting tunnel is, all the way from the curve to the climb’s mouth */
-export const bastionLinkWidth = linkSouthZ - linkNorthZ
-/** where the tunnel’s center line runs along the strip */
+/** how much room the strip leaves the connecting tunnel across, and the straight wall of the landing it opens out of along */
+const linkRoom = linkSouthZ - linkNorthZ
+/**
+ * How wide the connecting tunnel is, all the way from the curve to the climb’s mouth: a narrow culvert, much narrower than the room it has, as wide as twice the 0.75 m in from the hairpin’s west wall that orbs rolling down it come out along, see `bastionLinkGate`.
+ * At the mouth its west wall lines up with the mouth’s, so its middle and the gate’s lie on their line.
+ */
+export const bastionLinkWidth = 1.5
+/** where the tunnel’s center line runs along the strip, in the middle of its room */
 export const bastionLinkStripZ = (linkNorthZ + linkSouthZ) / 2
 /** where the left wall of the run toward the Lodge stands, which the tunnel opens out of */
 const runLeftZ = lodge.tunnelZ + width / 2
-/** where that wall’s line meets the passage’s usual distance from the apse’s west shoulder: the tunnel’s east wall runs on south from there, along the Oculus */
+/** where that wall’s line meets the passage’s usual distance from the apse’s west shoulder: the straight wall the tunnel opens out of runs on west from there */
 const linkEastX = west.center[0] - Math.sqrt((west.radius + bastionClearance) ** 2 - (runLeftZ - west.center[1]) ** 2)
-/** where the tunnel’s center line leaves the curve */
-const linkX = linkEastX - bastionLinkWidth / 2
-/** where the tunnel’s west wall stands */
-const linkWestX = linkX - bastionLinkWidth / 2
-/** The S bend hands over to a level landing that reaches to the tunnel’s west wall, so the doorway opens in a level wall; from there on, the run climbs. */
+/** where the tunnel’s center line leaves the curve, in the middle of that straight wall, as long as the strip leaves it room */
+const linkX = linkEastX - linkRoom / 2
+/** where the straight wall ends in the west */
+const linkWestX = linkX - linkRoom / 2
+/** The S bend hands over to a level landing that reaches to the end of the straight wall, so the doorway opens in a level wall; from there on, the run climbs. */
 const landingLength = bendCenterX - linkWestX
 /** a window’s width along the apse’s wall, a little narrower than the gate */
 const windowWidth = 2.4
@@ -299,7 +304,7 @@ const linkCorner = [linkEastX, runLeftZ] as const
 const linkCornerAngle = shoulderAngle(linkCorner)
 /**
  * Inside the S bend, its walls stand straight instead of curving away from the apse: on along the apse’s west shoulder down to the line of the run’s left wall and then straight west along that line, the left wall of the level landing too.
- * That straight wall is all but doorway into the connecting tunnel, bare like the ends of vaults, the tunnel’s walls running on south from both of its ends.
+ * In the middle of that straight wall opens the doorway into the connecting tunnel, bare like the ends of vaults, the tunnel’s walls running on south from both of its jambs.
  */
 const landingOutline: RouteOutline = {
   side: -1,

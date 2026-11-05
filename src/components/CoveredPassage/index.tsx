@@ -1,5 +1,5 @@
 import type {FloorPolygon} from '#src/lib/gallery/floorPolygons.ts'
-import type FloorRunnel from '#src/lib/gallery/passages/FloorRunnel.ts'
+import type FloorHollow from '#src/lib/gallery/passages/FloorHollow.ts'
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
@@ -34,14 +34,14 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<boolean>>> = {
   'bastion-approach': [],
   'bastion-climb_mouth': climbPassageLanterns.mouth,
 }
-export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, runnel, transition}: {
+export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, hollow, transition}: {
+  /** a hollow its paving has sunk into */
+  hollow?: FloorHollow
   material: Material
   passage: Passage
   /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
   paving?: ReadonlyArray<FloorPolygon>
   ribCutouts?: ReadonlyArray<PassageCutout>
-  /** a runnel worn into its floor */
-  runnel?: FloorRunnel
   /** whether the passage’s lanterns are all that lights it, which spaces them out */
   sole?: boolean
   timber?: Material
@@ -52,8 +52,8 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   const lanterns = passageLanterns[passage.name]
   // Under timber, lanterns hang from the ribs rather than the planks between them.
   const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], sole ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] ?? !lanterns), [geometry, lanterns, sole, passage, timber])
-  // The runnel takes its strip out of the floors.
-  const floors = runnel ? passage.floors.flatMap(floor => runnel.cut(floor)) : passage.floors
+  // The hollow takes its footprint out of the floors.
+  const floors = hollow ? passage.floors.flatMap(floor => hollow.cut(floor)) : passage.floors
   const paving = pavingOverride ?? transition?.stoneFloors ?? floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
@@ -66,7 +66,7 @@ export default function CoveredPassage({passage, sole = false, material, paving:
       {passage.floors.map((floor, i) => <ConvexHullCollider key={i} args={[slabCorners(floor, crown, crown + slabDepth)]} />)}
       {ceilings.map((ceiling, i) => <FloorSlab key={i} bottom={crown} depth={slabDepth} material={material} polygon={ceiling} />)}
       {paving.map((floor, i) => <FloorSlab key={i} bottom={passage.floorY - slabDepth} depth={slabDepth} material={material} polygon={floor} />)}
-      <Branch if={runnel}><RunnelGroove material={material} runnel={runnel!} /></Branch>
+      <Branch if={hollow}><SunkenPaving hollow={hollow!} material={material} /></Branch>
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>
       <Branch not={timber}>
@@ -78,15 +78,15 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   </group>
 }
 
-/** The round inside of a runnel worn into a passage’s floor, welded, so orbs roll on along it instead of catching on its facets’ edges. */
-function RunnelGroove({material, runnel}: {
+/** The paving sunk into a hollow in a passage’s floor, welded, so orbs roll on across it instead of catching on its facets’ edges. */
+function SunkenPaving({hollow, material}: {
+  hollow: FloorHollow
   material: Material
-  runnel: FloorRunnel
 }) {
-  const geometry = useDisposable(useMemo(() => runnel.geometry(), [runnel]))
+  const geometry = useDisposable(useMemo(() => hollow.geometry(), [hollow]))
   const collision = useMemo(() => colliderGeometry(geometry), [geometry])
   return <>
     <MeshSurfaceCollider args={collision} />
-    <mesh geometry={geometry} material={material} name='castle-runnel' receiveShadow />
+    <mesh geometry={geometry} material={material} name='castle-hollow' receiveShadow />
   </>
 }

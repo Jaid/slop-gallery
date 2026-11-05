@@ -10,7 +10,7 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} fro
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands, vaultShellThickness, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionCrater, bastionCurve, bastionLinkStart} from '../../src/lib/gallery/bastion.ts'
-import {bastionLink, bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
+import {bastionLink, bastionLinkGate, climbMouthHollow} from '../../src/lib/gallery/bastionNetwork.ts'
 import {climbMouth} from '../../src/lib/gallery/climb.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
@@ -60,26 +60,30 @@ test('both wings and the link belong to one Bastion', () => {
       expect(Math.abs(route.at(along + 0.01).y - route.at(along - 0.01).y) / 0.02).toBeLessThan(0.25)
     }
   }
-  // It leaves the curve’s landing heading south, level with it, and ends in the mouth’s north wall at its elbow, level with the mouth, its west wall in line with the mouth’s.
+  // It leaves the curve’s landing heading south, level with it, and ends in the mouth’s north wall at its elbow, a step under the hollow in front of its gate, its west wall in line with the mouth’s.
   expect(route.start).toEqual(bastionLinkStart.point)
   expect(route.start[1]).toBeCloseTo(landing.start[1] + bastionCurve.width / 2, 9)
   expect([route.y, route.heading]).toEqual([bastionLinkStart.y, Math.PI / 2])
   expect(route.end.point[0] - bastionLink.width / 2).toBeCloseTo(mouthWestX, 9)
   expect(route.end.point[1]).toBeCloseTo(mouthNorthZ, 9)
   expect(route.end.heading).toBeCloseTo(Math.PI / 2, 9)
-  expect(route.end.y).toBe(climbMouth.floorY)
+  expect(route.end.y).toBe(climbMouthHollow.outletY)
+  expect(climbMouth.floorY - route.end.y).toBeLessThan(0.25)
   expect(route.end.height).toBe(climbMouth.height)
 })
-test('beside the Lodge, the tunnel takes up all the room between the Lodge and the mouth of the western climb', () => {
-  expect(bastionLink.width).toBeCloseTo(3.75, 9)
+test('beside the Lodge, the tunnel runs as a narrow culvert down the middle of the room between the Lodge and the mouth of the western climb', () => {
+  expect(bastionLink.width).toBe(1.5)
   const strip = route.pieces.filter(straight).find(piece => Math.abs(piece.heading - Math.PI) < 1e-9)!
   const station = route.at(strip.from + strip.length / 2)
-  // The back of its vault 1 cm short of the face of the Lodge’s south wall
-  expect(across(station, 1, bastionLink.width / 2 + vaultShellThickness)[1]).toBeCloseTo(lodgeSouthZ - wallFace + 0.01, 9)
-  // The faces of its walls 1 cm in front of the back of the mouth’s vault, and the back of its own 1 cm short of the face of the mouth’s wall
-  expect(across(station, -1, bastionLink.width / 2 - wallFace)[1]).toBeCloseTo(mouthNorthZ - vaultShellThickness - 0.01, 9)
-  expect(across(station, -1, bastionLink.width / 2 + vaultShellThickness)[1]).toBeCloseTo(mouthNorthZ + wallFace - 0.01, 9)
-  // It runs that wide from past the Lodge’s east wall into the turn toward the mouth.
+  // The room: up to 1 cm short of the face of the Lodge’s south wall behind the back of its vault, and up to 1 cm in front of the back of the mouth’s vault from the faces of its walls
+  const north = lodgeSouthZ - wallFace + 0.01
+  const south = mouthNorthZ - vaultShellThickness - 0.01
+  expect(across(station, 1, bastionLink.width / 2 + vaultShellThickness)[1]).toBeGreaterThan(north)
+  expect(across(station, -1, bastionLink.width / 2 - wallFace)[1]).toBeLessThan(south)
+  expect(station.point[1]).toBeCloseTo((north + vaultShellThickness + south + wallFace) / 2, 9)
+  // The back of its vault stays short of the face of the mouth’s wall too.
+  expect(across(station, -1, bastionLink.width / 2 + vaultShellThickness)[1]).toBeLessThan(mouthNorthZ + wallFace - 0.01)
+  // It runs along the strip from past the Lodge’s east wall into the turn toward the mouth.
   expect(strip.start[0]).toBeGreaterThan(lodge.center[0] + lodge.size[0] / 2)
   expect(route.pieces.at(-1)!.from).toBeCloseTo(strip.from + strip.length, 9)
 })
@@ -128,7 +132,7 @@ const expectVaultSection = (hole: NonNullable<ReturnType<typeof wallById>['holes
   expect(radius).toBeCloseTo(bastionLink.width / 2, 9)
   expect(center).toBeCloseTo(crown - bastionLink.width / 2, 9)
 }
-test('it opens out of the curve’s level landing through a bare arch the size of its vault, which takes up all of the landing’s straight wall', () => {
+test('it opens out of the curve’s level landing through a bare arch the size of its vault, in the middle of the landing’s straight wall', () => {
   const wall = walls.find(value => value.id.startsWith('bastion-curve_') && value.holes?.some(hole => hole.name === 'link'))!
   const hole = wall.holes!.find(({name}) => name === 'link')!
   expectVaultSection(hole, bastionLinkStart.height)
@@ -139,10 +143,10 @@ test('it opens out of the curve’s level landing through a bare arch the size o
   const [eastJamb, westJamb] = [wall.center[0] - hole.u + hole.width / 2, wall.center[0] - hole.u - hole.width / 2]
   expect(eastJamb).toBeCloseTo(route.start[0] + bastionLink.width / 2 - wallFace, 9)
   expect(westJamb).toBeCloseTo(route.start[0] - bastionLink.width / 2 + wallFace, 9)
-  // The wall reaches from the corner where the tunnel’s east wall runs on to where its west wall runs on and the climb’s wall begins.
-  expect(wall.center[0] + wall.width / 2).toBeCloseTo(route.start[0] + bastionLink.width / 2, 9)
-  expect(wall.center[0] - wall.width / 2).toBeCloseTo(route.start[0] - bastionLink.width / 2, 9)
-  expect(climb.start[0]).toBeCloseTo(route.start[0] - bastionLink.width / 2, 9)
+  // The wall reaches from the corner on the apse’s west shoulder to where the climb’s wall begins, a meter and more of it on either side of the doorway.
+  expect(hole.u).toBeCloseTo(0, 9)
+  expect(wall.width).toBeGreaterThan(bastionLink.width + 2)
+  expect(climb.start[0]).toBeCloseTo(wall.center[0] - wall.width / 2, 9)
   // The floor stays level across the doorway, up to the climb.
   for (let x = westJamb; x <= eastJamb; x += 0.05) {
     expect(bastionCurve.floorAt(x, route.start[1] - 0.3)).toBe(bastionLinkStart.y)
@@ -165,12 +169,12 @@ test('it opens into the mouth’s elbow through a bare arch the size of its vaul
   // Its west jamb stands in line with the face of the mouth’s west wall.
   expect(wall.center[0] + hole.u - hole.width / 2).toBeCloseTo(mouthWestX + wallFace, 9)
   const {geometry} = architecture.find(entry => entry.wall === wall)!
-  // No cornice runs across it, but it still runs beside it, mitered round the corner into the mouth’s west wall.
-  const corner = mouthWestX + 0.3 - wall.center[0]
+  // No cornice runs across it, but it still runs on beside it in the east.
+  const beside = hole.u + hole.width / 2 + 0.3
   for (const {drop} of corniceBands) {
     const y = wall.height - drop
     expect(casted(geometry.cornice, hole.u, y)).toHaveLength(0)
-    expect(casted(geometry.cornice, corner, y).length).toBeGreaterThan(0)
+    expect(casted(geometry.cornice, beside, y).length).toBeGreaterThan(0)
   }
   // No casing frames it: right beside its east jamb, the wall’s face is all there is.
   expect(casted(geometry.trim, hole.u + hole.width / 2 + 0.05, 1)).toHaveLength(0)
@@ -185,10 +189,10 @@ for (const returning of [false, true]) {
   for (const sprint of [false, true]) {
     test(`the player walks the link up to the gate from the landing’s doorway, or down to it from the mouth, but no further, returning ${returning}, sprint ${sprint}`, () => {
       const world = physicsWorld(colliders)
-      // from the level landing west of the crater in front of the doorway, round its edge into the doorway, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater, then on toward the mouth’s elbow behind the gate
+      // from the level landing west of the crater in front of the doorway, down into the crater and up out of it into the doorway right behind it, at a walk there and through the first 3 m of the tunnel, then on toward the mouth’s elbow behind the gate
       const [craterX, entranceY, craterZ] = bastionCrater.center
       const tunnel = Array.from({length: Math.floor((route.length - 0.6) / 0.4) + 1}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const)
-      const path: Array<readonly [x: number, z: number, careful?: boolean]> = returning ? [climbMouth.path[1], [climbMouth.path[1][0], gateZ + 0.6]] : [[craterX - 1.8, craterZ, true], [craterX - 1.3, route.start[1] - 0.4, true], ...tunnel]
+      const path: Array<readonly [x: number, z: number, careful?: boolean]> = returning ? [climbMouth.path[1], [route.end.point[0], gateZ + 0.6]] : [[craterX - 1.8, craterZ, true], [craterX, craterZ, true], [craterX, route.start[1] - 0.4, true], ...tunnel]
       const beyond = returning ? route.at(-3).point : climbMouth.path[1]
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? climbMouth.floorY : entranceY) + 0.04, path[0][1]))
       const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
@@ -210,7 +214,7 @@ for (const returning of [false, true]) {
             sprint: sprint && !path[target][2],
           }, facing)
           world.step()
-          expect(position.y).toBeGreaterThan(-6.1)
+          expect(position.y).toBeGreaterThan(entranceY - bastionCrater.depth - 0.1)
         }
         expect({
           target,

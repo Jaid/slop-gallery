@@ -6,7 +6,6 @@ import {BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMa
 
 import {mergeParts} from '../../geometry.ts'
 import {vaultShellThickness} from '../architectureDimensions.ts'
-import runnelSection from './runnelSection.ts'
 
 type Profile = ReadonlyArray<readonly [lateral: number, up: number]>
 /** the cross section of a swept solid at a station, as faces in the order they follow around it, each a polyline from where the previous one ended; every station’s has as many points in each face */
@@ -148,10 +147,10 @@ export default class RouteVaultGeometry {
     const rise = width / 2
     // under the crown
     const spring = -rise
-    /** The stations between two distances along the route, in runs that meet where the outline turns its corners, with those its `runnel` needs. */
-    const runs = (from: number, to: number, runnel = false) => {
+    /** The stations between two distances along the route, in runs that meet where the outline turns its corners. */
+    const runs = (from: number, to: number) => {
       const result: Array<Array<RouteStation>> = [[]]
-      for (const station of passage.stations(from, to, {runnel})) {
+      for (const station of passage.stations(from, to)) {
         result.at(-1)!.push(station)
         if (passage.creases.some(along => Math.abs(along - station.along) < 1e-9) && station.along > from && station.along < to) {
           result.push([station])
@@ -173,13 +172,10 @@ export default class RouteVaultGeometry {
     }
     this.shell = mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
     this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - ribDepth / 2, along + ribDepth / 2), ring(-ribThickness, 0), true)))
-    const {runnel} = passage
-    this.paving = breakPits(mergeParts(sweep(runs(0, route.length, true), (station): ReadonlyArray<Profile> => {
+    this.paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))
-      const {width: across, depth, offset} = passage.runnelShape(station.along)
       return [
-        // Its floor, broken by the runnel’s round inside, a face of its own
-        ...runnel ? [[[-left, 0], [offset - across / 2, 0]], runnelSection(runnel, across, depth).map(([lateral, up]) => [lateral + offset, up] as const), [[offset + across / 2, 0], [right, 0]]] as const : [[[-left, 0], [right, 0]]] as const,
+        [[-left, 0], [right, 0]],
         [[right, 0], [right, -pavingThickness]],
         [[right, -pavingThickness], [-left, -pavingThickness]],
         [[-left, -pavingThickness], [-left, 0]],

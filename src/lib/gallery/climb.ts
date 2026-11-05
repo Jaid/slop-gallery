@@ -1,12 +1,9 @@
 import type {Wall} from '../placement/wallGeometry.ts'
-import type {Runnel} from './passages/RoutedPassage.ts'
 
 import {bastionClearance, bastionDoorway} from './bastion.ts'
 import {easedRampGradient} from './easedRamp.ts'
 import forge, {forgeVestibule} from './forge.ts'
 import lowerGallery from './lowerGallery.ts'
-import {easedTurnAcross} from './passages/easedTurn.ts'
-import FloorRunnel from './passages/FloorRunnel.ts'
 import Passage from './passages/Passage.ts'
 import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
@@ -28,6 +25,8 @@ const forgeWestX = forge.center[0] - forge.size[0] / 2
 const vestibuleWestX = forgeVestibule.center[0] - forgeVestibule.radius
 /** the Forge’s floor, on the upper floor */
 const forgeFloorY = 0
+/** where the hairpin tops out: the run north from it eases up by half a meter more to the Forge’s floor, a fall gentle enough to walk without noticing, which keeps orbs rolling on down it */
+const hairpinTopY = forgeFloorY - 0.5
 /** how steep the hairpin gets halfway, where its eased profile is steepest: like the Bastion’s ramps */
 const steepest = 0.25
 /** How long a ramp has to be to climb by `rise` without getting steeper than `steepest`. */
@@ -42,13 +41,13 @@ const eastLegX = forgeWestX - offset
 const westLegX = eastLegX - turnRadius * 2
 /** where the mouth turns south into the hairpin, as far north of the doorway’s line as an elbow and a stretch of vault reach */
 const turnZ = doorwayZ + elbowRun(width)
-/** Both legs climb as much, so the whole hairpin eases up by the bridge’s height to the Forge’s floor without getting steeper than 1 in 4. */
-const legLength = (rampLength(forgeFloorY - doorwayY) - Math.PI * turnRadius) / 2
+/** Both legs climb as much, so the whole hairpin eases up from the bridge’s height to its top without getting steeper than 1 in 4. */
+const legLength = (rampLength(hairpinTopY - doorwayY) - Math.PI * turnRadius) / 2
 /** The approach into the Forge’s vestibule is narrower than the passage, as wide as the Lodge’s doorway from the Bastion is high. */
 const stripWidth = 2.6
 /** where it runs east, straight at the vestibule’s middle */
 const stripZ = forgeVestibule.center[1]
-/** the radius of the approach’s turn from the run north into the strip east, round which whatever rolls out of the vestibule is carried on down the run */
+/** the radius of the approach’s turn from the run north into the strip east, round whose outer wall whatever rolls out of the vestibule is carried on down the run */
 const approachTurn = 3
 /** where the broad run north ends in the screen wall, where the approach turns east toward the strip */
 const screenZ = stripZ + approachTurn
@@ -61,11 +60,11 @@ export const climbDoorway = {
 /** From the doorway west under the Forge and on past its west wall, round an elbow to the south, level with the bridge’s end. */
 export const climbMouth = new Passage('climb_mouth', 'bastion', [[westWallX, doorwayZ], [westLegX, doorwayZ], [westLegX, turnZ]], doorwayY, width, mouthHeight)
 /**
- * South along the west leg, round a hairpin turn toward the east and back north along the east leg behind the Forge’s west wall, easing up all the way from the bridge’s height to the Forge’s floor as its vault rises.
+ * South along the west leg, round a hairpin turn toward the east and back north along the east leg behind the Forge’s west wall, easing up all the way from the bridge’s height to its top as its vault rises.
  */
 const route = new PassageRoute([westLegX, turnZ], Math.PI / 2, doorwayY, mouthHeight, [
   {
-    y: forgeFloorY,
+    y: hairpinTopY,
     height: levelHeight,
     steps: [
       {length: legLength},
@@ -77,65 +76,33 @@ const route = new PassageRoute([westLegX, turnZ], Math.PI / 2, doorwayY, mouthHe
     ],
   },
 ])
-/** The runnel worn into the paving down the middle of the climb, from the vestibule’s arch round the approach’s turn, down the run and round the hairpin to its foot, which carries the orbs released in the Forge on down toward the gate in the mouth. */
-export const climbRunnel = {
-  width: 0.4,
-  radius: 0.24,
-} as const satisfies Runnel
-/** Round the hairpin’s turn, the runnel eases into and out of a tighter turn over 3.5 m at both ends, swinging out toward the outer wall in between, so the orbs racing down it keep low in it. */
-const runnelTurn = easedTurnAcross(turnRadius * 2, -Math.PI, 3.5)
-/** Down the hairpin and on through the mouth’s elbow, where orbs race along it, the runnel is a little wider and so deeper than up in the approach and along the run: a full half round, its sides standing upright at its lips. */
-const deepRunnel = {
-  ...climbRunnel,
-  width: climbRunnel.radius * 2,
-} as const satisfies Runnel
-export const climbHairpin = new RoutedPassage('climb_hairpin', 'bastion', route, width, {
-  runnel: {
-    ...deepRunnel,
-    // narrowing toward its top to meet the run’s
-    end: {
-      length: 2,
-      width: climbRunnel.width,
-    },
-    path: new PassageRoute(route.start, route.heading, 0, 1, [
-      {length: legLength},
-      ...runnelTurn.steps,
-      {length: legLength},
-    ]),
-  },
-})
-/** From the hairpin’s foot, the runnel runs on straight across the mouth’s elbow to the gate in its north wall, shallowing out up to the floor right before it, so the orbs roll on through the gate’s hatch and down the tunnel beyond. */
-export const climbMouthRunnel = new FloorRunnel([westLegX, turnZ], [westLegX, doorwayZ - width / 2], doorwayY, {
-  ...deepRunnel,
-  outlet: 0.6,
-})
+/**
+ * Orbs released in the Forge roll down the hairpin on their own: down its east leg, round the outer wall of its turn and out of it along the west leg’s west wall, straight on across the mouth’s elbow to the gate in its north wall, see `bastionLinkGate`.
+ */
+export const climbHairpin = new RoutedPassage('climb_hairpin', 'bastion', route, width)
 if (Math.hypot(route.end.point[0] - eastLegX, route.end.point[1] - turnZ) > 1e-6 || Math.abs(route.end.heading + Math.PI / 2) > 1e-9) {
   throw new Error('The Bastion’s hairpin has to end where its run north begins, heading north.')
 }
-/** From the hairpin’s top on north at the Forge’s floor’s level, over the mouth and then over the Lodge’s roof, to the screen wall. */
-export const climbRun = new RoutedPassage('climb_run', 'bastion', new PassageRoute([eastLegX, turnZ], -Math.PI / 2, forgeFloorY, levelHeight, [{length: turnZ - screenZ}]), width, {
-  cornice: false,
-  runnel: climbRunnel,
-})
+/** how far short of the screen wall the run levels out at the Forge’s floor, so the walls along it there stand level and meet the screen wall in mitered corners */
+const screenRun = 1
+/** From the hairpin’s top on north, over the mouth and then over the Lodge’s roof, easing up to the Forge’s floor a meter short of the screen wall. */
+export const climbRun = new RoutedPassage('climb_run', 'bastion', new PassageRoute([eastLegX, turnZ], -Math.PI / 2, hairpinTopY, levelHeight, [
+  {
+    y: forgeFloorY,
+    steps: [{length: turnZ - screenZ - screenRun}],
+  },
+  {length: screenRun},
+]), width, {cornice: false})
 /** how long the approach’s straight stretch is, from its turn to the vestibule’s arch */
 const approachStraight = vestibuleWestX - eastLegX - approachTurn
-/** From the arch in the screen wall north round a smooth turn east, then straight on to the west arch of the Forge’s vestibule, where the runnel opens out into a broad, shallow mouth all along the straight stretch, which gathers in the orbs rolling out of the vestibule. */
+/** From the arch in the screen wall north round a smooth turn east, then straight on to the west arch of the Forge’s vestibule. */
 export const climbApproach = new RoutedPassage('climb_approach', 'bastion', new PassageRoute([eastLegX, screenZ], -Math.PI / 2, forgeFloorY, levelHeight, [
   {
     radius: approachTurn,
     angle: Math.PI / 2,
   },
   {length: approachStraight},
-]), stripWidth, {
-  cornice: false,
-  runnel: {
-    ...climbRunnel,
-    end: {
-      length: approachStraight,
-      width: 1.1,
-    },
-  },
-})
+]), stripWidth, {cornice: false})
 /** The arch through the screen wall, as wide and as high as the approach’s vault, and so are the arches of the Forge’s vestibule. */
 export const climbArch = {
   width: stripWidth,

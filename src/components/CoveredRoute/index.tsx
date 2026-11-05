@@ -24,7 +24,7 @@ export default function CoveredRoute({passage, material, lanterns}: {
   const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
-      {/* Welded, so orbs roll on along a runnel instead of catching on its facets’ edges */}
+      {/* Welded, so orbs roll on across its facets round the turns instead of catching on their edges */}
       <MeshSurfaceCollider args={paving} />
       {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
       <mesh castShadow geometry={geometry.paving} material={material} name='castle-paving' receiveShadow />

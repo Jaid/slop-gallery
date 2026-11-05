@@ -1,4 +1,5 @@
-import type {ForgeGutter} from './forgeGutter.ts'
+import type Gutter from './Gutter.ts'
+import type {GutterCut, GutterSpan} from './Gutter.ts'
 import type {RouteStation} from './passages/PassageRoute.ts'
 
 import {BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Vector3} from 'three/webgpu'
@@ -18,44 +19,30 @@ const bracketIron = [0.03, 0.012] as const
 const hangerRod = 0.008
 /** how far below its arm a bracket’s brace meets the wall */
 const braceDrop = 0.28
-/** how far the duct’s round inside reaches from the channel’s middle, wide enough to take in the holes through both walls */
-const ductRadius = 0.6
-/** how many facets round the duct, and how many lengths along it */
-const ductFacets = 16
-const ductLengths = 24
 
 type Station = RouteStation & {bottom: number}
-/** a stretch along the gutter where a wall stands beside it, on its left (−1) or its right (1) */
-type GutterSpan = {
-  from: number
-  side: -1 | 1
-  to: number
-}
-/** whether a point lies between two walls the gutter passes through, in the gap behind both */
-type GapTest = (point: Vector3) => boolean
 
 /**
- * The gutter’s parts, in world space: its brass `channel`, closed at its head and open at its end, the round inside of it and of its head as `collision`, the iron `brackets` holding it out from the walls along its spans beside them and the hangers carrying it from the ceiling where it passes the window, and the `duct` lining the gap it crosses between the north wall and the vestibule’s from the inside.
+ * A gutter’s parts, in world space: its brass `channel`, closed by a plate at its start or open there and open at its end, the round inside of it and of its plate as `collision`, and the iron `brackets` holding it out from the walls along its spans beside them and the hangers carrying it from the ceiling along its hung stretches.
  */
 export default class GutterGeometry {
   readonly brackets: BufferGeometry
   readonly channel: BufferGeometry
   readonly collision: BufferGeometry
-  readonly duct: BufferGeometry
 
-  constructor(gutter: ForgeGutter) {
+  constructor(gutter: Gutter) {
     const stations = gutter.route.stations(0, gutter.route.length, turnStep).map(station => ({
       ...station,
       bottom: gutter.bottom(station.along),
     }))
     this.channel = channelGeometry(gutter, stations)
     this.collision = insideGeometry(gutter, stations)
-    this.brackets = mergeParts([bracketGeometry(gutter, gutter.spans), hangerGeometry(gutter)])
-    this.duct = ductGeometry(gutter, gutter.gap, point => gutter.inGap(point))
+    const supports = [...bracketParts(gutter, gutter.spans), ...hangerParts(gutter)]
+    this.brackets = supports.length ? mergeParts(supports) : new BufferGeometry
   }
 
   dispose() {
-    for (const geometry of [this.brackets, this.channel, this.collision, this.duct]) {
+    for (const geometry of [this.brackets, this.channel, this.collision]) {
       geometry.dispose()
     }
   }
@@ -68,9 +55,32 @@ const around = ({point: [x, z], heading, bottom}: Station, middle: number, out: 
 }
 /** the direction out of the channel’s middle at the station, `angle` radians round from straight down toward the right */
 const outward = ({heading}: Station, angle: number) => new Vector3(-Math.sin(heading) * Math.sin(angle), -Math.cos(angle), Math.cos(heading) * Math.sin(angle))
+/** The points pushed along the channel onto the plane its open end is cut along, if it is cut: each as far forward or back along the station’s heading as it takes to lie in it. */
+const cut = (points: ReadonlyArray<readonly [Vector3, Vector3]>, {heading}: Station, plane?: GutterCut) => {
+  if (!plane) {
+    return points
+  }
+  const {normal: [nx, nz], point: [px, pz]} = plane
+  const [dx, dz] = [Math.cos(heading), Math.sin(heading)]
+  const facing = dx * nx + dz * nz
+  if (Math.abs(facing) < 0.2) {
+    throw new RangeError('A gutter’s end can’t be cut along a plane it runs almost alongside.')
+  }
+  return points.map(([point, normal]) => {
+    const shift = ((px - point.x) * nx + (pz - point.z) * nz) / facing
+    return [point.clone().add(new Vector3(dx * shift, 0, dz * shift)), normal] as const
+  })
+}
+/** The rings of points lofted along the stations, the first and the last cut along the gutter’s planes. */
+const rings = (gutter: Gutter, stations: ReadonlyArray<Station>, ring: (station: Station) => ReadonlyArray<readonly [Vector3, Vector3]>) => stations.map((station, index) => {
+  const plane = index === 0 ? gutter.cuts.start : (index === stations.length - 1 ? gutter.cuts.end : undefined)
+  return cut(ring(station), station, plane)
+})
 /** The channel’s cross-section at a station, as points with their normals: round its inside from rim to rim, over the rolled edge of that rim, back round its outside and over the other rim’s edge. */
-function profile(gutter: ForgeGutter, station: Station) {
-  const {lip, radius, thickness} = gutter
+function profile(gutter: Gutter, station: Station) {
+  const {thickness} = gutter
+  const lip = gutter.lipAt(station.along)
+  const radius = gutter.radiusAt(station.along)
   const points: Array<readonly [Vector3, Vector3]> = []
   for (let i = 0; i <= facets; i++) {
     const angle = -lip + lip * 2 * i / facets
@@ -95,39 +105,43 @@ function profile(gutter: ForgeGutter, station: Station) {
   rim(-lip, Math.PI)
   return points
 }
-function channelGeometry(gutter: ForgeGutter, stations: ReadonlyArray<Station>) {
+function channelGeometry(gutter: Gutter, stations: ReadonlyArray<Station>) {
   const loft = new RingLoft
-  for (const [index, station] of stations.entries()) {
-    loft.add(profile(gutter, station), true, index > 0)
+  for (const [index, ring] of rings(gutter, stations, station => profile(gutter, station)).entries()) {
+    loft.add(ring, true, index > 0)
   }
-  // The head’s end plate, across the inside and the brass round it: round the outside and over both rims.
-  const [first] = stations
-  const back = new Vector3(-Math.cos(first.heading), 0, -Math.sin(first.heading))
-  loft.fan(around(first, gutter.radius, 0, 0), profile(gutter, first).slice(facets + 1).map(([point]) => point), back)
+  // A closed start’s end plate, across the inside and the brass round it: round the outside and over both rims.
+  if (gutter.closed) {
+    const [first] = stations
+    const back = new Vector3(-Math.cos(first.heading), 0, -Math.sin(first.heading))
+    loft.fan(around(first, gutter.radiusAt(0), 0, 0), profile(gutter, first).slice(facets + 1).map(([point]) => point), back)
+  }
   return loft.geometry()
 }
-function insideGeometry(gutter: ForgeGutter, stations: ReadonlyArray<Station>) {
-  const {lip, radius} = gutter
+function insideGeometry(gutter: Gutter, stations: ReadonlyArray<Station>) {
   const loft = new RingLoft
-  const ring = (station: Station) => Array.from({length: facets + 1}, (_, i) => {
+  const inside = (station: Station) => Array.from({length: facets + 1}, (_, i) => {
+    const lip = gutter.lipAt(station.along)
+    const radius = gutter.radiusAt(station.along)
     const angle = -lip + lip * 2 * i / facets
     return [around(station, radius, radius, angle), outward(station, angle).negate()] as const
   })
-  for (const [index, station] of stations.entries()) {
-    loft.add(ring(station), false, index > 0)
+  for (const [index, ring] of rings(gutter, stations, inside).entries()) {
+    loft.add(ring, false, index > 0)
   }
-  const [first] = stations
-  loft.fan(around(first, radius, 0, 0), ring(first).map(([point]) => point), new Vector3(Math.cos(first.heading), 0, Math.sin(first.heading)))
+  if (gutter.closed) {
+    const [first] = stations
+    loft.fan(around(first, gutter.radiusAt(0), 0, 0), inside(first).map(([point]) => point), new Vector3(Math.cos(first.heading), 0, Math.sin(first.heading)))
+  }
   return loft.geometry()
 }
 /** Iron brackets every so often along the spans beside walls: an arm from the wall under the channel and a brace from lower down the wall out to it. */
-function bracketGeometry(gutter: ForgeGutter, spans: ReadonlyArray<GutterSpan>) {
-  const {offset, radius, thickness} = gutter
+function bracketParts(gutter: Gutter, spans: ReadonlyArray<GutterSpan>) {
+  const {offset, thickness} = gutter
   const [ironWidth, ironThickness] = bracketIron
   const parts: Array<BufferGeometry> = []
-  /** from the wall’s face, a little into it, out under the channel’s far edge */
+  /** from the wall’s face, a little into it */
   const armStart = offset - wallFace + 0.02
-  const armEnd = -(radius + thickness)
   for (const {from, to, side} of spans) {
     const count = Math.max(1, Math.round((to - from) / gutter.bracketSpacing))
     for (let i = 0; i < count; i++) {
@@ -140,6 +154,8 @@ function bracketGeometry(gutter: ForgeGutter, spans: ReadonlyArray<GutterSpan>) 
       // Across the channel, toward the wall
       const [ax, az] = [-Math.sin(heading) * side, Math.cos(heading) * side]
       const armY = bottom - thickness - ironThickness / 2
+      // out under the channel’s far edge
+      const armEnd = -(gutter.radiusAt(station.along) + thickness)
       const length = armStart - armEnd
       const arm = new BoxGeometry(ironWidth, ironThickness, length)
       const middle = (armStart + armEnd) / 2
@@ -156,19 +172,19 @@ function bracketGeometry(gutter: ForgeGutter, spans: ReadonlyArray<GutterSpan>) 
       parts.push(brace.translate(center.x, center.y, center.z))
     }
   }
-  return mergeParts(parts)
+  return parts
 }
 /** Iron hangers every so often along the stretches hung from the ceiling: a rod down from the ceiling on either side of the channel and a strap under it between their feet, clear of the orbs rolling along it. */
-function hangerGeometry(gutter: ForgeGutter) {
-  const {ceiling, radius, thickness} = gutter
+function hangerParts(gutter: Gutter) {
+  const {ceiling, thickness} = gutter
   const [ironWidth, ironThickness] = bracketIron
-  /** how far to either side of the channel’s middle the rods hang, just outside its brass */
-  const reach = radius + thickness + hangerRod
   const parts: Array<BufferGeometry> = []
   for (const [from, to] of gutter.hung) {
     const count = Math.max(1, Math.round((to - from) / gutter.bracketSpacing))
     for (let i = 0; i < count; i++) {
-      const {heading, point: [x, z], bottom} = gutter.at(from + (to - from) * (i + 0.5) / count)
+      const {along, heading, point: [x, z], bottom} = gutter.at(from + (to - from) * (i + 0.5) / count)
+      /** how far to either side of the channel’s middle the rods hang, just outside its brass */
+      const reach = gutter.radiusAt(along) + thickness + hangerRod
       const [ax, az] = [-Math.sin(heading), Math.cos(heading)]
       const strapY = bottom - thickness - ironThickness / 2
       const strap = new BoxGeometry(ironWidth, ironThickness, reach * 2 + hangerRod * 2)
@@ -180,54 +196,7 @@ function hangerGeometry(gutter: ForgeGutter) {
       }
     }
   }
-  return mergeParts(parts)
-}
-/** The duct’s round inside, round the channel’s middle, where it lies in the gap between the walls: each of its lengthwise lines cut where it leaves the gap, so its ends follow the walls. */
-function ductGeometry(gutter: ForgeGutter, [from, to]: readonly [number, number], inGap: GapTest) {
-  const station = (along: number) => gutter.at(along)
-  const lines = Array.from({length: ductFacets}, (_, facet) => {
-    const angle = facet / ductFacets * Math.PI * 2
-    const at = (along: number) => around(station(along), gutter.radius, ductRadius, angle)
-    // The first stretch of this line in the gap, found in fine steps and narrowed down at both ends.
-    const step = 0.01
-    let start = Number.NaN
-    let end = Number.NaN
-    for (let along = from; along <= to; along += step) {
-      if (inGap(at(along))) {
-        if (Number.isNaN(start)) {
-          start = along
-        }
-        end = along
-      } else if (!Number.isNaN(start)) {
-        break
-      }
-    }
-    if (Number.isNaN(start)) {
-      throw new RangeError('The gutter’s duct lies in no gap.')
-    }
-    const narrow = (inside: number, outside: number) => {
-      for (let i = 0; i < 24; i++) {
-        const middle = (inside + outside) / 2
-        if (inGap(at(middle))) {
-          inside = middle
-        } else {
-          outside = middle
-        }
-      }
-      return inside
-    }
-    start = narrow(start, start - step)
-    end = narrow(end, end + step)
-    return Array.from({length: ductLengths + 1}, (_, i) => {
-      const along = start + (end - start) * i / ductLengths
-      return [at(along), outward(station(along), angle).negate()] as const
-    })
-  })
-  const loft = new RingLoft
-  for (let i = 0; i <= ductLengths; i++) {
-    loft.add(lines.map(line => line[i]), true, i > 0)
-  }
-  return loft.geometry()
+  return parts
 }
 /** a strip of quads between rings of points with their normals, as an indexed geometry */
 class RingLoft {

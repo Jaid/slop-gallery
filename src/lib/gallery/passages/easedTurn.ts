@@ -44,18 +44,3 @@ export default function easedTurn(radius: number, angle: number, easing: number)
 export function turnReach({end: [x, z], heading}: ReturnType<typeof easedTurn>) {
   return x - z * Math.cos(heading) / Math.sin(heading)
 }
-
-/** An eased turn by `angle` with as many meters of `easing` at both ends whose ends lie `across` meters apart straight across the line it sets off along, like those of a plain turn round half that by half a revolution, found by narrowing down its radius. */
-export function easedTurnAcross(across: number, angle: number, easing: number) {
-  let low = easing / Math.abs(angle) * 1.000001
-  let high = across * 4
-  for (let i = 0; i < 64; i++) {
-    const radius = (low + high) / 2
-    if (Math.abs(easedTurn(radius, angle, easing).end[1]) > across) {
-      high = radius
-    } else {
-      low = radius
-    }
-  }
-  return easedTurn((low + high) / 2, angle, easing)
-}

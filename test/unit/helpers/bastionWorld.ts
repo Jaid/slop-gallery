@@ -6,11 +6,11 @@ import {ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../../src/lib/gallery/bastion.ts'
-import {bastionLinkGate, bastionNetwork} from '../../../src/lib/gallery/bastionNetwork.ts'
-import {climbArch, climbMouth, climbMouthRunnel} from '../../../src/lib/gallery/climb.ts'
+import {bastionLinkGate, bastionNetwork, climbMouthHollow} from '../../../src/lib/gallery/bastionNetwork.ts'
+import {climbArch, climbMouth} from '../../../src/lib/gallery/climb.ts'
 import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
 import forge from '../../../src/lib/gallery/forge.ts'
-import {forgeGutter} from '../../../src/lib/gallery/forgeGutter.ts'
+import {forgeBore, forgeGutters} from '../../../src/lib/gallery/forgeGutter.ts'
 import {forgeRoundVestibule, vestibuleArches} from '../../../src/lib/gallery/forgeVestibule.ts'
 import gateGeometry from '../../../src/lib/gallery/gateGeometry.ts'
 import GutterGeometry from '../../../src/lib/gallery/GutterGeometry.ts'
@@ -29,7 +29,7 @@ type Shape = {
   translation?: Vec3
   triangles: [Float32Array, Uint32Array]
 }
-/** The Bastion’s walls, passages, runnels, gate and crater, as the game builds their colliders. */
+/** The Bastion’s walls, passages, the hollow in its western mouth, its gate and crater, as the game builds their colliders. */
 export function bastionColliders() {
   const colliders = new Colliders
   colliders.walls(['bastion'])
@@ -40,19 +40,19 @@ export function bastionColliders() {
         colliders.surface(part)
       }
       vault.dispose()
-      // A straight passage’s floor and ceiling are slabs of their own, the floor without its runnel’s strip, see CoveredPassage.
-      const runnel = passage === climbMouth ? climbMouthRunnel : undefined
+      // A straight passage’s floor and ceiling are slabs of their own, the floor without its hollow’s footprint, see CoveredPassage.
+      const hollow = passage === climbMouth ? climbMouthHollow : undefined
       const crown = passage.floorY + passage.height
       for (const floor of passage.floors) {
         colliders.hulls.push(slabCorners(floor, crown, crown + 0.24))
-        for (const piece of runnel ? runnel.cut(floor) : [floor]) {
+        for (const piece of hollow ? hollow.cut(floor) : [floor]) {
           colliders.hulls.push(slabCorners(piece, passage.floorY - 0.24, passage.floorY))
         }
       }
-      if (runnel) {
-        const groove = runnel.geometry()
-        colliders.surface(groove, true)
-        groove.dispose()
+      if (hollow) {
+        const sunken = hollow.geometry()
+        colliders.surface(sunken, true)
+        sunken.dispose()
       }
       continue
     }
@@ -71,7 +71,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and its gutter. */
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, its gutters and the ledges between them. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -94,9 +94,14 @@ export function forgeAndBastionColliders() {
   const [halfWidth, halfDepth] = [forge.size[0] / 2, forge.size[1] / 2]
   const [x, z] = forge.center
   colliders.hulls.push(slabCorners([[x - halfWidth, z - halfDepth], [x + halfWidth, z - halfDepth], [x + halfWidth, z + halfDepth], [x - halfWidth, z + halfDepth]], -0.24, 0))
-  const gutter = new GutterGeometry(forgeGutter)
-  colliders.surface(gutter.collision, true)
-  gutter.dispose()
+  for (const gutter of Object.values(forgeGutters)) {
+    const geometry = new GutterGeometry(gutter)
+    colliders.surface(geometry.collision, true)
+    geometry.dispose()
+  }
+  for (const {min, max} of forgeBore.ledges) {
+    colliders.hulls.push(slabCorners([[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]], forgeBore.sill - forgeBore.ledgeThickness, forgeBore.sill))
+  }
   return colliders
 }
 

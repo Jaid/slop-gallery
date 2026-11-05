@@ -34,22 +34,6 @@ export type RoutedPassageOptions = {
   outlines?: ReadonlyArray<RouteOutline>
   /** holes broken through its paving, each an outline in plan that lies on its floor */
   pits?: ReadonlyArray<ReadonlyArray<Point>>
-  /** a runnel worn into its paving along its centerline from end to end */
-  runnel?: Runnel
-}
-/** a runnel along a routed passage’s centerline: a groove `width` wide across the floor, its inside round with a `radius` of at least half that */
-export type Runnel = {
-  /** where it widens or narrows evenly toward the route’s end over its last `length` meters, to `width` there, as deep as everywhere: to open out into a broad mouth that gathers in what rolls into it from there, or to meet a narrower runnel beyond */
-  end?: {
-    length: number
-    width: number
-  }
-  /** how far from the route’s start it shallows out evenly up to the floor, so what rolls along it toward the start runs out onto the floor */
-  outlet?: number
-  /** the line it follows in plan instead of the centerline, from the route’s start to its end, like one easing into and out of a turn, which keeps what rolls along it from being flung up its side */
-  path?: PassageRoute
-  radius: number
-  width: number
 }
 /** an outline with the stretch along the route it stands in for its side’s walls on, and where straight across from the route its walls turn their inner corners */
 type PlacedOutline = RouteOutline & {
@@ -84,10 +68,6 @@ const ribInset = 0.15
 const chunkStep = 0.05
 /** how finely an outline is checked against the route, in meters along it */
 const outlineCheckStep = 0.02
-/** how finely a runnel’s own path is followed, in meters along it */
-const runnelPathStep = 0.02
-/** how far apart the stations stand where a runnel strays off the centerline, in meters along the route */
-const runnelStationStep = 0.1
 const tolerance = 1e-6
 /** the direction to the right of a heading, seen from above with north up */
 const rightOf = (heading: number): Point => [-Math.sin(heading), Math.cos(heading)]
@@ -108,38 +88,15 @@ export default class RoutedPassage {
   readonly pits: ReadonlyArray<ReadonlyArray<Point>>
   /** where the vault’s ribs stand, in meters along the route */
   readonly ribs: ReadonlyArray<number>
-  /** the runnel worn into its paving along its centerline, if any */
-  readonly runnel?: Runnel
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
-  /** how far right of the centerline the runnel runs, by how far along the route, where it follows a path of its own */
-  private readonly runnelOffsets: Array<readonly [along: number, right: number]>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, openings = [], outlines = [], pits = [], runnel}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, openings = [], outlines = [], pits = []}: RoutedPassageOptions = {}) {
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }
-    if (runnel && !(runnel.width > 0 && Math.max(runnel.width, runnel.end?.width ?? 0) < width / 2 && runnel.radius >= Math.min(runnel.width, runnel.end?.width ?? Infinity) / 2 && (runnel.end?.length ?? 0) + (runnel.outlet ?? 0) < route.length && (runnel.end?.length ?? 1) > 0 && (runnel.outlet ?? 1) > 0)) {
-      throw new RangeError('A routed passage’s runnel needs to be narrower than half of it, round inside, and its end and outlet need to fit along the passage.')
-    }
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
-    if (runnel) {
-      this.runnel = runnel
-    }
-    // How far right of the centerline the runnel’s path runs, by how far along it lies, wherever it strays off the centerline
-    this.runnelOffsets = []
-    if (runnel?.path) {
-      for (let along = 0; along <= runnel.path.length; along += runnelPathStep) {
-        const [x, z] = runnel.path.at(along).point
-        const projection = route.project(x, z)
-        if (!projection || Math.abs(projection.right) + runnel.width / 2 > width / 2) {
-          throw new RangeError(`The runnel of ${this.name} strays off its floor.`)
-        }
-        this.runnelOffsets.push([projection.along, projection.right])
-      }
-      this.runnelOffsets.sort((a, b) => a[0] - b[0])
-    }
     const count = Math.max(1, Math.ceil(route.length / routeRibSpacing))
     this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count)
     const sides = new Set(outlines.map(({side}) => side))
@@ -248,24 +205,6 @@ export default class RoutedPassage {
     return (this.ribs[next - 1] + this.ribs[next]) / 2
   }
 
-  /** How wide its runnel is `along` meters down it, widening or narrowing evenly toward its end, how deep compared to its full depth, shallowing out evenly through its outlet, and how far right of the centerline its middle runs; 0 wide without one. */
-  runnelShape(along: number) {
-    if (!this.runnel) {
-      return {
-        width: 0,
-        depth: 0,
-        offset: 0,
-      }
-    }
-    const {end, outlet, width} = this.runnel
-    const into = end ? along - (this.route.length - end.length) : 0
-    return {
-      width: end && into > 0 ? width + (end.width - width) * Math.min(into / end.length, 1) : width,
-      depth: outlet ? Math.min(Math.max(along / outlet, 0), 1) : 1,
-      offset: this.runnelOffset(along),
-    }
-  }
-
   /** The station of the route abreast of the point, or undefined beside the passage. */
   stationAt(x: number, z: number) {
     for (const {along, right} of this.route.projections(x, z).toSorted((a, b) => Math.abs(a.right) - Math.abs(b.right))) {
@@ -276,13 +215,11 @@ export default class RoutedPassage {
     }
   }
 
-  /** Stations between two distances along the route, as it gives them with its turns cut into steps of `routeTurnStep`, and straight across from where the outline’s walls turn their corners; for its `runnel`, also where its outlet ends and its end begins to widen or narrow, and every so often where it strays off the centerline. */
-  stations(from: number, to: number, {runnel = false} = {}) {
+  /** Stations between two distances along the route, as it gives them with its turns cut into steps of `routeTurnStep`, and straight across from where the outline’s walls turn their corners. */
+  stations(from: number, to: number) {
     const stations = this.route.stations(from, to, routeTurnStep)
-    const joints = runnel ? [this.runnel?.outlet, this.runnel?.end && this.route.length - this.runnel.end.length].filter(along => along !== undefined) : []
-    const astray = runnel ? this.runnelOffsets.filter(([along, right], index, all) => Math.abs(right) > 1e-4 && Math.floor(along / runnelStationStep) !== Math.floor((all[index - 1]?.[0] ?? -1) / runnelStationStep)).map(([along]) => along) : []
-    const extra = [...this.creases, ...joints, ...astray].filter((along, index, all) => along > from && along < to && stations.every(station => Math.abs(station.along - along) > 1e-6) && all.findIndex(other => Math.abs(other - along) < 1e-6) === index).map(along => this.route.at(along))
-    return [...stations, ...extra].toSorted((a, b) => a.along - b.along)
+    const creases = this.creases.filter(along => along > from && along < to && stations.every(station => Math.abs(station.along - along) > 1e-9)).map(along => this.route.at(along))
+    return [...stations, ...creases].toSorted((a, b) => a.along - b.along)
   }
 
   /** Where a point lies abreast of a piece, even beyond its ends: how far into it, measured around a turn from the side of `near`, and how far to the right of its centerline. */
@@ -515,20 +452,6 @@ export default class RoutedPassage {
       width: radius * Math.abs(piece.sweep),
       curveRadius: outer ? radius : -radius,
     }
-  }
-
-  /** How far right of the centerline the runnel’s middle runs `along` meters down the route. */
-  private runnelOffset(along: number) {
-    const offsets = this.runnelOffsets
-    if (!offsets.length) {
-      return 0
-    }
-    const next = offsets.findIndex(([value]) => value >= along)
-    if (next <= 0) {
-      return offsets.at(next)![1]
-    }
-    const [[a, ra], [b, rb]] = [offsets[next - 1], offsets[next]]
-    return b - a > 1e-9 ? ra + (rb - ra) * (along - a) / (b - a) : rb
   }
 
   /** The stretch along the route the outline stands in for its side’s walls on, bounded by the joints its first and last corners lie straight across from. */

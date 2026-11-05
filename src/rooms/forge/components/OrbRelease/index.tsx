@@ -12,7 +12,7 @@ import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import {switchSoundEffects} from '#src/lib/audio/switchSoundEffects.ts'
 import {playEffect} from '#src/lib/gallery.ts'
 import {wallFace} from '#src/lib/gallery/architectureDimensions.ts'
-import {forgeGutter} from '#src/lib/gallery/forgeGutter.ts'
+import {forgeDrop} from '#src/lib/gallery/forgeGutter.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import {releasedOrb, releaseLocked} from '#src/lib/gallery/orbRelease.ts'
 import walls, {releaseSpot} from '#src/rooms/forge/walls.ts'
@@ -35,7 +35,7 @@ const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
 const orbAround = () => releaseLocked(propPositions(), roomAt)
 
 /**
- * The button on the Forge’s west wall that releases an orb through the hole in the ceiling over it into the gutter, which rolls round the room and the vestibule and on down the Bastion into its crater.
+ * The button on the Forge’s west wall that releases an orb through the hole in the ceiling over it into the gutter, which rolls round the room’s corner, through the wall into the vestibule’s gutter and on down the Bastion into its crater.
  * Every time, it is a new orb picked at random, steered by what lies in the Forge or is carried into it, see {@link releasedOrb}.
  * It does nothing while any orb is still in the Forge or the Bastion, so orbs never queue up on the way.
  */
@@ -67,7 +67,7 @@ export default function OrbRelease() {
     busyUntil.current = performance.now() + 1000
     playEffect(switchSoundEffects.release.id)
     setPressed(true)
-    const [x, y, z] = forgeGutter.spawn
+    const [x, y, z] = forgeDrop.spawn
     const orb = releasedOrb(propPositions(), roomAt, Math.random())
     setReleased(orbs => [...orbs, {
       id: `${orb.propId}-released-${orbs.length + 1}`,

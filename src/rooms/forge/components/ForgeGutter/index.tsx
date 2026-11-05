@@ -1,19 +1,37 @@
+import type {Vec3} from '#src/lib/gallery.ts'
 import type {Material} from 'three/webgpu'
 
-import {RigidBody} from '@react-three/rapier'
+import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
+import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {forgeGutter} from '#src/lib/gallery/forgeGutter.ts'
+import {forgeBore, forgeGutters} from '#src/lib/gallery/forgeGutter.ts'
 import GutterGeometry from '#src/lib/gallery/GutterGeometry.ts'
 
-/** The brass gutter round the Forge and its vestibule on its iron brackets, which orbs dropping through the ceiling roll down into the vestibule, and the duct lined with `plaster` that carries it through the gap behind the north wall. */
+/** The ledges under both ends of the opening orbs roll through between the gutters, by their middles and sizes, their tops level with its sill. */
+const ledges = forgeBore.ledges.map(({min, max}) => ({
+  position: [(min[0] + max[0]) / 2, forgeBore.sill - forgeBore.ledgeThickness / 2, (min[1] + max[1]) / 2] as Vec3,
+  size: [max[0] - min[0], forgeBore.ledgeThickness, max[1] - min[1]] as Vec3,
+}))
+
+/** The brass gutters round the Forge and its vestibule on their iron brackets and hangers, which orbs dropping through the ceiling roll down into the vestibule, and the `plaster` ledges they end and start on at both faces of the walls between them. */
 export default function ForgeGutter({plaster}: {plaster: Material}) {
-  const geometry = useDisposable(useMemo(() => new GutterGeometry(forgeGutter), []))
-  const collision = useMemo(() => colliderGeometry(geometry.collision), [geometry])
+  const parts = useDisposable(useMemo(() => {
+    const geometries = Object.values(forgeGutters).map(gutter => new GutterGeometry(gutter))
+    return {
+      geometries,
+      collision: geometries.map(geometry => colliderGeometry(geometry.collision)),
+      dispose() {
+        for (const geometry of geometries) {
+          geometry.dispose()
+        }
+      },
+    }
+  }, []))
   const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#a88a56',
     metalness: 0.8,
@@ -26,9 +44,14 @@ export default function ForgeGutter({plaster}: {plaster: Material}) {
     roughness: 0.7,
   }), []))
   return <RigidBody colliders={false} name='forge-gutter' type='fixed'>
-    <MeshSurfaceCollider args={collision} />
-    <mesh castShadow geometry={geometry.channel} material={brass} name='forge-gutter-channel' receiveShadow />
-    <mesh castShadow geometry={geometry.brackets} material={iron} name='forge-gutter-brackets' receiveShadow />
-    <mesh geometry={geometry.duct} material={plaster} name='forge-gutter-duct' receiveShadow />
+    {parts.collision.map((args, index) => <MeshSurfaceCollider key={index} args={args} />)}
+    {parts.geometries.map(({brackets, channel}, index) => <group key={index}>
+      <mesh castShadow geometry={channel} material={brass} name='forge-gutter-channel' receiveShadow />
+      <mesh castShadow geometry={brackets} material={iron} name='forge-gutter-brackets' receiveShadow />
+    </group>)}
+    {ledges.map(({position, size}) => <group key={position.join()}>
+      <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
+      <Box material={plaster} name='forge-gutter-ledge' position={position} size={size} />
+    </group>)}
   </RigidBody>
 }

@@ -7,7 +7,7 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {bastionLinkGate} from '#src/lib/gallery/bastionNetwork.ts'
 import gateGeometry from '#src/lib/gallery/gateGeometry.ts'
 
-/** The iron gate barring the connecting tunnel where it opens into the western mouth’s elbow, with the mouse hole at its foot that lets orbs through. */
+/** The iron gate barring the connecting tunnel where it opens into the western mouth’s elbow, standing on the tunnel’s floor a step under the hollow in front of it, with the mouse hole at its foot that lets orbs through. */
 export default function BastionGate() {
   const bars = useDisposable(useMemo(() => gateGeometry(bastionLinkGate), []))
   const collision = useMemo(() => colliderGeometry(bars), [bars])
