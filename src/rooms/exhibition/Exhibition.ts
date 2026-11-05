@@ -1,9 +1,10 @@
 import {Geofence} from 'geofency'
 
-import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
+import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 import lowerGallery, {tunnelCenter} from '#src/lib/gallery/lowerGallery.ts'
 import tunnelDisplays from '#src/lib/gallery/tunnelDisplays.ts'
+import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
@@ -37,14 +38,20 @@ export default class Exhibition extends Room {
   constructor() {
     super({
       title: 'The Exhibition',
-      // Glass vitrines down a tunnel: bright and medium.
-      acoustics: reverberation({
-        decay: 1.4,
-        predelay: 0.012,
-        brightness: [10_000, 3200],
-        early: [[0.008, 0.4], [0.017, 0.3]],
-        wet: 0.16,
-      }),
+      moods: [
+        new RoomMood({
+          id: 'exhibition',
+          title: 'Glass vitrines',
+          // Glass vitrines down a tunnel: bright and medium.
+          transformer: reverberation({
+            decay: 1.4,
+            predelay: 0.012,
+            brightness: [10_000, 3200],
+            early: [[0.008, 0.4], [0.017, 0.3]],
+            wet: 0.16,
+          }),
+        }),
+      ],
       frame: ['exhibition-vitrine', 'exhibition-evidence', 'exhibition-containment'],
       cameras,
       spawns,

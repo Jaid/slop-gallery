@@ -5,9 +5,10 @@ import type {Box3} from 'three/webgpu'
 
 import {Geofence} from 'geofency'
 
-import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
+import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {cellLedY} from '#src/lib/gallery/CellCeilingGeometry.ts'
 import {insideRoundVestibule, roundVestibuleWall} from '#src/lib/gallery/roundVestibule.ts'
+import RoomMood from '#src/lib/moods/RoomMood.ts'
 import {chandelierLampY} from '#src/lib/physics/chandelier.ts'
 
 import Room from '../base/Room.ts'
@@ -93,14 +94,20 @@ export default class Cell extends Room {
     }
     super({
       title: 'Cell',
-      // Varnished wood and papered walls under a coffered ceiling: short and soft.
-      acoustics: reverberation({
-        decay: 1,
-        predelay: 0.012,
-        brightness: [6000, 1700],
-        early: [[0.011, 0.33], [0.024, 0.2]],
-        wet: 0.14,
-      }),
+      moods: [
+        new RoomMood({
+          id: 'cell',
+          title: 'Varnished wood',
+          // Varnished wood and papered walls under a coffered ceiling: short and soft.
+          transformer: reverberation({
+            decay: 1,
+            predelay: 0.012,
+            brightness: [6000, 1700],
+            early: [[0.011, 0.33], [0.024, 0.2]],
+            wet: 0.14,
+          }),
+        }),
+      ],
       frame: 'cell-coffer',
       map: cellMap(layout),
       slots,

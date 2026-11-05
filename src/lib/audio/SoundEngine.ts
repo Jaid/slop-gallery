@@ -1,16 +1,15 @@
 import type {Vec3} from '../gallery/types.ts'
-import type {RoomAcoustics} from './acoustics/Acoustics.ts'
 import type {Hearing} from './hearing.ts'
 import type {FootstepSurface} from './playerSoundEffects.ts'
 import type {AudioOutput, ProceduralPlayback, Voice} from './proceduralAudio.ts'
 
 import {clamp} from 'math'
 
-import Acoustics from './acoustics/Acoustics.ts'
 import {audioVolume} from './audioParameter.ts'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices, playVoicesAt} from './proceduralAudio.ts'
 import {playSoundEffect} from './soundEffects.ts'
+import TransformerChain from './transformers/TransformerChain.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
 const effectsGain = 0.6 * 10 ** (12 / 20)
@@ -32,10 +31,11 @@ export default class SoundEngine {
   readonly master = this.context.createGain()
   /** where the effects and the narration meet, at the `?audio` volume */
   readonly output = this.context.createGain()
-  /** where the sounds of the world play, like footsteps, switches and ambience: through the acoustics of the room the listener is in, into the effects master, unlike the interface’s sounds, which play on the master directly */
+  /** what the moods showing transform the sounds of the world through on their way from {@link world} to the effects master, like the acoustics of the listener’s room */
+  readonly transformers: TransformerChain
+  /** where the sounds of the world play, like footsteps, switches and ambience: through the moods’ {@link transformers} into the effects master, unlike the interface’s sounds, which play on the master directly */
   readonly world: AudioOutput
 
-  private readonly acoustics: Acoustics
   private contactIndex = 0
   private extendedZoom = false
   private lastLanding = Number.NEGATIVE_INFINITY
@@ -55,12 +55,7 @@ export default class SoundEngine {
       context: this.context,
       master: world,
     }
-    this.acoustics = new Acoustics(this.context, world, this.master)
-  }
-
-  /** Hears the world in the room with the id `room` from now on, through its `acoustics`, if it has any; nothing happens while the listener stays in the same room. */
-  enterRoom(room: string, acoustics: RoomAcoustics | undefined) {
-    this.acoustics.enter(room, acoustics)
+    this.transformers = new TransformerChain(this.context, world, this.master)
   }
 
   land(surface: FootstepSurface, speed: number, crouching: boolean, impactSpeed: number) {

@@ -1,8 +1,8 @@
 import type AmbienceLoop from '../../src/lib/audio/ambience/base/AmbienceLoop.ts'
-import type {AudioOutput} from '../../src/lib/audio/proceduralAudio.ts'
 import type {MoodFade} from '../../src/lib/moods/base/Mood.ts'
+import type {MoodOutput, MoodTarget} from '../../src/lib/moods/MoodMixer.ts'
 
-import {afterEach, describe, expect, test} from 'bun:test'
+import {afterEach, describe, expect, mock, test} from 'bun:test'
 
 import {AmbientLight, Color, HemisphereLight, PointLight, Scene} from 'three/webgpu'
 
@@ -11,9 +11,13 @@ import {orbs} from '../../src/lib/gallery/orbs/index.ts'
 import Mood from '../../src/lib/moods/base/Mood.ts'
 import {readMood} from '../../src/lib/moods/forcedMood.ts'
 import {fusionMood, moods} from '../../src/lib/moods/index.ts'
-import MoodMixer, {moodFade} from '../../src/lib/moods/MoodMixer.ts'
+import MoodMixer, {moodFade, noMood} from '../../src/lib/moods/MoodMixer.ts'
 import {moodSuppression, toggleMoodSuppression} from '../../src/lib/moods/moodSuppression.ts'
+import RoomMood, {roomMoodFade} from '../../src/lib/moods/RoomMood.ts'
 import {applyLightLevels, lightTint, noTint} from '../../src/lib/rendering/lightLevels.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import knottingham from '../../src/worlds/knottingham/index.ts'
+import sandbox from '../../src/worlds/sandbox/index.ts'
 
 /** a loop that only records what it was told */
 class RecordingLoop {
@@ -32,79 +36,97 @@ class RecordingLoop {
     this.stopped++
   }
 }
+const noRelease = () => {}
+const transformNothing = () => noRelease
 class TestMood extends Mood {
+  override readonly ambience
   override readonly fade?: MoodFade
-  readonly fill = {
+  override readonly fill = {
     color: '#808080',
     gain: 1,
   }
-  readonly grade = {
+  override readonly grade = {
     shadow: '#000000',
     midtone: '#ff0000',
     highlight: '#ffffff',
     strength: 0.5,
   }
-  readonly lamps = {
+  override readonly lamps = {
     color: '#ff0000',
     gain: 0.5,
   }
   readonly loops: Array<RecordingLoop> = []
   readonly title: string
+  override readonly transformer = mock(transformNothing)
 
   constructor(readonly id: string, fade?: MoodFade) {
     super()
     this.title = id
     this.fade = fade
-  }
-
-  createAmbience() {
-    const loop = new RecordingLoop
-    this.loops.push(loop)
-    return loop as unknown as AmbienceLoop
+    const {loops} = this
+    this.ambience = class extends RecordingLoop {
+      constructor() {
+        super()
+        loops.push(this)
+      }
+    } as unknown as new () => AmbienceLoop
   }
 }
-const output = {} as AudioOutput
+/** an engine that only records the shares the moods’ transformers take */
+const engine = () => ({
+  transformers: {
+    transform: mock((_key: object, _transformer: unknown, _amount: number) => {}),
+  },
+}) as unknown as MoodOutput & {transformers: {transform: ReturnType<typeof mock<(key: object, transformer: unknown, amount: number) => void>>}}
+const output = engine()
 const step = 1 / 60
+const cast = (mood: Mood | null, ...room: Array<Mood>): MoodTarget => ({
+  cast: mood,
+  room,
+})
+const inRoom = (...room: Array<Mood>) => cast(null, ...room)
 /** Steps the mixer toward `target` for `seconds`. */
-const run = (mixer: MoodMixer, target: Mood | null, seconds: number, audio?: AudioOutput) => {
+const run = (mixer: MoodMixer, target: MoodTarget, seconds: number, audio?: MoodOutput) => {
   for (let time = 0; time < seconds - 1e-9; time += step) {
     mixer.update(target, step, audio)
   }
 }
+/** the share the mood’s transformer was last told to take on `audio` */
+const share = (audio: ReturnType<typeof engine>, mood: Mood) => audio.transformers.transform.mock.calls.findLast(([key]) => key === mood)?.[2]
 describe('mood mixer', () => {
   test('a mood fades in over its fade time, tints lamps and fill apart and fades out again', () => {
     const mixer = new MoodMixer
     const mood = new TestMood('test')
     const lamp = new PointLight
     const fill = new AmbientLight
-    run(mixer, mood, moodFade.in / 2)
-    expect(mixer.mood).toBe(mood)
-    expect(mixer.amount).toBeCloseTo(0.5, 1)
-    run(mixer, mood, moodFade.in)
-    expect(mixer.amount).toBe(1)
+    run(mixer, cast(mood), moodFade.in / 2)
+    expect(mixer.moods).toEqual([mood])
+    expect(mixer.amountOf(mood)).toBeCloseTo(0.5, 1)
+    run(mixer, cast(mood), moodFade.in)
+    expect(mixer.amountOf(mood)).toBe(1)
     // Linear colors: red at half gain for the lamps, middle gray for the fill.
     expect(mixer.tintOf(lamp).toArray()).toEqual([0.5, 0, 0])
     const gray = new Color('#808080')
     for (const [index, channel] of mixer.tintOf(fill).toArray().entries()) {
       expect(channel).toBeCloseTo(gray.toArray()[index], 12)
     }
-    run(mixer, null, moodFade.out + step)
-    expect(mixer.amount).toBe(0)
+    run(mixer, noMood, moodFade.out + step)
+    expect(mixer.amountOf(mood)).toBe(0)
     expect(mixer.tintOf(lamp).equals(noTint)).toBe(true)
-    expect(mixer.mood).toBeNull()
+    expect(mixer.moods).toEqual([])
   })
-  test('switching moods fades the first one out completely before the next one comes in', () => {
+  test('switching the mood cast fades the first one out completely before the next one comes in', () => {
     const mixer = new MoodMixer
     const first = new TestMood('first')
     const second = new TestMood('second')
-    run(mixer, first, moodFade.in)
-    run(mixer, second, moodFade.out / 2)
-    expect(mixer.mood).toBe(first)
-    expect(mixer.amount).toBeGreaterThan(0)
-    run(mixer, second, moodFade.out / 2 + step * 2)
-    expect(mixer.mood).toBe(second)
-    run(mixer, second, moodFade.in)
-    expect(mixer.amount).toBe(1)
+    run(mixer, cast(first), moodFade.in)
+    run(mixer, cast(second), moodFade.out / 2)
+    expect(mixer.moods).toEqual([first])
+    expect(mixer.amountOf(first)).toBeGreaterThan(0)
+    run(mixer, cast(second), moodFade.out / 2 + step * 2)
+    expect(mixer.moods).toEqual([second])
+    run(mixer, cast(second), moodFade.in)
+    expect(mixer.amountOf(second)).toBe(1)
   })
   test('a mood with a pace of its own comes and goes at it, also while it gives way to another one', () => {
     const mixer = new MoodMixer
@@ -113,15 +135,15 @@ describe('mood mixer', () => {
       out: 1,
     })
     const next = new TestMood('next')
-    run(mixer, slow, 1)
-    expect(mixer.amount).toBeCloseTo(0.5, 1)
-    run(mixer, slow, 1)
-    expect(mixer.amount).toBe(1)
-    run(mixer, next, 0.5)
-    expect(mixer.mood).toBe(slow)
-    expect(mixer.amount).toBeCloseTo(0.5, 1)
-    run(mixer, next, 0.5 + step * 2)
-    expect(mixer.mood).toBe(next)
+    run(mixer, cast(slow), 1)
+    expect(mixer.amountOf(slow)).toBeCloseTo(0.5, 1)
+    run(mixer, cast(slow), 1)
+    expect(mixer.amountOf(slow)).toBe(1)
+    run(mixer, cast(next), 0.5)
+    expect(mixer.moods).toEqual([slow])
+    expect(mixer.amountOf(slow)).toBeCloseTo(0.5, 1)
+    run(mixer, cast(next), 0.5 + step * 2)
+    expect(mixer.moods).toEqual([next])
   })
   test('a light with userData.untinted keeps its color through the mood', () => {
     const mixer = new MoodMixer
@@ -129,62 +151,118 @@ describe('mood mixer', () => {
     const lamp = new PointLight
     const portal = new PointLight
     portal.userData.untinted = true
-    run(mixer, mood, moodFade.in)
+    run(mixer, cast(mood), moodFade.in)
     expect(mixer.tintOf(lamp).equals(noTint)).toBe(false)
     expect(mixer.tintOf(portal)).toBe(noTint)
   })
-  test('cutting a mood drops it and its loop at once, ignoring its fade', () => {
+  test('the room’s moods hold beneath the one cast over the world, stacking their tints, loops and transformers', () => {
     const mixer = new MoodMixer
+    const audio = engine()
+    const room = new TestMood('room', roomMoodFade)
+    const orb = new TestMood('orb')
+    run(mixer, inRoom(room), roomMoodFade.in, audio)
+    expect(mixer.amountOf(room)).toBe(1)
+    run(mixer, cast(orb, room), moodFade.in, audio)
+    expect(mixer.moods).toEqual([room, orb])
+    expect(mixer.amountOf(room)).toBe(1)
+    expect(mixer.amountOf(orb)).toBe(1)
+    // Both tint the lamps: red at half gain, twice.
+    expect(mixer.tintOf(new PointLight).toArray()).toEqual([0.25, 0, 0])
+    expect(room.loops[0].levels.at(-1)).toBe(1)
+    expect(orb.loops[0].levels.at(-1)).toBe(1)
+    expect(share(audio, room)).toBe(1)
+    expect(share(audio, orb)).toBe(1)
+    // Letting go of the orb leaves the room as it was.
+    run(mixer, inRoom(room), moodFade.out + step, audio)
+    expect(mixer.moods).toEqual([room])
+    expect(mixer.tintOf(new PointLight).toArray()).toEqual([0.5, 0, 0])
+    expect(orb.loops[0].stopped).toBe(1)
+    expect(share(audio, orb)).toBe(0)
+    expect(room.loops[0].stopped).toBe(0)
+    expect(share(audio, room)).toBe(1)
+  })
+  test('walking into another room crosses its moods over, while a mood both rooms name holds on', () => {
+    const mixer = new MoodMixer
+    const audio = engine()
+    const left = new TestMood('left', roomMoodFade)
+    const entered = new TestMood('entered', roomMoodFade)
+    const shared = new TestMood('shared', roomMoodFade)
+    run(mixer, inRoom(left, shared), roomMoodFade.in, audio)
+    run(mixer, inRoom(entered, shared), roomMoodFade.out / 2, audio)
+    expect(mixer.amountOf(left)).toBeCloseTo(0.5, 1)
+    expect(mixer.amountOf(left) + mixer.amountOf(entered)).toBeCloseTo(1, 6)
+    expect(share(audio, left)! + share(audio, entered)!).toBeCloseTo(1, 6)
+    run(mixer, inRoom(entered, shared), roomMoodFade.out / 2 + step, audio)
+    expect(mixer.moods).toEqual([shared, entered])
+    expect(share(audio, left)).toBe(0)
+    expect(share(audio, entered)).toBe(1)
+    expect(shared.loops).toHaveLength(1)
+    expect(shared.loops[0].stopped).toBe(0)
+    expect(mixer.amountOf(shared)).toBe(1)
+  })
+  test('cutting lets every mood go at once, with its loop and transformer, ignoring its fade', () => {
+    const mixer = new MoodMixer
+    const audio = engine()
     const mood = new TestMood('test', {
       in: 1,
       out: 10,
     })
-    run(mixer, mood, 1, output)
-    expect(mixer.amount).toBe(1)
+    const room = new TestMood('room', roomMoodFade)
+    run(mixer, cast(mood, room), 1, audio)
+    expect(mixer.amountOf(mood)).toBe(1)
     mixer.cut()
-    expect(mixer.amount).toBe(0)
-    expect(mixer.mood).toBeNull()
+    expect(mixer.amountOf(mood)).toBe(0)
+    expect(mixer.moods).toEqual([])
     expect(mixer.tintOf(new PointLight).equals(noTint)).toBe(true)
     expect(mood.loops[0].stopped).toBe(1)
+    expect(room.loops[0].stopped).toBe(1)
+    expect(share(audio, mood)).toBe(0)
+    expect(share(audio, room)).toBe(0)
     mixer.cut()
     expect(mood.loops[0].stopped).toBe(1)
   })
-  test('snapping shows a mood in full at once, with its loop, and snapping to none drops it', () => {
+  test('snapping shows the moods due in full at once, with their loops, and snapping to none drops them', () => {
     const mixer = new MoodMixer
     const mood = new TestMood('test', {
       in: 10,
       out: 10,
     })
-    mixer.snap(mood, output)
-    expect(mixer.amount).toBe(1)
-    expect(mixer.mood).toBe(mood)
+    const room = new TestMood('room', roomMoodFade)
+    mixer.snap(cast(mood, room), output)
+    expect(mixer.amountOf(mood)).toBe(1)
+    expect(mixer.amountOf(room)).toBe(1)
+    expect(mixer.moods).toEqual([room, mood])
     expect(mood.loops[0].started).toBe(1)
     expect(mood.loops[0].levels.at(-1)).toBe(1)
-    mixer.snap(null)
-    expect(mixer.amount).toBe(0)
-    expect(mixer.mood).toBeNull()
+    mixer.snap(noMood)
+    expect(mixer.amountOf(mood)).toBe(0)
+    expect(mixer.moods).toEqual([])
     expect(mood.loops[0].stopped).toBe(1)
+    expect(room.loops[0].stopped).toBe(1)
   })
-  test('the loop starts once there is an output, follows the strength and stops with its mood', () => {
+  test('the loop and the transformer start once there is an output, follow the strength and stop with their mood', () => {
     const mixer = new MoodMixer
+    const audio = engine()
     const mood = new TestMood('test')
-    run(mixer, mood, 0.3)
+    run(mixer, cast(mood), 0.3)
     expect(mood.loops).toHaveLength(0)
-    run(mixer, mood, moodFade.in, output)
+    run(mixer, cast(mood), moodFade.in, audio)
     expect(mood.loops).toHaveLength(1)
     const [loop] = mood.loops
     expect(loop.started).toBe(1)
     expect(loop.levels[0]).toBe(0)
     expect(loop.levels.at(-1)).toBe(1)
-    run(mixer, null, moodFade.out + step, output)
+    expect(share(audio, mood)).toBe(1)
+    run(mixer, noMood, moodFade.out + step, audio)
     expect(loop.levels.at(-1)).toBeCloseTo(0, 6)
     expect(loop.stopped).toBe(1)
+    expect(share(audio, mood)).toBe(0)
     // Holding it again makes a fresh loop.
-    run(mixer, mood, step, output)
+    run(mixer, cast(mood), step, audio)
     expect(mood.loops).toHaveLength(2)
     mixer.dispose()
     expect(mood.loops[1].stopped).toBe(1)
-    expect(mixer.mood).toBeNull()
+    expect(mixer.moods).toEqual([])
   })
 })
 describe('light tint', () => {
@@ -231,7 +309,8 @@ describe('moods', () => {
       for (const color of [mood.grade.shadow, mood.grade.midtone, mood.grade.highlight, mood.lamps.color, mood.fill.color]) {
         expect(color).toMatch(/^#[\da-f]{6}$/)
       }
-      const ambience = mood.createAmbience()
+      const Ambience = mood.ambience
+      const ambience = new Ambience
       expect(ambience.playing).toBe(false)
       expect(ambience.id).toBe(`mood-${mood.id}`)
     }
@@ -241,6 +320,22 @@ describe('moods', () => {
     const orbMoods: ReadonlyArray<Mood> = orbs.flatMap(orb => (orb.mood ? [orb.mood] : []))
     expect(orbMoods).not.toContain(fusionMood)
     expect(fusionMood.fade.in).toBe(fusionTiming.intro)
+  })
+  test('the rooms’ moods come and go at a room’s pace, apart from the moods cast over the world, and their loops share their ids', () => {
+    const roomMoods = [slopGallery, knottingham, sandbox].flatMap(world => world.rooms.flatMap(placed => placed.moods))
+    expect(roomMoods.length).toBeGreaterThan(0)
+    for (const mood of roomMoods) {
+      expect(mood).toBeInstanceOf(RoomMood)
+      expect(moods).not.toContain(mood)
+      expect(mood.fade).toEqual(roomMoodFade)
+      const {ambience: Ambience} = mood
+      if (!Ambience) {
+        continue
+      }
+      const ambience = new Ambience
+      expect(ambience.id).toBe(`mood-${mood.id}`)
+    }
+    expect(roomMoods.filter(mood => mood.ambience).map(mood => mood.id)).toEqual([])
   })
   test('N suppresses every mood and lets them back', () => {
     expect(moodSuppression.active).toBe(false)

@@ -4,24 +4,21 @@ import Mood from './base/Mood.ts'
 
 /** The Spook Orb’s haunting: everything drowns in a sickly ghost-light green. */
 export default class SpookMood extends Mood {
-  readonly fill = {
+  override readonly ambience = SpookAmbience
+  override readonly fill = {
     color: '#a0ffcc',
     gain: 0.75,
   }
-  readonly grade = {
+  override readonly grade = {
     shadow: '#0a2a1e',
     midtone: '#5aae88',
     highlight: '#e4fff0',
     strength: 0.5,
   }
   readonly id = 'spook'
-  readonly lamps = {
+  override readonly lamps = {
     color: '#c0ffd8',
     gain: 0.85,
   }
   readonly title = 'Haunting'
-
-  createAmbience() {
-    return new SpookAmbience
-  }
 }

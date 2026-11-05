@@ -1,4 +1,7 @@
 import {moods} from '../../src/lib/moods/index.ts'
+import slopGallery from '../../src/worlds/gallery/index.ts'
+import knottingham from '../../src/worlds/knottingham/index.ts'
+import sandbox from '../../src/worlds/sandbox/index.ts'
 
 const rate = 48_000
 const effectsGain = 0.6 * 10 ** (12 / 20)
@@ -12,7 +15,7 @@ const assert: (condition: boolean, message: string) => asserts condition = (cond
   }
 }
 /**
- * Renders every mood’s loop offline on the effects master as the game plays it – fading in, held, then let go – and checks it for silence, headroom and a silent tail. No audible output, DOM, input, focus or viewport changes.
+ * Renders the loop of every mood, those of the rooms too, offline on the effects master as the game plays it – fading in, held, then let go – and checks it for silence, headroom and a silent tail. No audible output, DOM, input, focus or viewport changes.
  * With `listen`, every result carries its render as a base64 WAV.
  */
 export default async function verify({listen = false, seconds = 20}: {
@@ -21,13 +24,18 @@ export default async function verify({listen = false, seconds = 20}: {
   seconds?: number
 } = {}) {
   const results = []
-  for (const mood of moods) {
+  const roomMoods = [slopGallery, knottingham, sandbox].flatMap(world => world.rooms.flatMap(placed => placed.moods))
+  for (const mood of [...moods, ...roomMoods]) {
+    const {ambience: Ambience} = mood
+    if (!Ambience) {
+      continue
+    }
     const end = seconds + 2
     const context = new OfflineAudioContext(2, Math.ceil(rate * end), rate)
     const master = context.createGain()
     master.gain.value = effectsGain
     master.connect(context.destination)
-    const loop = mood.createAmbience()
+    const loop = new Ambience
     const failures: Array<unknown> = []
     for (let time = 0; time < end; time += step) {
       const moment = time

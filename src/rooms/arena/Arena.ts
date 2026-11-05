@@ -4,7 +4,8 @@ import type {Box3} from 'three/webgpu'
 
 import {Geofence} from 'geofency'
 
-import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
+import reverberation from '#src/lib/audio/transformers/reverberation.ts'
+import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
 import floorBox from '../lib/floorBox.ts'
@@ -24,14 +25,20 @@ export default class Arena extends Room {
     const size = [width, depth] as const
     super({
       title: 'Arena',
-      // Marble underfoot and velvet round the walls of a hall.
-      acoustics: reverberation({
-        decay: 1.6,
-        predelay: 0.02,
-        brightness: [7000, 2000],
-        early: [[0.018, 0.35], [0.04, 0.22]],
-        wet: 0.17,
-      }),
+      moods: [
+        new RoomMood({
+          id: 'arena',
+          title: 'Marble hall',
+          // Marble underfoot and velvet round the walls of a hall.
+          transformer: reverberation({
+            decay: 1.6,
+            predelay: 0.02,
+            brightness: [7000, 2000],
+            early: [[0.018, 0.35], [0.04, 0.22]],
+            wet: 0.17,
+          }),
+        }),
+      ],
       // Four plain walls around the rows, which artworks may hang on.
       walls: {
         north: planWall(size, 'north', height),

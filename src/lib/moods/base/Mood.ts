@@ -1,4 +1,5 @@
 import type AmbienceLoop from '#src/lib/audio/ambience/base/AmbienceLoop.ts'
+import type {SoundTransformer} from '#src/lib/audio/transformers/TransformerChain.ts'
 
 /** what a kind of light is multiplied by while a mood holds: a color, whose channels pass that share of the light, and a gain on top */
 export type MoodLight = {
@@ -20,21 +21,26 @@ export type MoodFade = {
   out: number
 }
 
+/** a loop a mood sounds, which takes no options */
+export type MoodAmbience = new () => AmbienceLoop
+
 /**
- * A spell over the whole world while something casts it, like a held prop that carries it or a fusion in progress: the finished frame takes on a gradient map, the lights are tinted and a loop sounds, centered, all fading in and out together.
+ * A spell over the whole world while something casts it, like a held prop that carries it, a fusion in progress or the room the listener is in, made of whatever it contributes, all fading in and out together: color filters (a gradient map over the finished frame and tints of the lights), an ambience (a loop sounding centered) and a sound transformer (which every sound of the world passes through).
+ * Moods stack: several may show at once, like a room’s and that of the orb held in it, the filters of each over those of the moods beneath, the transformers one after the other.
  * Colors are sRGB hex.
  */
 export default abstract class Mood {
+  /** the loop that sounds while the mood holds, made anew each time it begins */
+  readonly ambience?: MoodAmbience
   /** how fast the mood comes and goes, if not at the mixer’s usual pace */
   readonly fade?: MoodFade
   /** ambient, hemisphere and directional lights: the fill and the sun */
-  abstract readonly fill: MoodLight
-  abstract readonly grade: MoodGrade
+  readonly fill?: MoodLight
+  readonly grade?: MoodGrade
   abstract readonly id: string
   /** point and spot lights: the rooms’ lamps */
-  abstract readonly lamps: MoodLight
+  readonly lamps?: MoodLight
   abstract readonly title: string
-
-  /** the loop that sounds while the mood holds, made each time it begins */
-  abstract createAmbience(): AmbienceLoop
+  /** what every sound of the world passes through while the mood holds, like the ringing of a room’s walls, taking as much of it as the mood shows */
+  readonly transformer?: SoundTransformer
 }

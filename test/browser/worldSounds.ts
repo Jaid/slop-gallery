@@ -1,11 +1,11 @@
 import type {Voice} from '../../src/lib/audio/proceduralAudio.ts'
 
-import Acoustics from '../../src/lib/audio/acoustics/Acoustics.ts'
 import arrivalVoices, {arrivalGap} from '../../src/lib/audio/arrivalVoices.ts'
 import {frameImpactSounds, frameImpactVoices} from '../../src/lib/audio/frameImpacts.ts'
 import {orbImpactVoices} from '../../src/lib/audio/orbImpacts.ts'
 import {footstepVoices, impactFootstepStrength} from '../../src/lib/audio/playerSoundEffects.ts'
 import {playVoices, playVoicesAt, shiftVoices} from '../../src/lib/audio/proceduralAudio.ts'
+import TransformerChain from '../../src/lib/audio/transformers/TransformerChain.ts'
 import {hangingAnimation} from '../../src/lib/gallery/hanging/index.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 
@@ -68,7 +68,7 @@ async function render(name: string, seconds: number, play: (output: {
 }
 const recipe = (name: string, voices: ReadonlyArray<Voice>) => render(name, length(voices) + 0.15, output => playVoices(output, voices, name))
 
-/** Renders every strike, arrival and room of the world into silent offline buffers: no audible output, DOM, input, focus or viewport changes. */
+/** Renders every strike, arrival and room of the world, through the transformers of its moods, into silent offline buffers: no audible output, DOM, input, focus or viewport changes. */
 export default async function verify() {
   const strikes: Record<string, Measure> = {}
   for (const surface of ['generic', 'stone', 'hollow', 'fabric', 'glass', 'orb'] as const) {
@@ -112,11 +112,15 @@ export default async function verify() {
       master: GainNode
     }) => {
       const world = output.context.createGain()
-      const acoustics = new Acoustics(output.context, world, output.master)
+      const transformers = new TransformerChain(output.context, world, output.master)
       if (acoustic) {
-        acoustics.enter(placed.id, placed.acoustics)
+        for (const mood of placed.moods) {
+          if (mood.transformer) {
+            transformers.transform(mood, mood.transformer, 1)
+          }
+        }
       }
-      // Once the crossfade into the room is through
+      // Once the room’s moods have taken over
       return output.context.suspend(0.5).then(() => {
         playVoices({
           context: output.context,

@@ -1,4 +1,4 @@
-import type {RoomAcoustics} from './Acoustics.ts'
+import type {SoundTransformer} from './TransformerChain.ts'
 
 /** how a room answers a sound by what it is built of, which {@link reverberation} generates a stereo impulse response from */
 export type Reverberation = {
@@ -78,8 +78,8 @@ export function reverberationImpulse(context: BaseAudioContext, room: Reverberat
   return buffer
 }
 
-/** The acoustics of a room that rings on as `room` describes: its generated reverberation mixed under the dry sound. */
-export default function reverberation(room: Reverberation): RoomAcoustics {
+/** The acoustics of a room that rings on as `room` describes, as a mood’s sound transformer: its generated reverberation mixed under the dry sound. */
+export default function reverberation(room: Reverberation): SoundTransformer {
   return (context, input, output) => {
     const convolver = new ConvolverNode(context, {
       buffer: reverberationImpulse(context, room),

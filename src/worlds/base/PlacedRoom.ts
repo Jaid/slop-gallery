@@ -27,11 +27,6 @@ export default class PlacedRoom<Kind extends Room = Room> {
     this.fence = room.fence.translate(origin)
   }
 
-  /** how the room transforms the sounds of the world heard in it, or undefined for dry */
-  get acoustics() {
-    return this.room.acoustics
-  }
-
   /** the room’s air in world meters */
   get air() {
     const offset = new Vector3(...this.origin)
@@ -64,6 +59,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
   /** the room’s floor plan on the map, relative to its origin; place it at {@link center} */
   get map() {
     return this.room.map
+  }
+
+  /** the moods that hold while the listener is in the room */
+  get moods() {
+    return this.room.moods
   }
 
   /** the extent of the floor plan of a room around a rectangular one, centered on {@link center} */

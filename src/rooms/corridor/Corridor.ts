@@ -2,9 +2,10 @@ import type {GroundSurface, RoomSpawn} from '../base/Room.ts'
 
 import {Geofence} from 'geofency'
 
-import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
+import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import corridor, {corridorLanding, corridorPassage, corridorPaving, corridorStairs} from '#src/lib/gallery/corridor.ts'
 import {floorChunks} from '#src/lib/gallery/floorPolygons.ts'
+import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
 import chunkBoxes from '../lib/chunkBoxes.ts'
@@ -41,14 +42,20 @@ export default class Corridor extends Room {
   constructor() {
     super({
       title: 'Corridor',
-      // A timber tunnel with a flutter of its own.
-      acoustics: reverberation({
-        decay: 1.1,
-        predelay: 0.005,
-        brightness: [5500, 1600],
-        flutter: [0.017, 6, 0.35],
-        wet: 0.17,
-      }),
+      moods: [
+        new RoomMood({
+          id: 'corridor',
+          title: 'Timber tunnel',
+          // A timber tunnel with a flutter of its own.
+          transformer: reverberation({
+            decay: 1.1,
+            predelay: 0.005,
+            brightness: [5500, 1600],
+            flutter: [0.017, 6, 0.35],
+            wet: 0.17,
+          }),
+        }),
+      ],
       frame: ['corridor-kumiko', 'corridor-mission'],
       lamps,
       skybox: null,

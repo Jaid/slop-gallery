@@ -3,10 +3,11 @@ import type {Vec3} from 'math'
 
 import {Geofence} from 'geofency'
 
-import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
+import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {bastionApex} from '#src/lib/gallery/bastion.ts'
 import {fortressOrigin, fortressTransition} from '#src/lib/gallery/fortress.ts'
 import {fortressNetwork} from '#src/lib/gallery/fortressNetwork.ts'
+import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
 import chunkBoxes from '../lib/chunkBoxes.ts'
@@ -40,14 +41,20 @@ export default class Fortress extends Room {
   constructor() {
     super({
       title: 'The Fortress',
-      // Stone passages: dark and long, with slaps between their close walls.
-      acoustics: reverberation({
-        decay: 2.7,
-        predelay: 0.009,
-        brightness: [6000, 1200],
-        flutter: [0.024, 7, 0.45],
-        wet: 0.26,
-      }),
+      moods: [
+        new RoomMood({
+          id: 'fortress',
+          title: 'Cold stone',
+          // Stone passages: dark and long, with slaps between their close walls.
+          transformer: reverberation({
+            decay: 2.7,
+            predelay: 0.009,
+            brightness: [6000, 1200],
+            flutter: [0.024, 7, 0.45],
+            wet: 0.26,
+          }),
+        }),
+      ],
       frame: ['fortress-strapwork', 'fortress-oak'],
       cameras,
       spawns,

@@ -1,5 +1,6 @@
 import type AmbienceLoop from '../audio/ambience/base/AmbienceLoop.ts'
 import type {AudioOutput} from '../audio/proceduralAudio.ts'
+import type TransformerChain from '../audio/transformers/TransformerChain.ts'
 import type Mood from './base/Mood.ts'
 import type {MoodFade, MoodLight} from './base/Mood.ts'
 import type {Light} from 'three/webgpu'
@@ -8,12 +9,39 @@ import {clamp} from 'math'
 import {Color} from 'three/webgpu'
 
 import {noTint} from '../rendering/lightLevels.ts'
-import {paintMoodGrade} from '../rendering/moodGrade.ts'
+import {paintMoodGrades} from '../rendering/moodGrade.ts'
+
+/** where moods sound: their loops on the effects master, centered, and their transformers between the world and it, as `SoundEngine` offers both */
+export type MoodOutput = AudioOutput & {
+  readonly transformers: TransformerChain
+}
+/** the moods the world asks for */
+export type MoodTarget = {
+  /** the mood cast over the world, like that of a held prop or a fusion in progress, which shows over the room’s */
+  cast: Mood | null
+  /** the moods of the room the listener is in */
+  room: ReadonlyArray<Mood>
+}
+/** a mood while it shows, also while it fades in or out */
+type Showing = {
+  ambience?: AmbienceLoop
+  /** the level the loop was last set to */
+  level: number
+  mood: Mood
+  progress: number
+  /** where the mood’s transformer takes its share of the world’s sound, once it does */
+  transformers?: TransformerChain
+}
 
 /** seconds a mood takes to come over the world, slowly, and to leave it again, quickly, once its prop is thrown or dropped, unless the mood has a pace of its own */
 export const moodFade: MoodFade = {
   in: 4,
   out: 0.25,
+}
+/** the world asking for no mood at all */
+export const noMood: MoodTarget = {
+  cast: null,
+  room: [],
 }
 
 type Lamp = Light & {
@@ -26,39 +54,42 @@ const isLamp = (light: Light) => {
   const lamp = light as Lamp
   return Boolean(lamp.isPointLight || lamp.isSpotLight) && !lamp.userData.daylight
 }
+/** how strongly a mood shows at `progress` (0–1) of its fade, eased in and out */
+const ease = (progress: number) => progress * progress * (3 - 2 * progress)
 
 /**
- * Blends one mood at a time over the world: the mood showing fades in while it is the one asked for and out otherwise, and only once it is gone does the next one fade in, so two moods never mix.
- * It paints the render pipeline’s gradient map, keeps the tints of the lamps and of the fill and sounds the mood’s loop, all at the same eased strength.
+ * Blends the moods the world asks for over it, stacked: those of the listener’s room beneath the one cast over the world. Each fades in while it is asked for and out otherwise, at its own pace, while the others hold on.
+ * The moods cast over the world take turns: only once the one showing is gone does the next one fade in, so two of them never mix. The moods of two rooms cross over as the listener walks from one into the other.
+ * It paints the render pipeline’s gradient maps, keeps the tints of the lamps and of the fill, sounds the moods’ loops and lets their transformers take the world’s sound, each mood’s at its own eased strength.
  */
 export default class MoodMixer {
   /** what the fill and daylight are multiplied by now */
   readonly fillTint = new Color(1, 1, 1)
   /** what the lamps are multiplied by now */
   readonly lampTint = new Color(1, 1, 1)
-  private ambience?: AmbienceLoop
-  private current: Mood | null = null
-  /** the level the loop was last set to */
-  private level = 0
-  private progress = 0
+  /** the mood cast over the world that shows, also while it fades out, which the next one cast waits for */
+  private cast: Mood | null = null
+  private readonly showing = new Map<Mood, Showing>
 
-  /** how strongly the mood shows, 0–1, eased in and out */
-  get amount() {
-    return this.progress * this.progress * (3 - 2 * this.progress)
+  /** the moods showing, also while they fade in or out, from the bottom of the stack to its top */
+  get moods(): ReadonlyArray<Mood> {
+    return this.stack().map(showing => showing.mood)
   }
 
-  /** the mood showing, also while it fades in or out */
-  get mood() {
-    return this.current
+  /** How strongly `mood` shows, 0–1, eased in and out; 0 while it doesn’t. */
+  amountOf(mood: Mood) {
+    const showing = this.showing.get(mood)
+    return showing ? ease(showing.progress) : 0
   }
 
-  /** Lets the mood go at once, with its loop, without waiting for its fade. */
+  /** Lets every mood go at once, with its loop and its transformer, without waiting for its fade. */
   cut() {
-    if (!this.current) {
+    if (!this.showing.size) {
       return
     }
-    this.progress = 0
-    this.release(0.3)
+    for (const showing of this.showing.values()) {
+      this.release(showing, 0.3)
+    }
     this.paint()
   }
 
@@ -66,16 +97,18 @@ export default class MoodMixer {
     this.cut()
   }
 
-  /** Shows `target` in full at once, without waiting for any fade, sounding its loop on `output` once there is one; with none, lets the mood showing go at once. */
-  snap(target: Mood | null, output?: AudioOutput) {
-    if (this.current !== target) {
-      this.cut()
+  /** Shows the moods of `target` in full at once, without waiting for any fade, sounding them on `output` once there is one, and lets every other mood go at once. */
+  snap(target: MoodTarget, output?: MoodOutput) {
+    this.cast = target.cast
+    const wanted = this.wanted(target)
+    for (const showing of this.showing.values()) {
+      if (!wanted.has(showing.mood)) {
+        this.release(showing, 0.3)
+      }
     }
-    if (!target) {
-      return
+    for (const mood of wanted) {
+      this.show(mood).progress = 1
     }
-    this.current = target
-    this.progress = 1
     this.update(target, 0, output)
   }
 
@@ -87,55 +120,113 @@ export default class MoodMixer {
     return isLamp(light) ? this.lampTint : this.fillTint
   }
 
-  /** Moves `delta` seconds toward `target`, at the pace of the mood showing, sounding the mood’s loop on `output` once there is one. */
-  update(target: Mood | null, delta: number, output?: AudioOutput) {
-    if (!this.current) {
-      if (!target) {
-        return
+  /** Moves every mood `delta` seconds toward `target`, each at its own pace, sounding them on `output` once there is one. */
+  update(target: MoodTarget, delta: number, output?: MoodOutput) {
+    // The next mood cast takes over once the last one is gone, or right away if the room holds on to that one anyway.
+    if (target.cast !== this.cast && (!this.cast || !this.showing.has(this.cast) || target.room.includes(this.cast))) {
+      this.cast = target.cast
+    }
+    const wanted = this.wanted(target)
+    for (const mood of wanted) {
+      this.show(mood)
+    }
+    for (const showing of this.showing.values()) {
+      const rising = wanted.has(showing.mood)
+      const fade = showing.mood.fade ?? moodFade
+      showing.progress = clamp(showing.progress + delta / (rising ? fade.in : -fade.out), 0, 1)
+      if (!rising && showing.progress === 0) {
+        this.release(showing)
+        continue
       }
-      this.current = target
+      if (output) {
+        this.sound(showing, output)
+      }
     }
-    const rising = this.current === target
-    const fade = this.current.fade ?? moodFade
-    this.progress = clamp(this.progress + delta / (rising ? fade.in : -fade.out), 0, 1)
     this.paint()
-    if (!rising && this.progress === 0) {
-      this.release()
-      return
-    }
-    if (output && !this.ambience) {
-      this.ambience = this.current.createAmbience()
-      this.ambience.setLevel(0)
-      this.ambience.start(output)
-    }
-    const level = this.amount
-    if (this.ambience && level !== this.level) {
-      this.level = level
-      this.ambience.setLevel(level, 0.05)
-    }
   }
 
   private paint() {
-    const {amount, current} = this
-    paintMoodGrade(current?.grade, amount)
-    tint(this.lampTint, current?.lamps, amount)
-    tint(this.fillTint, current?.fill, amount)
+    const stack = this.stack()
+    paintMoodGrades(stack.filter(({mood}) => mood.grade).map(({mood, progress}) => ({
+      grade: mood.grade!,
+      amount: ease(progress),
+    })))
+    this.lampTint.setRGB(1, 1, 1)
+    this.fillTint.setRGB(1, 1, 1)
+    for (const {mood, progress} of stack) {
+      tint(this.lampTint, mood.lamps, ease(progress))
+      tint(this.fillTint, mood.fill, ease(progress))
+    }
   }
 
-  /** Forgets the mood, which has faded out, and stops its loop, which has gone silent with it. */
-  private release(fade?: number) {
-    this.ambience?.stop(fade)
-    this.ambience = undefined
-    this.level = 0
-    this.current = null
+  /** Forgets a mood, which has faded out, stops its loop, which has gone silent with it, and lets its transformer ring out. */
+  private release(showing: Showing, fade?: number) {
+    const {mood} = showing
+    showing.ambience?.stop(fade)
+    if (mood.transformer) {
+      showing.transformers?.transform(mood, mood.transformer, 0)
+    }
+    this.showing.delete(mood)
+    if (mood === this.cast) {
+      this.cast = null
+    }
+  }
+
+  /** The mood’s state of showing, a new one at nothing for a mood that doesn’t show yet. */
+  private show(mood: Mood) {
+    let showing = this.showing.get(mood)
+    if (!showing) {
+      showing = {
+        level: 0,
+        mood,
+        progress: 0,
+      }
+      this.showing.set(mood, showing)
+    }
+    return showing
+  }
+
+  /** Sounds a mood showing on `output` as strongly as it shows: its loop, started the first time, and its transformer. */
+  private sound(showing: Showing, output: MoodOutput) {
+    const {mood} = showing
+    const amount = ease(showing.progress)
+    const {ambience: Ambience} = mood
+    if (Ambience && !showing.ambience) {
+      showing.ambience = new Ambience
+      showing.ambience.setLevel(0)
+      showing.ambience.start(output)
+    }
+    if (showing.ambience && amount !== showing.level) {
+      showing.level = amount
+      showing.ambience.setLevel(amount, 0.05)
+    }
+    if (mood.transformer) {
+      showing.transformers = output.transformers
+      output.transformers.transform(mood, mood.transformer, amount)
+    }
+  }
+
+  /** the moods showing from the bottom of the stack to its top: the rooms’ in the order they came, the one cast over the world on top */
+  private stack() {
+    const {cast} = this
+    return this.showing.values().toArray().toSorted((a, b) => Number(a.mood === cast) - Number(b.mood === cast))
+  }
+
+  /** The moods `target` asks for that may show: the room’s and the one cast, unless it still waits for the last one to go. */
+  private wanted(target: MoodTarget) {
+    const wanted = new Set(target.room)
+    if (target.cast && target.cast === this.cast) {
+      wanted.add(target.cast)
+    }
+    return wanted
   }
 }
 
 const full = new Color
-/** Sets `target` to white blended toward the light’s full tint by `amount`. */
+const blend = new Color
+/** Multiplies `target` by white blended toward the light’s full tint by `amount`. */
 function tint(target: Color, light: MoodLight | undefined, amount: number) {
-  target.setRGB(1, 1, 1)
   if (light) {
-    target.lerp(full.set(light.color).multiplyScalar(light.gain), amount)
+    target.multiply(blend.setRGB(1, 1, 1).lerp(full.set(light.color).multiplyScalar(light.gain), amount))
   }
 }

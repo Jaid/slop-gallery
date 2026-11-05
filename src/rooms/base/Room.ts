@@ -1,7 +1,7 @@
-import type {RoomAcoustics} from '#src/lib/audio/acoustics/Acoustics.ts'
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
 import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
 import type {CameraBookmark, PortraitRatio, SpawnBookmark} from '#src/lib/gallery/types.ts'
+import type Mood from '#src/lib/moods/base/Mood.ts'
 import type {Wall, WallOpening} from '#src/lib/placement/wallGeometry.ts'
 import type {Geofence} from 'geofency'
 import type {Vec3} from 'math'
@@ -62,8 +62,6 @@ export type RoomPortraitSlot = {
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
 export type RoomOptions = {
-  /** how the room transforms the sounds of the world heard in it, like a reverberation of what it is built of, see `reverberation`; left out, they sound dry */
-  acoustics?: RoomAcoustics
   /** the room’s ambient sounds by their id within the room, in snake_case */
   ambience?: Record<string, RoomAmbience>
   /** the camera bookmarks by their id within the room, in snake_case */
@@ -74,6 +72,8 @@ export type RoomOptions = {
   lamps?: Record<string, Lamp>
   /** the room’s floor plan on the map as SVG markup, usually the room’s own map.svg: a drawing in meters relative to the room’s origin that its viewBox frames */
   map?: string
+  /** the moods that hold while the listener is in the room, beneath any mood cast over the world, like a `RoomMood` of its acoustics, a `reverberation` of what it is built of; left out, the world sounds dry there */
+  moods?: ReadonlyArray<Mood>
   /**
    * the id of the skybox behind the world while the player is in the room, like `sky`, which the world resolves to one of its own, maybe by its weather
    *
@@ -130,8 +130,6 @@ type Arrayable<T> = ReadonlyArray<T> | T
  * Field initializers of subclasses run after this constructor, so everything derived from them is a getter.
  */
 export default abstract class Room {
-  /** how the room transforms the sounds of the world heard in it, or undefined for dry */
-  readonly acoustics: RoomAcoustics | undefined
   /** the room’s air as one bounded box or several, from its floor (or the bottom of a sunken one) to its clear height; what culling and the analysis of a world count as inside the room */
   abstract readonly air: Arrayable<Box3>
   readonly ambience: ReadonlyMap<string, RoomAmbience>
@@ -153,6 +151,8 @@ export default abstract class Room {
   readonly lamps: ReadonlyMap<string, Lamp>
   /** the room’s floor plan on the map, if it has one */
   readonly map: RoomMap | undefined
+  /** the moods that hold while the listener is in the room */
+  readonly moods: ReadonlyArray<Mood>
   /** the width along x and the depth along z of a room around a rectangular floor plan, centered on its origin */
   readonly size?: FloorSize
   /** the id of the skybox behind the world while the player is inside, `null` for none or undefined to keep the one that showed before */
@@ -168,9 +168,9 @@ export default abstract class Room {
   readonly volumetricSun: number
   readonly walls: ReadonlyMap<string, RoomWall>
 
-  constructor({title, acoustics, lamps = {}, ambience = {}, cameras = {}, frame, map, upperMap, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
+  constructor({title, moods = [], lamps = {}, ambience = {}, cameras = {}, frame, map, upperMap, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
     this.title = title
-    this.acoustics = acoustics
+    this.moods = moods
     this.frame = frame
     this.map = map === undefined ? undefined : new RoomMap(map)
     this.upperMap = upperMap && {
