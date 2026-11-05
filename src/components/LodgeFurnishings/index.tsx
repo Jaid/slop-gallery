@@ -4,18 +4,16 @@ import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
-import CoffeeTableGeometry from '#src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '#src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '#src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import WagonWheelGeometry from '#src/lib/gallery/lodgeInterior/WagonWheelGeometry.ts'
 
-const {armchairs, chandelier, coffeeTable, rug, sofa} = lodgeInterior
+const {armchairs, chandelier, rug, sofa} = lodgeInterior
 
-/** Seating, table, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */
+/** Seating, rug and wagon-wheel chandelier of the Lodge, in the room’s frame. */
 export default function LodgeFurnishings({materials}: {materials: LodgeMaterials}) {
   const sofaGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(sofa.seats, lodgeInterior.seatWidth), []))
   const armchairGeometry = useDisposable(useMemo(() => new UpholsteredSeatGeometry(1, lodgeInterior.seatWidth + 0.08), []))
-  const table = useDisposable(useMemo(() => new CoffeeTableGeometry(coffeeTable.size), []))
   const wheel = useDisposable(useMemo(() => new WagonWheelGeometry(chandelier.drop), []))
   const seats = [
     {
@@ -38,9 +36,6 @@ export default function LodgeFurnishings({materials}: {materials: LodgeMaterials
       <mesh castShadow geometry={geometry.leather} material={materials.leather} receiveShadow />
       <mesh castShadow geometry={geometry.timber} material={materials.timber} receiveShadow />
     </group>)}
-    <group name='lodge-coffee-table' position={coffeeTable.position}>
-      <mesh castShadow geometry={table.timber} material={materials.timber} receiveShadow />
-    </group>
     <group name='lodge-chandelier' position={chandelier.position} rotation={[0, chandelier.yaw, 0]}>
       {/* The light burns among the candles, so the wheel would throw its spokes across the whole room; real candle flames are too broad for that. */}
       <mesh geometry={wheel.iron} material={materials.iron} />

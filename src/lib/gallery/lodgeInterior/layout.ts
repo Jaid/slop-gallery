@@ -45,10 +45,6 @@ const armchairs: ReadonlyArray<Placement> = [
     yaw: 1.15,
   },
 ]
-const coffeeTable = {
-  position: [0, 0, 1.1] as Vec3,
-  size: [1.4, 0.46, 0.8] as Vec3,
-}
 /**
  * Furnishings of the Lodge in the room’s frame: the origin is the middle of the floor and +z points toward the fireplace on the south wall.
  *
@@ -57,20 +53,6 @@ const coffeeTable = {
 const lodgeInterior = {
   /** north edge of the furniture; the walkway between the doorways stays free north of it */
   walkwayEdge: -1.45,
-  /** a timber settle under the west window, doubling as the step up into the window recess */
-  windowSeat: {
-    position: [-3.7, 0, 1.5] as Vec3,
-    length: 2.8,
-    depth: 0.85,
-    /** width of the timber ends, which stand proud of the cushion */
-    endWidth: 0.14,
-    /**
-     * The cushion runs between the ends and tucks 1 cm into each. It stays 1.5 cm behind their faces.
-     *
-     * Run over the full length, it poked out of the ends and shared their front and back faces, which flickered.
-     */
-    cushion: [2.8 - 0.28, 0.23, 0.85 - 0.03] as Vec3,
-  },
   /** a flat-woven kilim, centered in front of the fire */
   rug: {
     position: [0, 0, 0.75] as Vec3,
@@ -80,7 +62,6 @@ const lodgeInterior = {
   sofa,
   seatWidth,
   armchairs,
-  coffeeTable,
   /** the wagon wheel’s hub, hanging from the boss in the middle of the bay’s mouth, turned so its spokes look along the boss’ faces */
   chandelier: {
     position: [bayMouth[0], 2.8, bayMouth[1]] as Vec3,
@@ -158,12 +139,6 @@ export function lodgeFurnitureColliders(): Array<FurnitureCollider> {
       ...placement,
       size: seat(1),
     })),
-    {
-      name: 'lodge-coffee-table',
-      position: coffeeTable.position,
-      yaw: 0,
-      size: coffeeTable.size,
-    },
   ]
 }
 

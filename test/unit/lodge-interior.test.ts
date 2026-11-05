@@ -6,7 +6,6 @@ import {AmbientLight, DirectionalLight, DoubleSide, HemisphereLight, Material, M
 
 import {wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import lodge, {lodgeBay, lodgeOutline} from '../../src/lib/gallery/lodge.ts'
-import CoffeeTableGeometry from '../../src/lib/gallery/lodgeInterior/CoffeeTableGeometry.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeCeilingGeometry from '../../src/lib/gallery/lodgeInterior/LodgeCeilingGeometry.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
@@ -42,10 +41,9 @@ test('the gallery’s sun stays outside while lamps, fire and fill lights reach 
 test('furniture geometry is finite, merged per material and within its triangle budget', () => {
   const sofa = new UpholsteredSeatGeometry(3)
   const chair = new UpholsteredSeatGeometry(1, 0.76)
-  const table = new CoffeeTableGeometry(lodgeInterior.coffeeTable.size)
   const wheel = new WagonWheelGeometry(0.85)
   try {
-    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, table.timber, wheel.iron, wheel.wax, wheel.flames]
+    const parts = [sofa.leather, sofa.timber, chair.leather, chair.timber, wheel.iron, wheel.wax, wheel.flames]
     for (const geometry of parts) {
       const position = geometry.getAttribute('position')
       expect(position.count).toBeGreaterThan(0)
@@ -54,34 +52,31 @@ test('furniture geometry is finite, merged per material and within its triangle 
     }
     const total = parts.reduce((sum, geometry) => sum + triangleCount(geometry), 0)
     expect(total).toBeLessThan(40_000)
-    // The sofa’s width follows its seats, and its back stays below the window seat’s.
+    // The sofa’s width follows its seats, with its back below the frame height.
     expect(sofa.width).toBeCloseTo(3 * 0.68 + UpholsteredSeatGeometry.armWidth * 2)
     sofa.leather.computeBoundingBox()
     expect(sofa.leather.boundingBox!.max.y).toBeLessThanOrEqual(UpholsteredSeatGeometry.backHeight + 0.01)
     expect(sofa.leather.boundingBox!.min.y).toBeGreaterThanOrEqual(0)
-    // The table top sits at its nominal height.
-    table.timber.computeBoundingBox()
-    expect(table.timber.boundingBox!.max.y).toBeCloseTo(lodgeInterior.coffeeTable.size[1], 3)
     // The wheel’s canopy meets the ceiling.
     wheel.iron.computeBoundingBox()
     expect(wheel.iron.boundingBox!.max.y).toBeCloseTo(0.85, 3)
   } finally {
-    for (const resource of [sofa, chair, table, wheel]) {
+    for (const resource of [sofa, chair, wheel]) {
       resource.dispose()
     }
   }
 })
 test('furniture colliders cover every piece that stands on the floor', () => {
   const names = new Set(lodgeFurnitureColliders().map(collider => collider.name))
-  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1', 'lodge-coffee-table']) {
+  for (const name of ['lodge-sofa', 'lodge-armchair-0', 'lodge-armchair-1']) {
     expect(names.has(name)).toBe(true)
   }
-  // The console table, the fire tool stand and the firewood stack were taken out to declutter the room.
-  for (const name of ['lodge-console-table', 'lodge-fire-tools', 'lodge-firewood']) {
+  // Removed furniture must not leave behind colliders.
+  for (const name of ['lodge-coffee-table', 'lodge-console-table', 'lodge-fire-tools', 'lodge-firewood']) {
     expect(names.has(name)).toBe(false)
   }
-  // The mantel and the coffee table stay bare.
-  for (const key of ['candlesticks', 'books', 'firewood']) {
+  // The mantel stays bare.
+  for (const key of ['candlesticks', 'books', 'firewood', 'windowSeat', 'coffeeTable']) {
     expect(key in lodgeInterior).toBe(false)
   }
   for (const {size} of lodgeFurnitureColliders()) {
@@ -178,6 +173,5 @@ describe('the bay’s ceiling and chandelier', () => {
 test('furniture geometry rejects impossible inputs', () => {
   expect(() => new UpholsteredSeatGeometry(0)).toThrow(RangeError)
   expect(() => new UpholsteredSeatGeometry(1.5)).toThrow(RangeError)
-  expect(() => new CoffeeTableGeometry([1, Number.NaN, 1])).toThrow(RangeError)
   expect(() => new WagonWheelGeometry(0.2)).toThrow(RangeError)
 })

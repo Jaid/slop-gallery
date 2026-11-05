@@ -3,7 +3,6 @@ import type LodgeMaterials from '#src/lib/materials/LodgeMaterials.ts'
 import {ConvexHullCollider, RigidBody} from '@react-three/rapier'
 import {Shape, Vector2} from 'three/webgpu'
 
-import BenchSeat from '#component/BenchSeat'
 import LodgeCeiling from '#component/LodgeCeiling'
 import LodgeFire from '#component/LodgeFire'
 import LodgeFurnishings from '#component/LodgeFurnishings'
@@ -11,7 +10,7 @@ import Box from '#src/components/Scene/primitives.tsx'
 import lodge, {lodgeOutline} from '#src/lib/gallery/lodge.ts'
 import lodgeInterior from '#src/lib/gallery/lodgeInterior/layout.ts'
 
-const {fireplace, windowSeat} = lodgeInterior
+const {fireplace} = lodgeInterior
 /** Interior face of the room walls, measured from the room’s center. */
 const wallInside = lodge.size[1] / 2 - 0.105
 /** Past the wall face, so breast and chimney never show a seam against the logs. */
@@ -52,14 +51,6 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
       <mesh castShadow material={materials.ceiling} name='lodge-ceiling' position={[0, lodge.height, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}><extrudeGeometry args={[planShape, ceilingSlab]} /></mesh>
     </RigidBody>
     <LodgeCeiling material={materials.timber} />
-    <RigidBody colliders='cuboid' type='fixed'>
-      <group name='lodge-window-seat' position={windowSeat.position} rotation={[0, Math.PI / 2, 0]}>
-        <BenchSeat material={materials.leather} position={[0, 0.52, 0]} size={windowSeat.cushion} />
-        {[-1, 1].map(side => <Box key={side} material={materials.timber} position={[side * (windowSeat.length / 2 - 0.01 - windowSeat.endWidth / 2), 0.32, 0]} size={[windowSeat.endWidth, 0.64, windowSeat.depth]} />)}
-        <Box material={materials.timber} position={[0, 0.2, 0.03]} size={[windowSeat.length - 0.3, 0.4, 0.72]} />
-        <Box material={materials.timber} position={[0, 0.95, -0.36]} size={[windowSeat.length, 0.52, 0.13]} />
-      </group>
-    </RigidBody>
     <group name='lodge-fireplace' rotation={[0, Math.PI, 0]}>
       <RigidBody colliders='cuboid' type='fixed'>
         <Box material={materials.stone} name='lodge-hearth' position={[0, hearth.size[1] / 2, -hearth.z]} size={hearth.size} />

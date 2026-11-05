@@ -11,7 +11,6 @@ import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import corridor, {corridorLanding, corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonArea} from '../../src/lib/gallery/floorPolygons.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
-import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
 import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import TimberGeometry from '../../src/lib/gallery/passages/TimberGeometry.ts'
@@ -289,13 +288,6 @@ describe('passage elbows', () => {
   })
 })
 describe('Lodge furniture', () => {
-  test('the window seat’s cushion stays inside its timber ends', () => {
-    const {windowSeat} = lodgeInterior
-    const endInner = windowSeat.length / 2 - 0.01 - windowSeat.endWidth
-    expect(windowSeat.cushion[0] / 2).toBeGreaterThan(endInner)
-    expect(windowSeat.cushion[0] / 2).toBeLessThan(endInner + windowSeat.endWidth - 0.02)
-    expect(windowSeat.depth - windowSeat.cushion[2]).toBeGreaterThanOrEqual(0.02)
-  })
   for (const seats of [1, 3]) {
     test(`a ${seats}-seat frame keeps its rear and ends off the arms’ faces`, () => {
       const geometry = new UpholsteredSeatGeometry(seats)

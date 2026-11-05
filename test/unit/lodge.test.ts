@@ -103,13 +103,12 @@ function createWorld(fps: number) {
   box([-14, 5.9, 14], [12, 0.3, 12])
   box([siennaVestibule.center[0], -0.15, siennaVestibule.center[1]], [siennaVestibule.size[0], 0.3, siennaVestibule.size[1]])
   box([siennaVestibule.center[0], siennaVestibuleCeiling.y, siennaVestibule.center[1]], [siennaVestibule.size[0], siennaVestibuleCeiling.thickness, siennaVestibule.size[1]])
-  // The Lodge’s furniture, window seat and hearth, as the room mounts them.
+  // The Lodge’s furniture and hearth, as the room mounts them.
   for (const {position, yaw, size} of lodgeFurnitureColliders()) {
     const turn = new Quaternion
     box([lodge.center[0] + position[0], lodge.floorY + position[1] + size[1] / 2, lodge.center[1] + position[2]], size).setRotation(turn.setFromAxisAngle(new Vector3(0, 1, 0), yaw))
   }
-  const {windowSeat, fireplace} = lodgeInterior
-  box([lodge.center[0] + windowSeat.position[0], lodge.floorY + 0.5, lodge.center[1] + windowSeat.position[2]], [0.85, 1, windowSeat.length])
+  const {fireplace} = lodgeInterior
   box([lodge.center[0], lodge.floorY + fireplace.hearth.size[1] / 2, lodge.center[1] + fireplace.hearth.z], fireplace.hearth.size)
   return world
 }
@@ -359,9 +358,6 @@ describe('Lodge and Corridor route', () => {
       const halfX = Math.abs(Math.cos(yaw)) * size[0] / 2 + Math.abs(Math.sin(yaw)) * size[2] / 2
       expect(Math.abs(position[0]) + halfX).toBeLessThan(lodge.size[0] / 2 - 0.105)
       expect(position[2] + reach).toBeLessThan(lodge.size[1] / 2 - 0.105)
-      // Nothing stands in front of the window seat.
-      const {windowSeat} = lodgeInterior
-      expect(position[0] - halfX).toBeGreaterThan(windowSeat.position[0] + 0.425 + 0.3)
       // Nothing stands inside the chimney breast.
       const {fireplace} = lodgeInterior
       expect(Math.abs(position[0]) - halfX >= fireplace.width / 2 || position[2] + reach <= fireplace.front).toBe(true)
