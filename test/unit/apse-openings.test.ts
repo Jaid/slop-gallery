@@ -9,7 +9,7 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} fro
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {barDepth} from '../../src/lib/gallery/BarredOpeningGeometry.ts'
-import {apseOpeningPoint, apseOpenings, fortressClearance, fortressCurve, fortressLanterns} from '../../src/lib/gallery/fortress.ts'
+import {apseOpeningPoint, apseOpenings, bastionClearance, bastionCurve, bastionLanterns} from '../../src/lib/gallery/bastion.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse from '../../src/lib/gallery/oculusApse.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
@@ -22,7 +22,7 @@ import walls from './fixtures/gallery.ts'
 await RAPIER.init()
 const platformY = oculusPlatform.position[1] + oculusPlatform.size[1] / 2
 const apseWalls = ['oculus-northwest', 'oculus-north', 'oculus-northeast']
-/** each opening with its hole in the apse’s wall and in the wall of the Fortress’ curve behind it */
+/** each opening with its hole in the apse’s wall and in the wall of the Bastion’s curve behind it */
 const openings = apseOpenings.map(opening => {
   const find = (candidates: ReadonlyArray<Wall>) => {
     const wall = candidates.find(value => value.holes?.some(hole => hole.name === opening.name))!
@@ -34,15 +34,15 @@ const openings = apseOpenings.map(opening => {
   return {
     opening,
     apse: find(walls.filter(wall => wall.id === apseWalls[opening.arc])),
-    fortress: find(walls.filter(wall => wall.id.startsWith('fortress-curve_'))),
+    bastion: find(walls.filter(wall => wall.id.startsWith('bastion-curve_'))),
   }
 })
-const architecture = [...new Set(openings.flatMap(({apse, fortress}) => [apse.wall, fortress.wall]))].map(wall => ({
+const architecture = [...new Set(openings.flatMap(({apse, bastion}) => [apse.wall, bastion.wall]))].map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
 const grilles = apseOpenings.map(apseGrille)
-const vault = new RouteVaultGeometry(fortressCurve)
+const vault = new RouteVaultGeometry(bastionCurve)
 const ground = new OculusGroundGeometry
 const material = new MeshBasicMaterial({side: DoubleSide})
 const placed = (wall: Wall, geometry: ConstructorParameters<typeof Mesh>[0]) => {
@@ -74,7 +74,7 @@ const angleAround = ({arc}: {arc: number}, [x, , z]: Vec3) => {
   const {center} = oculusApse.arcs[arc]
   return Math.atan2(z - center[1], x - center[0])
 }
-describe('the apse’s barred gate and windows onto the Fortress', () => {
+describe('the apse’s barred gate and windows onto the Bastion', () => {
   test('a gate in the middle of the crown and a window to either side of it, symmetric, all three on the crown', () => {
     expect(openings.map(({opening, apse}) => [opening.name, apse.wall.id])).toEqual([['west_window', 'oculus-north'], ['gate', 'oculus-north'], ['east_window', 'oculus-north']])
     const [west, gate, east] = apseOpenings
@@ -90,45 +90,45 @@ describe('the apse’s barred gate and windows onto the Fortress', () => {
     expect(Math.abs(gateHole.u - westHole.u) - gateHole.width / 2 - westHole.width / 2 - casing * 2).toBeGreaterThan(0.5)
     expect(wall.width / 2 - Math.abs(westHole.u) - westHole.width / 2 - casing).toBeCloseTo(0.3, 9)
   })
-  test('each pierces the apse’s wall and the curve’s wall behind it, its jambs pointing to its arc’s center, the windows splayed toward the gate and up on the Fortress’ side', () => {
+  test('each pierces the apse’s wall and the curve’s wall behind it, its jambs pointing to its arc’s center, the windows splayed toward the gate and up on the Bastion’s side', () => {
     const {radius} = oculusApse.arcs[1]
     const gateAngle = apseOpenings.find(opening => opening.name === 'gate')!.angle
-    for (const {opening, apse, fortress} of openings) {
+    for (const {opening, apse, bastion} of openings) {
       const jambs = ({wall, hole}: typeof apse) => [-1, 1].map(side => angleAround(opening, wallPosition(wall, hole.u + side * hole.width / 2, platformY + 1, 0))).toSorted((a, b) => a - b)
-      const [apseJambs, fortressJambs] = [jambs(apse), jambs(fortress)]
+      const [apseJambs, bastionJambs] = [jambs(apse), jambs(bastion)]
       for (const [index, side] of [-1, 1].entries()) {
         expect(apseJambs[index] - opening.angle + Math.PI * 2).toBeCloseTo(side * opening.width / 2 / radius, 6)
-        expect(fortressJambs[index] - opening.back.angle + Math.PI * 2).toBeCloseTo(side * opening.back.width / 2 / radius, 6)
+        expect(bastionJambs[index] - opening.back.angle + Math.PI * 2).toBeCloseTo(side * opening.back.width / 2 / radius, 6)
       }
-      // Away from the gate, its jambs line up; toward it, the Fortress’ side reaches further.
+      // Away from the gate, its jambs line up; toward it, the Bastion’s side reaches further.
       const away = Math.sign(opening.angle - gateAngle)
       if (away) {
-        expect(fortressJambs[away < 0 ? 0 : 1]).toBeCloseTo(apseJambs[away < 0 ? 0 : 1], 6)
-        expect((fortressJambs[away < 0 ? 1 : 0] - apseJambs[away < 0 ? 1 : 0]) * away).toBeLessThan(-0.02)
+        expect(bastionJambs[away < 0 ? 0 : 1]).toBeCloseTo(apseJambs[away < 0 ? 0 : 1], 6)
+        expect((bastionJambs[away < 0 ? 1 : 0] - apseJambs[away < 0 ? 1 : 0]) * away).toBeLessThan(-0.02)
         expect(opening.back.height).toBeGreaterThan(opening.height)
       } else {
         for (const [index, angle] of apseJambs.entries()) {
-          expect(fortressJambs[index]).toBeCloseTo(angle, 6)
+          expect(bastionJambs[index]).toBeCloseTo(angle, 6)
         }
         expect(opening.back.height).toBe(opening.height)
       }
-      expect(apse.wall.center[1] + (apse.hole.bottom ?? 0)).toBeCloseTo(fortress.wall.center[1] + (fortress.hole.bottom ?? 0), 9)
+      expect(apse.wall.center[1] + (apse.hole.bottom ?? 0)).toBeCloseTo(bastion.wall.center[1] + (bastion.hole.bottom ?? 0), 9)
       expect(apse.wall.center[1] + (apse.hole.bottom ?? 0)).toBeCloseTo(platformY + opening.bottom, 9)
       expect(apse.wall.center[1] + openingTop(apse.hole, apse.hole.u)).toBeCloseTo(platformY + opening.height, 9)
-      expect(fortress.wall.center[1] + openingTop(fortress.hole, fortress.hole.u)).toBeCloseTo(platformY + opening.back.height, 9)
+      expect(bastion.wall.center[1] + openingTop(bastion.hole, bastion.hole.u)).toBeCloseTo(platformY + opening.back.height, 9)
       // Behind each, the curve runs at the platform’s level, under a vault that springs above its casing.
-      const [x, z] = apseOpeningPoint(opening, fortressClearance + fortressCurve.width / 2)
-      const station = fortressCurve.stationAt(x, z)!
+      const [x, z] = apseOpeningPoint(opening, bastionClearance + bastionCurve.width / 2)
+      const station = bastionCurve.stationAt(x, z)!
       expect(station.y).toBeCloseTo(platformY, 9)
-      expect(station.height - fortressCurve.width / 2).toBeGreaterThan(opening.back.height + 0.17)
+      expect(station.height - bastionCurve.width / 2).toBeGreaterThan(opening.back.height + 0.17)
     }
     expect(apseOpenings.find(opening => opening.name === 'gate')!.bottom).toBe(0)
   })
   test('a single lantern hangs behind the gate, and its light falls through all three openings between the bars onto the platform', () => {
-    const [x, z] = apseOpeningPoint(apseOpenings.find(opening => opening.name === 'gate')!, fortressClearance + fortressCurve.width / 2)
-    expect(Math.abs(fortressLanterns.north - fortressCurve.route.project(x, z)!.along)).toBeLessThan(0.3)
-    expect(Object.keys(fortressLanterns)).toEqual(['east', 'north'])
-    const lamp = slopGallery.lamps().find(value => value.id === 'fortress-lantern_north')!
+    const [x, z] = apseOpeningPoint(apseOpenings.find(opening => opening.name === 'gate')!, bastionClearance + bastionCurve.width / 2)
+    expect(Math.abs(bastionLanterns.north - bastionCurve.route.project(x, z)!.along)).toBeLessThan(0.3)
+    expect(Object.keys(bastionLanterns)).toEqual(['east', 'north'])
+    const lamp = slopGallery.lamps().find(value => value.id === 'bastion-lantern_north')!
     expect(lamp.shadow).toBe(true)
     const light = new Vector3(...lamp.position)
     const gateHole = openings.find(({opening}) => opening.name === 'gate')!.apse.hole
@@ -163,8 +163,8 @@ describe('the apse’s barred gate and windows onto the Fortress', () => {
       const y = apse.wall.center[1] + bottom + 0.9
       // Sideways along the gap between both walls, from the opening’s middle, the reveal closes it beyond the jamb, or where a window splays toward the gate, beyond its back’s.
       for (const side of [-1, 1]) {
-        const start = new Vector3(...wallPosition(apse.wall, apse.hole.u, y, -fortressClearance / 2))
-        const beyond = new Vector3(...wallPosition(apse.wall, apse.hole.u + side * (opening.back.width - opening.width / 2 + 0.2), y, -fortressClearance / 2))
+        const start = new Vector3(...wallPosition(apse.wall, apse.hole.u, y, -bastionClearance / 2))
+        const beyond = new Vector3(...wallPosition(apse.wall, apse.hole.u + side * (opening.back.width - opening.width / 2 + 0.2), y, -bastionClearance / 2))
         const ray = new Raycaster(start, beyond.clone().sub(start).normalize(), 0, start.distanceTo(beyond))
         const hits = ray.intersectObject(new Mesh(grilles[index].reveal, material))
         expect(hits.length).toBeGreaterThan(0)

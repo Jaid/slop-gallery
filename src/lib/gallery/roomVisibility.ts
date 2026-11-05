@@ -19,7 +19,7 @@ type Portal = {
   rooms: readonly [RoomId, RoomId]
 }
 
-/** how many openings deep line of sight reaches in the gallery: from the Lobby down through its glazed floor into the Oculus and on through the Fortress into the Lodge, or from the Antechamber down to Moonfall and on through the Exhibition into the Oculus */
+/** how many openings deep line of sight reaches in the gallery: from the Lobby down through its glazed floor into the Oculus and on through the Bastion into the Lodge, or from the Antechamber down to Moonfall and on through the Exhibition into the Oculus */
 const sightDepth = 3
 // Doorframes, trims and the reveal of thick walls stay inside the portal.
 const portalDepth = 0.8

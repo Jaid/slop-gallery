@@ -184,8 +184,8 @@ test('a work strikes with its face, a side or a corner, by the contact’s norma
 })
 test('every frame sounds like one of the shared frame sounds, gilded wood unless it says otherwise', () => {
   expect(frames.classic.impactSound).toBe('gilt')
-  expect(frames['fortress-oak'].impactSound).toBe('hardwood')
-  expect(frames['fortress-strapwork'].impactSound).toBe('heavy')
+  expect(frames['bastion-oak'].impactSound).toBe('hardwood')
+  expect(frames['bastion-strapwork'].impactSound).toBe('heavy')
   for (const frame of Object.values(frames)) {
     expect(Object.keys(frameImpactSounds)).toContain(frame.impactSound)
   }

@@ -16,7 +16,7 @@ import ApseGrilles from '#src/rooms/oculus/components/ApseGrilles/index.tsx'
 const {oculus} = lowerGallery
 const {floorY} = oculus
 const ceilingY = oculus.ceiling.topY - oculus.ceiling.thickness / 2
-/** The Oculus with its tower, ramps, balcony and apse, the barred openings in the apse lined with `stone` like the Fortress behind them. */
+/** The Oculus with its tower, ramps, balcony and apse, the barred openings in the apse lined with `stone` like the Bastion behind them. */
 export default function OculusRoom({material, stone}: {
   material: Material
   stone: Material

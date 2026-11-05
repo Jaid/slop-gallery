@@ -1,6 +1,6 @@
 import type {RoomWall} from '../base/Room.ts'
 
-import {bastionArch} from '#src/lib/gallery/bastion.ts'
+import {climbArch} from '#src/lib/gallery/climb.ts'
 import forge, {forgeVestibule} from '#src/lib/gallery/forge.ts'
 import {forgeGutter, gutterOpening} from '#src/lib/gallery/forgeGutter.ts'
 import {forgeRoundVestibule} from '#src/lib/gallery/forgeVestibule.ts'
@@ -31,7 +31,7 @@ export default {
     ...north,
     holes: {
       vestibule: {
-        ...bastionArch,
+        ...climbArch,
         u: wallCoordinates(north, [vestibuleX - originX, 0, vestibuleZ + radius - originZ]),
       },
       gutter: gutterOpening(north, roomOrigins.forge),
@@ -49,7 +49,7 @@ export default {
     ...west,
     reservations: [lightSwitchReservation(releaseSpot.u, releaseSpot.y)],
   },
-  // The vestibule’s round wall, one ring facing its center, with the arch back into the room, the one out onto the Fortress’ approach and the hole the gutter comes in by.
+  // The vestibule’s round wall, one ring facing its center, with the arch back into the room, the one out onto the Bastion’s approach and the hole the gutter comes in by.
   vestibule: {
     ...vestibule,
     holes: {

@@ -25,7 +25,7 @@ function cornerTurn(radius: number, angle: number, easing: number) {
 const corner = cornerTurn(1.2, -Math.PI / 2, 1.5)
 /** its turn off the north wall into the hole through it */
 const wallBend = cornerTurn(1, Math.PI / 2, 0.8)
-/** the radius of its last turn, off the vestibule’s wall toward the arch onto the Fortress */
+/** the radius of its last turn, off the vestibule’s wall toward the arch onto the Bastion */
 const spoutTurn = 1
 const [width, depth] = forge.size
 const westX = forge.center[0] - width / 2
@@ -41,12 +41,12 @@ const throughX = vestibuleX - ringRadius
 const dropZ = forge.center[1] - 1
 /** how far north of where orbs drop in the gutter’s closed head lies */
 const headReach = 0.25
-/** how far round the vestibule it runs from the west, by the north, before its last turn: so far that the last turn brings it round onto the vestibule’s axis, heading west toward the arch onto the Fortress */
+/** how far round the vestibule it runs from the west, by the north, before its last turn: so far that the last turn brings it round onto the vestibule’s axis, heading west toward the arch onto the Bastion */
 const ringSweep = Math.PI - Math.asin(spoutTurn / (ringRadius - spoutTurn))
 /** how far its last turn turns, from heading round the vestibule to heading west */
 const spoutSweep = Math.PI * 3 / 2 - ringSweep
 /**
- * The gutter’s middle in plan: from its closed head over the west wall south, round the Forge’s corners and along its south, east and north walls under their cornices, off the north wall west of the vestibule’s arch through both walls into the vestibule, round its wall from the west by the north toward the east, and in a last turn onto the vestibule’s axis, ending in the air heading west at the arch onto the Fortress’ approach.
+ * The gutter’s middle in plan: from its closed head over the west wall south, round the Forge’s corners and along its south, east and north walls under their cornices, off the north wall west of the vestibule’s arch through both walls into the vestibule, round its wall from the west by the north toward the east, and in a last turn onto the vestibule’s axis, ending in the air heading west at the arch onto the Bastion’s approach.
  * Its floor height is its {@link ForgeGutter.bottom}, not the route’s.
  */
 const route = new PassageRoute([westX + offset, dropZ - headReach], Math.PI / 2, 0, 1, [

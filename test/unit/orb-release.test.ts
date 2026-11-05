@@ -7,12 +7,12 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {mulberry32} from 'math/random'
 
 import {corniceBands, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
-import {bastionApproach, bastionMouthRunnel} from '../../src/lib/gallery/bastion.ts'
+import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
+import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
+import {climbApproach, climbMouthRunnel} from '../../src/lib/gallery/climb.ts'
 import {helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import forge, {forgeVestibule} from '../../src/lib/gallery/forge.ts'
 import {forgeGutter} from '../../src/lib/gallery/forgeGutter.ts'
-import {fortressCrater} from '../../src/lib/gallery/fortress.ts'
-import {fortressLinkGate} from '../../src/lib/gallery/fortressNetwork.ts'
 import GutterGeometry from '../../src/lib/gallery/GutterGeometry.ts'
 import {forgeWindow} from '../../src/lib/gallery/lobbyWindows.ts'
 import {releaseCandidates, releasedOrb, releaseLocked} from '../../src/lib/gallery/orbRelease.ts'
@@ -21,7 +21,7 @@ import {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {openingTop, wallCoordinates, wallOffset} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls from './fixtures/gallery.ts'
-import {addOrb, forgeAndFortressColliders, physicsWorld} from './helpers/fortressWorld.ts'
+import {addOrb, forgeAndBastionColliders, physicsWorld} from './helpers/bastionWorld.ts'
 
 await RAPIER.init()
 const {route} = forgeGutter
@@ -48,12 +48,12 @@ describe('the Forge’s gutter', () => {
     for (let along = 0; along < route.length; along += 0.5) {
       expect(forgeGutter.bottom(along) - forgeGutter.bottom(along + 0.5)).toBeCloseTo(forgeGutter.grade * 0.5, 9)
     }
-    // It ends in the air over the vestibule, heading west straight at the arch onto the Fortress’ approach.
+    // It ends in the air over the vestibule, heading west straight at the arch onto the Bastion’s approach.
     const {point: [endX, endZ], heading} = route.end
     expect(endZ).toBeCloseTo(forgeVestibule.center[1], 9)
     expect(Math.cos(heading)).toBeCloseTo(-1, 9)
     expect(Math.hypot(endX - forgeVestibule.center[0], endZ - forgeVestibule.center[1])).toBeLessThan(forgeVestibule.radius - 1)
-    expect(bastionApproach.route.end.point[1]).toBeCloseTo(endZ, 9)
+    expect(climbApproach.route.end.point[1]).toBeCloseTo(endZ, 9)
   })
   test('runs along the walls clear of their cornices, its brackets in the walls, and hangs from the ceiling where it passes the window into the Lobby', () => {
     const outside = forgeGutter.radius + forgeGutter.thickness
@@ -124,11 +124,11 @@ describe('the Forge’s gutter', () => {
 const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
 describe('the Forge’s orb release', () => {
   const orb = transparentOrb.propId
-  test('stays locked while any orb is in the Forge or anywhere in the Fortress, but not for other props or orbs elsewhere', () => {
+  test('stays locked while any orb is in the Forge or anywhere in the Bastion, but not for other props or orbs elsewhere', () => {
     expect(releaseLocked([], roomAt)).toBe(false)
     expect(releaseLocked([[orb, forgeGutter.spawn]], roomAt)).toBe(true)
     expect(releaseLocked([[`${orb}-released-3`, [forge.center[0], 1, forge.center[1]]]], roomAt)).toBe(true)
-    expect(releaseLocked([['prop-orb-spook', [fortressCrater.center[0], fortressCrater.center[1] - 0.2, fortressCrater.center[2]]]], roomAt)).toBe(true)
+    expect(releaseLocked([['prop-orb-spook', [bastionCrater.center[0], bastionCrater.center[1] - 0.2, bastionCrater.center[2]]]], roomAt)).toBe(true)
     expect(releaseLocked([['prop-orb-horror', [-14, 1, -4]]], roomAt)).toBe(false)
     expect(releaseLocked([['prop-sculpture', [forge.center[0], 1, forge.center[1]]]], roomAt)).toBe(false)
   })
@@ -162,11 +162,11 @@ describe('the Forge’s orb release', () => {
     expect([0, 0.49, 0.5, 0.99].map(random => releasedOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(releaseCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
-  test('of the orbs it releases, which all roll round the gutter, nine in ten roll on out across the vestibule, down the climb’s runnel and through the gate’s hatch, and four in five of those into the Fortress’ crater', () => {
-    const colliders = forgeAndFortressColliders()
+  test('of the orbs it releases, which all roll round the gutter, nine in ten roll on out across the vestibule, down the climb’s runnel and through the gate’s hatch, and four in five of those into the Bastion’s crater', () => {
+    const colliders = forgeAndBastionColliders()
     const state = mulberry32.create(7)
     const scatter = () => (mulberry32.sample(state) * 2 - 1) * 0.015
-    const [hatchX, gateZ] = [fortressLinkGate.wall.center[0] + fortressLinkGate.hatch.u, fortressLinkGate.wall.center[2]]
+    const [hatchX, gateZ] = [bastionLinkGate.wall.center[0] + bastionLinkGate.hatch.u, bastionLinkGate.wall.center[2]]
     const releases = 20
     let through = 0
     let caught = 0
@@ -190,7 +190,7 @@ describe('the Forge’s orb release', () => {
             leftGutter = projection.along > route.length - 0.05
           }
           // Low down in the mouth, it comes up to the gate, and on past it into the tunnel.
-          if (position.y < bastionMouthRunnel.y + 0.5) {
+          if (position.y < climbMouthRunnel.y + 0.5) {
             if (previousZ > gateZ + 0.3 && position.z <= gateZ + 0.3) {
               atGate = position.x
             }
@@ -207,9 +207,9 @@ describe('the Forge’s orb release', () => {
         }
         through++
         // Only through the hatch: it came up to the gate right in front of it.
-        expect(Math.abs(atGate! - hatchX)).toBeLessThan(fortressLinkGate.hatch.width / 2 - orbRadius)
+        expect(Math.abs(atGate! - hatchX)).toBeLessThan(bastionLinkGate.hatch.width / 2 - orbRadius)
         const {x: endX, y: endY, z: endZ} = body.translation()
-        if (Math.hypot(endX - fortressCrater.center[0], endZ - fortressCrater.center[2]) < fortressCrater.radius * 1.05 && endY < fortressCrater.center[1]) {
+        if (Math.hypot(endX - bastionCrater.center[0], endZ - bastionCrater.center[2]) < bastionCrater.radius * 1.05 && endY < bastionCrater.center[1]) {
           caught++
         }
       } finally {

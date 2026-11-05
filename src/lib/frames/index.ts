@@ -5,6 +5,8 @@ import AntechamberAdamFrame from './AntechamberAdamFrame.ts'
 import BanquetCheckerFrame from './BanquetCheckerFrame.ts'
 import BanquetDecoFrame from './BanquetDecoFrame.ts'
 import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
+import BastionOakFrame from './BastionOakFrame.ts'
+import BastionStrapworkFrame from './BastionStrapworkFrame.ts'
 import CellCofferFrame from './CellCofferFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import CorridorKumikoFrame from './CorridorKumikoFrame.ts'
@@ -13,8 +15,6 @@ import ExhibitionContainmentFrame from './ExhibitionContainmentFrame.ts'
 import ExhibitionEvidenceFrame from './ExhibitionEvidenceFrame.ts'
 import ExhibitionVitrineFrame from './ExhibitionVitrineFrame.ts'
 import ForgeMeanderFrame from './ForgeMeanderFrame.ts'
-import FortressOakFrame from './FortressOakFrame.ts'
-import FortressStrapworkFrame from './FortressStrapworkFrame.ts'
 import {readFrame} from './frameParameter.ts'
 import HalloweenLanternFrame from './HalloweenLanternFrame.ts'
 import HorrorBleedingFrame from './HorrorBleedingFrame.ts'
@@ -65,8 +65,8 @@ export const frames = {
   'moonfall-meteorite': new MoonfallMeteoriteFrame,
   'moonfall-orbit': new MoonfallOrbitFrame,
   'moonfall-regolith': new MoonfallRegolithFrame,
-  'fortress-strapwork': new FortressStrapworkFrame,
-  'fortress-oak': new FortressOakFrame,
+  'bastion-strapwork': new BastionStrapworkFrame,
+  'bastion-oak': new BastionOakFrame,
   'lodge-twig': new LodgeTwigFrame,
   'lodge-tramp': new LodgeTrampFrame,
   'lodge-charred': new LodgeCharredFrame,

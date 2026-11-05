@@ -4,7 +4,7 @@ import {mulberry32} from 'math/random'
 import {ExtrudeGeometry, Float32BufferAttribute, BufferGeometry as Geometry, IcosahedronGeometry, Matrix4, Shape, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {fortressCrater} from './fortress.ts'
+import {bastionCrater} from './bastion.ts'
 import {pavingThickness} from './passages/RouteVaultGeometry.ts'
 
 /** how many rings the rubble’s surface is laid in from its middle out to the broken edge */
@@ -27,10 +27,10 @@ const cracks = 0.015
 const shards = 10
 
 /**
- * The Fortress’ crater, in its own frame with the floor’s level round its middle at the origin, inside the hole broken through the paving: the flags that tipped into it from its edge, the rubble under them that sinks into a pit down to its `depth` in its middle, and a few shards lying in the pit.
+ * The Bastion’s crater, in its own frame with the floor’s level round its middle at the origin, inside the hole broken through the paving: the flags that tipped into it from its edge, the rubble under them that sinks into a pit down to its `depth` in its middle, and a few shards lying in the pit.
  * The hole itself, its broken edge included, is the curve’s pit, which its vault geometry breaks through its paving.
  */
-export default class FortressCraterGeometry {
+export default class BastionCraterGeometry {
   /** how far under the floor each tipped flag’s broken end hangs, at the top of its lowest corner */
   readonly drops: ReadonlyArray<number>
   /** the flags that tipped into the crater from its edge, each hinged on the broken edge and broken off toward the middle */
@@ -39,7 +39,7 @@ export default class FortressCraterGeometry {
   readonly shards: BufferGeometry
 
   constructor() {
-    const {center, depth, outline, radius} = fortressCrater
+    const {center, depth, outline, radius} = bastionCrater
     const randomState = mulberry32.create(1871)
     const random = () => mulberry32.sample(randomState)
     const between = ([low, high]: readonly [number, number]) => low + random() * (high - low)

@@ -8,10 +8,10 @@ import {DoubleSide, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vecto
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
+import {bastionApproach, bastionDoorway, bastionMouth, bastionTransition} from '../../src/lib/gallery/bastion.ts'
+import {insideBastion} from '../../src/lib/gallery/bastionNetwork.ts'
 import {corridorEndZ, corridorLanding, corridorPassage, corridorRails, corridorRunner, corridorStairs, insideCorridor, lodgeThreshold, lodgeThresholdSaddle} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonCentroid, rectanglePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressApproach, fortressDoorway, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
-import {insideFortress} from '../../src/lib/gallery/fortressNetwork.ts'
 import lodge, {insideLodgeWindow, lodgeBay, lodgeBayFloor, lodgeOutline, lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior, {lodgeFurnitureColliders} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
@@ -30,16 +30,16 @@ import walls, {floorHeight, insideGallery} from './fixtures/gallery.ts'
 import samplePortraits from './fixtures/portraits.ts'
 
 await RAPIER.init()
-const routePassages = [fortressApproach, corridorPassage, corridorLanding] as const
-const insideRoute = (position: Vec3) => insideLodgeWindow(position) || insideFortress(position) || insideCorridor(position)
-const routeWalls = walls.filter(wall => ['corridor', 'lodge', 'sienna'].includes(wall.room) || wall.id.startsWith('fortress-approach_') || wall.id === 'vesper-west')
+const routePassages = [bastionApproach, corridorPassage, corridorLanding] as const
+const insideRoute = (position: Vec3) => insideLodgeWindow(position) || insideBastion(position) || insideCorridor(position)
+const routeWalls = walls.filter(wall => ['corridor', 'lodge', 'sienna'].includes(wall.room) || wall.id.startsWith('bastion-approach_') || wall.id === 'vesper-west')
 const architecture = routeWalls.map(wall => ({
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
 const windowGeometry = new LodgeWindowGeometry
-const transition = new TransitionGeometry(fortressTransition)
-const vaults = [new VaultGeometry(fortressApproach, fortressTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.passage(corridorLanding), TimberGeometry.stairs(corridorStairs, true)]
+const transition = new TransitionGeometry(bastionTransition)
+const vaults = [new VaultGeometry(bastionApproach, bastionTransition.length), TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts), TimberGeometry.passage(corridorLanding), TimberGeometry.stairs(corridorStairs, true)]
 const thresholdSaddle = SaddleGeometry.across(lodgeThresholdSaddle, corridorPassage.floorY)
 const saddles = [transition.sill, thresholdSaddle]
 afterAll(() => {
@@ -68,7 +68,7 @@ function createWorld(fps: number) {
   }
   for (const vault of vaults) {
     for (const geometry of [vault.shell, vault.ribs]) {
-      // The Fortress’ approach, all timber transition, has no stone ribs.
+      // The Bastion’s approach, all timber transition, has no stone ribs.
       if (geometry.hasAttribute('position')) {
         world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
       }
@@ -204,10 +204,10 @@ describe('Lodge and Corridor route', () => {
       })
     }
   }
-  test('both doorways of the Fortress are as wide and as high as the passages behind them, with clear corner trim', () => {
-    expect(fortressApproach.width).toBe(towerBridge.mouthWidth)
-    expect(fortressApproach.width).toBe(4)
-    for (const [id, name, floorY, passage] of [['oculus-east', 'fortress', fortressDoorway.y, fortressMouth], ['lodge-east', 'fortress', lodge.floorY, fortressApproach]] as const) {
+  test('both doorways of the Bastion are as wide and as high as the passages behind them, with clear corner trim', () => {
+    expect(bastionApproach.width).toBe(towerBridge.mouthWidth)
+    expect(bastionApproach.width).toBe(4)
+    for (const [id, name, floorY, passage] of [['oculus-east', 'bastion', bastionDoorway.y, bastionMouth], ['lodge-east', 'bastion', lodge.floorY, bastionApproach]] as const) {
       const wall = walls.find(value => value.id === id)!
       const hole = wall.holes!.find(value => value.name === name)!
       expect(hole.width).toBe(passage.width)
@@ -229,7 +229,7 @@ describe('Lodge and Corridor route', () => {
       // Through the Lodge’s doorway, at a person’s height and a little off the axis on both sides
       for (const offset of [-1.45, 1.45]) {
         const z = lodge.tunnelZ + offset
-        expect(fortressApproach.floorAt(-19.5, z)).toBe(lodge.floorY)
+        expect(bastionApproach.floorAt(-19.5, z)).toBe(lodge.floorY)
         expect(insideGallery([-19.5, lodge.floorY + 1.6, z])).toBe(true)
         const ray = new Raycaster(new Vector3(-18.5, lodge.floorY + 1.7, z), new Vector3(-1, 0, 0), 0, 3)
         expect(ray.intersectObjects(meshes)).toHaveLength(0)
@@ -242,7 +242,7 @@ describe('Lodge and Corridor route', () => {
     for (const returning of [false, true]) {
       test(`the widened stone doorway is walkable at offset ${offset}, returning ${returning}`, () => {
         const world = createWorld(60)
-        const path = [[fortressApproach.path[0][0] - 0.4, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
+        const path = [[bastionApproach.path[0][0] - 0.4, lodge.tunnelZ + offset], [-23, lodge.tunnelZ + offset]]
         if (returning) {
           path.reverse()
         }
@@ -367,11 +367,11 @@ describe('Lodge and Corridor route', () => {
       expect(Math.abs(position[0]) - halfX >= fireplace.width / 2 || position[2] + reach <= fireplace.front).toBe(true)
     }
   })
-  test('the Fortress’ doorway in the Oculus opens at the east bridge’s end, its sill just under the deck', () => {
+  test('the Bastion’s doorway in the Oculus opens at the east bridge’s end, its sill just under the deck', () => {
     const wall = walls.find(candidate => candidate.id === 'oculus-east')!
-    const hole = wall.holes!.find(value => value.name === 'fortress')!
-    expect(wall.center[1] + hole.bottom!).toBeCloseTo(fortressDoorway.y - 0.02)
-    expect(wallPosition(wall, hole.u, fortressDoorway.y, 0)).toEqual([expect.closeTo(fortressDoorway.x), fortressDoorway.y, expect.closeTo(fortressDoorway.z)])
+    const hole = wall.holes!.find(value => value.name === 'bastion')!
+    expect(wall.center[1] + hole.bottom!).toBeCloseTo(bastionDoorway.y - 0.02)
+    expect(wallPosition(wall, hole.u, bastionDoorway.y, 0)).toEqual([expect.closeTo(bastionDoorway.x), bastionDoorway.y, expect.closeTo(bastionDoorway.z)])
     const siennaWest = walls.find(candidate => candidate.id === 'sienna-west')!
     expect(wallPosition(siennaWest, siennaWest.holes![0].u, 0, 0)[2]).toBeCloseTo(lodge.siennaZ)
     expect(siennaWest.holes![0].u + lodge.timberWidth / 2 + 0.17).toBeLessThan(siennaWest.width / 2)
@@ -437,8 +437,8 @@ describe('Lodge and Corridor route', () => {
       for (const sprint of [false, true]) {
         test(`real player traverses the entire loop at ${fps} Hz, returning ${returning}, sprint ${sprint}`, () => {
           const world = createWorld(fps)
-          // From the flat planks beyond the Fortress’ raised timber saddle into the Lodge, north through its bay, round it along the Corridor, up the diagonal flight and through the landing and the Sienna’s vestibule.
-          const path = [[fortressApproach.path.at(-1)![0] + 0.4, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, ...corridorLanding.path.toReversed(), [-18.5, lodge.siennaZ]]
+          // From the flat planks beyond the Bastion’s raised timber saddle into the Lodge, north through its bay, round it along the Corridor, up the diagonal flight and through the landing and the Sienna’s vestibule.
+          const path = [[bastionApproach.path.at(-1)![0] + 0.4, lodge.tunnelZ], [lodge.center[0], lodge.tunnelZ], ...corridorPassage.path, ...corridorLanding.path.toReversed(), [-18.5, lodge.siennaZ]]
           if (returning) {
             path.reverse()
           }

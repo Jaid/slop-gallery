@@ -14,7 +14,7 @@ const margin = 0.028
 const unit = (node: Float) => node.mul(0.5).add(0.5)
 
 /**
- * Dressed ashlar for the Fortress and the Bastion, their vaults and flags, and the masonry that shows through to the Forge and the Oculus.
+ * Dressed ashlar for the Bastion, its passages’ vaults and flags, and the masonry that shows through to the Forge and the Oculus.
  *
  * Walls are laid in 38 cm courses whose blocks each have a length and offset of their own; the floors in broader, squarer flags. Each block is one of four stones – buff and gray limestone, a warm sandstone and the odd rusty, iron-rich block – in a tone of its own, and dressed the way a mason dresses ashlar: a margin chiseled flat around the face in fine strokes square to the arris, and a field boasted in parallel diagonal strokes, slightly pillowed and tilted. The arrises are rounded and chipped, with the odd larger spall, and the lime mortar sits back between them, sandy and pale, shadowed under the block above. Water has seeped down the walls from some of the joints in dark, faintly glossy streaks, and the vaults are darkened by lantern smoke. The flags underfoot are trodden smooth and dull-polished in patches, their joints filled with grime.
  *

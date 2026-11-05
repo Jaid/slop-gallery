@@ -11,7 +11,7 @@ export type Hall = PlacedRoom<GalleryRoom> & {
   size: FloorSize
 }
 
-/** the gallery’s rooms around a rectangular floor plan, every room but the Exhibition and the Fortress */
+/** the gallery’s rooms around a rectangular floor plan, every room but the Exhibition and the Bastion */
 export const rooms = slopGallery.rooms.filter((room): room is Hall => room.size !== undefined)
 const {walls} = slopGallery
 export const galleryPlacement = slopGallery.placement

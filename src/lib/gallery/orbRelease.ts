@@ -4,8 +4,8 @@ import type {Vec3} from './types.ts'
 import {helmet, knife, pumpkin} from './curios/index.ts'
 import {halloweenOrb, horrorOrb, randomOrbs, spookOrb} from './orbs/index.ts'
 
-/** the rooms an orb released into the Forge’s gutter passes through on its way down to the Fortress’ crater */
-export const releaseRooms: ReadonlySet<string> = new Set(['forge', 'fortress'])
+/** the rooms an orb released into the Forge’s gutter passes through on its way down to the Bastion’s crater */
+export const releaseRooms: ReadonlySet<string> = new Set(['bastion', 'forge'])
 /** the props that, lying in the Forge or carried into it, steer its release to an orb of their own, by their ids: the pumpkin to the Halloween Orb, the cleaver to the Horror Orb and the helmet to the Spook Orb */
 export const releaseSteering: ReadonlyMap<string, Orb> = new Map<string, Orb>([
   [pumpkin.propId, halloweenOrb],

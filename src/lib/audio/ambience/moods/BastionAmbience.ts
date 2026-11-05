@@ -48,11 +48,11 @@ const whistles = {
   volume: 0.006,
 }
 
-/** The Fortress’ drafts: cold air pressing through the iron bars of its gate and windows, water dripping somewhere down the passages with its echo running after it and now and then a low whistle where the wind finds a bar. */
-export default class FortressAmbience extends AmbienceLoop {
+/** The Bastion’s drafts: cold air pressing through the iron bars of its gate and windows, water dripping somewhere down the passages with its echo running after it and now and then a low whistle where the wind finds a bar. */
+export default class BastionAmbience extends AmbienceLoop {
   constructor() {
     super({
-      id: 'mood-fortress',
+      id: 'mood-bastion',
       title: 'Drafts',
       gain: 0.22,
     })

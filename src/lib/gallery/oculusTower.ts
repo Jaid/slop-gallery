@@ -11,7 +11,7 @@ const oculusTower = {
   x: lobby.opening.center[0],
   z: lobby.opening.center[1],
   radius: oculusTowerRadius,
-  // Half a meter over the Lodge’s floor, low enough for the Fortress to reach its east bridge under the Salon’s floor.
+  // Half a meter over the Lodge’s floor, low enough for the Bastion to reach its east bridge under the Salon’s floor.
   height: 3.5 + oculusDrop,
   floorY: lowerGallery.oculus.floorY,
 }
@@ -56,7 +56,7 @@ export const towerBridge = {
   /** how far they climb from the deck to their walls, easing in and out like the ramp */
   rise: 0.6,
 }
-/** the west bridge leads into the Bastion and the east one into the Fortress */
+/** the west bridge leads into the Bastion’s western climb and the east one into its mouth */
 export const towerBridges = (['west', 'east'] as const).map(side => ({
   side,
   /** the direction it leaves the tower in, as an angle in the floor plan, atan2 of z and x */

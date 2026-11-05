@@ -4,8 +4,8 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import {BoxGeometry, DoubleSide, ExtrudeGeometry, Mesh, MeshBasicMaterial, Raycaster, Shape, Vector2, Vector3} from 'three/webgpu'
 
+import {bastionApproach, bastionCurve, bastionLanterns, bastionMouth, bastionTransition} from '../../src/lib/gallery/bastion.ts'
 import {corridorLanding, corridorPassage, corridorStairs} from '../../src/lib/gallery/corridor.ts'
-import {fortressApproach, fortressCurve, fortressLanterns, fortressMouth, fortressTransition} from '../../src/lib/gallery/fortress.ts'
 import {lodgeWindowRibCutouts} from '../../src/lib/gallery/lodge.ts'
 import LodgeWindowGeometry from '../../src/lib/gallery/LodgeWindowGeometry.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
@@ -18,13 +18,13 @@ import {canopyEmbed, canopyHeight, canopyRadius} from '../../src/lib/gallery/pen
 import {siennaCeilingBeam, siennaCeilingBeamOffsets, siennaCeilingBeamY, siennaVestibule, siennaVestibuleCeiling, siennaVestibuleLantern} from '../../src/lib/gallery/sienna.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
 
-const mouth = new VaultGeometry(fortressMouth)
-const curve = new RouteVaultGeometry(fortressCurve)
-const approach = new VaultGeometry(fortressApproach, fortressTransition.length)
+const mouth = new VaultGeometry(bastionMouth)
+const curve = new RouteVaultGeometry(bastionCurve)
+const approach = new VaultGeometry(bastionApproach, bastionTransition.length)
 const corridor = TimberGeometry.passage(corridorPassage, lodgeWindowRibCutouts)
 const landing = TimberGeometry.passage(corridorLanding)
 const stairs = TimberGeometry.stairs(corridorStairs, true)
-const transition = new TransitionGeometry(fortressTransition)
+const transition = new TransitionGeometry(bastionTransition)
 const lodgeWindow = new LodgeWindowGeometry
 const material = new MeshBasicMaterial({side: DoubleSide})
 const translatedBox = (size: [number, number, number], position: [number, number, number]) => {
@@ -33,7 +33,7 @@ const translatedBox = (size: [number, number, number], position: [number, number
 }
 // The flat roof slabs over passage elbows, as rendered by CoveredPassage, and the Sienna vestibule’s ceiling slab and joists.
 const slabs = [
-  ...[fortressMouth, fortressApproach].flatMap(passage => passage.floors.map(floor => {
+  ...[bastionMouth, bastionApproach].flatMap(passage => passage.floors.map(floor => {
     const slab = new ExtrudeGeometry(new Shape(floor.map(([x, z]) => new Vector2(x, -z))), {
       depth: 0.24,
       bevelEnabled: false,
@@ -66,16 +66,16 @@ const groups: Array<{
   {
     label: 'castle curve',
     body: lantern,
-    lights: Object.values(fortressLanterns).map(along => fortressCurve.route.at(along).y + fortressCurve.route.at(along).height - passageLightDrop),
-    mounts: routePendantMounts(fortressCurve, [curve.shell, curve.ribs], Object.values(fortressLanterns)),
+    lights: Object.values(bastionLanterns).map(along => bastionCurve.route.at(along).y + bastionCurve.route.at(along).height - passageLightDrop),
+    mounts: routePendantMounts(bastionCurve, [curve.shell, curve.ribs], Object.values(bastionLanterns)),
   },
   // The approach to the Lodge is all timber transition, with no room for a lantern.
   (() => {
-    const mounts = passagePendantMounts(fortressMouth, [mouth.shell, mouth.ribs])
+    const mounts = passagePendantMounts(bastionMouth, [mouth.shell, mouth.ribs])
     return {
       label: 'castle mouth',
       body: lantern,
-      lights: mounts.map(() => fortressMouth.floorY + fortressMouth.height - passageLightDrop),
+      lights: mounts.map(() => bastionMouth.floorY + bastionMouth.height - passageLightDrop),
       mounts,
     }
   })(),

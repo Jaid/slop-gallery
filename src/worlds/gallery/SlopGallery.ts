@@ -12,10 +12,10 @@ import showcasedKnots from '#src/lib/gallery/showcasedKnots.ts'
 import {GalleryPlacementSpace} from '#src/lib/placement/GalleryPlacementSpace.ts'
 import Antechamber from '#src/rooms/antechamber/Antechamber.ts'
 import Banquet from '#src/rooms/banquet/Banquet.ts'
+import Bastion from '#src/rooms/bastion/Bastion.ts'
 import Corridor from '#src/rooms/corridor/Corridor.ts'
 import Exhibition from '#src/rooms/exhibition/Exhibition.ts'
 import Forge from '#src/rooms/forge/Forge.ts'
-import Fortress from '#src/rooms/fortress/Fortress.ts'
 import Lobby from '#src/rooms/lobby/Lobby.ts'
 import Lodge from '#src/rooms/lodge/Lodge.ts'
 import Moonfall from '#src/rooms/moonfall/Moonfall.ts'
@@ -32,12 +32,12 @@ import {audibleRooms, litRooms} from './relations.ts'
 import sky from './sky.ts'
 
 /** a room of the gallery */
-export type GalleryRoom = Antechamber | Banquet | Corridor | Exhibition | Forge | Fortress | Lobby | Lodge | Moonfall | Oculus | Salon | Sienna | Vesper
+export type GalleryRoom = Antechamber | Banquet | Bastion | Corridor | Exhibition | Forge | Lobby | Lodge | Moonfall | Oculus | Salon | Sienna | Vesper
 export type GalleryRoomId = GalleryRoom['id']
 
 /**
  * Every room at the origin the gallery’s layout gives it, in the order their fences are checked: the ground floor first, then the lower rooms, each passage after the rooms its fence meets.
- * The Fortress comes before both the Oculus, whose fence takes in the box around its apse, and the Lodge, whose fence reaches through its roof into the Fortress’ upper run.
+ * The Bastion comes before both the Oculus, whose fence takes in the box around its apse, and the Lodge, whose fence reaches through its roof into the Bastion’s upper run.
  */
 const placements: ReadonlyArray<RoomPlacement<GalleryRoom>> = [
   new Lobby,
@@ -48,7 +48,7 @@ const placements: ReadonlyArray<RoomPlacement<GalleryRoom>> = [
   new Salon,
   new Forge,
   new Moonfall,
-  new Fortress,
+  new Bastion,
   new Lodge,
   new Corridor,
   new Oculus,

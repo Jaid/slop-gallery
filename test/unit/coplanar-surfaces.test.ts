@@ -6,10 +6,10 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {bastionMouth} from '../../src/lib/gallery/bastion.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import corridor, {corridorLanding, corridorPassage} from '../../src/lib/gallery/corridor.ts'
 import {insidePolygon, polygonArea} from '../../src/lib/gallery/floorPolygons.ts'
-import {fortressMouth} from '../../src/lib/gallery/fortress.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import UpholsteredSeatGeometry from '../../src/lib/gallery/lodgeInterior/UpholsteredSeatGeometry.ts'
@@ -171,7 +171,7 @@ describe('inside corners of room walls', () => {
     })
   }
   test('the bay’s 45° walls start behind the casings of the Lodge’s doorways beside them', () => {
-    for (const [doorway, name, diagonal] of [['lodge-north', 'corridor', 'lodge-northwest'], ['lodge-north', 'corridor', 'lodge-northeast'], ['lodge-east', 'fortress', 'lodge-northeast']] as const) {
+    for (const [doorway, name, diagonal] of [['lodge-north', 'corridor', 'lodge-northwest'], ['lodge-north', 'corridor', 'lodge-northeast'], ['lodge-east', 'bastion', 'lodge-northeast']] as const) {
       const wall = wallById(doorway)
       const bay = wallById(diagonal)
       const hole = wall.holes!.find(value => value.name === name)!
@@ -200,7 +200,7 @@ describe('inside corners of room walls', () => {
   })
 })
 describe('passage elbows', () => {
-  for (const passage of [corridorPassage, corridorLanding, fortressMouth]) {
+  for (const passage of [corridorPassage, corridorLanding, bastionMouth]) {
     test(`${passage.id}: walls close the inner corner of every elbow`, () => {
       const meshes = passageSurfaces(passage)
       const half = passage.width / 2
@@ -243,12 +243,12 @@ describe('passage elbows', () => {
     expect(straight.junctions).toEqual([])
   })
   test('vault ribs never overlap, even on a short run before an elbow', () => {
-    const vault = new VaultGeometry(fortressMouth)
+    const vault = new VaultGeometry(bastionMouth)
     disposables.push(vault)
     const mesh = new Mesh(vault.ribs, material)
-    const radius = fortressMouth.width / 2
-    const spring = fortressMouth.floorY + fortressMouth.height - radius
-    for (const [i, {start, end}] of fortressMouth.spans.entries()) {
+    const radius = bastionMouth.width / 2
+    const spring = bastionMouth.floorY + bastionMouth.height - radius
+    for (const [i, {start, end}] of bastionMouth.spans.entries()) {
       const direction = horizontal(end[0] - start[0], end[1] - start[1])
       // Through the ribs’ crowns, along the span, a little off its axis, where the triangles of the ribs’ faces meet.
       const origin = new Vector3(start[0], spring + radius - 0.04, start[1])
@@ -263,21 +263,21 @@ describe('passage elbows', () => {
     }
   })
   test('vaults close their spandrels toward an elbow, up to its ceiling', () => {
-    const vault = new VaultGeometry(fortressMouth)
+    const vault = new VaultGeometry(bastionMouth)
     disposables.push(vault)
     const mesh = new Mesh(vault.shell, material)
-    const radius = fortressMouth.width / 2
-    const [x, z] = fortressMouth.path[1]
+    const radius = bastionMouth.width / 2
+    const [x, z] = bastionMouth.path[1]
     const elbow = new Vector3(x, 0, z)
-    for (const [i, {start, end}] of fortressMouth.spans.entries()) {
+    for (const [i, {start, end}] of bastionMouth.spans.entries()) {
       // From the elbow, back along the span it ends or ahead along the span it starts.
       const direction = i ? horizontal(end[0] - start[0], end[1] - start[1]) : horizontal(start[0] - end[0], start[1] - end[1])
       const across = new Vector3(-direction.z, 0, direction.x)
       for (const side of [-1, 1]) {
         // Beside the vault’s arch, just under the elbow’s ceiling, where the turn used to look into the void behind the vault.
-        for (const height of [fortressMouth.height - 0.05, fortressMouth.height - 0.6]) {
+        for (const height of [bastionMouth.height - 0.05, bastionMouth.height - 0.6]) {
           const origin = elbow.clone().addScaledVector(across, side * (radius - wallFace - 0.15))
-          origin.y = fortressMouth.floorY + height
+          origin.y = bastionMouth.floorY + height
           const raycaster = new Raycaster(origin, direction, 0, radius + 0.5)
           const hits = raycaster.intersectObject(mesh)
           expect(hits.length).toBeGreaterThan(0)

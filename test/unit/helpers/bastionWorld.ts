@@ -5,13 +5,13 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../../src/lib/gallery/architecture.ts'
-import {bastionArch, bastionMouth, bastionMouthRunnel} from '../../../src/lib/gallery/bastion.ts'
+import {bastionCrater} from '../../../src/lib/gallery/bastion.ts'
+import {bastionLinkGate, bastionNetwork} from '../../../src/lib/gallery/bastionNetwork.ts'
+import {climbArch, climbMouth, climbMouthRunnel} from '../../../src/lib/gallery/climb.ts'
 import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
 import forge from '../../../src/lib/gallery/forge.ts'
 import {forgeGutter} from '../../../src/lib/gallery/forgeGutter.ts'
 import {forgeRoundVestibule, vestibuleArches} from '../../../src/lib/gallery/forgeVestibule.ts'
-import {fortressCrater} from '../../../src/lib/gallery/fortress.ts'
-import {fortressLinkGate, fortressNetwork} from '../../../src/lib/gallery/fortressNetwork.ts'
 import gateGeometry from '../../../src/lib/gallery/gateGeometry.ts'
 import GutterGeometry from '../../../src/lib/gallery/GutterGeometry.ts'
 import Passage from '../../../src/lib/gallery/passages/Passage.ts'
@@ -20,7 +20,7 @@ import VaultGeometry from '../../../src/lib/gallery/passages/VaultGeometry.ts'
 import roundRevealGeometry from '../../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../../src/lib/gallery/roundVestibule.ts'
 import walls from '../fixtures/gallery.ts'
-import {fortressCraterGeometry} from './fortressCrater.ts'
+import {bastionCraterGeometry} from './bastionCrater.ts'
 
 type Shape = {
   /** welded, so nothing catches on its facets’ inner edges, like `MeshSurfaceCollider` */
@@ -29,11 +29,11 @@ type Shape = {
   translation?: Vec3
   triangles: [Float32Array, Uint32Array]
 }
-/** The Fortress’ walls, passages, runnels, gate and crater, as the game builds their colliders. */
-export function fortressColliders() {
+/** The Bastion’s walls, passages, runnels, gate and crater, as the game builds their colliders. */
+export function bastionColliders() {
   const colliders = new Colliders
-  colliders.walls(['fortress'])
-  for (const passage of fortressNetwork) {
+  colliders.walls(['bastion'])
+  for (const passage of bastionNetwork) {
     if (passage instanceof Passage) {
       const vault = new VaultGeometry(passage)
       for (const part of [vault.shell, vault.ribs].filter(geometry => geometry.hasAttribute('position'))) {
@@ -41,7 +41,7 @@ export function fortressColliders() {
       }
       vault.dispose()
       // A straight passage’s floor and ceiling are slabs of their own, the floor without its runnel’s strip, see CoveredPassage.
-      const runnel = passage === bastionMouth ? bastionMouthRunnel : undefined
+      const runnel = passage === climbMouth ? climbMouthRunnel : undefined
       const crown = passage.floorY + passage.height
       for (const floor of passage.floors) {
         colliders.hulls.push(slabCorners(floor, crown, crown + 0.24))
@@ -62,18 +62,18 @@ export function fortressColliders() {
     colliders.surface(vault.ribs)
     vault.dispose()
   }
-  const gate = gateGeometry(fortressLinkGate)
+  const gate = gateGeometry(bastionLinkGate)
   colliders.surface(gate)
   gate.dispose()
-  for (const part of [fortressCraterGeometry.flags, fortressCraterGeometry.rubble, fortressCraterGeometry.shards]) {
-    colliders.surface(part, true, fortressCrater.center)
+  for (const part of [bastionCraterGeometry.flags, bastionCraterGeometry.rubble, bastionCraterGeometry.shards]) {
+    colliders.surface(part, true, bastionCrater.center)
   }
   return colliders
 }
 
-/** The Fortress’ colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and its gutter. */
-export function forgeAndFortressColliders() {
-  const colliders = fortressColliders()
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and its gutter. */
+export function forgeAndBastionColliders() {
+  const colliders = bastionColliders()
   colliders.walls(['forge'])
   const floor = new ExtrudeGeometry(roundVestibuleFloorShape(forgeRoundVestibule), {
     depth: 0.24,
@@ -87,7 +87,7 @@ export function forgeAndFortressColliders() {
   const place = new Matrix4
   place.makeRotationY(ring.rotation).setPosition(...ring.center)
   for (const {name} of vestibuleArches) {
-    const reveal = roundRevealGeometry(ring, ring.holes!.find(hole => hole.name === name)!, bastionArch).applyMatrix4(place)
+    const reveal = roundRevealGeometry(ring, ring.holes!.find(hole => hole.name === name)!, climbArch).applyMatrix4(place)
     colliders.surface(reveal)
     reveal.dispose()
   }

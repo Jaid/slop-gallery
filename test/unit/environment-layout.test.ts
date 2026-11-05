@@ -158,7 +158,7 @@ test('corridor timber ribs never share their visible face with a wall baseboard'
     expect(hits[0].point.x).toBeLessThan(lodge.approachX - corridorPassage.width / 2 + 0.3)
     expect(hits[1].distance - hits[0].distance).toBeGreaterThan(0.01)
     expect(walls.filter(value => value.room === 'corridor').every(value => value.trimStyle === 'none')).toBe(true)
-    expect(walls.filter(value => value.room === 'fortress').every(value => value.trimStyle === 'plain')).toBe(true)
+    expect(walls.filter(value => value.room === 'bastion').every(value => value.trimStyle === 'plain')).toBe(true)
   } finally {
     material.dispose()
     architecture.dispose()

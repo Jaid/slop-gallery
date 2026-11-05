@@ -73,8 +73,8 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
       <LodgeThreshold wood={wood} />
     </>
   },
-  fortress: async () => {
-    const {default: Room} = await import('#src/rooms/fortress/components/FortressRoom/index.tsx')
+  bastion: async () => {
+    const {default: Room} = await import('#src/rooms/bastion/components/BastionRoom/index.tsx')
     return ({castleStone, wood}) => <Room material={castleStone} wood={wood} />
   },
   corridor: async () => {

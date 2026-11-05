@@ -34,8 +34,8 @@ const rivet = () => dome(0.006, 0.004, {
   rings: 2,
 })
 
-/** The Fortress’ own ironmongery: a flat bar of blackened wrought iron round a square rod, its corners bound by riveted straps. */
-export default class FortressStrapworkFrame extends PortraitFrame {
+/** The Bastion’s own ironmongery: a flat bar of blackened wrought iron round a square rod, its corners bound by riveted straps. */
+export default class BastionStrapworkFrame extends PortraitFrame {
   override readonly description = 'Forged for cold stone and long shadows: a broad flat bar of blackened wrought iron, hammered round at its edges, round a square rod at the sight edge, its corners bound by bent straps riveted through, with more rivets marching along every member and a bloom of rust where the damp gets in.'
   override readonly front = profile.front + 0.009
   override readonly imageDepth = imageDepth

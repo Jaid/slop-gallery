@@ -31,13 +31,13 @@ function *propPositions(): Generator<readonly [string, Vec3]> {
   }
 }
 const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
-/** Whether an orb is still on its way, or anywhere else in the Forge or the Fortress. */
+/** Whether an orb is still on its way, or anywhere else in the Forge or the Bastion. */
 const orbAround = () => releaseLocked(propPositions(), roomAt)
 
 /**
- * The button on the Forge’s west wall that releases an orb through the hole in the ceiling over it into the gutter, which rolls round the room and the vestibule and on down the Fortress into its crater.
+ * The button on the Forge’s west wall that releases an orb through the hole in the ceiling over it into the gutter, which rolls round the room and the vestibule and on down the Bastion into its crater.
  * Every time, it is a new orb picked at random, steered by what lies in the Forge or is carried into it, see {@link releasedOrb}.
- * It does nothing while any orb is still in the Forge or the Fortress, so orbs never queue up on the way.
+ * It does nothing while any orb is still in the Forge or the Bastion, so orbs never queue up on the way.
  */
 export default function OrbRelease() {
   const [released, setReleased] = useState<ReadonlyArray<{

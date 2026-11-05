@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {DoubleSide, Matrix3, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {bastionApproach, bastionArch} from '../../src/lib/gallery/bastion.ts'
+import {climbApproach, climbArch} from '../../src/lib/gallery/climb.ts'
 import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
 import {forgeRoundVestibule, forgeVestibuleFloor, vestibuleArches} from '../../src/lib/gallery/forgeVestibule.ts'
 import {isRing} from '../../src/lib/gallery/fresco.ts'
@@ -108,7 +108,7 @@ describe('the Forge’s vestibule', () => {
   const ring = wallById('forge-vestibule')
   const north = wallById('forge-north')
   const northZ = forge.center[1] - forge.size[1] / 2
-  const half = bastionArch.width / 2
+  const half = climbArch.width / 2
   const archOf = (name: string) => ring.holes!.find(hole => hole.name === name)!
   test('is round, on the room’s axis, its wall touching the middle of the north wall back to back, where an arch opens through both', () => {
     expect(x).toBe(forge.center[0])
@@ -126,7 +126,7 @@ describe('the Forge’s vestibule', () => {
     // Where they touch, one faces north into the vestibule and the other south into the room, each with the approach’s arch in it.
     const inner = archOf('forge')
     const outer = north.holes!.find(hole => hole.name === 'vestibule')!
-    expect(outer).toMatchObject(bastionArch)
+    expect(outer).toMatchObject(climbArch)
     for (const [wall, hole, facing] of [[ring, inner, -1], [north, outer, 1]] as const) {
       const [px, , pz] = wallPosition(wall, hole.u, 0, 0)
       expect(px).toBeCloseTo(x, 9)
@@ -137,17 +137,17 @@ describe('the Forge’s vestibule', () => {
     expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'gutter'])
     for (const hole of ring.holes!.filter(value => value.name !== 'gutter')) {
       const [left, right] = [-1, 1].map(side => wallPosition(ring, hole.u + side * hole.width / 2, 0, 0))
-      expect(Math.hypot(left[0] - right[0], left[2] - right[2])).toBeCloseTo(bastionArch.width, 9)
-      expect([hole.height, hole.profile, hole.bottom]).toEqual([bastionArch.height, bastionArch.profile, undefined])
+      expect(Math.hypot(left[0] - right[0], left[2] - right[2])).toBeCloseTo(climbArch.width, 9)
+      expect([hole.height, hole.profile, hole.bottom]).toEqual([climbArch.height, climbArch.profile, undefined])
     }
     // The west one where the approach ends, the arch between the room and the vestibule within the room.
-    const [wx, , wz] = wallPosition(ring, archOf('fortress').u, 0, 0)
-    expect(wx).toBeCloseTo(bastionApproach.route.end.point[0], 9)
-    expect(wz).toBeCloseTo(bastionApproach.route.end.point[1], 9)
+    const [wx, , wz] = wallPosition(ring, archOf('bastion').u, 0, 0)
+    expect(wx).toBeCloseTo(climbApproach.route.end.point[0], 9)
+    expect(wz).toBeCloseTo(climbApproach.route.end.point[1], 9)
     expect(openings.filter(({rooms: pair}) => pair.includes('forge'))).toEqual([
       {
-        rooms: ['fortress', 'forge'],
-        holes: [['forge-vestibule', 'fortress']],
+        rooms: ['bastion', 'forge'],
+        holes: [['forge-vestibule', 'bastion']],
       },
       {
         rooms: ['lobby', 'forge'],
@@ -174,8 +174,8 @@ describe('the Forge’s vestibule', () => {
     for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       expect(insideGallery([x + dx * (radius - 0.4), 1.7, z + dz * (radius - 0.4)])).toBe(false)
     }
-    // Under its floor, the Fortress’ curve climbs west toward the Lodge.
-    expect(roomAt([x, -4.4, z - 2.7])).toBe('fortress')
+    // Under its floor, the Bastion’s curve climbs west toward the Lodge.
+    expect(roomAt([x, -4.4, z - 2.7])).toBe('bastion')
     expect(insideGallery([x, 6.2, z])).toBe(false)
   })
   test('its floor slab’s shape is what navigation holds: within the wall’s center line and out under each arch to the plane touching it', () => {
@@ -211,7 +211,7 @@ describe('the Forge’s vestibule', () => {
     turn.setFromMatrix4(place)
     for (const {name, angle} of vestibuleArches) {
       const hole = archOf(name)
-      const reveal = roundRevealGeometry(ring, hole, bastionArch)
+      const reveal = roundRevealGeometry(ring, hole, climbArch)
       try {
         const position = reveal.getAttribute('position')
         const normal = reveal.getAttribute('normal')
@@ -231,10 +231,10 @@ describe('the Forge’s vestibule', () => {
           expect(along).toBeLessThan(radius + 1e-6)
           expect(Math.abs(across)).toBeLessThan(half + 1e-6)
           expect(point.y).toBeGreaterThanOrEqual(-1e-9)
-          expect(point.y).toBeLessThan(bastionArch.height + 1e-6)
+          expect(point.y).toBeLessThan(climbArch.height + 1e-6)
           // Facing into the opening: straight across it below where the head springs, toward the middle of the head above, and never along it
           const sideways = facing.z * out[0] - facing.x * out[1]
-          const springY = bastionArch.height - half
+          const springY = climbArch.height - half
           expect(sideways * -across + facing.y * (Math.min(point.y, springY) - point.y)).toBeGreaterThan(0)
           expect(Math.abs(facing.x * out[0] + facing.z * out[1])).toBeLessThan(1e-6)
           if (Math.abs(along - radius) >= 1e-6) {
@@ -245,7 +245,7 @@ describe('the Forge’s vestibule', () => {
         }
         // Out at the plane, it opens as wide and as high as the approach’s arch.
         expect(widest).toBeCloseTo(half, 6)
-        expect(highest).toBeCloseTo(bastionArch.height, 6)
+        expect(highest).toBeCloseTo(climbArch.height, 6)
         const [, indices] = colliderGeometry(reveal)
         expect(indices.length).toBeGreaterThan(0)
       } finally {

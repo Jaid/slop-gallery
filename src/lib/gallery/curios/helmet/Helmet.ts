@@ -7,7 +7,7 @@ import ForgedSteelMaterial from '#src/lib/materials/ForgedSteelMaterial.ts'
 import {studioEnvironment} from '#src/lib/materials/metal.ts'
 
 import {mergeParts} from '../../../geometry.ts'
-import {fortressMouth} from '../../fortress.ts'
+import {bastionMouth} from '../../bastion.ts'
 import Curio, {CurioModel} from '../base/Curio.ts'
 import latticeGeometry from '../lattice.ts'
 
@@ -118,20 +118,20 @@ function rivetHeads(points: ReadonlyArray<{
     return head
   })
 }
-const [, elbow] = fortressMouth.path
+const [, elbow] = bastionMouth.path
 
 /**
  * A knight’s close helmet of hand-forged steel, and nobody in it: an egg of a skull with a low comb over its crown, a visor of two plates standing proud of it, the upper one with its eye slits, the lower one creased down its prow and slotted to breathe through, a pointed chin, all on a bell of a gorget with a rolled border riveted all round, pointed at the front.
- * It stands in the corner of the Fortress’ mouth by the east bridge, looking out toward the doorway, waiting for a body of armor to wear it, and steers the Forge’s orb release to a Spook Orb.
+ * It stands in the corner of the Bastion’s mouth by the east bridge, looking out toward the doorway, waiting for a body of armor to wear it, and steers the Forge’s orb release to a Spook Orb.
  * In its own frame it stands on the border of its gorget at the origin, looking along z.
  */
 export default class Helmet extends Curio {
   readonly id = 'helmet'
   readonly mass = 3.2
   // In the outer corner of the mouth’s elbow, 70 cm off both walls
-  readonly position: Vec3 = [elbow[0] + fortressMouth.width / 2 - 0.7, fortressMouth.floorY + 0.003, elbow[1] + fortressMouth.width / 2 - 0.7]
+  readonly position: Vec3 = [elbow[0] + bastionMouth.width / 2 - 0.7, bastionMouth.floorY + 0.003, elbow[1] + bastionMouth.width / 2 - 0.7]
   readonly reach = 0.36
-  readonly room = 'fortress'
+  readonly room = 'bastion'
   override readonly rotation: Vec3 = [0, -2, 0]
   readonly title = 'A knight’s helmet, with nobody in it'
 

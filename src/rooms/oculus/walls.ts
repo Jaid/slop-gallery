@@ -1,8 +1,8 @@
 import type {RoomWall} from '../base/Room.ts'
 import type {Vec3} from 'math'
 
-import {bastionDoorway} from '#src/lib/gallery/bastion.ts'
-import {apseOpeningPoint, apseOpenings, fortressDoorway} from '#src/lib/gallery/fortress.ts'
+import {apseOpeningPoint, apseOpenings, bastionDoorway} from '#src/lib/gallery/bastion.ts'
+import {climbDoorway} from '#src/lib/gallery/climb.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '#src/lib/gallery/lowerGallery.ts'
 import oculusApse from '#src/lib/gallery/oculusApse.ts'
@@ -20,14 +20,14 @@ const local = ([x, y, z]: Vec3): Vec3 => [x - originX, y - originY, z - originZ]
 const sillDrop = 0.02
 /**
  * A side wall along the ramps, whose baseboard follows them up to the turning landing, with the door at the balcony’s level onto the staff stairway down to the tunnel’s display on that side.
- * The east one opens into the Fortress where the east bridge meets it, the west one into the Bastion where the west bridge does.
+ * The east one opens into the Bastion where the east bridge meets it, the west one into its western climb where the west bridge does.
  */
 const sideWall = (side: 'east' | 'west'): RoomWall => {
   const ramp = oculusRamps.find(value => value.side === side)!
   const wall = planWall(oculus.size, side, height, {trimStyle: 'plain'})
   const {stairway: {door}} = tunnelDisplays.find(display => display.side === side)!
   const doorAt = local(door)
-  const passage = side === 'east' ? fortressDoorway : bastionDoorway
+  const passage = side === 'east' ? bastionDoorway : climbDoorway
   const doorway = local([passage.x, passage.y, passage.z])
   return {
     ...wall,
@@ -47,7 +47,7 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
         height: doorAt[1] + displayStairway.doorHeight,
         profile: 'rectangle',
       },
-      fortress: {
+      bastion: {
         u: wallCoordinates(wall, doorway),
         width: passage.width,
         bottom: doorway[1] - sillDrop,
@@ -58,7 +58,7 @@ const sideWall = (side: 'east' | 'west'): RoomWall => {
   }
 }
 const platformHeight = oculusPlatform.position[1] + oculusPlatform.size[1] / 2 - oculus.floorY
-/** The apse’s round walls stand on the platform, each along one of its arcs, and reach up to the same cornice as the side walls. The barred gate and windows onto the Fortress pierce them. */
+/** The apse’s round walls stand on the platform, each along one of its arcs, and reach up to the same cornice as the side walls. The barred gate and windows onto the Bastion pierce them. */
 const [northwest, north, northeast] = oculusApse.arcs.map(({center, radius, from, to}, arc): RoomWall => {
   const angle = (from + to) / 2
   const wall = {

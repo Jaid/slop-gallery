@@ -48,7 +48,7 @@ export default function Architecture() {
       dispose: () => disposeArchitecturalGlassMaterials(materials),
     }
   }, [isHeavy]))
-  // The Lodge, the Fortress, the Bastion and the corridor run underground, beyond the reach of the sun.
+  // The Lodge, the Bastion with its western climb and the corridor run underground, beyond the reach of the sun.
   const castleStone = useDisposable(useMemo(() => lightIndoors(new CastleStoneMaterial), []))
   // The corridor and its stairs see nothing but their own lanterns.
   const corridorWood = useDisposable(useMemo(() => lightIndoors(new LodgeWoodMaterial), []))
@@ -91,7 +91,7 @@ export default function Architecture() {
     if (wall.room === 'oculus' || wall.room === 'exhibition') {
       return oculusMaterial
     }
-    if (wall.room === 'fortress') {
+    if (wall.room === 'bastion') {
       return castleStone
     }
     if (wall.room === 'lodge') {

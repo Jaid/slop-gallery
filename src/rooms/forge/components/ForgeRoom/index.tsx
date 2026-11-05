@@ -11,7 +11,7 @@ import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {bastionArch} from '#src/lib/gallery/bastion.ts'
+import {climbArch} from '#src/lib/gallery/climb.ts'
 import {floorThickness} from '#src/lib/gallery/floors.ts'
 import {forgeRooflight, forgeVestibule} from '#src/lib/gallery/forge.ts'
 import {forgeGutter} from '#src/lib/gallery/forgeGutter.ts'
@@ -53,10 +53,10 @@ const ceilingSlabs = (() => {
     slab(dropX - gap, dropZ + gap, dropX + gap, halfDepth),
   ]
 })()
-/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight and the hole an orb released by the button under it drops through into the gutter round the room, and its round vestibule north of it, alike on a smaller scale, where the gutter lets the orb fly off toward the Fortress. */
+/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight and the hole an orb released by the button under it drops through into the gutter round the room, and its round vestibule north of it, alike on a smaller scale, where the gutter lets the orb fly off toward the Bastion. */
 export default function ForgeRoom({glass, masonry, stone, wood}: {
   glass: Material
-  /** the Fortress’ stone, which lines the vestibule’s arch onto its approach */
+  /** the Bastion’s stone, which lines the vestibule’s arch onto its approach */
   masonry: Material
   stone: Texture
   wood: Texture
@@ -170,7 +170,7 @@ function Rooflight({gilt, layout, name, plaster}: {
 }
 /**
  * The round vestibule north of the room: its floor, out under its arches, with a brass ring like the room’s inlays, its ceiling and rooflight like the room’s, and the reveals that line its arches out to the planes touching its wall there:
- * plaster through to the room’s north wall, and the Fortress’ stone on from the end of its approach.
+ * plaster through to the room’s north wall, and the Bastion’s stone on from the end of its approach.
  */
 function Vestibule({floorReflections, masonry, plaster}: {
   floorReflections: boolean
@@ -195,7 +195,7 @@ function Vestibule({floorReflections, masonry, plaster}: {
   }), [floorReflections]))
   const linings = {
     forge: lining,
-    fortress: masonry,
+    bastion: masonry,
   }
   const parts = useDisposable(useMemo(() => {
     const slab = new ExtrudeGeometry(roundVestibuleFloorShape(forgeRoundVestibule), {
@@ -207,7 +207,7 @@ function Vestibule({floorReflections, masonry, plaster}: {
     const inlay = ring(radius - vestibuleInlay - 0.013, radius - vestibuleInlay + 0.013, 0.012).translate(0, 0.009, 0)
     const reveals = vestibuleArches.map(({name}) => ({
       name,
-      geometry: roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, bastionArch),
+      geometry: roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, climbArch),
     }))
     const outline = new Shape
     outline.absarc(0, 0, radius, 0, Math.PI * 2, false)

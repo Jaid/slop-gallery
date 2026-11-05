@@ -2,9 +2,9 @@ import type {Vec3} from '#src/lib/gallery/types.ts'
 import type PlacedRoom from '../base/PlacedRoom.ts'
 import type {GalleryRoom} from './SlopGallery.ts'
 
+import {bastionFloors, insideBastion} from '#src/lib/gallery/bastionNetwork.ts'
 import {corridorLanding, corridorPassage, corridorStairFloor, insideCorridor} from '#src/lib/gallery/corridor.ts'
 import {forgeVestibuleFloor} from '#src/lib/gallery/forgeVestibule.ts'
-import {fortressFloors, insideFortress} from '#src/lib/gallery/fortressNetwork.ts'
 import {insideLodgeWindow, lodgeBayFloor, lodgeWindowFloor} from '#src/lib/gallery/lodge.ts'
 import lowerGallery, {rampFloorHeight, tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
 import {craterTerrain} from '#src/lib/gallery/moonfall/CraterTerrain.ts'
@@ -36,7 +36,7 @@ export default class GalleryNavigation {
 
   /** Whether the position lies anywhere a player or an artwork may be. */
   contains(position: Vec3) {
-    return position.every(Number.isFinite) && (this.halls.some(room => this.hallContains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeWindow(position) || insideFortress(position))
+    return position.every(Number.isFinite) && (this.halls.some(room => this.hallContains(room, position)) || insideStairway(position) || tunnelContains(position) || insideTunnelDisplay(position) || insideLodgeWindow(position) || insideBastion(position))
   }
 
   /**
@@ -45,7 +45,7 @@ export default class GalleryNavigation {
   floorHeight([x, y, z]: Vec3) {
     const floors = [
       ...this.halls.filter(room => inPlan(room, x, z)).map(room => groundOf(room, x, z)),
-      ...fortressFloors(x, z),
+      ...bastionFloors(x, z),
       corridorPassage.floorAt(x, z),
       corridorLanding.floorAt(x, z),
       siennaVestibuleFloor(x, z),

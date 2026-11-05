@@ -1,20 +1,20 @@
 import type {RoundVestibule, VestibuleArch} from './roundVestibule.ts'
 
-import {bastionArch} from './bastion.ts'
+import {climbArch} from './climb.ts'
 import {forgeVestibule} from './forge.ts'
 import roomOrigins from './layout.ts'
 import {insideRoundVestibule} from './roundVestibule.ts'
 
 const floorY = roomOrigins.forge[1]
 
-/** The vestibule’s arches: south into the Forge, through the middle of its north wall, and west onto the Fortress’ approach. */
+/** The vestibule’s arches: south into the Forge, through the middle of its north wall, and west onto the Bastion’s approach. */
 export const vestibuleArches = [
   {
     name: 'forge',
     angle: Math.PI / 2,
   },
   {
-    name: 'fortress',
+    name: 'bastion',
     angle: Math.PI,
   },
 ] as const satisfies ReadonlyArray<VestibuleArch>
@@ -23,7 +23,7 @@ export const vestibuleArches = [
 export const forgeRoundVestibule = {
   center: forgeVestibule.center,
   radius: forgeVestibule.radius,
-  arch: bastionArch,
+  arch: climbArch,
   arches: vestibuleArches,
 } satisfies RoundVestibule
 

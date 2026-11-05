@@ -49,8 +49,8 @@ const nail = () => dome(0.006, 0.004, {
   rings: 1,
 })
 
-/** The Fortress’ own carpentry: thick boards of weathered oak, their corners bound by forged iron brackets and nailed with square nails. */
-export default class FortressOakFrame extends PortraitFrame {
+/** The Bastion’s own carpentry: thick boards of weathered oak, their corners bound by forged iron brackets and nailed with square nails. */
+export default class BastionOakFrame extends PortraitFrame {
   override readonly description = 'A frame for a gatehouse: thick boards of weathered oak, gray at their worn arrises and open in the grain, their corners bound by forged iron brackets ending in spade-shaped curls, all of it fastened with square hand-cut nails.'
   override readonly front = profile.front + 0.006
   override readonly imageDepth = imageDepth

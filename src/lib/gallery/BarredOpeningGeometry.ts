@@ -107,7 +107,7 @@ export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {cur
 }
 
 /**
- * The iron bars in an opening through a wall, and the stone reveal that lines the opening on through the gap behind the wall to the wall it meets there, like the apse’s gate and windows through the Oculus’ wall and the Fortress’ behind it.
+ * The iron bars in an opening through a wall, and the stone reveal that lines the opening on through the gap behind the wall to the wall it meets there, like the apse’s gate and windows through the Oculus’ wall and the Bastion’s behind it.
  * Both are built in the wall’s own frame, bent with it if it curves, and placed with it in world space.
  * The reveal lines the opening from the wall’s center line `depth` meters back, where the other wall’s center line lies, there as wide as the `back` opening; for an opening down to the floor, its sill fills the gap between both floors.
  * The bars stand in the wall itself, where the opening is no wider than on its face, splayed or not.

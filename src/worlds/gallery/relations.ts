@@ -71,34 +71,34 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['oculus-west', 'staff_door']],
   },
   {
-    rooms: ['oculus', 'fortress'],
-    holes: [['oculus-east', 'fortress']],
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-east', 'bastion']],
   },
-  // The barred gate and windows in the apse, each through the apse’s wall and the wall of the Fortress’ curve behind it, the one toward the apse along that stretch of the curve.
+  // The barred gate and windows in the apse, each through the apse’s wall and the wall of the Bastion’s curve behind it, the one toward the apse along that stretch of the curve.
   {
-    rooms: ['oculus', 'fortress'],
-    holes: [['oculus-north', 'west_window'], ['fortress-curve_wall_6', 'west_window']],
-  },
-  {
-    rooms: ['oculus', 'fortress'],
-    holes: [['oculus-north', 'gate'], ['fortress-curve_wall_6', 'gate']],
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-north', 'west_window'], ['bastion-curve_wall_6', 'west_window']],
   },
   {
-    rooms: ['oculus', 'fortress'],
-    holes: [['oculus-north', 'east_window'], ['fortress-curve_wall_6', 'east_window']],
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-north', 'gate'], ['bastion-curve_wall_6', 'gate']],
   },
   {
-    rooms: ['fortress', 'lodge'],
-    holes: [['lodge-east', 'fortress']],
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-north', 'east_window'], ['bastion-curve_wall_6', 'east_window']],
   },
   {
-    rooms: ['oculus', 'fortress'],
-    holes: [['oculus-west', 'fortress']],
+    rooms: ['bastion', 'lodge'],
+    holes: [['lodge-east', 'bastion']],
   },
   {
-    // The arch out of the Forge’s vestibule onto the Fortress’ approach; the arch between the Forge and its vestibule lies within the Forge.
-    rooms: ['fortress', 'forge'],
-    holes: [['forge-vestibule', 'fortress']],
+    rooms: ['oculus', 'bastion'],
+    holes: [['oculus-west', 'bastion']],
+  },
+  {
+    // The arch out of the Forge’s vestibule onto the Bastion’s approach; the arch between the Forge and its vestibule lies within the Forge.
+    rooms: ['bastion', 'forge'],
+    holes: [['forge-vestibule', 'bastion']],
   },
   {
     rooms: ['lodge', 'corridor'],
@@ -126,7 +126,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'forge', 'oculus', 'sienna', 'exhibition', 'fortress'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'forge', 'oculus', 'sienna', 'exhibition', 'bastion'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -143,7 +143,7 @@ const relations = {
     },
   },
   vesper: {
-    rooms: ['lobby', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'forge', 'corridor', 'oculus'],
+    rooms: ['lobby', 'bastion', 'sienna', 'banquet', 'antechamber', 'salon', 'forge', 'corridor', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -217,11 +217,11 @@ const relations = {
   },
   forge: {
     // Through its window, across the Lobby and through the Salon’s window, as the Salon sees across it the other way
-    rooms: ['fortress', 'lobby', 'salon', 'vesper', 'banquet', 'antechamber', 'oculus', 'sienna', 'exhibition'],
+    rooms: ['bastion', 'lobby', 'salon', 'vesper', 'banquet', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     // The last lantern along the approach hangs right before the vestibule’s arch.
     visibleLamps: {
-      fortress: 'lantern_strip',
+      bastion: 'lantern_strip',
     },
   },
   moonfall: {
@@ -236,7 +236,7 @@ const relations = {
     },
   },
   corridor: {
-    rooms: ['sienna', 'lodge', 'vesper', 'fortress'],
+    rooms: ['sienna', 'lodge', 'vesper', 'bastion'],
     visibleLamps: {
       sienna: [
         'chandelier',
@@ -249,7 +249,7 @@ const relations = {
     },
   },
   oculus: {
-    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'forge', 'moonfall', 'banquet'],
+    rooms: ['lobby', 'exhibition', 'bastion', 'salon', 'forge', 'moonfall', 'banquet'],
     visibleLamps: {
       moonfall: [
         'planet_glow',
@@ -264,7 +264,7 @@ const relations = {
         'east_stairway_door',
         'east_stairway_landing',
       ],
-      fortress: [
+      bastion: [
         'lantern_east',
         'lantern_north',
         'lantern_mouth',
@@ -273,7 +273,7 @@ const relations = {
     },
   },
   exhibition: {
-    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon', 'forge'],
+    rooms: ['oculus', 'moonfall', 'lobby', 'bastion', 'salon', 'forge'],
     floorMirror: 'moonfall',
     audibleAmbiences: {
       moonfall: 'orbital_sculpture',
@@ -299,7 +299,7 @@ const relations = {
     },
   },
   lodge: {
-    rooms: ['fortress', 'corridor', 'oculus'],
+    rooms: ['bastion', 'corridor', 'oculus'],
     visibleLamps: {
       corridor: [
         'lantern_lodge',
@@ -307,10 +307,10 @@ const relations = {
         'lantern_middle',
         'lantern_south',
       ],
-      fortress: 'lantern_north',
+      bastion: 'lantern_north',
     },
   },
-  fortress: {
+  bastion: {
     rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'forge', 'vesper'],
     visibleLamps: {
       corridor: 'lantern_lodge',

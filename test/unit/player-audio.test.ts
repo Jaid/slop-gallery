@@ -4,7 +4,7 @@ import {afterEach, beforeEach, expect, mock, spyOn, test} from 'bun:test'
 
 import {attachPlayerAudio, onPlayerLand, onPlayerStep, onPlayerZoomChange, onPlayerZoomTransition} from '../../src/lib/audio/playerAudio.ts'
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
-import {fortressApproach, fortressOrigin, fortressTransition} from '../../src/lib/gallery/fortress.ts'
+import {bastionApproach, bastionOrigin, bastionTransition} from '../../src/lib/gallery/bastion.ts'
 import {useGallery} from '../../src/lib/gallery/store.ts'
 import {getPlayerZoom, setPlayerZoom} from '../../src/lib/rendering/playerView.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -65,10 +65,10 @@ test('ground surface resolver maps visible floor materials to modifiers', () => 
   expect(groundSurface('sienna', [-10, 0, 14])).toBe('hollow')
   expect(groundSurface('moonfall', [-8, -8, 18.5])).toBe('fabric')
   expect(groundSurface('moonfall', [2, -8, 18.5])).toBe('generic')
-  expect(groundSurface('fortress', fortressOrigin)).toBe('stone')
-  const [planksX, planksZ] = fortressTransition.floor.center
-  expect(groundSurface('fortress', [planksX, fortressApproach.floorY, planksZ])).toBe('hollow')
-  expect(groundSurface('fortress', [planksX + fortressTransition.floor.size[0] / 2 + 0.3, fortressApproach.floorY, planksZ])).toBe('stone')
+  expect(groundSurface('bastion', bastionOrigin)).toBe('stone')
+  const [planksX, planksZ] = bastionTransition.floor.center
+  expect(groundSurface('bastion', [planksX, bastionApproach.floorY, planksZ])).toBe('hollow')
+  expect(groundSurface('bastion', [planksX + bastionTransition.floor.size[0] / 2 + 0.3, bastionApproach.floorY, planksZ])).toBe('stone')
 })
 test('player footsteps use horizontal physical speed and landings use pre-impact speed', () => {
   onPlayerStep(state)

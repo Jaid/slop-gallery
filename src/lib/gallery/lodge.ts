@@ -20,7 +20,7 @@ const lodge = {
   // Expand the long timber passage westward, keeping its east wall fixed.
   approachX: -31.7 - timberWidth / 2,
   timberWidth,
-  /** the Fortress’ width, as wide as the doorway the Oculus’ east bridge leads into */
+  /** the Bastion’s width, as wide as the doorway the Oculus’ east bridge leads into */
   passageWidth: towerBridge.mouthWidth,
   // The widened stone doorway sits beside the north wall: its jamb stays 2 cm in front of the north baseboard’s cap (25 cm from the
   // wall) and 7 cm in front of its face (20 cm), and its casing still tucks into the north wall’s logs (10.5 cm). On the baseboard’s

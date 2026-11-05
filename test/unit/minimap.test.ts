@@ -9,7 +9,7 @@ import Minimap from '#component/GalleryMinimap'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 import {cameraPose, useGallery} from '../../src/lib/gallery.ts'
-import {bastionApex} from '../../src/lib/gallery/bastion.ts'
+import {climbApex} from '../../src/lib/gallery/climb.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import {isLowerPosition, minimapHeading, minimapPortrait, minimapRooms, minimapViewBox} from '../../src/lib/gallery/minimap.ts'
 import portraitObjects from '../../src/lib/gallery/portraitObjects.ts'
@@ -91,10 +91,10 @@ test('hanging portraits belong to their wall’s floor even when rooms overlap v
     wallId: 'lobby-north',
   }).lower).toBe(false)
 })
-test('the Fortress shows on the lower floor up to the apex of its western hairpin and its climb to the Forge from there on the upper floor', () => {
-  const drawings = minimapRooms.filter(room => room.id === 'fortress')
+test('the Bastion shows on the lower floor up to the apex of its western hairpin and its climb to the Forge from there on the upper floor', () => {
+  const drawings = minimapRooms.filter(room => room.id === 'bastion')
   expect(drawings.map(room => room.lower)).toEqual([true, false])
-  const [apexX, apexZ] = bastionApex.point
+  const [apexX, apexZ] = climbApex.point
   // In the mouth under the run north, on the hairpin’s west leg and just short of the apex, then just past it, up the east leg and along the run north over the mouth.
   for (const [position, lower] of [
     [[-15, -3.9, -24], true],
@@ -107,10 +107,10 @@ test('the Fortress shows on the lower floor up to the apex of its western hairpi
     [[-22.3, 0, -30], false],
   ] as const) {
     const at = eye(position)
-    expect(slopGallery.roomAt(at)?.id).toBe('fortress')
-    expect(isLowerPosition('fortress', at)).toBe(lower)
+    expect(slopGallery.roomAt(at)?.id).toBe('bastion')
+    expect(isLowerPosition('bastion', at)).toBe(lower)
   }
-  expect(isLowerPosition('fortress', eye(slopGallery.room('fortress').spawn.position))).toBe(true)
+  expect(isLowerPosition('bastion', eye(slopGallery.room('bastion').spawn.position))).toBe(true)
 })
 test('portrait dots follow rigid bodies instead of the positions in the store', () => {
   const portrait = {

@@ -1,15 +1,15 @@
 import type {Lamp} from '../base/Room.ts'
 
-import {fortressCurve, fortressLanterns, fortressOrigin} from '#src/lib/gallery/fortress.ts'
-import {fortressLink, fortressLinkLanterns} from '#src/lib/gallery/fortressNetwork.ts'
+import {bastionCurve, bastionLanterns, bastionOrigin} from '#src/lib/gallery/bastion.ts'
+import {bastionLink, bastionLinkLanterns} from '#src/lib/gallery/bastionNetwork.ts'
 import {routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
 import climbLamps from './climbLamps.ts'
 
-const [originX, originY, originZ] = fortressOrigin
+const [originX, originY, originZ] = bastionOrigin
 /** `below` meters under the middle of the lantern hanging `along` meters down the curve, with how it shines */
 const lantern = (along: number, shine: Pick<Lamp, 'decay' | 'range' | 'strength'> = {}, below = 0.3): Lamp => {
-  const [x, y, z] = routeLight(fortressCurve, along)
+  const [x, y, z] = routeLight(bastionCurve, along)
   return {
     position: [x - originX, y - below - originY, z - originZ],
     strength: 30,
@@ -23,17 +23,17 @@ const lantern = (along: number, shine: Pick<Lamp, 'decay' | 'range' | 'strength'
 
 export default {
   ...climbLamps,
-  ...Object.fromEntries(fortressLinkLanterns.map((along, index) => {
-    const [x, y, z] = routeLight(fortressLink, along)
+  ...Object.fromEntries(bastionLinkLanterns.map((along, index) => {
+    const [x, y, z] = routeLight(bastionLink, along)
     return [`lantern_link_${index}`, {
       ...climbLamps.lantern_mouth,
       position: [x - originX, y - 0.3 - originY, z - originZ] as const,
     }]
   })),
   // The curve’s lanterns, hung low, stronger than the corridor’s and fading more gently: a little way north of the mouth, which the Oculus sees, and behind the apse’s gate, which the Lodge also looks down the approach at.
-  lantern_east: lantern(fortressLanterns.east),
+  lantern_east: lantern(bastionLanterns.east),
   // It throws the bars of the gate onto the platform right in front of it and those of the windows beside it, slanting through them, far out across it: it reaches that far, fading more gently, and shines a little lower than the other one.
-  lantern_north: lantern(fortressLanterns.north, {
+  lantern_north: lantern(bastionLanterns.north, {
     strength: 35,
     range: 20,
     decay: 1.25,

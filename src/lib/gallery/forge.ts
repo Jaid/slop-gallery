@@ -23,7 +23,7 @@ export type Rooflight = {
 
 /**
  * The Forge sits north of the Vesper, across the Lobby’s north extension from the Salon, whose floor plan it mirrors: its east wall backs onto the Lobby’s west extension, from the Lobby’s north wall to the Vesper’s north wall’s line.
- * The Fortress climbs from the Oculus’ west bridge and enters its round vestibule, north of the room, from the west.
+ * The Bastion climbs from the Oculus’ west bridge and enters its round vestibule, north of the room, from the west.
  */
 const forge = {
   center: [-salon.center[0], salon.center[1]],
@@ -49,7 +49,7 @@ export const forgeRooflight = {
 const vestibuleRadius = 3
 /**
  * The vestibule north of the Forge, still the Forge’s: a round anteroom at its floor on its axis, whose wall touches the middle of its north wall back to back, where an arch opens through both into the room.
- * The Fortress’ approach arrives through a second arch, from the west. Its ceiling is as high as the room’s, pierced in the middle by a round rooflight of its own.
+ * The Bastion’s approach arrives through a second arch, from the west. Its ceiling is as high as the room’s, pierced in the middle by a round rooflight of its own.
  */
 export const forgeVestibule = {
   center: [forge.center[0], northZ - vestibuleRadius],

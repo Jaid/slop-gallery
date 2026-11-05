@@ -9,7 +9,7 @@ import {Box3, Euler, Quaternion, Vector3} from 'three/webgpu'
 import {banquet, banquetTable, banquetTableColliders} from '../../src/lib/gallery/banquet.ts'
 import {curios, helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
-import {fortressColliders, physicsWorld} from './helpers/fortressWorld.ts'
+import {bastionColliders, physicsWorld} from './helpers/bastionWorld.ts'
 
 await RAPIER.init()
 /** the volume a surface encloses, positive while it faces out */
@@ -33,7 +33,7 @@ describe('the curios', () => {
     for (const curio of curios) {
       expect(slopGallery.roomAt(curio.position)?.id).toBe(curio.room)
     }
-    expect([pumpkin.room, knife.room, helmet.room]).toEqual(['banquet', 'banquet', 'fortress'])
+    expect([pumpkin.room, knife.room, helmet.room]).toEqual(['banquet', 'banquet', 'bastion'])
   })
   for (const curio of curios) {
     test(`the ${curio.id}’s meshes face out, carry what their materials read and fit its reach`, () => {
@@ -154,8 +154,8 @@ describe('where a game begins, each curio comes to rest where it lies', () => {
       world.free()
     }
   })
-  test('the helmet stands on its gorget in the Fortress’ mouth', () => {
-    const world = physicsWorld(fortressColliders())
+  test('the helmet stands on its gorget in the Bastion’s mouth', () => {
+    const world = physicsWorld(bastionColliders())
     try {
       const {asleep, moved, up, y} = settle(helmet, world)
       expect(asleep).toBe(true)
