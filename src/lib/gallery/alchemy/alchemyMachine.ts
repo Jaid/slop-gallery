@@ -5,7 +5,7 @@ import {weldedSurfaceSkin} from '../../physics/weldedSurface.ts'
 import {wallCoordinates} from '../../placement/wallGeometry.ts'
 import {wallFace} from '../architectureDimensions.ts'
 import forge, {forgeVestibule} from '../forge.ts'
-import {forgeHopper, forgeOpeningCenter} from '../forgeGutter.ts'
+import {forgeOpeningCenter} from '../forgeOpening.ts'
 import {orbRadius} from '../orbs/index.ts'
 
 const southZ = forge.center[1] + forge.size[1] / 2
@@ -194,11 +194,11 @@ export const cannonLaunch = (() => {
   }
 })()
 
-/** The orb’s flight from the cannon until it strikes the backstop behind the opening, after every step of the physics. */
+/** The orb’s free flight from the cannon into the vestibule, after every step of the physics. */
 export function cannonFlight() {
   const points: Array<Vec3> = []
   for (const point of flight(cannonLaunch.position, cannonLaunch.velocity)) {
-    if (point[2] - orbRadius < forgeHopper.backstop.face) {
+    if (point[2] < forgeVestibule.center[1]) {
       return points
     }
     points.push(point)

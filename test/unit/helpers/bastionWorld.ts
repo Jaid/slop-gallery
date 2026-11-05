@@ -10,11 +10,9 @@ import {bastionLinkGate, bastionNetwork, climbMouthHollow} from '../../../src/li
 import {climbArch, climbMouth} from '../../../src/lib/gallery/climb.ts'
 import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
 import forge from '../../../src/lib/gallery/forge.ts'
-import {forgeGutter, forgeHopper} from '../../../src/lib/gallery/forgeGutter.ts'
+import ForgeTurnGeometry from '../../../src/lib/gallery/ForgeTurnGeometry.ts'
 import {forgeRoundVestibule, vestibuleArches} from '../../../src/lib/gallery/forgeVestibule.ts'
 import gateGeometry from '../../../src/lib/gallery/gateGeometry.ts'
-import GutterGeometry from '../../../src/lib/gallery/GutterGeometry.ts'
-import HopperGeometry from '../../../src/lib/gallery/HopperGeometry.ts'
 import Passage from '../../../src/lib/gallery/passages/Passage.ts'
 import RouteVaultGeometry from '../../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../../src/lib/gallery/passages/VaultGeometry.ts'
@@ -27,6 +25,7 @@ import {bastionCraterGeometry} from './bastionCrater.ts'
 type Shape = {
   /** welded, so nothing catches on its facets’ inner edges, with its skin, like `MeshSurfaceCollider` */
   fix?: boolean
+  polished?: boolean
   rotation?: number
   translation?: Vec3
   triangles: [Float32Array, Uint32Array]
@@ -73,7 +72,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, the hopper behind the opening the alchemy machine’s cannon shoots through and the gutter under it. */
+/** The Bastion’s colliders and the Forge’s walls, floors, arch reveals and north-wall pipe. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -96,15 +95,13 @@ export function forgeAndBastionColliders() {
   const [halfWidth, halfDepth] = [forge.size[0] / 2, forge.size[1] / 2]
   const [x, z] = forge.center
   colliders.hulls.push(slabCorners([[x - halfWidth, z - halfDepth], [x + halfWidth, z - halfDepth], [x + halfWidth, z + halfDepth], [x - halfWidth, z + halfDepth]], -0.24, 0))
-  const gutter = new GutterGeometry(forgeGutter)
-  colliders.surface(gutter.collision, true)
-  gutter.dispose()
-  const hopper = new HopperGeometry
-  colliders.surface(hopper.funnel.collision, true, forgeHopper.funnel.center)
-  hopper.dispose()
-  const {backstop, funnel} = forgeHopper
-  const [left, right] = [funnel.center[0] - backstop.width / 2, funnel.center[0] + backstop.width / 2]
-  colliders.cushions.push(slabCorners([[left, backstop.face - backstop.thickness], [right, backstop.face - backstop.thickness], [right, backstop.face], [left, backstop.face]], backstop.bottom, backstop.top))
+  const pipe = new ForgeTurnGeometry
+  colliders.shapes.push({
+    triangles: colliderGeometry(pipe.collision),
+    fix: true,
+    polished: true,
+  })
+  pipe.dispose()
   return colliders
 }
 
@@ -134,15 +131,16 @@ export function addOrb(world: RAPIER.World, position: Vec3) {
 
 /** Collects the shapes once, as the game builds them, to put into as many worlds as asked. */
 class Colliders {
-  /** hulls that whatever strikes them stops dead against, without bouncing off, like the hopper’s padded backstop */
-  readonly cushions: Array<Float32Array> = []
   readonly hulls: Array<Float32Array> = []
   readonly shapes: Array<Shape> = []
 
   /** Puts all of them into the world. */
   into(world: RAPIER.World) {
-    for (const {fix, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
+    for (const {fix, polished, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
       const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin) : RAPIER.ColliderDesc.trimesh(vertices, indices)
+      if (polished) {
+        shape.setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.2).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min)
+      }
       if (translation) {
         shape.setTranslation(...translation)
       }
@@ -153,9 +151,6 @@ class Colliders {
     }
     for (const vertices of this.hulls) {
       world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!)
-    }
-    for (const vertices of this.cushions) {
-      world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!.setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min))
     }
   }
 

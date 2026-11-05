@@ -22,7 +22,7 @@ import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import AlchemyMachine from '#src/rooms/forge/components/AlchemyMachine/index.tsx'
-import ForgeGutter from '#src/rooms/forge/components/ForgeGutter/index.tsx'
+import ForgeTurn from '#src/rooms/forge/components/ForgeTurn/index.tsx'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('forge')
@@ -63,7 +63,7 @@ export default function ForgeRoom({glass, masonry, stone, wood}: {
       <Rooflight gilt={gold} layout={forgeRooflight} name='forge-rooflight' plaster={plaster} />
     </group>
     <Vestibule floorReflections={floorReflections} masonry={masonry} plaster={plaster} />
-    <ForgeGutter />
+    <ForgeTurn />
     <AlchemyMachine />
   </group>
 }

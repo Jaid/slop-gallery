@@ -5,7 +5,7 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import {mulberry32} from 'math/random'
-import {Box3, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {alchemyCannon, alchemyPipe, alchemySink, cannonFlight, cannonLaunch, forgeOpening, holderSpot, inSinkThroat, machineBody, southWallFace, workbench} from '../../src/lib/gallery/alchemy/alchemyMachine.ts'
 import CannonGeometry from '../../src/lib/gallery/alchemy/CannonGeometry.ts'
@@ -18,12 +18,10 @@ import {colliderGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery
 import {corniceBands} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
-import {climbApproach} from '../../src/lib/gallery/climb.ts'
 import {helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
-import {forgeGutter, forgeHopper, forgeOpeningCenter} from '../../src/lib/gallery/forgeGutter.ts'
-import GutterGeometry from '../../src/lib/gallery/GutterGeometry.ts'
-import HopperGeometry from '../../src/lib/gallery/HopperGeometry.ts'
+import {forgeOpeningCenter} from '../../src/lib/gallery/forgeOpening.ts'
+import ForgeTurnGeometry, {forgeTurn} from '../../src/lib/gallery/ForgeTurnGeometry.ts'
 import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
 import {halloweenOrb, horrorOrb, orbRadius, randomOrbs, spookOrb, transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
 import {salonCeiling} from '../../src/lib/gallery/salon.ts'
@@ -36,10 +34,9 @@ import {addOrb, forgeAndBastionColliders, physicsWorld} from './helpers/bastionW
 await RAPIER.init()
 const bench = new WorkbenchGeometry
 const sink = new SinkGeometry
-const gutter = new GutterGeometry(forgeGutter)
-const hopper = new HopperGeometry
+const turnPipe = new ForgeTurnGeometry
 afterAll(() => {
-  for (const geometry of [bench, sink, gutter, hopper]) {
+  for (const geometry of [bench, sink, turnPipe]) {
     geometry.dispose()
   }
 })
@@ -48,7 +45,7 @@ const [benchX, benchZ] = workbench.center
 const [sinkX, sinkY, sinkZ] = alchemySink.center
 const northZ = forge.center[1] - forge.size[1] / 2
 const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
-/** where the orb is after every step until it strikes the backstop */
+/** where the orb is after every step before it enters the pipe */
 const flight = cannonFlight()
 describe('the Forge’s alchemy machine', () => {
   test('stands against the middle of the south wall: its bench on the room’s axis, its sink in the bench’s east end and its body under the sink, between the legs', () => {
@@ -238,7 +235,7 @@ describe('the alchemy machine’s cannon', () => {
     const share = (before[2] - northZ) / (before[2] - after[2])
     expect(before[1] + (after[1] - before[1]) * share).toBeCloseTo(forgeOpeningCenter[1], 3)
   })
-  test('Rapier flies an orb shot out of it along the very steps its aim follows, until it strikes the backstop', () => {
+  test('Rapier flies an orb shot out of it along the very steps its aim follows, into the vestibule', () => {
     const world = physicsWorld(forgeAndBastionColliders())
     try {
       const body = addOrb(world, cannonLaunch.position)
@@ -287,56 +284,32 @@ describe('the alchemy machine’s cannon', () => {
     expect(forgeOpeningCenter[1] + forgeOpening.radius).toBeLessThan(north.center[1] + north.height - corniceBands[0].drop - corniceBands[0].height / 2 - 0.1)
   })
 })
-describe('the Forge’s hopper and gutter', () => {
-  const {backstop, funnel} = forgeHopper
-  test('the backstop stands straight behind the opening, over the funnel’s far rim, taller than the opening, and the funnel stands in front of the vestibule’s wall over the gutter’s mouth', () => {
-    const [x, rimY, z] = funnel.center
-    expect(x).toBe(forgeOpeningCenter[0])
-    expect(backstop.face).toBeCloseTo(z - funnel.radius, 9)
-    expect(backstop.bottom).toBeLessThan(rimY)
-    expect(backstop.top).toBeGreaterThan(forgeOpeningCenter[1] + forgeOpening.radius + orbRadius)
-    expect(backstop.width / 2).toBeGreaterThan(funnel.radius)
-    // Inside the vestibule, its rim clear of the round wall
-    expect(Math.hypot(x - forgeVestibule.center[0], z + funnel.radius - forgeVestibule.center[1])).toBeLessThan(forgeVestibule.radius - wallFace)
-    // An orb flying through the opening passes over the funnel’s rim.
-    for (const [, y, flightZ] of flight) {
-      if (flightZ < northZ - wallFace && flightZ > backstop.face) {
-        expect(y - orbRadius).toBeGreaterThan(rimY)
+describe('the Forge’s north-wall pipe', () => {
+  test('turns 270° from the incoming shot to the westward approach, entirely inside the vestibule, with open ends and room for an orb', () => {
+    expect(forgeTurn.sweep).toBeCloseTo(Math.PI * 1.5, 9)
+    expect(forgeTurn.bore - orbRadius - weldedSurfaceSkin).toBeGreaterThan(0.04)
+    const end = forgeTurn.getPoint(1)
+    expect(end.z).toBeCloseTo(forgeVestibule.center[1], 9)
+    expect(forgeTurn.getTangent(0).x).toBeCloseTo(0, 9)
+    expect(forgeTurn.getTangent(1).z).toBeCloseTo(0, 9)
+    expect(forgeTurn.getTangent(1).x).toBeLessThan(-0.9)
+    for (let step = 0; step <= 100; step++) {
+      const point = forgeTurn.getPoint(step / 100)
+      expect(Math.hypot(point.x - forgeVestibule.center[0], point.z - forgeVestibule.center[1]) + forgeTurn.bore + forgeTurn.thickness).toBeLessThan(forgeVestibule.radius - wallFace)
+      expect(point.y - forgeTurn.bore).toBeGreaterThan(1.5)
+    }
+    const material = new MeshBasicMaterial
+    try {
+      const mesh = new Mesh(turnPipe.pipe, material)
+      mesh.updateMatrixWorld()
+      for (const t of [0, 1]) {
+        const tangent = forgeTurn.getTangent(t).multiplyScalar(t === 0 ? 1 : -1)
+        const origin = forgeTurn.getPoint(t).addScaledVector(tangent, -0.1)
+        const ray = new Raycaster(origin, tangent, 0, 0.2)
+        expect(ray.intersectObject(mesh)).toHaveLength(0)
       }
-    }
-    // Its throat drops orbs into the gutter’s mouth, over its rims, where its closed head is a quarter meter behind.
-    const drop = forgeGutter.route.project(x, z)!
-    expect(drop.along).toBeCloseTo(0.25, 9)
-    expect(Math.abs(drop.right)).toBeLessThan(1e-9)
-    expect(drop.along).toBeLessThan(forgeGutter.catch!.length)
-    const throatBottom = rimY - funnel.depth
-    expect(throatBottom).toBeGreaterThan(forgeGutter.bottom(drop.along) + forgeGutter.radiusAt(drop.along) * (1 - Math.cos(forgeGutter.lipAt(drop.along))))
-    expect(funnel.throat - orbRadius - weldedSurfaceSkin).toBeGreaterThan(0.015)
-    for (const part of [hopper.board, hopper.cushion, hopper.iron, hopper.funnel.metal, hopper.funnel.collision]) {
-      expect(part.getAttribute('position').count).toBeGreaterThan(0)
-    }
-    const bounds = new Box3
-    bounds.setFromBufferAttribute(hopper.cushion.getAttribute('position') as never)
-    expect(z + bounds.min.z).toBeCloseTo(backstop.face - 0.05, 6)
-    expect(z + bounds.max.z).toBeCloseTo(backstop.face, 6)
-  })
-  test('the gutter hangs from the ceiling in the vestibule, closed under the funnel, and swings round a hook onto the vestibule’s axis, ending in the air heading west at the arch onto the Bastion’s approach', () => {
-    expect(forgeGutter.closed).toBe(true)
-    expect(forgeGutter.hung).toEqual([[0, expect.closeTo(forgeGutter.route.length, 9)]])
-    const {point: [endX, endZ], heading} = forgeGutter.route.end
-    expect(endZ).toBeCloseTo(forgeVestibule.center[1], 9)
-    expect(Math.cos(heading)).toBeCloseTo(-1, 9)
-    expect(endX - forgeVestibule.center[0]).toBeCloseTo(1, 9)
-    expect(climbApproach.route.end.point[1]).toBeCloseTo(endZ, 9)
-    // Its whole length over the vestibule’s floor, inside its wall
-    for (let along = 0; along <= forgeGutter.route.length; along += 0.1) {
-      const {point: [x, z]} = forgeGutter.route.at(along)
-      expect(Math.hypot(x - forgeVestibule.center[0], z - forgeVestibule.center[1])).toBeLessThan(forgeVestibule.radius - forgeGutter.radiusAt(along) - forgeGutter.thickness - wallFace)
-    }
-    expect(forgeGutter.bottom(forgeGutter.route.length)).toBeGreaterThan(3)
-    expect(forgeGutter.head + forgeGutter.catch!.radius + 0.1).toBeLessThan(salonCeiling.underside)
-    for (const part of [gutter.channel, gutter.brackets, gutter.collision]) {
-      expect(part.getAttribute('position').count).toBeGreaterThan(0)
+    } finally {
+      material.dispose()
     }
   })
 })
@@ -389,7 +362,7 @@ describe('the alchemy machine’s orbs', () => {
     expect([0, 0.49, 0.5, 0.99].map(random => flavoredOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(flavorCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
-  test('of the orbs the cannon shoots, a hair off its aim, every one passes the opening untouched, strikes the backstop and drops into the gutter, nine in ten roll on out across the vestibule, down the climb and through the gate’s hatch, and four in five of those into the Bastion’s crater, never dragged across the welded surfaces', () => {
+  test('scattered cannon shots pass the opening untouched, retain their speed through the pipe and travel down the Bastion to its crater without surface drag', () => {
     const colliders = forgeAndBastionColliders()
     const state = mulberry32.create(7)
     const scatter = (size: number) => (mulberry32.sample(state) * 2 - 1) * size
@@ -413,8 +386,10 @@ describe('the alchemy machine’s orbs', () => {
           z: vz * speed,
         }, true)
         let untouched = true
-        let stopped = false
-        let inGutter = false
+        let entered = false
+        let exited = false
+        let inletSpeed = 0
+        let exitSpeed = 0
         let atGate: number | undefined
         let previousZ = Infinity
         let previous = body.translation()
@@ -423,14 +398,21 @@ describe('the alchemy machine’s orbs', () => {
           world.step()
           const position = body.translation()
           const velocity = body.linvel()
-          // Flying on until it reaches the backstop, gravity alone changing its velocity
-          if (!stopped && position.z - orbRadius > forgeHopper.backstop.face + 0.02 && Math.hypot(velocity.x - before.x, velocity.z - before.z) > 1e-6) {
+          // Flying freely right up to the pipe, gravity alone changing its velocity.
+          if (!entered && position.z > forgeTurn.inlet.z + 0.3 && Math.hypot(velocity.x - before.x, velocity.z - before.z) > 1e-6) {
             untouched = false
           }
-          stopped ||= Math.abs(velocity.z) < 1
-          inGutter ||= stopped && position.y < forgeGutter.head + 0.3 && position.y > forgeGutter.bottom(forgeGutter.route.length) - 0.1 && !!forgeGutter.route.project(position.x, position.z)
           const pace = Math.hypot(velocity.x, velocity.y, velocity.z)
-          if (pace > 1 && stopped) {
+          if (!entered && position.z <= forgeTurn.inlet.z) {
+            entered = true
+            inletSpeed = pace
+          }
+          const end = forgeTurn.getPoint(1)
+          if (entered && !exited && position.x < end.x - 0.3 && Math.abs(position.z - end.z) < 0.4 && position.y < end.y + 0.3) {
+            exited = true
+            exitSpeed = pace
+          }
+          if (pace > 1 && exited) {
             rolling++
             if (Math.hypot(position.x - previous.x, position.y - previous.y, position.z - previous.z) < pace * world.timestep * 0.8) {
               dragged++
@@ -444,7 +426,9 @@ describe('the alchemy machine’s orbs', () => {
           previousZ = position.z
         }
         expect(untouched).toBe(true)
-        expect(inGutter).toBe(true)
+        expect(entered).toBe(true)
+        expect(exited).toBe(true)
+        expect(exitSpeed / inletSpeed).toBeGreaterThan(0.5)
         if (atGate === undefined) {
           continue
         }
