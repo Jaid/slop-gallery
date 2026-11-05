@@ -1,3 +1,5 @@
+import type {Vec3} from '#src/lib/gallery.ts'
+
 import {useFrame} from '@react-three/fiber'
 import {Vector3} from 'three/webgpu'
 
@@ -25,8 +27,9 @@ export default function AmbienceListener() {
     camera.getWorldPosition(position)
     camera.getWorldDirection(forward)
     up.setFromMatrixColumn(camera.matrixWorld, 1)
+    const listening: Vec3 = [position.x, position.y, position.z]
     for (const emitter of useAmbienceEmitters.getState().emitters) {
-      emitter.setListenerRoom(room)
+      emitter.hear(listening, room)
       emitter.start(engine.world)
     }
     const {listener} = engine.context
