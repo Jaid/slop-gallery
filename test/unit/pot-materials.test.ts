@@ -6,6 +6,7 @@ import decorationResources from '../../src/lib/gallery/plantDecorations/Decorati
 import CeladonMaterial from '../../src/lib/materials/CeladonMaterial.ts'
 import PorcelainMaterial from '../../src/lib/materials/PorcelainMaterial.ts'
 import PotMaterials from '../../src/lib/materials/PotMaterials.ts'
+import TenmokuMaterial from '../../src/lib/materials/TenmokuMaterial.ts'
 import {getGraphicsProfile} from '../../src/lib/rendering/graphicsMode.ts'
 
 test('fast pots and soil have warm, matte colors without noise maps', () => {
@@ -51,11 +52,14 @@ test('switching finishes reuses shared geometry and caches independent material 
   expect(fast.soil.map).toBeNull()
   expect(heavy.soil.map).not.toBeNull()
 })
-test('celadon and ivory keep their glazed physical finishes in every graphics mode', () => {
+test('celadon, ivory and noir keep their glazed physical finishes in every graphics mode', () => {
   for (const noiseTextures of [false, true]) {
     const materials = new PotMaterials(noiseTextures)
     try {
-      const {celadon, ivory} = materials.shells
+      const {celadon, ivory, noir} = materials.shells
+      expect(noir).toBeInstanceOf(TenmokuMaterial)
+      expect(noir.clearcoatNode).not.toBeNull()
+      expect(noir.iridescenceNode).not.toBeNull()
       expect(celadon).toBeInstanceOf(CeladonMaterial)
       expect(celadon).toBeInstanceOf(MeshPhysicalNodeMaterial)
       expect(celadon.colorNode).not.toBeNull()
@@ -72,7 +76,7 @@ test('celadon and ivory keep their glazed physical finishes in every graphics mo
       expect(ivory.iridescenceThicknessNode).not.toBeNull()
       expect(ivory.iridescenceThicknessMinimum).toBe(200)
       expect(ivory.iridescenceThicknessMaximum).toBe(420)
-      for (const material of [celadon, ivory]) {
+      for (const material of [celadon, ivory, noir]) {
         expect(material.map).toBeNull()
         expect(material.bumpMap).toBeNull()
         expect(material.roughnessMap).toBeNull()

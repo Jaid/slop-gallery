@@ -3,6 +3,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import CeladonMaterial from './CeladonMaterial.ts'
 import PorcelainMaterial from './PorcelainMaterial.ts'
 import SoilTextures from './SoilTextures.ts'
+import TenmokuMaterial from './TenmokuMaterial.ts'
 import TerracottaTextures from './TerracottaTextures.ts'
 
 /** A shared pot finish set; only the detailed variant allocates procedural textures. */
@@ -28,11 +29,7 @@ export default class PotMaterials {
       }),
       ivory: new PorcelainMaterial,
       celadon: new CeladonMaterial,
-      noir: new MeshStandardNodeMaterial({
-        color: '#303735',
-        roughness: 0.56,
-        metalness: 0.12,
-      }),
+      noir: new TenmokuMaterial,
     }
     this.soil = new MeshStandardNodeMaterial(this.soilTextures ? {
       map: this.soilTextures.map,
