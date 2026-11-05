@@ -17,15 +17,20 @@ import {chime, requestFusion, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import world from '#src/worlds/current.ts'
 
+import useHanging from './useHanging.ts'
+
 export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
+  const art = useRef<Group>(null)
+  const placard = useRef<Group>(null)
   const held = useGallery(s => s.held === p.id)
   const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
   const frame = portraitFrame(p.frame)
   const geometry = useDisposable(useMemo(() => frame.createGeometry(w, h), [frame, w, h]))
+  useHanging(p, frame, held, art, placard)
   useEffect(() => {
     if (body.current && group.current) {
       portraitObjects.set(p.id, {
@@ -123,12 +128,17 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
         portraitId: p.id,
       }} ref={group}
     >
-      {/* Only a held work fades; hung ones stay opaque so the floor glass, which refracts opaque surfaces only, shows them in the room below. */}
-      <mesh castShadow geometry={geometry} material={held ? frame.heldMaterial : frame.materials} name='portrait-frame' receiveShadow />
-      {/* Shadows draw back faces only, so the frame’s backing board blocks the lights in front of the work and the image those behind it, which a loose work can turn its back to. */}
-      <mesh castShadow name='portrait-image' position={[0, 0, frame.imageDepth]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent={held} /></mesh>
+      {/* The frame and its image, which move on their own while the work arrives on its wall. */}
+      <group ref={art}>
+        {/* Only a held work fades; hung ones stay opaque so the floor glass, which refracts opaque surfaces only, shows them in the room below. */}
+        <mesh castShadow geometry={geometry} material={held ? frame.heldMaterial : frame.materials} name='portrait-frame' receiveShadow />
+        {/* Shadows draw back faces only, so the frame’s backing board blocks the lights in front of the work and the image those behind it, which a loose work can turn its back to. */}
+        <mesh castShadow name='portrait-image' position={[0, 0, frame.imageDepth]}><planeGeometry args={[w, h]} /><DynamicImageMaterial opacity={held ? 0.3 : 1} source={p.source} toneMapped={false} transparent={held} /></mesh>
+      </group>
       {/* The placard hides while the work orbits a fusion’s portal. */}
-      <Branch if={p.hung && !p.fusing}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
+      <group ref={placard}>
+        <Branch if={p.hung && !p.fusing}><PortraitLabel above={p.labelAbove} creator={p.creator} height={h} pending={p.pending} title={p.title} width={w} /></Branch>
+      </group>
     </group>
   </RigidBody>
 }

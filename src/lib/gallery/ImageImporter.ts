@@ -3,6 +3,7 @@ import type {Portrait, Vec3} from './types.ts'
 import world from '#src/worlds/current.ts'
 
 import {arrivalFrame, cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
+import {holdPoint, requestHanging} from './hanging/hangings.ts'
 import {maximumPortraits, validateImage} from './imagePolicy.ts'
 import {useGallery} from './store.ts'
 
@@ -217,6 +218,9 @@ export default class ImageImporter {
           // Where it hangs or lands decides its frame, which may be another room’s than the player’s, through a doorway.
           p.frame = arrivalFrame(p.position, pose.position, p.id)
           s.add(p)
+          if (p.hung) {
+            requestHanging(p.id, p.position, p.rotation, holdPoint(pose))
+          }
           count++
           this.onImport(p)
         } catch (error) {
