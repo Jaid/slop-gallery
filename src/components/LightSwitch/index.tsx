@@ -39,7 +39,7 @@ export default function LightSwitch({id, on, onToggle, title = 'Light switch', .
     onToggle()
   }
   return <InteractiveObject id={id} action={on ? 'Switch off' : 'Switch on'} title={title} onActivate={press} {...props}>
-    <SwitchPlate />
+    <SwitchPlate buttons={2} />
     <SwitchButton material={pearl} pressed={on} y={switchButtonY(0, 2)} />
     <SwitchButton material={ebony} pressed={!on} y={switchButtonY(1, 2)} />
   </InteractiveObject>

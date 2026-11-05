@@ -39,7 +39,7 @@ export default function SelectorSwitch<Option extends string>({id, onChange, opt
     onChange(next)
   }
   return <InteractiveObject id={id} action={nextOption.title} title={title} onActivate={press} {...props}>
-    <SwitchPlate />
+    <SwitchPlate buttons={buttons.length} />
     {buttons.map(([option, {button}], index) => <SelectorButton key={option} color={button} pressed={option === value} y={switchButtonY(index, buttons.length)} />)}
   </InteractiveObject>
 }
