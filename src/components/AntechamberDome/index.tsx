@@ -2,8 +2,9 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {CircleGeometry, DoubleSide, ExtrudeGeometry, Path, Quaternion, Shape, Vector3} from 'three/webgpu'
 
-import antechamberDome, {antechamberDomeGeometry, antechamberGlassPlacements, antechamberLatticeGeometry, antechamberLatticeY, antechamberWindowMask} from '#src/lib/gallery/antechamberDome.ts'
+import antechamberDome, {antechamberDomeGeometry, antechamberGlassPlacements, antechamberLatticeGeometry, antechamberLatticeY} from '#src/lib/gallery/antechamberDome.ts'
 import StainedGlassMaterial from '#src/lib/materials/StainedGlassMaterial.ts'
+import StarryVaultMaterial from '#src/lib/materials/StarryVaultMaterial.ts'
 
 /** one palette per ring of windows, from the bottom up */
 const palettes = [
@@ -19,12 +20,13 @@ const palettes = [
   },
 ] as const
 
-/** The Antechamber’s ceiling, around its center: a flat slab like the other rooms’, opened up into a dome with stained-glass windows and a brass lattice at its crown. */
+/** The Antechamber’s ceiling, around its center: a flat slab like the other rooms’, opened up into a dome painted as a starry vault, with stained-glass windows and a brass lattice at its crown. */
 export default function AntechamberDome({height, size}: {
   height: number
   size: readonly [number, number]
 }) {
   const {radius, springY} = antechamberDome
+  const vault = useDisposable(useMemo(() => new StarryVaultMaterial, []))
   const geometry = useDisposable(useMemo(() => {
     const outline = new Shape
     outline.moveTo(-size[0] / 2, -size[1] / 2)
@@ -57,7 +59,6 @@ export default function AntechamberDome({height, size}: {
     return {
       dome,
       lattice,
-      mask: antechamberWindowMask(),
       panes,
       pane,
       slab,
@@ -75,7 +76,7 @@ export default function AntechamberDome({height, size}: {
   return <group name='antechamber-dome'>
     <mesh castShadow geometry={geometry.slab} name='antechamber-ceiling' position={[0, height - 0.11, 0]} receiveShadow rotation={[-Math.PI / 2, 0, 0]}><meshStandardNodeMaterial color='#e1dccc' roughness={0.7} /></mesh>
     {/* Seen from inside, the shell shows its back faces, which have to cast the sun’s shadow too. */}
-    <mesh castShadow geometry={geometry.dome} name='antechamber-dome-shell' position={[0, springY, 0]} receiveShadow><meshStandardNodeMaterial color='#e8dfc8' maskNode={geometry.mask} roughness={0.8} side={DoubleSide} /></mesh>
+    <mesh castShadow geometry={geometry.dome} material={vault} name='antechamber-dome-shell' position={[0, springY, 0]} receiveShadow />
     <group name='antechamber-dome-glass' position={[0, springY, 0]}>
       {geometry.panes.map(({center, material, quaternion, radius: paneRadius}, index) => <mesh key={index} castShadow geometry={geometry.pane} material={material} position={center} quaternion={quaternion} scale={paneRadius} />)}
     </group>
