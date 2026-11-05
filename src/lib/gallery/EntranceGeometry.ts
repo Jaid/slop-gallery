@@ -1,18 +1,17 @@
+import type {GrainMapping} from './woodGrain.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
-import {BoxGeometry, CylinderGeometry, ExtrudeGeometry, Float32BufferAttribute, Shape} from 'three/webgpu'
+import {BoxGeometry, CylinderGeometry, ExtrudeGeometry, Shape} from 'three/webgpu'
 
 import {insetPolygon, mergeParts} from '../geometry.ts'
 import mainEntrance from './entrance.ts'
+import {withWoodGrain} from './woodGrain.ts'
 
 type Point = [number, number]
 type Bevel = {
   size: number
   thickness: number
 }
-/** Maps a point of the door plane to its grain coordinates: meters along the fibers and meters across them. */
-type GrainMapping = (x: number, y: number) => Point
-
 /** Segments per half circle; ≤ 2 mm chord error on the 2 m architrave. */
 const halfCircleSegments = 32
 /** Front face of the wall plaster that the entrance is mounted on. */
@@ -67,17 +66,6 @@ const extrude = (points: Array<Point>, from: number, to: number, bevel?: Bevel) 
   })
   return geometry.translate(0, 0, from + (bevel?.thickness ?? 0))
 }
-/** Bakes the grain direction into the `woodGrain` attribute (along, across, seed) read by WalnutMaterial. */
-const withGrain = (geometry: BufferGeometry, mapping: GrainMapping, seed: number) => {
-  const position = geometry.getAttribute('position')
-  const grain = new Float32Array(position.count * 3)
-  for (let index = 0; index < position.count; index++) {
-    const [along, across] = mapping(position.getX(index), position.getY(index))
-    grain.set([along, across, seed], index * 3)
-  }
-  geometry.setAttribute('woodGrain', new Float32BufferAttribute(grain, 3))
-  return geometry
-}
 const vertical: GrainMapping = (x, y) => [y, x]
 const horizontal: GrainMapping = (x, y) => [x, y]
 
@@ -104,7 +92,7 @@ export default class EntranceGeometry {
     const metal: Array<BufferGeometry> = []
     let seed = 0
     const wood = (points: Array<Point>, mapping: GrainMapping, from = leafBack, to = leafFront, bevel?: Bevel) => {
-      leaves.push(withGrain(extrude(points, from, to, bevel), mapping, seed++ * 0.618034 % 1))
+      leaves.push(withWoodGrain(extrude(points, from, to, bevel), mapping, seed++ * 0.618034 % 1))
     }
     for (const side of [-1, 1]) {
       const mirror = (points: Array<Point>) => points.map(([x, y]) => [side * x, y] as Point)
@@ -113,7 +101,7 @@ export default class EntranceGeometry {
       const panelRight = leafRadius - stile
       const muntinLeft = (panelLeft + panelRight - muntin) / 2
       const muntinRight = muntinLeft + muntin
-      const sideOf = (mapping: GrainMapping): GrainMapping => (x, y) => mapping(side * x, y)
+      const sideOf = (mapping: GrainMapping): GrainMapping => (x, y, z) => mapping(side * x, y, z)
       // Meeting stile, rising into the crown of the arch.
       const crownAngle = Math.acos(panelLeft / leafRadius)
       wood(mirror([[inner, rails.bottom[0]], [panelLeft, rails.bottom[0]], ...arc(archCenter, leafRadius, crownAngle, Math.acos(inner / leafRadius))]), sideOf(vertical))

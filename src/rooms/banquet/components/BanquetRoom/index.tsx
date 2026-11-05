@@ -6,6 +6,7 @@ import {useState} from 'react'
 import {Color} from 'three/webgpu'
 
 import BanquetFloor from '#component/BanquetFloor'
+import BanquetTable from '#component/BanquetTable'
 import CeilingLeds from '#component/CeilingLeds'
 import LightSwitch from '#component/LightSwitch'
 import SelectorSwitch from '#component/SelectorSwitch'
@@ -37,7 +38,7 @@ const temperatures = mapValues(banquetLightTemperatures, ({light, surface}): Cei
   surface: balanced(surface, white.surface),
 }))
 
-/** Lit by breakable LED panes with their own dimming lights instead of fixed light boxes. */
+/** Lit by breakable LED panes with their own dimming lights instead of fixed light boxes, over a long table down its middle. */
 export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof BanquetFloor>[0], 'room'>) {
   // A new game switches the lights back on.
   return <>
@@ -47,6 +48,7 @@ export default function BanquetRoom({glass, stone, wood}: Omit<Parameters<typeof
       </RigidBody>
       <Box color='#e1dccc' position={[0, room.height - 0.02, 0]} size={[width, 0.18, depth]} />
       <BanquetFloor glass={glass} room={room} stone={stone} wood={wood} />
+      <BanquetTable />
     </group>
     <BanquetLights />
   </>
