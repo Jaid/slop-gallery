@@ -46,6 +46,16 @@ export type PropHandle = {
   unleash: (velocity: Vec3, spin: Vec3) => void
 }
 export const propObjects = new Map<string, PropHandle>
+const propTarget = new Vector3
+/** Moves a seized prop’s group, inside its body’s object, to the point in the world. */
+export function showPropAt({group}: PropHandle, point: Vec3) {
+  const holder = group.parent
+  if (!holder) {
+    return
+  }
+  holder.updateWorldMatrix(true, false)
+  group.position.copy(holder.worldToLocal(propTarget.set(...point)))
+}
 /** how far below the middle of the view a carried prop floats, in radians: low and in the middle, as if held in front of the chest */
 const holdTilt = 15 * Math.PI / 180
 /** how far from the eye a carried prop’s surface stays, roughly, in meters, before its size adds to it: very near, without reaching the near plane */

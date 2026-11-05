@@ -9,7 +9,7 @@ import {alchemyPipe, alchemySink, machineBody} from './alchemyMachine.ts'
 /** how far the plinth band round its foot and the lid’s band round its top stand out of its sides, and how tall either is */
 const band = [0.018, 0.045] as const
 /** the radius of the round window in its front, inside the brass bezel round it */
-const windowRadius = 0.115
+const windowRadius = 0.16
 /** how far apart the rivets along its bands stand at most */
 const rivetPitch = 0.075
 const rivetRadius = 0.007

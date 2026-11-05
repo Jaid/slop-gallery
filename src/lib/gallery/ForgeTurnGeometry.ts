@@ -1,112 +1,107 @@
 import type {BufferGeometry} from 'three/webgpu'
 
-import {Curve, Quaternion, RingGeometry, TorusGeometry, TubeGeometry, Vector3} from 'three/webgpu'
+import {Curve, ExtrudeGeometry, Path, Quaternion, RingGeometry, Shape, TubeGeometry, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {cannonLaunch, flight, physicsSteps} from './alchemy/alchemyMachine.ts'
 import {wallFace} from './architectureDimensions.ts'
 import {forgeVestibule} from './forge.ts'
-import {rod} from './lodgeInterior/place.ts'
+import {forgeTurn, forgeTurnHoleRadius} from './forgeTurn.ts'
 
-/** A descending 270° sweep in the vestibule’s north half, tangent to the incoming shot and leaving west along the Bastion’s approach. */
-export class ForgeTurn extends Curve<Vector3> {
-  readonly bore = 0.21
-  readonly grade: number
-  readonly inlet: Vector3
-  readonly radius = 0.95
-  readonly sweep = Math.PI * 1.5
-  readonly thickness = 0.012
-
-  constructor() {
-    super()
-    const z = forgeVestibule.center[1] - this.radius
-    let previous = cannonLaunch.position
-    let step = 0
-    for (const point of flight(cannonLaunch.position, cannonLaunch.velocity)) {
-      step++
-      if (point[2] <= z) {
-        const share = (previous[2] - z) / (previous[2] - point[2])
-        this.inlet = new Vector3(point[0], previous[1] + (point[1] - previous[1]) * share, z)
-        const time = (step - 1 + share) / physicsSteps.rate
-        this.grade = (cannonLaunch.velocity[1] - 9.81 * time) / cannonLaunch.velocity[2]
-        return
-      }
-      previous = point
-    }
-    throw new Error('The cannon’s shot never reaches the pipe.')
+/** how many pieces the bore’s collider is cut into along the pipe, finely enough for an orb to slide round the loop without catching on their seams */
+const collisionSegments = 640
+const visibleSegments = 320
+const sides = 24
+/** how far each wall plate reaches out past the hole it covers, and how thick it is */
+const plate = [0.04, 0.012] as const
+const forward = new Vector3(0, 0, 1)
+/** A tube along the curve facing inward, like the bore an orb slides through. */
+function bore(curve: ForgeTurnCurve, segments: number) {
+  const tube = new TubeGeometry(curve, segments, forgeTurn.bore, sides, false)
+  const indices = tube.getIndex()!
+  for (let index = 0; index < indices.count; index += 3) {
+    const first = indices.getX(index)
+    indices.setX(index, indices.getX(index + 2))
+    indices.setX(index + 2, first)
   }
-
-  getPoint(t: number, target = new Vector3) {
-    const angle = this.sweep * t
-    return target.set(this.inlet.x + this.radius * (1 - Math.cos(angle)), this.inlet.y - this.grade * this.radius * angle, this.inlet.z - this.radius * Math.sin(angle))
+  const normals = tube.getAttribute('normal')
+  for (let index = 0; index < normals.count; index++) {
+    normals.setXYZ(index, -normals.getX(index), -normals.getY(index), -normals.getZ(index))
   }
-
-  getTangent(t: number, target = new Vector3) {
-    const angle = this.sweep * t
-    return target.set(Math.sin(angle), -this.grade, -Math.cos(angle)).normalize()
-  }
+  return tube
 }
-
-export const forgeTurn = new ForgeTurn
-
-/** An open-ended brass pipe with a continuous polished bore and three iron clamps fixed to the vestibule’s north wall. */
+/** The brass plate on the face of the vestibule’s wall round the pipe where its mouth runs in, falling steeply, covering the hole: its inner edge round the pipe’s section on the face, stretched by its fall, its outer edge round the hole, bent round the wall’s curve. */
+function wallPlate(crossing: keyof typeof forgeTurn.crossings) {
+  const outside = forgeTurn.bore + forgeTurn.thickness
+  const stretch = Math.hypot(1, forgeTurn.fall(forgeTurn.faces[crossing]))
+  const [x, y, z] = forgeTurn.at(forgeTurn.faces[crossing]).point
+  const shape = new Shape
+  shape.absarc(0, 0, forgeTurnHoleRadius(crossing) + plate[0], 0, Math.PI * 2, false)
+  const hole = new Path
+  hole.absellipse(0, 0, outside, outside * stretch, 0, Math.PI * 2, true, 0)
+  shape.holes.push(hole)
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: plate[1],
+    bevelEnabled: true,
+    bevelSegments: 2,
+    bevelSize: 0.003,
+    bevelThickness: 0.003,
+    curveSegments: 48,
+  })
+  // Its back a hair into the wall, bent round toward the vestibule’s middle as the wall’s face curves away from the plate’s middle
+  const face = forgeVestibule.radius - wallFace
+  const positions = geometry.getAttribute('position')
+  for (let index = 0; index < positions.count; index++) {
+    const across = positions.getX(index)
+    positions.setZ(index, positions.getZ(index) - 0.004 + face - Math.sqrt(face ** 2 - across ** 2))
+  }
+  geometry.computeVertexNormals()
+  const [centerX, centerZ] = forgeVestibule.center
+  const inward = new Vector3(centerX - x, 0, centerZ - z)
+  const turn = new Quaternion
+  turn.setFromUnitVectors(forward, inward.normalize())
+  return geometry.applyQuaternion(turn).translate(x, y, z)
+}
+/**
+ * The redirection pipe, see {@link forgeTurn}, in the world’s frame: its brass `pipe`, open at its mouth and its outlet, with a plate round it on the vestibule’s wall where its mouth runs in, and its bore as `collision`.
+ */
 export default class ForgeTurnGeometry {
-  readonly brackets: BufferGeometry
   readonly collision: BufferGeometry
   readonly pipe: BufferGeometry
 
   constructor() {
-    const {bore, thickness} = forgeTurn
-    const outside = bore + thickness
-    const segments = 256
-    const sides = 32
-    const inner = new TubeGeometry(forgeTurn, segments, bore, sides, false)
-    // TubeGeometry faces outward; the bore faces the orb inside it instead.
-    const indices = inner.getIndex()!
-    for (let index = 0; index < indices.count; index += 3) {
-      const first = indices.getX(index)
-      indices.setX(index, indices.getX(index + 2))
-      indices.setX(index + 2, first)
-    }
-    const normals = inner.getAttribute('normal')
-    for (let index = 0; index < normals.count; index++) {
-      normals.setXYZ(index, -normals.getX(index), -normals.getY(index), -normals.getZ(index))
-    }
-    this.collision = inner.clone()
-    const parts: Array<BufferGeometry> = [inner, new TubeGeometry(forgeTurn, segments, outside, sides, false)]
-    const forward = new Vector3(0, 0, 1)
+    const curve = new ForgeTurnCurve
+    const outside = forgeTurn.bore + forgeTurn.thickness
+    this.collision = bore(curve, collisionSegments)
+    const parts: Array<BufferGeometry> = [bore(curve, visibleSegments), new TubeGeometry(curve, visibleSegments, outside, sides, false)]
     for (const t of [0, 1]) {
-      const point = forgeTurn.getPoint(t)
+      const point = curve.getPoint(t)
       const turn = new Quaternion
-      turn.setFromUnitVectors(forward, forgeTurn.getTangent(t).multiplyScalar(t === 0 ? -1 : 1))
-      const rim = new RingGeometry(bore, outside, sides)
+      turn.setFromUnitVectors(forward, curve.getTangent(t).multiplyScalar(t === 0 ? -1 : 1))
+      const rim = new RingGeometry(forgeTurn.bore, outside, sides)
       parts.push(rim.applyQuaternion(turn).translate(point.x, point.y, point.z))
     }
+    parts.push(wallPlate('inlet'))
     this.pipe = mergeParts(parts)
-    const supports: Array<BufferGeometry> = []
-    const [cx, cz] = forgeVestibule.center
-    for (const t of [0.12, 0.45, 0.78]) {
-      const point = forgeTurn.getPoint(t)
-      const tangent = forgeTurn.getTangent(t)
-      const turn = new Quaternion
-      turn.setFromUnitVectors(forward, tangent)
-      const clamp = new TorusGeometry(outside + 0.014, 0.012, 8, sides)
-      supports.push(clamp.applyQuaternion(turn).translate(point.x, point.y, point.z))
-      const radial = new Vector3(point.x - cx, 0, point.z - cz)
-      radial.normalize()
-      const wall = new Vector3(cx, point.y, cz)
-      wall.addScaledVector(radial, forgeVestibule.radius - wallFace + 0.01)
-      for (const side of [-1, 1]) {
-        const from = point.clone().addScaledVector(tangent, side * 0.06).addScaledVector(radial, outside)
-        supports.push(rod(from, wall.clone().addScaledVector(tangent, side * 0.06), 0.014, 8))
-      }
-    }
-    this.brackets = mergeParts(supports)
   }
 
   dispose() {
     this.pipe.dispose()
-    this.brackets.dispose()
     this.collision.dispose()
+  }
+}
+
+/** the pipe’s middle as a curve, from its mouth at 0 to its outlet at 1 */
+class ForgeTurnCurve extends Curve<Vector3> {
+  constructor() {
+    super()
+    this.arcLengthDivisions = 2000
+  }
+
+  getPoint(t: number, target = new Vector3) {
+    return target.set(...forgeTurn.at(t * forgeTurn.length).point)
+  }
+
+  getTangent(t: number, target = new Vector3) {
+    return target.set(...forgeTurn.at(t * forgeTurn.length).direction)
   }
 }

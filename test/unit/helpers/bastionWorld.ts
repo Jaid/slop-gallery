@@ -72,7 +72,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s walls, floors, arch reveals and north-wall pipe. */
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and the redirection pipe’s bore. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -139,7 +139,7 @@ class Colliders {
     for (const {fix, polished, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
       const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin) : RAPIER.ColliderDesc.trimesh(vertices, indices)
       if (polished) {
-        shape.setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0.2).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min)
+        shape.setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min)
       }
       if (translation) {
         shape.setTranslation(...translation)

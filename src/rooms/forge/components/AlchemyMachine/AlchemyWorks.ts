@@ -6,7 +6,7 @@ import type {Object3D} from 'three/webgpu'
 import {uniform} from 'three/tsl'
 import {Vector3} from 'three/webgpu'
 
-import {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
+import {propObjects, showPropAt} from '#src/components/Scene/GrabbableProp.tsx'
 import {alchemyBrewVoices, alchemySwallowVoices, cannonVoices} from '#src/lib/audio/alchemySounds.ts'
 import {shiftVoices} from '#src/lib/audio/proceduralAudio.ts'
 import {bodyPose, playSound, useGallery} from '#src/lib/gallery.ts'
@@ -48,7 +48,6 @@ const holderSeat: Vec3 = [holderSpot[0], holderSpot[1] + orbSeat + 0.002, holder
 const sinkPosition: Vec3 = [alchemySink.center[0], alchemySink.throatY, alchemySink.center[2]]
 const bodyPosition: Vec3 = [machineBody.center[0], machineBody.size[1] / 2, machineBody.center[1]]
 const worldPosition = new Vector3
-const target = new Vector3
 /** Every prop by its id and where it is: where it is shown, lying, rolling, held by a portal or inside the machine, or where the player is who carries it, whose room it is in even before it is shown there. */
 function *propPositions(): Generator<readonly [string, Vec3]> {
   const {held} = useGallery.getState()
@@ -57,15 +56,6 @@ function *propPositions(): Generator<readonly [string, Vec3]> {
   }
 }
 const roomAt = (position: Vec3) => slopGallery.roomAt(position)?.id
-/** Moves the prop’s group, inside its body’s object, to the point in the world. */
-function showAt({group}: PropHandle, point: Vec3) {
-  const holder = group.parent
-  if (!holder) {
-    return
-  }
-  holder.updateWorldMatrix(true, false)
-  group.position.copy(holder.worldToLocal(target.set(...point)))
-}
 
 /**
  * What the alchemy machine does, frame by frame: it takes in every orb that drops down its sink’s throat, out of the physics, lets it sink out of sight, works on it for a while and shoots out what it made of it through its cannon, one orb at a time, see {@link transmutedOrb}. A flavored orb comes out as itself; a Transparent Orb that takes a flavor is used up, and a new orb of that flavor comes out in its stead, made hidden in the barrel as soon as the machine takes in the old one.
@@ -146,7 +136,7 @@ export default class AlchemyWorks {
     }
     this.batches.shift()
     this.lastShot = this.clock
-    showAt(product, cannonLaunch.position)
+    showPropAt(product, cannonLaunch.position)
     product.unleash(cannonLaunch.velocity, [0, 0, 0])
     playSound(cannonVoices(Math.random() * 2 - 1), `alchemy:shot:${++this.counts.sounds}`, alchemyCannon.muzzle)
   }
@@ -162,7 +152,7 @@ export default class AlchemyWorks {
       }
       const share = Math.min(batch.since / sinking[0], 1)
       const [x, y, z] = batch.from
-      showAt(intake, [x, y - sinking[1] * share * share, z])
+      showPropAt(intake, [x, y - sinking[1] * share * share, z])
       if (share < 1) {
         continue
       }

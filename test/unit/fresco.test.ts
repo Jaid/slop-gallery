@@ -64,11 +64,11 @@ describe('the Salon’s fresco', () => {
   })
 })
 describe('a round wall’s fresco', () => {
-  // The Forge’s vestibule with its two arches, without the opening high up that orbs fly in by
+  // The Forge’s vestibule with its two arches, without the holes low down that the redirection pipe runs through
   const vestibule = wallById('forge-vestibule')
   const ring = {
     ...vestibule,
-    holes: vestibule.holes!.filter(hole => hole.name !== 'orbs'),
+    holes: vestibule.holes!.filter(hole => !hole.name?.startsWith('pipe')),
   }
   test('runs all round without a corner, its panels going on through the seam where its ends meet', () => {
     const {band, openingMargin, panelLength} = pompeianFresco

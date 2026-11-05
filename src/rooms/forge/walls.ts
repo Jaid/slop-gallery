@@ -1,9 +1,10 @@
 import type {WallReservation} from '#src/lib/placement/wallGeometry.ts'
 import type {RoomWall} from '../base/Room.ts'
 
-import {alchemyCannon, alchemyPipe, forgeOpeningHole, workbench} from '#src/lib/gallery/alchemy/alchemyMachine.ts'
+import {alchemyCannon, alchemyPipe, workbench} from '#src/lib/gallery/alchemy/alchemyMachine.ts'
 import {climbArch} from '#src/lib/gallery/climb.ts'
 import forge, {forgeVestibule} from '#src/lib/gallery/forge.ts'
+import {forgeTurnHole} from '#src/lib/gallery/forgeTurn.ts'
 import {forgeRoundVestibule} from '#src/lib/gallery/forgeVestibule.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import {forgeWindow, lobbyWindowHole} from '#src/lib/gallery/lobbyWindows.ts'
@@ -34,7 +35,7 @@ const [benchX] = workbench.center
 const riserX = alchemyPipe.corners[1][0]
 
 export default {
-  // The arch into the vestibule, where its round wall touches the middle of this one, as wide and as high as the approach’s vault, and over it the round opening the alchemy machine’s cannon shoots orbs through.
+  // The arch into the vestibule, where its round wall touches the middle of this one, as wide and as high as the approach’s vault, which the alchemy machine’s cannon shoots orbs through.
   north: {
     ...north,
     holes: {
@@ -42,7 +43,6 @@ export default {
         ...climbArch,
         u: wallCoordinates(north, [vestibuleX - originX, 0, vestibuleZ + radius - originZ]),
       },
-      orbs: forgeOpeningHole(north, roomOrigins.forge),
     },
   },
   // The cast-glass window into the Lobby, the Salon’s mirrored, whose glass stands in the shared plane.
@@ -61,12 +61,13 @@ export default {
     ],
   },
   west,
-  // The vestibule’s round wall, one ring facing its center, with the arch back into the room, the one out onto the Bastion’s approach and, over the arch into the room, the opening orbs fly in by.
+  // The vestibule’s round wall, one ring facing its center, with the arch back into the room, the one out onto the Bastion’s approach and, low on its north and its east side, the holes the redirection pipe runs out and in again by.
   vestibule: {
     ...vestibule,
     holes: {
       ...vestibule.holes,
-      orbs: forgeOpeningHole(vestibule, roomOrigins.forge),
+      pipe_inlet: forgeTurnHole(vestibule, roomOrigins.forge, 'inlet'),
+      pipe_outlet: forgeTurnHole(vestibule, roomOrigins.forge, 'outlet'),
     },
   },
 } satisfies Record<string, RoomWall>
