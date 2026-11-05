@@ -2,6 +2,8 @@ import StudioEnvironment from 'knot-materials/StudioEnvironment.ts'
 
 import BrushedMetalMaterial from './BrushedMetalMaterial.ts'
 
+/** the softly lit studio the shared steel reflects, which other steel lying about the gallery borrows too, never disposing it */
+export const studioEnvironment = new StudioEnvironment
 /**
  * Shared satin steel for the Lobby bench frames (including their screws), the Oculus handrail/posts/end caps and Knottingham’s nameplate supports in heavy mode.
  *
@@ -9,6 +11,6 @@ import BrushedMetalMaterial from './BrushedMetalMaterial.ts'
  *
  * Both the material and its environment live for the page lifetime, like the shared gold. Consumers borrow them; they must not dispose them on unmount or a graphics-mode change.
  */
-const metal = new BrushedMetalMaterial({environment: new StudioEnvironment})
+const metal = new BrushedMetalMaterial({environment: studioEnvironment})
 
 export default metal

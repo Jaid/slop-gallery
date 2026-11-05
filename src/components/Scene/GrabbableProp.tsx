@@ -88,6 +88,8 @@ export type SnapshotSubject = {
 type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> & GrabbableBodyOptions & {
   blockedMessage?: () => string
   children: ReactNode
+  /** colliders of its own, like a hull round all of its meshes, instead of those built from its children; they stay with its body while its children float in front of the camera */
+  collider?: ReactNode
   /** whether a fusion it is thrown into uses it up on success, like an orb, instead of spitting it back out */
   consumable?: boolean
   id: string
@@ -119,7 +121,7 @@ export default function GrabbableProp(props: GrabbablePropProps) {
 }
 
 /** The prop while it is still in the world. */
-function PresentProp({id, title, consumable, ingredient, mood, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, striker, withheld = false, ...props}: GrabbablePropProps) {
+function PresentProp({id, title, consumable, ingredient, mood, orbit, children, collider, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, striker, withheld = false, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   /** whether a fusion holds the prop, from the start if it is withheld */
@@ -313,7 +315,8 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
     })
   }
   // A withheld prop’s colliders are built from its children while they are hidden.
-  return <RigidBody ccd colliders='cuboid' friction={0.8} includeInvisible={withheld} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
+  return <RigidBody ccd colliders={collider ? false : 'cuboid'} friction={0.8} includeInvisible={withheld} mass={1.8} restitution={0.32} ref={body} onCollisionEnter={struck} {...props}>
+    {collider}
     <group
       name={id} userData={{
         pickup: true,
