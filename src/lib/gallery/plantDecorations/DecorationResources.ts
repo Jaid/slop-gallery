@@ -5,6 +5,7 @@ import type {PlantKind, PotKind} from './catalog.ts'
 
 import {DoubleSide, MeshStandardNodeMaterial} from 'three/webgpu'
 
+import LeafMaterial from '#src/lib/materials/LeafMaterial.ts'
 import PotMaterials from '#src/lib/materials/PotMaterials.ts'
 
 import CatalogPlantGeometry from '../destructiblePlants/CatalogPlantGeometry.ts'
@@ -19,20 +20,19 @@ class DecorationResources {
     metalness: 0.82,
     roughness: 0.28,
   })
-  readonly foliage = new MeshStandardNodeMaterial({
-    vertexColors: true,
-    side: DoubleSide,
-    roughness: 0.52,
-  })
+  readonly foliage = new LeafMaterial
   readonly stems = new MeshStandardNodeMaterial({
     color: '#4e6539',
     roughness: 0.8,
   })
-  readonly waxyFoliage = new MeshStandardNodeMaterial({
+  /** the jade’s fleshy leaves, which have neither veins nor a blade */
+  readonly succulent = new MeshStandardNodeMaterial({
     vertexColors: true,
     side: DoubleSide,
     roughness: 0.3,
   })
+
+  readonly waxyFoliage = new LeafMaterial({glossy: true})
   readonly wood = new MeshStandardNodeMaterial({
     color: '#78614a',
     roughness: 0.92,
@@ -57,7 +57,7 @@ class DecorationResources {
     for (const materials of this.materialCache.values()) {
       materials.dispose()
     }
-    for (const material of [this.brass, this.foliage, this.waxyFoliage, this.stems, this.wood]) {
+    for (const material of [this.brass, this.foliage, this.succulent, this.waxyFoliage, this.stems, this.wood]) {
       material.dispose()
     }
   }
