@@ -68,21 +68,6 @@ export const alchemySink = (() => {
 })()
 
 /**
- * The brass splashback round the back of the sink, its inside padded with leather, standing on the bench’s top round the far side of the bowl and wrapping forward round its sides: the bench stands nearly at eye height, so orbs come at the sink almost flat, and the bowl alone would only fling them up and out again like a ramp. Striking the padding, an orb stops dead and drops into the bowl.
- * Its lengths are in meters, its `sweep` in radians round the sink’s middle, centered on the wall behind.
- */
-export const alchemySplashback = {
-  /** the radius of the padding’s face, over the rim of the bowl */
-  radius: alchemySink.radius + alchemySink.thickness,
-  /** how thick the leather padding is */
-  padding: 0.025,
-  /** how thick the brass shell is */
-  shell: 0.012,
-  height: 0.6,
-  sweep: Math.PI * 4 / 3,
-} as const
-
-/**
  * The body of the alchemy machine under its sink, standing on the floor between the bench’s legs: an iron cube the sink’s throat runs down into, with a round window in its front glowing while it works on an orb.
  * Its pipe leaves it through the middle of its east side. In meters, its middle in plan in the world’s frame.
  */

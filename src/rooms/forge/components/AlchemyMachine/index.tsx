@@ -2,7 +2,6 @@ import type {Vec3} from '#src/lib/gallery.ts'
 import type {AlchemyOrb} from './AlchemyWorks.ts'
 import type {Group} from 'three/webgpu'
 
-import {CoefficientCombineRule} from '@dimforge/rapier3d-compat'
 import {useFrame} from '@react-three/fiber'
 import {CapsuleCollider, CuboidCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
@@ -18,13 +17,11 @@ import CannonGeometry, {trunnionReach} from '#src/lib/gallery/alchemy/CannonGeom
 import MachineBodyGeometry from '#src/lib/gallery/alchemy/MachineBodyGeometry.ts'
 import PipeGeometry, {pipeCenterline} from '#src/lib/gallery/alchemy/PipeGeometry.ts'
 import SinkGeometry from '#src/lib/gallery/alchemy/SinkGeometry.ts'
-import SplashbackGeometry from '#src/lib/gallery/alchemy/SplashbackGeometry.ts'
 import WorkbenchGeometry from '#src/lib/gallery/alchemy/WorkbenchGeometry.ts'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import BronzeMaterial from '#src/lib/materials/BronzeMaterial.ts'
 import GrainedWoodMaterial from '#src/lib/materials/GrainedWoodMaterial.ts'
 import HammeredBrassMaterial from '#src/lib/materials/HammeredBrassMaterial.ts'
-import LeatherMaterial from '#src/lib/materials/LeatherMaterial.ts'
 import {studioEnvironment} from '#src/lib/materials/metal.ts'
 import WroughtIronMaterial from '#src/lib/materials/WroughtIronMaterial.ts'
 
@@ -67,7 +64,7 @@ const pipeCapsules = (() => {
 const breechBlock = alchemyCannon.breech.map((value, axis) => value + alchemyCannon.axis[axis] * trunnionReach / 2) as Vec3
 
 /**
- * The alchemy machine against the Forge’s south wall: a workbench with the machine’s brass sink let into its east end, a padded splashback round its back, and an orb holder on its west end, the machine’s iron body under the sink, and its pipe out of the body, up the wall and into a cannon over the bench, which shoots across the Forge through the arch into the vestibule, into the mouth of the redirection pipe there.
+ * The alchemy machine against the Forge’s south wall: a workbench with the machine’s brass sink let into its east end, and an orb holder on its west end, the machine’s iron body under the sink, and its pipe out of the body, up the wall and into a cannon over the bench, which shoots across the Forge through the arch into the vestibule, into the mouth of the redirection pipe there.
  * An orb thrown or dropped into the sink rolls down its throat into the body, which works on it for a while, its window glowing, and shoots it out of the cannon, see {@link AlchemyWorks}.
  */
 export default function AlchemyMachine() {
@@ -78,22 +75,19 @@ export default function AlchemyMachine() {
   const parts = useDisposable(useMemo(() => {
     const bench = new WorkbenchGeometry
     const sink = new SinkGeometry
-    const splashback = new SplashbackGeometry
     const body = new MachineBodyGeometry
     const pipe = new PipeGeometry
     const cannon = new CannonGeometry
     return {
       bench,
       sink,
-      splashback,
       body,
       pipe,
       cannon,
       topCollision: colliderGeometry(bench.top),
       sinkCollision: colliderGeometry(sink.collision),
-      splashbackCollision: colliderGeometry(splashback.collision),
       dispose() {
-        for (const part of [bench, sink, splashback, body, pipe, cannon]) {
+        for (const part of [bench, sink, body, pipe, cannon]) {
           part.dispose()
         }
       },
@@ -106,10 +100,6 @@ export default function AlchemyMachine() {
     }, {roughness: 0.5})
     const brass = new HammeredBrassMaterial
     const iron = new WroughtIronMaterial
-    const leather = new LeatherMaterial({
-      tint: '#4a2416',
-      highlight: '#7a4128',
-    })
     const bronze = new BronzeMaterial({environment: studioEnvironment})
     // Smoky glass, lit from inside by the work going on behind it
     const window = new MeshStandardNodeMaterial({
@@ -122,11 +112,10 @@ export default function AlchemyMachine() {
       wood,
       brass,
       iron,
-      leather,
       bronze,
       window,
       dispose() {
-        for (const material of [wood, brass, iron, leather, bronze, window]) {
+        for (const material of [wood, brass, iron, bronze, window]) {
           material.dispose()
         }
       },
@@ -141,8 +130,6 @@ export default function AlchemyMachine() {
       <MeshSurfaceCollider args={parts.topCollision} position={[benchX, 0, benchZ]} />
       {parts.bench.colliders.map(({center, size}) => <CuboidCollider key={center.join()} args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={[benchX + center[0], center[1], benchZ + center[2]]} />)}
       <MeshSurfaceCollider args={parts.sinkCollision} position={alchemySink.center} />
-      {/* The padding stops whatever strikes it dead, dropping it into the bowl. */}
-      <MeshSurfaceCollider args={parts.splashbackCollision} position={alchemySink.center} restitution={0} restitutionCombineRule={CoefficientCombineRule.Min} />
       <CuboidCollider args={[machineBody.size[0] / 2, machineBody.size[1] / 2, machineBody.size[2] / 2]} position={[sinkX, machineBody.size[1] / 2, sinkZ]} />
       {pipeCapsules.map(({half, position, rotation}) => <CapsuleCollider key={position.join()} args={[half, alchemyPipe.radius]} position={position} rotation={rotation} />)}
       <CylinderCollider args={[trunnionReach / 2, 0.27]} position={breechBlock} rotation={barrelTurn} />
@@ -151,10 +138,6 @@ export default function AlchemyMachine() {
         <mesh castShadow geometry={parts.bench.frame} material={materials.wood} name='alchemy-workbench-frame' receiveShadow />
       </group>
       <mesh castShadow geometry={parts.sink.metal} material={materials.brass} name='alchemy-sink' position={[sinkX, sinkY, sinkZ]} receiveShadow />
-      <group position={alchemySink.center}>
-        <mesh castShadow geometry={parts.splashback.shell} material={materials.brass} name='alchemy-splashback' receiveShadow />
-        <mesh castShadow geometry={parts.splashback.padding} material={materials.leather} name='alchemy-splashback-padding' receiveShadow />
-      </group>
       <group position={[sinkX, 0, sinkZ]}>
         <mesh castShadow geometry={parts.body.iron} material={materials.iron} name='alchemy-body' receiveShadow />
         <mesh castShadow geometry={parts.body.brass} material={materials.brass} name='alchemy-body-brass' receiveShadow />

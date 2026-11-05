@@ -7,15 +7,15 @@ import {wallFace} from './architectureDimensions.ts'
 import {forgeVestibule} from './forge.ts'
 import {forgeTurn, forgeTurnHoleRadius} from './forgeTurn.ts'
 
-/** how many pieces the bore’s collider is cut into along the pipe, finely enough for an orb to slide round the loop without catching on their seams */
-const collisionSegments = 640
-const visibleSegments = 320
-const sides = 24
+/** how many pieces the bore’s collider is cut into along the pipe and round it: finely enough for an orb pressed onto the loop at many times its weight to slide round it without knocking against their seams, which would cost it most of its speed */
+const collision = [1500, 48] as const
+/** how many pieces the brass is cut into along the pipe and round it */
+const visible = [320, 24] as const
 /** how far each wall plate reaches out past the hole it covers, and how thick it is */
 const plate = [0.04, 0.012] as const
 const forward = new Vector3(0, 0, 1)
 /** A tube along the curve facing inward, like the bore an orb slides through. */
-function bore(curve: ForgeTurnCurve, segments: number) {
+function bore(curve: ForgeTurnCurve, [segments, sides]: readonly [number, number]) {
   const tube = new TubeGeometry(curve, segments, forgeTurn.bore, sides, false)
   const indices = tube.getIndex()!
   for (let index = 0; index < indices.count; index += 3) {
@@ -71,13 +71,13 @@ export default class ForgeTurnGeometry {
   constructor() {
     const curve = new ForgeTurnCurve
     const outside = forgeTurn.bore + forgeTurn.thickness
-    this.collision = bore(curve, collisionSegments)
-    const parts: Array<BufferGeometry> = [bore(curve, visibleSegments), new TubeGeometry(curve, visibleSegments, outside, sides, false)]
+    this.collision = bore(curve, collision)
+    const parts: Array<BufferGeometry> = [bore(curve, visible), new TubeGeometry(curve, visible[0], outside, visible[1], false)]
     for (const t of [0, 1]) {
       const point = curve.getPoint(t)
       const turn = new Quaternion
       turn.setFromUnitVectors(forward, curve.getTangent(t).multiplyScalar(t === 0 ? -1 : 1))
-      const rim = new RingGeometry(forgeTurn.bore, outside, sides)
+      const rim = new RingGeometry(forgeTurn.bore, outside, visible[1])
       parts.push(rim.applyQuaternion(turn).translate(point.x, point.y, point.z))
     }
     parts.push(wallPlate('inlet'))

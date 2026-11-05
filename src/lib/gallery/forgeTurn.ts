@@ -79,7 +79,7 @@ function plan(along: number): {
 
 /**
  * The redirection pipe in the Forge’s vestibule, which turns every orb the alchemy machine’s cannon shoots through the arch round toward the Bastion, without slowing it: from its mouth low on the vestibule’s north wall, facing the arch, it runs north through the wall, round a 270° loop behind it, as wide as the vestibule, and west through the wall again at the vestibule’s east side, where its outlet sends the orb rolling across the floor and out through the west arch onto the Bastion’s approach.
- * It takes the shot over at its mouth at the very slope it falls there, the orb already resting on the bottom of its bore, and eases out into a gentle fall down to its outlet, just over the floor. Its bore is polished brass, which an orb slides round like a bobsled, without rolling and without bouncing.
+ * It takes the shot over at its mouth at the very slope it falls there, the orb already resting on the bottom of its bore, and eases out into a gentle fall down to its outlet, just over the floor. Its bore is polished brass, which an orb slides round like a bobsled, without rolling and without bouncing, though pressed onto the bends at many times its weight, it leaves with only about three fifths of the speed it flew in with.
  * All values are in meters, in the world’s frame.
  */
 export const forgeTurn = {
@@ -134,77 +134,5 @@ export function forgeTurnHole(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotat
     height: bottom + holeRadius * 2,
     profile: 'round',
     casing: false,
-  }
-}
-
-const gravity = 9.81
-/** How far along the pipe in plan an orb at the position, flying at the velocity, has flown into its mouth, if it has: inside the bore, between the mouth and a little past the wall, heading in. */
-export function forgeTurnEntry([x, y, z]: Vec3, [, , vz]: Vec3) {
-  const along = mouthZ - z
-  if (along < 0 || along > inletRun + 0.4 || !(vz < 0)) {
-    return
-  }
-  const [axisX, axisY] = forgeTurn.at(Math.min(along, inletRun)).point
-  return Math.hypot(x - axisX, y - axisY) < bore ? along : undefined
-}
-
-/** Where an orb rides in the pipe `along` meters along it in plan: on the bottom of its bore, `slack` under its middle, square to the way it runs. */
-function seat(along: number): Vec3 {
-  const {direction: [dx, dy, dz], point} = forgeTurn.at(along)
-  // Straight down, less its share along the pipe
-  const down: Vec3 = [dy * dx, dy * dy - 1, dy * dz]
-  const norm = Math.hypot(...down)
-  return point.map((value, axis) => value + down[axis] / norm * slack) as Vec3
-}
-/** How far the pipe turns in plan between two points along it, in radians: round the loop, and nowhere else. */
-function turned(from: number, to: number) {
-  const overlap = Math.min(to, inletRun + loop) - Math.max(from, inletRun)
-  return Math.max(overlap, 0) / radius
-}
-
-/**
- * An orb sliding through the pipe, out of the physics: it gains what its fall down the pipe gives it, and round the loop, pressed onto the polished bore at many times its weight, it loses a little to the bore with every radian it turns, as a rope slips round a capstan, keeping four fifths of its speed all the way round.
- * Rapier, which steps a ball pressed onto a faceted bend as a series of small collisions, would lose half of it, and some of that by chance.
- */
-export class ForgeTurnRide {
-  /** how much of its speed the bore takes per radian the loop turns it */
-  static readonly drag = 0.04
-  /** how far along the pipe in plan it is */
-  along: number
-  private velocity: number
-
-  constructor(along: number, speed: number) {
-    this.along = Math.max(0, along)
-    this.velocity = speed
-  }
-
-  /** Slides it on by `seconds`; whether it has left the outlet. */
-  advance(seconds: number) {
-    const from = this.along
-    this.along = Math.min(from + this.velocity * seconds / Math.hypot(1, fall(from)), length)
-    const gained = this.velocity ** 2 + 2 * gravity * (height(from) - height(this.along))
-    this.velocity = Math.sqrt(Math.max(gained, 0)) * Math.exp(-ForgeTurnRide.drag * turned(from, this.along))
-    return this.along >= length
-  }
-
-  /** where its middle is, on the bottom of the bore */
-  position() {
-    return seat(this.along)
-  }
-
-  /** How it leaves the outlet: where, along the pipe at its speed, and spinning as it rolls on the floor. */
-  release() {
-    const velocity = forgeTurn.at(length).direction.map(value => value * this.velocity) as Vec3
-    const [vx, , vz] = velocity
-    return {
-      position: seat(length),
-      velocity,
-      // Rolling west without slipping: the floor’s up crossed with its velocity
-      spin: [vz / orbRadius, 0, -vx / orbRadius] as Vec3,
-    }
-  }
-
-  speed() {
-    return this.velocity
   }
 }

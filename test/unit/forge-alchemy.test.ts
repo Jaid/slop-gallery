@@ -7,13 +7,12 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {mulberry32} from 'math/random'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
-import {alchemyCannon, alchemyPipe, alchemySink, alchemySplashback, cannonFlight, cannonLaunch, cannonTarget, holderSpot, inSinkThroat, machineBody, southWallFace, workbench} from '../../src/lib/gallery/alchemy/alchemyMachine.ts'
+import {alchemyCannon, alchemyPipe, alchemySink, cannonFlight, cannonLaunch, cannonTarget, holderSpot, inSinkThroat, machineBody, southWallFace, workbench} from '../../src/lib/gallery/alchemy/alchemyMachine.ts'
 import CannonGeometry from '../../src/lib/gallery/alchemy/CannonGeometry.ts'
 import {flavorCandidates, flavoredOrb, orbAround, transmutedOrb} from '../../src/lib/gallery/alchemy/flavor.ts'
 import MachineBodyGeometry from '../../src/lib/gallery/alchemy/MachineBodyGeometry.ts'
 import PipeGeometry from '../../src/lib/gallery/alchemy/PipeGeometry.ts'
 import SinkGeometry from '../../src/lib/gallery/alchemy/SinkGeometry.ts'
-import SplashbackGeometry from '../../src/lib/gallery/alchemy/SplashbackGeometry.ts'
 import WorkbenchGeometry from '../../src/lib/gallery/alchemy/WorkbenchGeometry.ts'
 import {colliderGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
@@ -21,7 +20,7 @@ import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
 import {climbApproach} from '../../src/lib/gallery/climb.ts'
 import {helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
-import {forgeTurn, forgeTurnEntry, forgeTurnHoleRadius, ForgeTurnRide} from '../../src/lib/gallery/forgeTurn.ts'
+import {forgeTurn, forgeTurnHoleRadius} from '../../src/lib/gallery/forgeTurn.ts'
 import ForgeTurnGeometry from '../../src/lib/gallery/ForgeTurnGeometry.ts'
 import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
 import {halloweenOrb, horrorOrb, orbRadius, randomOrbs, spookOrb, transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
@@ -35,10 +34,9 @@ import {addOrb, forgeAndBastionColliders, physicsWorld} from './helpers/bastionW
 await RAPIER.init()
 const bench = new WorkbenchGeometry
 const sink = new SinkGeometry
-const splashback = new SplashbackGeometry
 const turnPipe = new ForgeTurnGeometry
 afterAll(() => {
-  for (const geometry of [bench, sink, splashback, turnPipe]) {
+  for (const geometry of [bench, sink, turnPipe]) {
     geometry.dispose()
   }
 })
@@ -100,7 +98,7 @@ describe('the Forge’s alchemy machine', () => {
     expect(sinkY + min.y).toBeLessThan(machineBody.size[1])
     expect(Math.max(max.x, -min.x)).toBeLessThan(alchemySink.radius + 0.04)
   })
-  test('takes in every orb dropped into its sink and nearly every one thrown at its splashback from in front of the bench, which rolls down the throat into its body', () => {
+  test('takes in every orb dropped into its sink and some thrown at it from in front of the bench, nearly at eye height, which roll down the throat into its body', () => {
     const world = new RAPIER.World({
       x: 0,
       y: -9.81,
@@ -136,9 +134,6 @@ describe('the Forge’s alchemy machine', () => {
       })
       welded(colliderGeometry(bench.top), [benchX, 0, benchZ])
       welded(colliderGeometry(sink.collision), alchemySink.center)
-      const padding = welded(colliderGeometry(splashback.collision), alchemySink.center)
-      padding.setRestitution(0)
-      padding.setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min)
       world.createCollider(RAPIER.ColliderDesc.cuboid(machineBody.size[0] / 2, machineBody.size[1] / 2, machineBody.size[2] / 2).setTranslation(sinkX, machineBody.size[1] / 2, sinkZ))
       world.createCollider(RAPIER.ColliderDesc.cuboid(8, 0.1, 8).setTranslation(benchX, -0.1, benchZ - 4))
       world.createCollider(RAPIER.ColliderDesc.cuboid(8, 3, 0.1).setTranslation(benchX, 3, southWallFace + 0.1))
@@ -151,8 +146,8 @@ describe('the Forge’s alchemy machine', () => {
         }
       }
       expect(dropped).toBe(24)
-      // Thrown like a carried prop, 10 m/s along the view and 2 m/s up, from a player standing up to 4 m in front of the bench: it stands nearly at eye height, so every throw comes at the sink almost flat, and players aim it at the middle of the splashback’s padding, a hand over the bowl.
-      const target: Vec3 = [sinkX, sinkY + 0.3, sinkZ + alchemySplashback.radius]
+      // Thrown like a carried prop, 10 m/s along the view and 2 m/s up, from a player standing up to 4 m in front of the bench, aiming the throw’s arc at the middle of the bowl, a hand over the bench: it stands nearly at eye height, so every throw comes at the sink almost flat, and the bowl flings many out again like a ramp.
+      const target: Vec3 = [sinkX, sinkY + 0.15, sinkZ]
       let throws = 0
       let caught = 0
       for (const distance of [0.6, 1.5, 2.5, 4]) {
@@ -185,7 +180,8 @@ describe('the Forge’s alchemy machine', () => {
           }
         }
       }
-      expect(caught).toBeGreaterThanOrEqual(throws * 0.9)
+      // Hard to land, but not hopeless
+      expect(caught).toBeGreaterThanOrEqual(throws / 4)
     } finally {
       world.free()
     }
@@ -356,35 +352,6 @@ describe('the Forge’s redirection pipe', () => {
       material.dispose()
     }
   })
-  test('an orb flying into its mouth slides through it, gains what its fall down the pipe gives it, keeps four fifths of its speed round the loop and rolls out of the outlet on the bottom of its bore, heading west', () => {
-    const [x, y, z] = cannonTarget.mouth
-    const velocity = cannonLaunch.velocity.map((value, axis) => (axis === 1 ? value - 9.81 * 1.2 : value)) as Vec3
-    expect(forgeTurnEntry([x, y, z + 0.05], velocity)).toBeUndefined()
-    expect(forgeTurnEntry([x + 0.3, y, z - 0.1], velocity)).toBeUndefined()
-    expect(forgeTurnEntry([x, y, z - 0.1], [0, 0, 1])).toBeUndefined()
-    const along = forgeTurnEntry([x, y, z - 0.1], velocity)!
-    expect(along).toBeCloseTo(0.1 + (forgeTurn.at(0).point[2] - z), 9)
-    const ride = new ForgeTurnRide(along, 18)
-    let steps = 0
-    while (!ride.advance(1 / 240)) {
-      steps++
-      expect(ride.speed()).toBeGreaterThan(14)
-    }
-    expect(steps).toBeLessThan(forgeTurn.length / 14 * 240)
-    const {position, spin, velocity: out} = ride.release()
-    const drop = forgeTurn.at(along).point[1] - forgeTurn.at(forgeTurn.length).point[1]
-    // As much as the loop’s drag leaves of its speed and what the drop gives it, give or take what the steps make of it
-    const turn = Math.exp(-ForgeTurnRide.drag * Math.PI * 3 / 2)
-    expect(Math.hypot(...out)).toBeGreaterThan(18 * turn)
-    expect(Math.hypot(...out)).toBeLessThan(Math.sqrt((18 * turn) ** 2 + 2 * 9.81 * drop))
-    expect(turn).toBeGreaterThan(0.8)
-    expect(out[0]).toBeLessThan(0)
-    // On the bottom of the bore, a hair over the floor
-    expect(position[1] - orbRadius).toBeGreaterThan(0)
-    expect(position[1] - orbRadius).toBeLessThan(0.08)
-    // Rolling: its bottom stands still on the floor.
-    expect(Math.hypot(out[0] + spin[2] * orbRadius, out[2] - spin[0] * orbRadius)).toBeLessThan(1e-9)
-  })
   test('runs through round holes in the vestibule’s wall, wide enough round its brass, snug at the outlet and covered by a plate at the inlet, above the baseboard', () => {
     const ring = wallById('forge-vestibule')
     expect(ring.holes!.filter(hole => hole.name?.startsWith('pipe')).map(hole => hole.name)).toEqual(['pipe_inlet', 'pipe_outlet'])
@@ -458,7 +425,7 @@ describe('the alchemy machine’s orbs', () => {
     expect([0, 0.49, 0.5, 0.99].map(random => flavoredOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(flavorCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
-  test('scattered cannon shots pass the arch untouched, keep four fifths of their speed round the redirection pipe and travel on down the Bastion to its crater, never dragged across the welded surfaces', () => {
+  test('scattered cannon shots pass the arch untouched, keep over half their speed round the redirection pipe and travel on down the Bastion to its crater, never dragged across the welded surfaces', () => {
     const colliders = forgeAndBastionColliders()
     const state = mulberry32.create(7)
     const scatter = (size: number) => (mulberry32.sample(state) * 2 - 1) * size
@@ -466,7 +433,6 @@ describe('the alchemy machine’s orbs', () => {
     const [hatchX, gateZ] = [wall.center[0] + hatch.u, wall.center[2]]
     const shots = 20
     const outlet = forgeTurn.at(forgeTurn.length).point
-    const fromVestibule = ([x, , z]: Vec3) => Math.hypot(x - forgeVestibule.center[0], z - forgeVestibule.center[1])
     const ratios: Array<number> = []
     let through = 0
     let caught = 0
@@ -502,34 +468,9 @@ describe('the alchemy machine’s orbs', () => {
             untouched = false
           }
           const pace = Math.hypot(velocity.x, velocity.y, velocity.z)
-          // Flying into the mouth, it slides through the pipe out of the physics, as ForgeTurnRides slides it, and comes out at the outlet.
-          const along = entered ? undefined : forgeTurnEntry([position.x, position.y, position.z], [velocity.x, velocity.y, velocity.z])
-          if (along !== undefined) {
+          if (!entered && position.z <= cannonTarget.mouth[2]) {
             entered = true
             inletSpeed = pace
-            const ride = new ForgeTurnRide(along, pace)
-            while (!ride.advance(world.timestep)) {
-              expect(fromVestibule(ride.position())).toBeGreaterThan(0)
-            }
-            const release = ride.release()
-            const [x, y, z] = release.position
-            body.setTranslation({
-              x,
-              y,
-              z,
-            }, true)
-            body.setLinvel({
-              x: release.velocity[0],
-              y: release.velocity[1],
-              z: release.velocity[2],
-            }, true)
-            body.setAngvel({
-              x: release.spin[0],
-              y: release.spin[1],
-              z: release.spin[2],
-            }, true)
-            previous = body.translation()
-            continue
           }
           if (entered && !exited && position.x < outlet[0] - 0.3 && Math.abs(position.z - outlet[2]) < 0.4 && position.y < outlet[1] + 0.3) {
             exited = true
@@ -565,8 +506,8 @@ describe('the alchemy machine’s orbs', () => {
         world.free()
       }
     }
-    // Over the floor, the orbs roll on with four fifths of the speed they flew in with.
-    expect(Math.min(...ratios)).toBeGreaterThan(0.8)
+    // Over the floor, the orbs roll on with over half the speed they flew in with.
+    expect(Math.min(...ratios)).toBeGreaterThan(0.5)
     expect(through).toBeGreaterThanOrEqual(shots * 0.9)
     expect(caught).toBeGreaterThanOrEqual(through * 0.8)
     // but where they strike something
