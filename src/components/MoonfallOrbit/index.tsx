@@ -11,6 +11,8 @@ import Orbitable from '#component/Orbitable'
 import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import MoonfallOrbitAmbience from '#src/lib/audio/ambience/MoonfallOrbit.ts'
 import {AnimationClock} from '#src/lib/frozenTime.ts'
+import meteoriteGeometry from '#src/lib/gallery/moonfall/MeteoriteGeometry.ts'
+import MeteoriteMaterial from '#src/lib/materials/MeteoriteMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
@@ -32,7 +34,9 @@ const rings = [0, 1, 2].map(i => ({
   hue: i === 1 ? '#d5ad73' : '#62b6b1',
   tint: i === 1 ? '#d5ad73' : '#8ad6cd',
 }))
-/** The Moonfall’s orbital sculpture: a dark core under three glowing rings, each precessing and nodding on its own while its bead runs round it, trailing light. */
+/** how large the meteorite at the sculpture’s middle is round */
+const coreRadius = 0.7
+/** The Moonfall’s orbital sculpture: an iron meteorite under three glowing rings, each precessing and nodding on its own while its bead runs round it, trailing light. */
 export default function MoonfallOrbit() {
   const turns = useRef<Array<Group | null>>([])
   const beads = useRef<Array<Mesh | null>>([])
@@ -50,8 +54,9 @@ export default function MoonfallOrbit() {
       },
     }
   }, [clock]))
-  // The core’s detail 2 splits each edge in three, so the factor applies to that count.
-  const coreDetail = 3 * curveDetail - 1
+  // About 4500 triangles at the base detail; the thumbprints are shaded, not modeled.
+  const core = useDisposable(useMemo(() => meteoriteGeometry(coreRadius, 14 * curveDetail), [curveDetail]))
+  const iron = useDisposable(useMemo(() => new MeteoriteMaterial(coreRadius), []))
   useFrame((_, delta) => {
     const t = clock.advance(delta)
     for (const [i, ring] of rings.entries()) {
@@ -65,7 +70,7 @@ export default function MoonfallOrbit() {
     }
   })
   return <Orbitable id='moonfall-orbital-sculpture' name='moonfall-orbital-sculpture' orbit={sculptureOrbit} position={[0, 2.5, 0]} title='Orbital sculpture'>
-    <mesh castShadow><icosahedronGeometry args={[0.7, coreDetail]} /><meshStandardNodeMaterial color='#11252c' envMapIntensity={0.35} metalness={0.8} roughness={0.3} /></mesh>
+    <mesh castShadow geometry={core} material={iron} name='moonfall-meteorite' />
     {rings.map((ring, i) => <group
       key={i} ref={group => {
         turns.current[i] = group
