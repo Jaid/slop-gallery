@@ -335,7 +335,7 @@ describe('moods', () => {
       const ambience = new Ambience
       expect(ambience.id).toBe(`mood-${mood.id}`)
     }
-    expect(roomMoods.filter(mood => mood.ambience).map(mood => mood.id)).toEqual([])
+    expect(roomMoods.filter(mood => mood.ambience).map(mood => mood.id)).toEqual(['fortress'])
   })
   test('N suppresses every mood and lets them back', () => {
     expect(moodSuppression.active).toBe(false)

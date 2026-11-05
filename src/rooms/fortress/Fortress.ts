@@ -3,6 +3,7 @@ import type {Vec3} from 'math'
 
 import {Geofence} from 'geofency'
 
+import FortressAmbience from '#src/lib/audio/ambience/moods/FortressAmbience.ts'
 import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {bastionApex} from '#src/lib/gallery/bastion.ts'
 import {fortressOrigin, fortressTransition} from '#src/lib/gallery/fortress.ts'
@@ -45,6 +46,7 @@ export default class Fortress extends Room {
         new RoomMood({
           id: 'fortress',
           title: 'Cold stone',
+          ambience: FortressAmbience,
           // Stone passages: dark and long, with slaps between their close walls.
           transformer: reverberation({
             decay: 2.7,
