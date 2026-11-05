@@ -19,7 +19,6 @@ export type SoundShape = {
   volume: number
 }
 export type SoundTone = SoundShape & {
-  detune?: number
   /** the frequency it glides to by its end, exponentially */
   end?: number
   filter?: SoundFilter
@@ -73,15 +72,15 @@ function echo(context: BaseAudioContext, {brightness, decay, length}: SoundRoom)
  * It owns every node it makes and disconnects them once {@link finish} found them rung out, so the portal closing doesn’t cut its tail off.
  */
 export default class EffectSound {
-  readonly bus: GainNode
   readonly context: BaseAudioContext
   /** when it started, in the context’s seconds */
   readonly now: number
-  readonly panner: PannerNode
+  private readonly bus: GainNode
   /** when the last of its parts ends, in the context’s seconds */
   private end: number
   private readonly master: AudioNode
   private readonly nodes: Array<AudioNode> = []
+  private readonly panner: PannerNode
 
   constructor({context, master}: AudioOutput, [x, y, z]: Vec3, room: SoundRoom) {
     this.context = context
@@ -106,8 +105,7 @@ export default class EffectSound {
     envelope.gain.exponentialRampToValueAtTime(silence, start + duration)
     envelope.gain.setValueAtTime(0, start + duration)
     through.connect(envelope).connect(into)
-    this.reach(start + duration)
-    return envelope
+    this.end = Math.max(this.end, start + duration)
   }
 
   /** Disconnects every node once everything has rung out, `tail` seconds after the last part ended. */
@@ -120,8 +118,9 @@ export default class EffectSound {
   }
 
   /** Moves where it is heard from to `to`, gliding there linearly by `at`, in the context’s seconds. */
-  glide(to: Vec3, at: number, panner = this.panner) {
-    for (const [index, position] of [panner.positionX, panner.positionY, panner.positionZ].entries()) {
+  glide(to: Vec3, at: number) {
+    const {positionX, positionY, positionZ} = this.panner
+    for (const [index, position] of [positionX, positionY, positionZ].entries()) {
       position.linearRampToValueAtTime(to[index], at)
     }
   }
@@ -131,14 +130,9 @@ export default class EffectSound {
     const source = this.keep(new AudioBufferSourceNode(this.context, {buffer: whiteNoise(this.context)}))
     const filtered = this.filter(filter, start, duration)
     source.connect(filtered)
-    const envelope = this.envelope(filtered, start, duration, shape, into)
+    this.envelope(filtered, start, duration, shape, into)
     source.start(start, Math.random() * 3)
     source.stop(start + duration + 0.02)
-    return {
-      envelope,
-      filter: filtered,
-      source,
-    }
   }
 
   /** Registers nodes it made for something of its own, which {@link finish} disconnects with the rest. */
@@ -166,17 +160,11 @@ export default class EffectSound {
     return panner
   }
 
-  /** Makes sure the nodes stay connected until `at`, in the context’s seconds. */
-  reach(at: number) {
-    this.end = Math.max(this.end, at)
-  }
-
   /** A tone from `start` for `duration` seconds, into `into`, the bus by default. */
-  tone(start: number, duration: number, {detune = 0, end, filter, frequency, type = 'sine', vibrato, ...shape}: SoundTone, into?: AudioNode) {
+  tone(start: number, duration: number, {end, filter, frequency, type = 'sine', vibrato, ...shape}: SoundTone, into?: AudioNode) {
     const oscillator = this.keep(new OscillatorNode(this.context, {
       type,
       frequency,
-      detune,
     }))
     oscillator.frequency.setValueAtTime(frequency, start)
     if (end) {
@@ -194,13 +182,9 @@ export default class EffectSound {
     if (shaped) {
       oscillator.connect(shaped)
     }
-    const envelope = this.envelope(shaped ?? oscillator, start, duration, shape, into)
+    this.envelope(shaped ?? oscillator, start, duration, shape, into)
     oscillator.start(start)
     oscillator.stop(start + duration + 0.02)
-    return {
-      envelope,
-      oscillator,
-    }
   }
 
   private filter({end, frequency, q = 1, type}: SoundFilter, start: number, duration: number) {

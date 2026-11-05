@@ -6,7 +6,6 @@ import type {FusionEffect} from './effects/index.ts'
 import modelImage from '../../ai/modelImage.ts'
 import {loadBlob} from '../actions.ts'
 import {compositeImages, tintImage} from '../ImageImporter.ts'
-import {forcedEffect} from './effects/forcedEffect.ts'
 
 /** Something an ingredient contributes to the fusion: an image the result is made of, an instruction to the image model, a frame the result wears or an effect the portal shows. */
 export type IngredientContribution = {
@@ -97,11 +96,8 @@ export default class FusionRecipe {
     this.ingredients = ingredients
   }
 
-  /** the effects the portal shows, each once, in the order of their ingredients, or the one `?fusion_effect` forces on every fusion instead */
+  /** the effects the portal shows, each once, in the order of their ingredients */
   get effects() {
-    if (forcedEffect) {
-      return [forcedEffect]
-    }
     return [...new Set(this.contributionsOf('effect').map(contribution => contribution.effect))]
   }
 

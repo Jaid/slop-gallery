@@ -1,13 +1,13 @@
 import type {OrbGlassOptions} from '#src/lib/materials/orb/base/OrbGlassMaterial.ts'
 
-import {eyesEffect} from '#src/lib/gallery/fusion/effects/index.ts'
+import {bloodEffect} from '#src/lib/gallery/fusion/effects/index.ts'
 import EyeOrbMaterial from '#src/lib/materials/orb/EyeOrbMaterial.ts'
 import {horrorMood} from '#src/lib/moods/index.ts'
 
 import PromptOrb from '../base/PromptOrb.ts'
 import photo from './photo.jxl' with {distance: '1', format: 'jxl', maximumLong: '512'}
 
-/** A bloodshot eye bleeding into its liquid. It corrupts a work into something disturbing, and eyes like its own open round the portal to stare as the result flips out. */
+/** A bloodshot eye bleeding into its liquid. It corrupts a work into something disturbing, and the portal spurts blood as the result flips out. */
 export default class HorrorOrb extends PromptOrb {
   readonly adjectives = [
     // unease
@@ -35,7 +35,7 @@ export default class HorrorOrb extends PromptOrb {
   ]
   readonly change = 'provide traits that make it'
   readonly color = '#a8060f'
-  override readonly effect = eyesEffect
+  override readonly effect = bloodEffect
   readonly frame = ['horror-flesh', 'horror-bleeding'] as const
   readonly id = 'horror'
   readonly mood = horrorMood
