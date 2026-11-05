@@ -12,6 +12,8 @@ export const spookOrb = new SpookOrb
 export const orbs = [halloweenOrb, horrorOrb, spookOrb, transparentOrb] as const
 /** the orbs that rework a work by a prompt of their own */
 export const promptOrbs = [halloweenOrb, horrorOrb, spookOrb] as const
+/** the orbs that turn up at random where nothing asks for a kind of its own: on the Vesper’s pedestals and out of the Forge’s release while nothing in it steers it; never the Horror Orb, which takes the cleaver to call up */
+export const randomOrbs = [transparentOrb, spookOrb, halloweenOrb] as const
 
 export type {default as Orb} from './base/Orb.ts'
 export {transparentOrb} from './transparent/TransparentOrb.ts'

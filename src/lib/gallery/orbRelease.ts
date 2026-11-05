@@ -2,12 +2,10 @@ import type {Orb} from './orbs/index.ts'
 import type {Vec3} from './types.ts'
 
 import {helmet, knife, pumpkin} from './curios/index.ts'
-import {halloweenOrb, horrorOrb, spookOrb, transparentOrb} from './orbs/index.ts'
+import {halloweenOrb, horrorOrb, randomOrbs, spookOrb} from './orbs/index.ts'
 
 /** the rooms an orb released into the Forge’s gutter passes through on its way down to the Fortress’ crater */
 export const releaseRooms: ReadonlySet<string> = new Set(['forge', 'fortress'])
-/** the orbs the Forge’s release picks one of at random, while nothing in the Forge steers it */
-export const releasePool: ReadonlyArray<Orb> = [transparentOrb, spookOrb, halloweenOrb]
 /** the props that, lying in the Forge or carried into it, steer its release to an orb of their own, by their ids: the pumpkin to the Halloween Orb, the cleaver to the Horror Orb and the helmet to the Spook Orb */
 export const releaseSteering: ReadonlyMap<string, Orb> = new Map<string, Orb>([
   [pumpkin.propId, halloweenOrb],
@@ -27,7 +25,7 @@ export function releaseLocked(props: Iterable<PropPosition>, roomAt: (position: 
   return false
 }
 
-/** The orbs the Forge’s release may give, with the props where they are: those that the props in the Forge steer it to, by {@link releaseSteering}, or, with none of them there, the {@link releasePool}. */
+/** The orbs the Forge’s release may give, with the props where they are: those that the props in the Forge steer it to, by {@link releaseSteering}, or, with none of them there, the {@link randomOrbs}. */
 export function releaseCandidates(props: Iterable<PropPosition>, roomAt: (position: Vec3) => string | undefined): ReadonlyArray<Orb> {
   const steered = new Set<Orb>
   for (const [id, position] of props) {
@@ -36,7 +34,7 @@ export function releaseCandidates(props: Iterable<PropPosition>, roomAt: (positi
       steered.add(orb)
     }
   }
-  return steered.size ? [...steered] : releasePool
+  return steered.size ? [...steered] : randomOrbs
 }
 
 /** The orb the Forge’s release gives, picked evenly from its {@link releaseCandidates} by `random`, a number from 0 up to 1. */

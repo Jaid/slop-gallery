@@ -15,8 +15,8 @@ import {fortressCrater} from '../../src/lib/gallery/fortress.ts'
 import {fortressLinkGate} from '../../src/lib/gallery/fortressNetwork.ts'
 import GutterGeometry from '../../src/lib/gallery/GutterGeometry.ts'
 import {forgeWindow} from '../../src/lib/gallery/lobbyWindows.ts'
-import {releaseCandidates, releasedOrb, releaseLocked, releasePool} from '../../src/lib/gallery/orbRelease.ts'
-import {halloweenOrb, horrorOrb, orbRadius, spookOrb, transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
+import {releaseCandidates, releasedOrb, releaseLocked} from '../../src/lib/gallery/orbRelease.ts'
+import {halloweenOrb, horrorOrb, orbRadius, randomOrbs, spookOrb, transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
 import {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {openingTop, wallCoordinates, wallOffset} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
@@ -133,14 +133,14 @@ describe('the Forge’s orb release', () => {
     expect(releaseLocked([['prop-sculpture', [forge.center[0], 1, forge.center[1]]]], roomAt)).toBe(false)
   })
   test('gives an orb of its pool at random while nothing in the Forge steers it, each of them as often, but never the Horror Orb', () => {
-    expect(releasePool).toEqual([transparentOrb, spookOrb, halloweenOrb])
+    expect(randomOrbs).toEqual([transparentOrb, spookOrb, halloweenOrb])
     const counts = new Map<Orb, number>
     const draws = 300
     for (let i = 0; i < draws; i++) {
       const drawn = releasedOrb([], roomAt, (i + 0.5) / draws)
       counts.set(drawn, (counts.get(drawn) ?? 0) + 1)
     }
-    expect(counts.keys().toArray()).toEqual([...releasePool])
+    expect(counts.keys().toArray()).toEqual([...randomOrbs])
     expect(counts.values().toArray()).toEqual([100, 100, 100])
     expect(releasedOrb([], roomAt, 0)).toBe(transparentOrb)
     expect(releasedOrb([], roomAt, 1 - 1e-12)).toBe(halloweenOrb)
@@ -156,11 +156,11 @@ describe('the Forge’s orb release', () => {
     expect(releaseCandidates([['prop-knife', inVestibule]], roomAt)).toEqual([horrorOrb])
     expect(releaseCandidates([['prop-helmet-2', inForge]], roomAt)).toEqual([spookOrb])
     // Where they lie when a game begins, none of them is in the Forge yet.
-    expect(releaseCandidates([pumpkin, knife, helmet].map(curio => [curio.propId, curio.position] as const), roomAt)).toBe(releasePool)
+    expect(releaseCandidates([pumpkin, knife, helmet].map(curio => [curio.propId, curio.position] as const), roomAt)).toBe(randomOrbs)
     // Several of a kind steer it no harder than one.
     expect(releaseCandidates([['prop-pumpkin', inForge], ['prop-pumpkin-2', inForge], ['prop-knife', inForge]], roomAt)).toEqual([halloweenOrb, horrorOrb])
     expect([0, 0.49, 0.5, 0.99].map(random => releasedOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
-    expect(releaseCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(releasePool)
+    expect(releaseCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
   test('of the orbs it releases, which all roll round the gutter, nine in ten roll on out across the vestibule, down the climb’s runnel and through the gate’s hatch, and four in five of those into the Fortress’ crater', () => {
     const colliders = forgeAndFortressColliders()
