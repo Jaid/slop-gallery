@@ -6,6 +6,7 @@ import {MeshPhysicalNodeMaterial, MeshStandardNodeMaterial} from 'three/webgpu'
 
 import InteractiveObject from '#component/InteractiveObject'
 import SwitchPlate, {SwitchButton} from '#component/SwitchPlate'
+import {switchSoundEffects} from '#src/lib/audio/switchSoundEffects.ts'
 import {playEffect} from '#src/lib/gallery.ts'
 import {switchButtonY} from '#src/lib/gallery/lightSwitch.ts'
 
@@ -35,7 +36,7 @@ export default function LightSwitch({id, on, onToggle, title = 'Light switch', .
     roughness: 0.3,
   }), []))
   const press = () => {
-    playEffect('SFX-44')
+    playEffect(on ? switchSoundEffects.lightOff.id : switchSoundEffects.lightOn.id)
     onToggle()
   }
   return <InteractiveObject id={id} action={on ? 'Switch off' : 'Switch on'} title={title} onActivate={press} {...props}>

@@ -4,24 +4,40 @@ import {expect, test} from 'bun:test'
 
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../src/lib/audio/playerSoundEffects.ts'
 import {soundEffects} from '../../src/lib/audio/soundEffects.ts'
+import {switchSoundEffects} from '../../src/lib/audio/switchSoundEffects.ts'
 
-test('sound effect catalog has 21 stable unique IDs with playable recipes', () => {
-  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43', 'SFX-44'])
+test('sound effect catalog has 24 stable unique IDs with playable recipes', () => {
+  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43', 'SFX-44', 'SFX-45', 'SFX-46', 'SFX-47'])
   const labels = new Set(soundEffects.map(effect => effect.label))
-  expect(labels.size).toBe(21)
+  expect(labels.size).toBe(24)
   const recipes = new Set(soundEffects.map(effect => JSON.stringify(effect.voices)))
-  expect(recipes.size).toBe(21)
+  expect(recipes.size).toBe(24)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {
       expect(voice.duration).toBeGreaterThan(0)
       expect(voice.volume).toBeGreaterThan(0)
-      expect(voice.volume).toBeLessThanOrEqual(0.05)
+      // Noise through a narrow band keeps only a sliver of its energy, so a click of it may start higher.
+      expect(voice.volume).toBeLessThanOrEqual(voice.kind === 'noise' ? 0.12 : 0.05)
     }
   }
 })
+/** the frequency of a recipe’s first tone */
+const pitch = (voices: ReadonlyArray<Voice>) => voices.find(voice => voice.kind === 'oscillator')!.frequency
+/** when a recipe’s last voice ends */
+const length = (voices: ReadonlyArray<Voice>) => Math.max(...voices.map(voice => (voice.delay ?? 0) + voice.duration))
 /** the voices flagstones add to the hard ground’s step */
 const grit = (voices: ReadonlyArray<Voice>) => voices.slice(3)
+test('the light switch sounds apart switching on and off, and the selector apart from both', () => {
+  const {lightOff, lightOn, selector} = switchSoundEffects
+  for (const effect of [lightOff, lightOn, selector]) {
+    expect(soundEffects).toContain(effect)
+  }
+  expect(pitch(lightOff.voices)).toBeLessThan(pitch(lightOn.voices))
+  // Switching on, the lights hum up for longer than they drop away switching off.
+  expect(length(lightOn.voices)).toBeGreaterThan(length(lightOff.voices))
+  expect(length(selector.voices)).toBeLessThan(length(lightOff.voices))
+})
 test('all seven player cues are in the catalog with recipes of their own', () => {
   const cues = Object.values(playerSoundEffects)
   expect(cues).toHaveLength(7)

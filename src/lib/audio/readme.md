@@ -14,7 +14,7 @@ Player effects use Web Audio synthesis only: no recordings, downloads, generated
 | SFX-36 | Viewing Mode Leave | V-inspection is released, including target removal. |
 | SFX-37 | Zoom Focus | A quiet two-tone layer sustained while zoomed. |
 
-All seven are part of the catalog in `soundEffects.ts`, next to the 14 interface effects. The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
+All seven are part of the catalog in `soundEffects.ts`, next to the 14 interface effects and the three switch sounds of `switchSoundEffects.ts` (see [Switches](#switches)). The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
 
 Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. Extended transitions use the extended family, including direct returns to normal FOV. Instant transitions produce no sweep. Reversing replaces the previous sweep with a short fade instead of stacking sounds. Explicit camera handoff, teleport and unmount release zoom audio without fabricating another transition.
 
@@ -30,7 +30,7 @@ The reusable `ego-player` package emits `onLand` and `onZoomTransition` but cont
 
 ## Room acoustics
 
-`SoundEngine` has two ways into its effects master: the master itself, which the interface’s sounds play on (the pause menu’s toggles, zoom, V-inspection, moods and the fusion portals, which bring rooms of their own), and `world`, which every sound of the world plays on (footsteps, landings, `chime`s, strikes and the ambience emitters). `world` reaches the master through the acoustics of the room the listener is in: a room may name a `RoomAcoustics` (`acoustics/Acoustics.ts`) among its options, a function that wires an input to an output through nodes of its own, the dry sound included, and returns how to disconnect them again. Rooms without one sound dry, as does everything before the listener entered a room.
+`SoundEngine` has two ways into its effects master: the master itself, which the interface’s sounds play on (the pause menu’s toggles, zoom, V-inspection, moods and the fusion portals, which bring rooms of their own), and `world`, which every sound of the world plays on (footsteps, landings, `chime`s, switches, strikes and the ambience emitters). `world` reaches the master through the acoustics of the room the listener is in: a room may name a `RoomAcoustics` (`acoustics/Acoustics.ts`) among its options, a function that wires an input to an output through nodes of its own, the dry sound included, and returns how to disconnect them again. Rooms without one sound dry, as does everything before the listener entered a room.
 
 `AmbienceListener` tells the engine the player’s room every frame (`enterRoom`, which does nothing while it stays the same). `Acoustics` builds the room’s transformation behind a send of its own and crossfades the sends with a 0.12 s time constant, so the sound made in the room left behind rings out there while everything new rings in the room entered. A room’s transformation stays built for 8 s after the listener left it, long enough for any echo to die and for stepping back through a doorway to find it still there.
 
@@ -43,6 +43,10 @@ Orbs and loose works sound when they strike something. Rapier reports a collisio
 `GrabbableProp` registers its body under its `striker`, which only `Orb` gives it so far. `orbImpacts.ts` is the glass of a 1.8 kg orb striking the ground there (`groundSurface` of the room at the contact point): a thump of its weight, a click of first contact and the glass ringing on, louder and brighter the harder it hits (speed^1.25); flagstones add grit, boards a hollow knock, carpet and the crater only thud, the Lobby’s glass floor rings back, a frame sounds like boards and two orbs clink like marbles.
 
 `Portrait` registers every work under its frame’s `impactSound`, an id of `frameImpactSounds` (`frameImpacts.ts`) that every frame of the same stuff shares: `gilt` (gessoed and gilded wood, the default of `PortraitFrame`), `hardwood` (oak, walnut, ebony and other solid wood) and `heavy` (stone, metal and acrylic). Only a loose work strikes anything, since a hung one is fixed and a carried or fusing one disabled. The contact’s normal in the frame’s own space as it struck tells which part struck first: within 14° of its face or back, it falls flat and slaps down on a cushion of air with its corners rattling after, a side knocks fuller and a corner sharp, with the frame’s resonances and the canvas drumming behind.
+
+## Switches
+
+The Banquet’s push-button switches sound mechanical (`switchSoundEffects.ts`): the light switch plays `SFX-45` Push Button On or `SFX-46` Push Button Off, the pressed button going in with a snap and a knock of the Bakelite and the other popping out a moment later, on letting the lights hum up for a breath and off letting it drop, a little lower; the light color selector plays `SFX-47` Selector Button, lighter, its detent clicking before the pop. `SFX-44` Switch Click stays in the catalog.
 
 ## Narration subtitles
 

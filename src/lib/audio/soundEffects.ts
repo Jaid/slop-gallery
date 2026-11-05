@@ -2,6 +2,7 @@ import type {AudioOutput, SoundEffect} from './proceduralAudio.ts'
 
 import {playerSoundEffects} from './playerSoundEffects.ts'
 import {noise, osc, playVoices} from './proceduralAudio.ts'
+import {switchSoundEffects} from './switchSoundEffects.ts'
 
 export type {SoundEffect} from './proceduralAudio.ts'
 
@@ -177,6 +178,7 @@ export const soundEffects: Array<SoundEffect> = [
       }),
     ],
   },
+  ...Object.values(switchSoundEffects),
 ]
 
 const byId = new Map(soundEffects.map(effect => [effect.id, effect]))

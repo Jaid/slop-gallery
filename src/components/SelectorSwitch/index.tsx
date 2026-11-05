@@ -6,6 +6,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import InteractiveObject from '#component/InteractiveObject'
 import SwitchPlate, {SwitchButton} from '#component/SwitchPlate'
+import {switchSoundEffects} from '#src/lib/audio/switchSoundEffects.ts'
 import {playEffect} from '#src/lib/gallery.ts'
 import {switchButtonY} from '#src/lib/gallery/lightSwitch.ts'
 
@@ -35,7 +36,7 @@ export default function SelectorSwitch<Option extends string>({id, onChange, opt
   const buttons = Object.entries(options) as Array<[Option, SelectorOption]>
   const [next, nextOption] = buttons[(buttons.findIndex(([option]) => option === value) + 1) % buttons.length]
   const press = () => {
-    playEffect('SFX-44')
+    playEffect(switchSoundEffects.selector.id)
     onChange(next)
   }
   return <InteractiveObject id={id} action={nextOption.title} title={title} onActivate={press} {...props}>
