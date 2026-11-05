@@ -3,15 +3,15 @@ import type {Group, Mesh} from 'three/webgpu'
 import {useFrame} from '@react-three/fiber'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo, useRef} from 'react'
-import {color, exp, float, uniform, uv} from 'three/tsl'
-import {MeshStandardNodeMaterial} from 'three/webgpu'
 import {useGraphicsModeValue} from 'use-graphics-mode'
 
 import Orbitable from '#component/Orbitable'
 import {useAmbienceEmitter} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import MoonfallOrbitAmbience from '#src/lib/audio/ambience/MoonfallOrbit.ts'
 import {AnimationClock} from '#src/lib/frozenTime.ts'
+import armillaryBandGeometry from '#src/lib/gallery/moonfall/ArmillaryBandGeometry.ts'
 import meteoriteGeometry from '#src/lib/gallery/moonfall/MeteoriteGeometry.ts'
+import ArmillaryRingMaterial from '#src/lib/materials/ArmillaryRingMaterial.ts'
 import MeteoriteMaterial from '#src/lib/materials/MeteoriteMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
@@ -32,11 +32,10 @@ const rings = [0, 1, 2].map(i => ({
   nod: 0.06 + i * 0.02,
   revolution: [0.95, 0.62, 0.41][i],
   hue: i === 1 ? '#d5ad73' : '#62b6b1',
-  tint: i === 1 ? '#d5ad73' : '#8ad6cd',
 }))
 /** how large the meteorite at the sculpture’s middle is round */
 const coreRadius = 0.7
-/** The Moonfall’s orbital sculpture: an iron meteorite under three glowing rings, each precessing and nodding on its own while its bead runs round it, trailing light. */
+/** The Moonfall’s orbital sculpture: an iron meteorite under three engraved bronze bands, each precessing and nodding on its own while its bead runs round it, trailing light through the band’s inlay. */
 export default function MoonfallOrbit() {
   const turns = useRef<Array<Group | null>>([])
   const beads = useRef<Array<Mesh | null>>([])
@@ -44,7 +43,7 @@ export default function MoonfallOrbit() {
   const {curveDetail} = useGraphicsModeValue(getGraphicsProfile)
   useAmbienceEmitter(MoonfallOrbitAmbience, slopGallery.ambienceRooms('moonfall', 'moonfall-orbital_sculpture'))
   const materials = useDisposable(useMemo(() => {
-    const list = rings.map(ring => ringMaterial(ring.tint, ring.hue, () => clock.time * ring.revolution / (Math.PI * 2) % 1))
+    const list = rings.map(ring => new ArmillaryRingMaterial(ring.radius, ring.hue, () => clock.time * ring.revolution / (Math.PI * 2) % 1))
     return {
       list,
       dispose: () => {
@@ -54,6 +53,17 @@ export default function MoonfallOrbit() {
       },
     }
   }, [clock]))
+  const bands = useDisposable(useMemo(() => {
+    const list = rings.map(ring => armillaryBandGeometry(ring.radius, 128 * curveDetail))
+    return {
+      list,
+      dispose: () => {
+        for (const geometry of list) {
+          geometry.dispose()
+        }
+      },
+    }
+  }, [curveDetail]))
   // About 4500 triangles at the base detail; the thumbprints are shaded, not modeled.
   const core = useDisposable(useMemo(() => meteoriteGeometry(coreRadius, 14 * curveDetail), [curveDetail]))
   const iron = useDisposable(useMemo(() => new MeteoriteMaterial(coreRadius), []))
@@ -77,7 +87,7 @@ export default function MoonfallOrbit() {
       }}
     >
       <group rotation={ring.tilt}>
-        <mesh material={materials.list[i]}><torusGeometry args={[ring.radius, 0.018, 8 * curveDetail, 128 * curveDetail]} /></mesh>
+        <mesh geometry={bands.list[i]} material={materials.list[i]} name='moonfall-armillary-band' />
         <mesh
           position={[ring.radius, 0, 0]} ref={mesh => {
             beads.current[i] = mesh
@@ -86,18 +96,4 @@ export default function MoonfallOrbit() {
       </group>
     </group>)}
   </Orbitable>
-}
-
-/** A ring that glows brighter in a comet’s tail behind its bead, which `phaseAt` places (0–1 round the ring) every frame. */
-function ringMaterial(tint: string, hue: string, phaseAt: () => number) {
-  const phase = uniform(0).onRenderUpdate(phaseAt)
-  // TorusGeometry’s u runs round the ring from +x, the way the bead travels.
-  const behind = phase.sub(uv().x).fract()
-  const tail = exp(behind.mul(-14)).mul(2.6)
-  const material = new MeshStandardNodeMaterial({
-    color: tint,
-    roughness: 0.4,
-  })
-  material.emissiveNode = color(hue).mul(float(1.6).add(tail))
-  return material
 }
