@@ -55,9 +55,25 @@ export type AudioOutput = {
   context: BaseAudioContext
   master: AudioNode
 }
+
 export type ProceduralPlayback = {
   gain: AudioParam
   stop: (fade?: number) => void
+}
+
+/** Delays every voice of a recipe by `seconds`, to string recipes together into one playback. */
+export function shiftVoices(voices: ReadonlyArray<Voice>, seconds: number): Array<Voice> {
+  return voices.map(voice => ({
+    ...voice,
+    delay: (voice.delay ?? 0) + seconds,
+  }))
+}
+/** Scales the volume of every voice of a recipe by `factor`. */
+export function scaleVoices(voices: ReadonlyArray<Voice>, factor: number): Array<Voice> {
+  return voices.map(voice => ({
+    ...voice,
+    volume: voice.volume * factor,
+  }))
 }
 
 const fillNoise = (data: Float32Array, seed: string) => {

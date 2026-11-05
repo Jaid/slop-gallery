@@ -2,8 +2,11 @@ import type {Portrait, Vec3} from './types.ts'
 
 import world from '#src/worlds/current.ts'
 
-import {arrivalFrame, cameraPose, chime, loadBlob, newPortrait, notify} from './actions.ts'
+import arrivalVoices, {arrivalGap} from '../audio/arrivalVoices.ts'
+import {shiftVoices} from '../audio/proceduralAudio.ts'
+import {arrivalFrame, cameraPose, loadBlob, newPortrait, notify, playSound} from './actions.ts'
 import {holdPoint, requestHanging} from './hanging/hangings.ts'
+import {hangingAnimation} from './hanging/index.ts'
 import {maximumPortraits, validateImage} from './imagePolicy.ts'
 import {useGallery} from './store.ts'
 
@@ -143,7 +146,11 @@ async function canvasImage(canvas: OffscreenCanvas): Promise<SizedImage> {
 }
 
 export default class ImageImporter {
+  /** how many works have arrived so far, which tunes each one’s sound */
+  private arrivals = 0
   private disposed = false
+  /** when the last work’s arrival sounds, in seconds of `performance.now()` */
+  private lastArrival = Number.NEGATIVE_INFINITY
   private queue = Promise.resolve()
 
   constructor(private readonly onImport: (portrait: Portrait) => void) {}
@@ -221,16 +228,23 @@ export default class ImageImporter {
           if (p.hung) {
             requestHanging(p.id, p.position, p.rotation, holdPoint(pose))
           }
+          this.arrive(p.hung)
           count++
           this.onImport(p)
         } catch (error) {
           notify(Error.isError(error) ? `${file.name}: ${error.message}` : 'That image could not be imported.')
         }
       }
-      if (count) {
-        chime(500)
-      }
     })
     return this.queue
+  }
+
+  /** Sounds a work arriving, each tuned a little apart: one hung right away as its hanging slaps it onto its wall, one dropped into the room at least {@link arrivalGap} after the one before. */
+  private arrive(hung: boolean) {
+    const now = performance.now() / 1000
+    const delay = hung ? 0 : Math.max(0, this.lastArrival + arrivalGap - now)
+    this.lastArrival = Math.max(this.lastArrival, now + delay)
+    const index = this.arrivals++
+    playSound(shiftVoices(arrivalVoices(hung, Math.sin(index * 2.39996), hung ? hangingAnimation.impact : undefined), delay), `arrival:${index}`)
   }
 }

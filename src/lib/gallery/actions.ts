@@ -1,3 +1,4 @@
+import type {Voice} from '../audio/proceduralAudio.ts'
 import type {Portrait, ThrownItem, Vec3} from './types.ts'
 
 import composeId from 'compose-id'
@@ -72,6 +73,13 @@ export function playEffect(id: string) {
   if (useGallery.getState().sound) {
     const engine = SoundEngine.get()
     engine.playEffect(id, engine.world)
+  }
+}
+
+/** Plays a recipe in the world, heard from `position` if given, unless the sound is off. */
+export function playSound(voices: ReadonlyArray<Voice>, seed: string, position?: Vec3) {
+  if (useGallery.getState().sound) {
+    SoundEngine.get().playInWorld(voices, seed, position)
   }
 }
 

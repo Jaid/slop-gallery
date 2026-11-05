@@ -14,7 +14,7 @@ Player effects use Web Audio synthesis only: no recordings, downloads, generated
 | SFX-36 | Viewing Mode Leave | V-inspection is released, including target removal. |
 | SFX-37 | Zoom Focus | A quiet two-tone layer sustained while zoomed. |
 
-All seven are part of the catalog in `soundEffects.ts`, next to the 14 interface effects and the three switch sounds of `switchSoundEffects.ts` (see [Switches](#switches)). The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
+All seven are part of the catalog in `soundEffects.ts`, next to the 14 interface effects and the three switch sounds of `switchSoundEffects.ts` (see [Switches and arrivals](#switches-and-arrivals)). The held zoom layer’s recipe lasts a finite 1.2 seconds; gameplay holds it until released. New cues never renumber existing catalog IDs.
 
 Zoom sweeps follow `ego-player`'s actual FOV transition direction and duration. Extended transitions use the extended family, including direct returns to normal FOV. Instant transitions produce no sweep. Reversing replaces the previous sweep with a short fade instead of stacking sounds. Explicit camera handoff, teleport and unmount release zoom audio without fabricating another transition.
 
@@ -30,7 +30,7 @@ The reusable `ego-player` package emits `onLand` and `onZoomTransition` but cont
 
 ## Room acoustics
 
-`SoundEngine` has two ways into its effects master: the master itself, which the interface’s sounds play on (the pause menu’s toggles, zoom, V-inspection, moods and the fusion portals, which bring rooms of their own), and `world`, which every sound of the world plays on (footsteps, landings, `chime`s, switches, strikes and the ambience emitters). `world` reaches the master through the acoustics of the room the listener is in: a room may name a `RoomAcoustics` (`acoustics/Acoustics.ts`) among its options, a function that wires an input to an output through nodes of its own, the dry sound included, and returns how to disconnect them again. Rooms without one sound dry, as does everything before the listener entered a room.
+`SoundEngine` has two ways into its effects master: the master itself, which the interface’s sounds play on (the pause menu’s toggles, zoom, V-inspection, moods and the fusion portals, which bring rooms of their own), and `world`, which every sound of the world plays on (footsteps, landings, `chime`s, switches, arrivals, strikes and the ambience emitters). `world` reaches the master through the acoustics of the room the listener is in: a room may name a `RoomAcoustics` (`acoustics/Acoustics.ts`) among its options, a function that wires an input to an output through nodes of its own, the dry sound included, and returns how to disconnect them again. Rooms without one sound dry, as does everything before the listener entered a room.
 
 `AmbienceListener` tells the engine the player’s room every frame (`enterRoom`, which does nothing while it stays the same). `Acoustics` builds the room’s transformation behind a send of its own and crossfades the sends with a 0.12 s time constant, so the sound made in the room left behind rings out there while everything new rings in the room entered. A room’s transformation stays built for 8 s after the listener left it, long enough for any echo to die and for stepping back through a doorway to find it still there.
 
@@ -44,9 +44,11 @@ Orbs and loose works sound when they strike something. Rapier reports a collisio
 
 `Portrait` registers every work under its frame’s `impactSound`, an id of `frameImpactSounds` (`frameImpacts.ts`) that every frame of the same stuff shares: `gilt` (gessoed and gilded wood, the default of `PortraitFrame`), `hardwood` (oak, walnut, ebony and other solid wood) and `heavy` (stone, metal and acrylic). Only a loose work strikes anything, since a hung one is fixed and a carried or fusing one disabled. The contact’s normal in the frame’s own space as it struck tells which part struck first: within 14° of its face or back, it falls flat and slaps down on a cushion of air with its corners rattling after, a side knocks fuller and a corner sharp, with the frame’s resonances and the canvas drumming behind.
 
-## Switches
+## Switches and arrivals
 
 The Banquet’s push-button switches sound mechanical (`switchSoundEffects.ts`): the light switch plays `SFX-45` Push Button On or `SFX-46` Push Button Off, the pressed button going in with a snap and a knock of the Bakelite and the other popping out a moment later, on letting the lights hum up for a breath and off letting it drop, a little lower; the light color selector plays `SFX-47` Selector Button, lighter, its detent clicking before the pop. `SFX-44` Switch Click stays in the catalog.
+
+`ImageImporter` sounds every imported work as it arrives (`arrivalVoices.ts`), each tuned a little apart: a shimmer swells out of nothing for 0.38 s and the canvas lands with a soft thump and a warm fifth, works of one drop at least 90 ms apart, or, where the work hangs right away, the shimmer swells only until its hanging slaps it onto the wall (`hangingAnimation.impact`, 0.1 s), where it catches with the tap, click and settle of hanging.
 
 ## Narration subtitles
 
@@ -83,6 +85,8 @@ The sounds of the other effects (`src/lib/gallery/fusion/effects`) are built on 
 ## Validation
 
 Run `bun test ./test/unit/sound-engine.test.ts ./test/unit/sound-effects.test.ts ./test/unit/player-audio.test.ts ./test/unit/acoustics.test.ts ./test/unit/hearing.test.ts ./test/unit/impact-sounds.test.ts` and `bun run --cwd packages/ego-player test`.
+
+`test/browser/worldSounds.ts` renders every strike of every surface and frame sound at several speeds, a strike near and far, the arrivals and a heavy landing through every gallery room’s acoustics offline, and checks for sound, headroom (frame strikes saturate at 9 m/s to stay under it) and silent tails.
 
 `bun test/browser/run.ts fusionSound.ts` renders a fusion that succeeds after the image model took 6.5 s and one that fails after 1 s offline, driven by the portal’s own envelope every 50 ms, heard from 4 m away, and checks for silence, headroom and a silent tail; called with `{listen: true}`, it also returns both as WAVs.
 
