@@ -1,8 +1,9 @@
 import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
+import {wallFace} from './architectureDimensions.ts'
 import {bastionLinkStart, bastionLinkStripZ, bastionLinkWidth, bastionPassages} from './bastion.ts'
-import {climbMouth, climbPassages} from './climb.ts'
+import {climbCrossfall, climbHairpin, climbMouth, climbPassages} from './climb.ts'
 import FloorHollow from './passages/FloorHollow.ts'
 import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
@@ -14,15 +15,34 @@ const mouthNorthZ = climbMouth.path[0][1] - climbMouth.width / 2
 const cornerRadius = 4
 /** the radius of the last turn, from the strip south into the mouth’s north wall at its elbow */
 const lastRadius = mouthNorthZ - bastionLinkStripZ
-/** where the tunnel ends in the mouth’s north wall: its west wall in line with the mouth’s west wall, so it runs on into the elbow, its middle where orbs roll up to it out of the hairpin */
+/** where the tunnel ends in the mouth’s north wall: its west wall in line with the mouth’s west wall, so it runs on into the elbow */
 const endX = climbMouth.path[1][0] - climbMouth.width / 2 + bastionLinkWidth / 2
 /** the opening it ends in through the mouth’s north wall, the size of its vault */
 const linkVault = vaultOpening(bastionLinkWidth, height)
-/** where the mouth’s elbow ends in the east, open to the straight run on toward the doorway: on the line straight across from the corner of its walls inside the turn */
-const elbowEastX = climbMouth.path[1][0] + climbMouth.width / 2
+const [elbowX, footZ] = climbHairpin.route.start
+/** where the mouth’s elbow ends in the west and in the east, along its west wall’s center line and straight across from the corner of its walls inside the turn, where it opens onto the straight run on toward the doorway */
+const [elbowWestX, elbowEastX] = [elbowX - climbMouth.width / 2, elbowX + climbMouth.width / 2]
+/**
+ * How far under the mouth’s floor its elbow’s paving lies at a point in plan: falling toward the line from the middle of the hairpin’s foot to the middle of the tunnel’s mouth, as the hairpin’s does, and as deep there, so it runs on from the hairpin’s paving into the tunnel’s.
+ * It falls from the face of the west wall, which runs on into the tunnel’s, and from a wall’s depth short of where the elbow opens east at the hairpin’s foot, from the tunnel’s east jamb at the gate, so the north wall beside it stands on the level floor; level beyond the elbow.
+ */
+function elbowSag(x: number, z: number) {
+  if (z < mouthNorthZ || z > footZ) {
+    return 0
+  }
+  const toGate = (footZ - z) / (footZ - mouthNorthZ)
+  const west = elbowWestX + wallFace
+  const east = elbowEastX - wallFace + (endX + linkVault.width / 2 - elbowEastX + wallFace) * toGate
+  if (x <= west || x >= east) {
+    return 0
+  }
+  const valley = elbowX + (endX - elbowX) * toGate
+  const share = x < valley ? (x - west) / (valley - west) : (east - x) / (east - valley)
+  return climbCrossfall * (climbMouth.width / 2 - wallFace) * share
+}
 /**
  * The hollow the elbow’s paving has sunk into in front of the gate, between the hairpin’s foot and the tunnel, as though water had long drained off down the tunnel through the gate’s hatch: deepest just beyond the gate, under the hatch, and shallow over most of the elbow.
- * It keeps off the walls but where the tunnel opens, its west side in line with the mouth’s west wall, and widens out east as soon as it leaves the north wall, all the way to where the elbow ends, so orbs that miss the hatch roll back down to it.
+ * It keeps off the walls beside the tunnel’s mouth and widens out from the gate into the elbow, so orbs that miss the hatch roll back down to it. Its surface takes the place of the elbow’s whole floor, falling toward its middle like the hairpin’s.
  */
 export const climbMouthHollow = new FloorHollow(climbMouth.floorY, {
   center: [endX, mouthNorthZ],
@@ -32,8 +52,15 @@ export const climbMouthHollow = new FloorHollow(climbMouth.floorY, {
   depth: 0.15,
   beyond: 0.5,
   reach: 3.5,
-  spread: [0, 4],
-  width: [linkVault.width / 2, elbowEastX - endX],
+  throat: 1.2,
+  spread: [1, 1],
+  width: [1.5, 1.8],
+}, {
+  area: {
+    center: [elbowX, (mouthNorthZ + footZ) / 2],
+    size: [climbMouth.width, footZ - mouthNorthZ],
+  },
+  sag: elbowSag,
 })
 /**
  * The connecting tunnel from the landing south of the curve’s S bend south along the Oculus, round a corner west into the strip south of the Lodge and along it, then round a last turn south into the mouth’s elbow, easing up from the platform’s level all the way to a step under the hollow in front of it.
@@ -55,7 +82,13 @@ const route = new PassageRoute([startX, startZ], heading, y, height, [
     ],
   },
 ])
-export const bastionLink = new RoutedPassage('link', 'bastion', route, bastionLinkWidth)
+/** Its paving falls toward its middle like the hairpin’s, but for its last stretch to the gate, where it eases out to stand on a level floor; at the landing, it meets the landing’s floor on a sill along the doorway, a hand’s breadth over its middle. */
+export const bastionLink = new RoutedPassage('link', 'bastion', route, bastionLinkWidth, {
+  crossfall: {
+    slope: climbCrossfall,
+    easeOut: 1.5,
+  },
+})
 export const bastionLinkLanterns = [bastionLink.ribGap(4), bastionLink.ribGap(route.length - 5)]
 const mouthWall = climbMouth.walls[2]
 /** The tunnel opens into the mouth’s north wall at the elbow, the size of its vault and bare like the ends of the mouth’s own vaults there. */
@@ -70,8 +103,8 @@ mouthWall.holes = [linkHole]
 const gateFoot = climbMouthHollow.outletY - climbMouth.floorY
 /**
  * The iron gate barring the tunnel where it opens into the mouth’s elbow, barred like the apse’s gate, low over the floor and on up its bars, but for a hatch in the middle of its foot, round-headed like a mouse hole: wide enough for an orb rolling at it to slip through and on down the tunnel, far too low for anyone to follow.
- * Orbs rolling down the hairpin come out of its turn along the west leg’s west wall and roll on 0.75 m in from it, straight at the hatch across the elbow; those that miss it roll back down into the hollow in front of it.
- * It stands on the tunnel’s floor, its bars reaching down past the hollow’s edge there. In the frame of the mouth’s north wall, facing south into the elbow.
+ * Orbs rolling down the hairpin come out of its turn along the west leg’s west wall, and the paving falling toward its middle carries them across to the hatch; those that miss it roll back down into the hollow in front of it.
+ * It stands on the tunnel’s level floor at its mouth, a step under the hollow. In the frame of the mouth’s north wall, facing south into the elbow.
  */
 export const bastionLinkGate = {
   wall: mouthWall,
@@ -80,7 +113,7 @@ export const bastionLinkGate = {
     bottom: gateFoot,
   },
   hatch: {
-    u: endX - mouthWall.center[0],
+    u: linkHole.u,
     width: 0.6,
     bottom: gateFoot,
     height: gateFoot + 0.5,

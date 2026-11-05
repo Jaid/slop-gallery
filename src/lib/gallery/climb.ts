@@ -1,4 +1,5 @@
 import type {Wall} from '../placement/wallGeometry.ts'
+import type {RouteCrossfall} from './passages/RoutedPassage.ts'
 
 import {bastionClearance, bastionDoorway} from './bastion.ts'
 import {easedRampGradient} from './easedRamp.ts'
@@ -31,6 +32,11 @@ const hairpinTopY = forgeFloorY - 0.5
 const steepest = 0.25
 /** How long a ramp has to be to climb by `rise` without getting steeper than `steepest`. */
 const rampLength = (rise: number) => Math.abs(rise) * easedRampGradient(0.5, 1) / steepest
+/**
+ * How steeply the paving of the hairpin, of the mouth’s elbow at its foot and of the tunnel beyond the gate falls from both walls toward their middles: 1 in 20, like an old street’s draining down its middle, see {@link RouteCrossfall}.
+ * Orbs released in the Forge come out of the hairpin’s turn along the outer wall of its west leg, and the fall carries them across toward the middle, so they reach the gate right at the hatch in its middle.
+ */
+export const climbCrossfall = 1 / 20
 /** the radius of the hairpin’s turn, round whose inner wall a meter of floor is left */
 const turnRadius = 3
 /** How far past an elbow a straight stretch of vault runs before a hairpin’s ribs begin or a screen wall stands, like the Bastion’s mouth before its curve: an elbow’s reach and 0.8 m more. */
@@ -77,9 +83,15 @@ const route = new PassageRoute([westLegX, turnZ], Math.PI / 2, doorwayY, mouthHe
   },
 ])
 /**
- * Orbs released in the Forge roll down the hairpin on their own: down its east leg, round the outer wall of its turn and out of it along the west leg’s west wall, straight on across the mouth’s elbow to the gate in its north wall, see `bastionLinkGate`.
+ * Orbs released in the Forge roll down the hairpin on their own: down its east leg and round the outer wall of its turn, which sends every one of them out along the west leg’s west wall, however it came down; from there, the paving’s fall carries it across toward the middle, on through the mouth’s elbow to the gate in its north wall, see `bastionLinkGate`.
+ * Its paving falls toward its middle all the way but for its top, where it eases out to meet the run’s level floor.
  */
-export const climbHairpin = new RoutedPassage('climb_hairpin', 'bastion', route, width)
+export const climbHairpin = new RoutedPassage('climb_hairpin', 'bastion', route, width, {
+  crossfall: {
+    slope: climbCrossfall,
+    easeOut: 2,
+  } satisfies RouteCrossfall,
+})
 if (Math.hypot(route.end.point[0] - eastLegX, route.end.point[1] - turnZ) > 1e-6 || Math.abs(route.end.heading + Math.PI / 2) > 1e-9) {
   throw new Error('The Bastion’s hairpin has to end where its run north begins, heading north.')
 }

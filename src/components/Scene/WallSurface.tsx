@@ -2,11 +2,12 @@ import type {Wall} from '#src/lib/gallery.ts'
 import type {ComponentType} from 'react'
 import type {Material, Texture} from 'three/webgpu'
 
-import {RigidBody, TrimeshCollider} from '@react-three/rapier'
+import {RigidBody} from '@react-three/rapier'
 import Branch from 'branch-component'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
 import {architectureGeometry} from '#src/lib/gallery/architecture.ts'
 import withOpeningReveals from '#src/lib/gallery/openingReveals.ts'
 
@@ -22,7 +23,7 @@ export type WallDecorationsProps = {
 const noDecorations = () => null
 
 /**
- * A wall with its trim, glazing and colliders. Its surface mesh carries the wall as `userData.wall`, so a material shared by many walls can lay its pattern out along each, round ones too.
+ * A wall with its trim, glazing and colliders, welded, so whatever rolls along its foot, like an orb along a baseboard, rolls on smoothly instead of catching on the edges between its facets. Its surface mesh carries the wall as `userData.wall`, so a material shared by many walls can lay its pattern out along each, round ones too.
  */
 export default function WallSurface({wall, plaster, glass, material, revealMaterial, surfaceMaterial, surfaceRoom = wall.room, decorations: Decorations = noDecorations}: {
   /** what the world draws on the wall beyond the wall itself, nothing by default */
@@ -69,7 +70,7 @@ export default function WallSurface({wall, plaster, glass, material, revealMater
     }}
   >
     <RigidBody colliders={false} type='fixed'>
-      {geometry.collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
+      {geometry.collision.map((args, i) => <MeshSurfaceCollider key={i} args={args} />)}
       <mesh castShadow material={surfaceMaterials} name={`wall-${wall.id}`} receiveShadow userData={{wall}}><primitive attach='geometry' object={surface.geometry} /><Branch not={surfaceMaterials}><meshStandardNodeMaterial color={color} envMapIntensity={surfaceRoom === 'moonfall' ? 0.08 : 1} map={plaster} roughness={0.9} /></Branch></mesh>
       {geometry.trim.map((part, i) => <mesh key={i} castShadow material={material} name={`trim-${wall.id}`} receiveShadow><primitive attach='geometry' object={part} /><Branch not={material}><meshStandardNodeMaterial color={trim} roughness={0.6} /></Branch></mesh>)}
       {geometry.glazing.map((part, i) => <mesh key={i} geometry={part} material={glass} name={`glass-${wall.id}`}>

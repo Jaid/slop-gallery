@@ -15,6 +15,8 @@ const ribDepth = 0.22
 const ribThickness = 0.085
 /** how thick the slab of a routed passage’s paving is, under its floor */
 export const pavingThickness = 0.24
+/** how wide the strips its paving is cut into across at most, in meters */
+const pavingStrip = 0.25
 /** An odd count leaves a level facet along the crown, wide enough for a lantern’s canopy to sit flush. */
 const archSegments = 33
 /** Points around a half ellipse over the spring, `halfSpan` to either side of `middle` and `rise` high, from its left foot over its crown to its right foot, or back with `reverse`; as wide as it is high, it is a semicircle. */
@@ -172,10 +174,16 @@ export default class RouteVaultGeometry {
     }
     this.shell = mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
     this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - ribDepth / 2, along + ribDepth / 2), ring(-ribThickness, 0), true)))
+    /** how many strips the paving is cut into from either wall to the centerline, at most `pavingStrip` wide, so it bends with its crossfall and stays close to flat through the twist of a ramp round a turn */
+    const strips = Math.ceil(width / 2 / pavingStrip)
     this.paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))
+      const across = [
+        ...Array.from({length: strips + 1}, (_, index) => -left + left * index / strips),
+        ...Array.from({length: strips}, (_, index) => right * (index + 1) / strips),
+      ]
       return [
-        [[-left, 0], [right, 0]],
+        across.map(lateral => [lateral, -passage.sag(station, lateral)] as const),
         [[right, 0], [right, -pavingThickness]],
         [[right, -pavingThickness], [-left, -pavingThickness]],
         [[-left, -pavingThickness], [-left, 0]],

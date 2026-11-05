@@ -4,6 +4,7 @@ import type {Vec3} from '../types.ts'
 import type {RoutePiece, RouteStation} from './PassageRoute.ts'
 
 import {wallCoordinates} from '../../placement/wallGeometry.ts'
+import {wallFace} from '../architectureDimensions.ts'
 import PassageRoute from './PassageRoute.ts'
 
 /** the box around a stretch of a passage’s air, from its lowest floor to its highest ceiling */
@@ -26,9 +27,20 @@ export type RouteOutline = {
   corners: ReadonlyArray<Point>
   side: -1 | 1
 }
+/**
+ * How a routed passage’s paving falls from the faces of both walls toward its centerline, like an old street draining down its middle: as steeply as `slope`, rise over run, all the way to the middle, which it reaches as far under the route’s floor as that takes from the nearer wall.
+ * Over the first `easeIn` and the last `easeOut` meters of the route, it eases in from and back out to a level floor across, where the passage meets another one.
+ */
+export type RouteCrossfall = {
+  easeIn?: number
+  easeOut?: number
+  slope: number
+}
 export type RoutedPassageOptions = {
   /** whether its walls carry a cornice along their tops, true by default */
   cornice?: boolean
+  /** its paving falling toward its centerline, level across if left out */
+  crossfall?: RouteCrossfall
   openings?: ReadonlyArray<RouteOpening>
   /** at most one for each side */
   outlines?: ReadonlyArray<RouteOutline>
@@ -68,10 +80,17 @@ const ribInset = 0.15
 const chunkStep = 0.05
 /** how finely an outline is checked against the route, in meters along it */
 const outlineCheckStep = 0.02
+/** where a crossfall eases in or out, how far apart the stations stand, in meters along the route */
+const crossfallStep = 0.25
 const tolerance = 1e-6
 /** the direction to the right of a heading, seen from above with north up */
 const rightOf = (heading: number): Point => [-Math.sin(heading), Math.cos(heading)]
 const clamp = (value: number, low: number, high: number) => Math.min(Math.max(value, low), high)
+/** a smooth step from 0 at `s` = 0 and below up to 1 at 1 and beyond */
+const smoothstep = (s: number) => {
+  const t = clamp(s, 0, 1)
+  return t * t * (3 - 2 * t)
+}
 
 /**
  * An open-ended passage along a {@link PassageRoute} that winds through turns, may climb or fall and grow taller or lower along its ramps, and may have openings in its walls: the same footprint drives its walls, floor and air.
@@ -80,6 +99,8 @@ const clamp = (value: number, low: number, high: number) => Math.min(Math.max(va
 export default class RoutedPassage {
   /** where straight across from the route the walls of the outlines turn their inner corners, in meters along it */
   readonly creases: ReadonlyArray<number>
+  /** how its paving falls toward its centerline, if it does */
+  readonly crossfall?: RouteCrossfall
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
   readonly name: string
   /** the outlines, each with the stretch along the route it stands in for its side’s walls on */
@@ -91,9 +112,15 @@ export default class RoutedPassage {
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, openings = [], outlines = [], pits = []}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, crossfall, openings = [], outlines = [], pits = []}: RoutedPassageOptions = {}) {
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
+    }
+    if (crossfall && !(crossfall.slope > 0 && crossfall.slope < 0.2 && (crossfall.easeIn ?? 0) >= 0 && (crossfall.easeOut ?? 0) >= 0 && (crossfall.easeIn ?? 0) + (crossfall.easeOut ?? 0) <= route.length)) {
+      throw new RangeError('A routed passage’s crossfall needs a gentle slope and to ease in and out within its route.')
+    }
+    if (crossfall) {
+      this.crossfall = crossfall
     }
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
@@ -188,7 +215,8 @@ export default class RoutedPassage {
 
   /** The height of the floor under the point, or undefined beside the passage. */
   floorAt(x: number, z: number) {
-    return this.stationAt(x, z)?.y
+    const abreast = this.abreast(x, z)
+    return abreast && abreast.station.y - this.sag(abreast.station, abreast.right)
   }
 
   /** How far straight across from the station toward `side`, −1 its left and 1 its right, that side’s walls stand, along their center line: half the passage’s width, or further out along an outline. */
@@ -205,21 +233,45 @@ export default class RoutedPassage {
     return (this.ribs[next - 1] + this.ribs[next]) / 2
   }
 
+  /** How far under the route’s floor at the station its paving lies `right` meters right of the centerline, where its crossfall makes it fall toward the middle: nowhere along the walls’ faces and behind them, deepest along the centerline. */
+  sag(station: RouteStation, right: number) {
+    if (!this.crossfall) {
+      return 0
+    }
+    const {easeIn = 0, easeOut = 0, slope} = this.crossfall
+    const eased = Math.min(easeIn > 0 ? smoothstep(station.along / easeIn) : 1, easeOut > 0 ? smoothstep((this.route.length - station.along) / easeOut) : 1)
+    const half = Math.min(this.reach(station, -1), this.reach(station, 1)) - wallFace
+    return slope * eased * Math.max(0, half - Math.abs(right))
+  }
+
   /** The station of the route abreast of the point, or undefined beside the passage. */
   stationAt(x: number, z: number) {
+    return this.abreast(x, z)?.station
+  }
+
+  /** Stations between two distances along the route, as it gives them with its turns cut into steps of `routeTurnStep`, straight across from where the outline’s walls turn their corners, and every `crossfallStep` where its crossfall eases in or out. */
+  stations(from: number, to: number) {
+    const stations = this.route.stations(from, to, routeTurnStep)
+    const {easeIn = 0, easeOut = 0} = this.crossfall ?? {}
+    const easing = [
+      ...Array.from({length: Math.ceil(easeIn / crossfallStep)}, (_, index) => easeIn * index / Math.ceil(easeIn / crossfallStep)),
+      ...Array.from({length: Math.ceil(easeOut / crossfallStep)}, (_, index) => this.route.length - easeOut * index / Math.ceil(easeOut / crossfallStep)),
+    ]
+    const extra = [...this.creases, ...easing].filter((along, index, all) => along > from && along < to && stations.every(station => Math.abs(station.along - along) > 1e-9) && all.findIndex(other => Math.abs(other - along) < 1e-9) === index).map(along => this.route.at(along))
+    return [...stations, ...extra].toSorted((a, b) => a.along - b.along)
+  }
+
+  /** The station of the route abreast of the point and how far right of the centerline the point lies there, or undefined beside the passage. */
+  private abreast(x: number, z: number) {
     for (const {along, right} of this.route.projections(x, z).toSorted((a, b) => Math.abs(a.right) - Math.abs(b.right))) {
       const station = this.route.at(along)
       if (right <= this.reach(station, 1) + tolerance && -right <= this.reach(station, -1) + tolerance) {
-        return station
+        return {
+          station,
+          right,
+        }
       }
     }
-  }
-
-  /** Stations between two distances along the route, as it gives them with its turns cut into steps of `routeTurnStep`, and straight across from where the outline’s walls turn their corners. */
-  stations(from: number, to: number) {
-    const stations = this.route.stations(from, to, routeTurnStep)
-    const creases = this.creases.filter(along => along > from && along < to && stations.every(station => Math.abs(station.along - along) > 1e-9)).map(along => this.route.at(along))
-    return [...stations, ...creases].toSorted((a, b) => a.along - b.along)
   }
 
   /** Where a point lies abreast of a piece, even beyond its ends: how far into it, measured around a turn from the side of `near`, and how far to the right of its centerline. */

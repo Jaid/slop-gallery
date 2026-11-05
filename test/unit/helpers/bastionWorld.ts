@@ -159,12 +159,13 @@ class Colliders {
     })
   }
 
-  /** Every wall of the rooms. */
+  /** Every wall of the rooms, welded like `WallSurface` welds them. */
   walls(rooms: ReadonlyArray<string>) {
     for (const wall of walls.filter(value => rooms.includes(value.room))) {
       const geometry = createArchitectureGeometry(wall)
       for (const triangles of geometry.collision) {
         this.shapes.push({
+          fix: true,
           triangles,
           translation: wall.center,
           rotation: wall.rotation,

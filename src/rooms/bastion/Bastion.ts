@@ -7,7 +7,7 @@ import BastionAmbience from '#src/lib/audio/ambience/moods/BastionAmbience.ts'
 import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {bastionOrigin, bastionTransition} from '#src/lib/gallery/bastion.ts'
 import {bastionNetwork} from '#src/lib/gallery/bastionNetwork.ts'
-import {climbApex} from '#src/lib/gallery/climb.ts'
+import {climbApex, climbHairpin} from '#src/lib/gallery/climb.ts'
 import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
@@ -67,9 +67,9 @@ export default class Bastion extends Room {
       volumetricSun: 0,
       walls,
       map,
-      // From the apex of the western hairpin on, the climb shows on the upper floor with the Forge it leads to.
+      // From the apex of the western hairpin on, the climb shows on the upper floor with the Forge it leads to: from where its floor rises over the floor in the middle of the apex, where its paving falls lowest.
       upperMap: {
-        from: climbApex.y - bastionOrigin[1],
+        from: climbHairpin.floorAt(...climbApex.point)! - bastionOrigin[1],
         map: upperMap,
       },
     })

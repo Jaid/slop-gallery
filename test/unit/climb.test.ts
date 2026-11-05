@@ -10,7 +10,7 @@ import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/
 import {vaultShellThickness} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionDoorway} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate, climbMouthHollow} from '../../src/lib/gallery/bastionNetwork.ts'
-import {climbApproach, climbArch, climbDoorway, climbHairpin, climbLanterns, climbMouth, climbRun, climbScreen} from '../../src/lib/gallery/climb.ts'
+import {climbApproach, climbArch, climbCrossfall, climbDoorway, climbHairpin, climbLanterns, climbMouth, climbRun, climbScreen} from '../../src/lib/gallery/climb.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {insidePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import forge, {forgeVestibule} from '../../src/lib/gallery/forge.ts'
@@ -154,11 +154,17 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
       expect(roomAt(position)).toBe('bastion')
     }
     for (const passage of routed) {
-      for (const {point: [x, z], y} of along(passage)) {
-        const position: Vec3 = [x, y + 1.6, z]
-        expect(passage.floorAt(x, z)).toBeCloseTo(y, 6)
+      for (const station of along(passage)) {
+        const {point: [x, z], y} = station
+        // its paving, falling toward its middle along the hairpin
+        const floor = y - passage.sag(station, 0)
+        const position: Vec3 = [x, floor + 1.6, z]
+        expect(passage.floorAt(x, z)).toBeCloseTo(floor, 6)
         expect(insideGallery(position)).toBe(true)
-        expect(floorHeight(position)).toBeCloseTo(y, 6)
+        // Where it meets the next passage, the higher floor of both counts.
+        if (station.along > 0.05 && station.along < passage.route.length - 0.05) {
+          expect(floorHeight(position)).toBeCloseTo(floor, 6)
+        }
         expect(roomAt(position)).toBe('bastion')
       }
     }
@@ -277,52 +283,89 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
       endY: 0,
     })
   })
-  test('the climb’s paving lies plain all the way, but in the mouth’s elbow, where it has sunk into a hollow toward the gate’s hatch, which keeps off its walls but where the tunnel opens', () => {
+  test('the hairpin’s paving falls 1 in 20 from the faces of its walls toward its middle, easing out to meet the run’s level floor at its top, while the run’s and the approach’s lie level across', () => {
+    expect(climbHairpin.crossfall?.slope).toBe(climbCrossfall)
+    const half = climbHairpin.width / 2 - wallFace
+    for (const station of stations) {
+      // short of the top, where it eases out
+      if (station.along > route.length - 2) {
+        continue
+      }
+      expect(climbHairpin.sag(station, 0)).toBeCloseTo(climbCrossfall * half, 9)
+      expect(climbHairpin.sag(station, half / 2)).toBeCloseTo(climbCrossfall * half / 2, 9)
+      expect(climbHairpin.sag(station, -half)).toBe(0)
+    }
+    expect(climbHairpin.sag(route.end, 0)).toBe(0)
+    for (const passage of [climbRun, climbApproach]) {
+      expect(passage.crossfall).toBeUndefined()
+    }
+    // Its paving bends down to its middle with its crossfall, at its foot as all along.
+    const position = routeVaults[0].paving.getAttribute('position')
+    const [footX, footZ] = route.start
+    let lowest = Infinity
+    for (let i = 0; i < position.count; i++) {
+      if (Math.abs(position.getZ(i) - footZ) < 1e-4 && Math.abs(position.getX(i) - footX) < 1e-4) {
+        lowest = Math.min(lowest, position.getY(i))
+      }
+    }
+    expect(lowest).toBeCloseTo(route.y - climbCrossfall * half, 5)
+  })
+  test('in the mouth’s elbow, the paving falls on from the hairpin’s foot toward the tunnel’s mouth and has sunk into a hollow toward the gate’s hatch, level along its walls and where it opens east', () => {
     const {hatch, wall} = bastionLinkGate
     const hatchX = wall.center[0] + hatch.u
     const mouthNorthZ = climbMouth.path[0][1] - climbMouth.width / 2
-    const mouthWestX = climbMouth.path[1][0] - climbMouth.width / 2
-    const elbowEastX = climbMouth.path[1][0] + climbMouth.width / 2
+    const [footX, footZ] = route.start
+    const mouthWestX = footX - climbMouth.width / 2
+    const elbowEastX = footX + climbMouth.width / 2
+    // The fall runs on from the hairpin’s foot, as deep along its middle, and bends to meet the middle of the tunnel’s mouth.
+    for (let right = -2; right <= 2; right += 0.1) {
+      expect(climbMouthHollow.sink(footX + right, footZ)).toBeCloseTo(climbHairpin.sag(route.at(0), -right) + climbMouthHollow.hollowAt(footX + right, footZ), 9)
+    }
+    expect(climbMouthHollow.hollowAt(footX, footZ)).toBe(0)
+    expect(climbMouthHollow.sink(hatchX, mouthNorthZ) - climbMouthHollow.hollowAt(hatchX, mouthNorthZ)).toBeCloseTo(climbCrossfall * (climbMouth.width / 2 - wallFace), 9)
     // Deepest just beyond the gate, under the hatch, where it steps down onto the tunnel’s floor
-    expect(climbMouthHollow.sink(hatchX, mouthNorthZ)).toBeGreaterThan(0.1)
-    expect(climbMouthHollow.sink(hatchX, mouthNorthZ - 0.3)).toBeGreaterThan(climbMouthHollow.sink(hatchX, mouthNorthZ))
+    expect(climbMouthHollow.hollowAt(hatchX, mouthNorthZ)).toBeGreaterThan(0.1)
+    expect(climbMouthHollow.hollowAt(hatchX, mouthNorthZ - 0.3)).toBeGreaterThan(climbMouthHollow.hollowAt(hatchX, mouthNorthZ))
     expect(climbMouthHollow.outletY).toBeLessThan(climbMouth.floorY - climbMouthHollow.sink(hatchX, mouthNorthZ))
     // Sloping down toward the hatch from across the elbow, so whatever rolls in it ends up there
-    for (const [x, z] of [[hatchX + 0.8, mouthNorthZ + 0.3], [hatchX + 2, mouthNorthZ + 1], [hatchX, mouthNorthZ + 2], [mouthWestX + 0.3, mouthNorthZ + 1.5]] as const) {
+    for (const [x, z] of [[hatchX + 0.8, mouthNorthZ + 0.3], [hatchX + 1.5, mouthNorthZ + 1], [hatchX, mouthNorthZ + 2], [mouthWestX + 0.4, mouthNorthZ + 1.5]] as const) {
       expect(climbMouthHollow.sink(x, z)).toBeGreaterThan(0)
       expect(climbMouthHollow.sink(x + (hatchX - x) * 0.2, z + (mouthNorthZ - z) * 0.2)).toBeGreaterThan(climbMouthHollow.sink(x, z))
     }
-    // Level with the floor along the walls round it, where the elbow opens onto the straight run east and onto the hairpin, and beside the tunnel’s opening
+    // Level with the floor along the faces of its walls and where the elbow opens onto the straight run east
     for (let share = 0; share <= 1; share += 0.01) {
       expect(climbMouthHollow.sink(mouthWestX + wallFace, mouthNorthZ + share * 4.8)).toBeLessThan(1e-12)
-      expect(climbMouthHollow.sink(elbowEastX, mouthNorthZ + share * 4)).toBeLessThan(1e-12)
-      expect(climbMouthHollow.sink(mouthWestX + share * 4, route.start[1])).toBeLessThan(1e-12)
+      expect(climbMouthHollow.sink(elbowEastX - wallFace, mouthNorthZ + share * 4.8)).toBeLessThan(1e-12)
       const x = mouthWestX + share * 4
       if (Math.abs(x - hatchX) >= bastionLinkGate.hole.width / 2) {
         expect(climbMouthHollow.sink(x, mouthNorthZ + wallFace)).toBeLessThan(1e-12)
       }
     }
-    // Its footprint lies within the elbow and is cut out of the mouth’s floors, which close round it.
+    // Its surface takes up the whole elbow, cut out of the mouth’s floors, which close round it.
+    expect(climbMouthHollow.footprint).toEqual({
+      center: [footX, (mouthNorthZ + footZ) / 2],
+      size: [climbMouth.width, footZ - mouthNorthZ],
+    })
     const {center: [cx, cz], size: [width, depth]} = climbMouthHollow.footprint
-    expect(cx - width / 2).toBeGreaterThanOrEqual(mouthWestX + wallFace - 1e-9)
-    expect(cx + width / 2).toBeLessThanOrEqual(elbowEastX + 1e-9)
-    expect(cz - depth / 2).toBeCloseTo(mouthNorthZ, 9)
     const cut = climbMouth.floors.flatMap(floor => climbMouthHollow.cut(floor))
     const inFloors = (x: number, z: number) => cut.some(floor => insidePolygon(floor, x, z))
     expect(inFloors(cx, cz)).toBe(false)
-    expect(inFloors(cx, cz + depth / 2 + 0.2)).toBe(true)
-    expect(inFloors(cx + width / 2 + 0.2, cz)).toBe(true)
+    expect(inFloors(footX, footZ - 0.1)).toBe(false)
+    expect(inFloors(elbowEastX + 0.2, cz)).toBe(true)
     expect(inFloors((climbDoorway.x + elbowEastX) / 2, climbDoorway.z)).toBe(true)
-    // Its surface meets them at their height round its edges and reaches down to the tunnel’s floor under the gate.
+    // Its surface meets the floor round it along its edges and reaches down to the tunnel’s floor under the gate.
     const position = sunkenPaving.getAttribute('position')
     let lowest = Infinity
     for (let i = 0; i < position.count; i++) {
       const [x, y, z] = [position.getX(i), position.getY(i), position.getZ(i)]
       lowest = Math.min(lowest, y)
       // as precise as its 32-bit floats, out in front of the wall, where the step down under the gate isn’t
-      const inFront = z > cz - depth / 2 + 1e-5
-      if (inFront && (Math.abs(x - (cx - width / 2)) < 1e-5 || Math.abs(x - (cx + width / 2)) < 1e-5 || Math.abs(z - (cz + depth / 2)) < 1e-5)) {
+      if (z > cz - depth / 2 + 1e-5 && (Math.abs(x - (cx - width / 2)) < 1e-5 || Math.abs(x - (cx + width / 2)) < 1e-5)) {
         expect(y).toBeCloseTo(climbMouth.floorY, 5)
+      }
+      // and along the hairpin’s foot, its paving’s
+      if (Math.abs(z - (cz + depth / 2)) < 1e-5) {
+        expect(y).toBeCloseTo(climbHairpin.floorAt(x, z + 1e-4)!, 4)
       }
     }
     expect(lowest).toBeLessThan(climbMouthHollow.outletY)
