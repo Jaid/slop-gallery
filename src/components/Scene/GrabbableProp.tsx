@@ -32,6 +32,8 @@ export type PropHandle = {
   group: Group
   /** the mood that comes over the world while the player holds the prop */
   mood?: Mood
+  /** the kind of orb the prop is, if it is one */
+  orb?: Orb
   release: (throwing: boolean) => void
   /** Takes the prop out of the physics for a fusion, which flies it around by its `group` until it calls `unleash`; false while the player carries it. */
   seize: () => boolean
@@ -97,6 +99,8 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   ingredient?: ItemIngredient
   /** what comes over the world while the player holds the prop */
   mood?: Mood
+  /** the kind of orb the prop is, if it is one */
+  orb?: Orb
   /** lets holding V orbit around the prop */
   orbit?: OrbitSettings
   position: Vec3
@@ -121,7 +125,7 @@ export default function GrabbableProp(props: GrabbablePropProps) {
 }
 
 /** The prop while it is still in the world. */
-function PresentProp({id, title, consumable, ingredient, mood, orbit, children, collider, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, striker, withheld = false, ...props}: GrabbablePropProps) {
+function PresentProp({id, title, consumable, ingredient, mood, orb, orbit, children, collider, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, striker, withheld = false, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   /** whether a fusion holds the prop, from the start if it is withheld */
@@ -178,6 +182,7 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       body: rigidBody,
       group: prop,
       mood,
+      ...orb ? {orb} : {},
       title,
       seize: () => {
         if (seized.current || carried.active) {
@@ -254,7 +259,7 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
         controller.current = null
       }
     }
-  }, [id, mood, title, world])
+  }, [id, mood, orb, title, world])
   useEffect(() => {
     if (!held) {
       propObjects.get(id)?.cancel()

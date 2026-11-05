@@ -14,7 +14,6 @@ import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {climbArch} from '#src/lib/gallery/climb.ts'
 import {floorThickness} from '#src/lib/gallery/floors.ts'
 import {forgeRooflight, forgeVestibule} from '#src/lib/gallery/forge.ts'
-import {forgeDrop} from '#src/lib/gallery/forgeGutter.ts'
 import {forgeRoundVestibule, vestibuleArches} from '#src/lib/gallery/forgeVestibule.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
@@ -22,8 +21,8 @@ import {salonCeiling} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import AlchemyMachine from '#src/rooms/forge/components/AlchemyMachine/index.tsx'
 import ForgeGutter from '#src/rooms/forge/components/ForgeGutter/index.tsx'
-import OrbRelease from '#src/rooms/forge/components/OrbRelease/index.tsx'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('forge')
@@ -31,29 +30,7 @@ const vestibuleWall = slopGallery.walls.find(wall => wall.id === 'forge-vestibul
 const circleSegments = 96
 /** how far in from the vestibule’s wall its brass ring lies, on the line of the room’s inlays */
 const vestibuleInlay = 1.25
-/** the hole in the ceiling orbs drop through into the gutter, relative to the room’s center */
-const [dropX, dropZ] = [forgeDrop.point[0] - room.center[0], forgeDrop.point[1] - room.center[1]]
-/** the gilt bead round its edge, like the rooflights’ */
-const dropBeadSize = 0.03
-/**
- * The ceiling’s colliders, boxes over the room relative to its center by their middles and half sizes in x and z, leaving out a square round the hole orbs drop through, so they fall into the room from above.
- */
-const ceilingSlabs = (() => {
-  const [halfWidth, halfDepth] = [room.size[0] / 2, room.size[1] / 2]
-  const gap = forgeDrop.radius
-  /** a box from one corner to the other */
-  const slab = (x0: number, z0: number, x1: number, z1: number) => ({
-    middle: [(x0 + x1) / 2, (z0 + z1) / 2] as const,
-    half: [(x1 - x0) / 2, (z1 - z0) / 2] as const,
-  })
-  return [
-    slab(-halfWidth, -halfDepth, dropX - gap, halfDepth),
-    slab(dropX + gap, -halfDepth, halfWidth, halfDepth),
-    slab(dropX - gap, -halfDepth, dropX + gap, dropZ - gap),
-    slab(dropX - gap, dropZ + gap, dropX + gap, halfDepth),
-  ]
-})()
-/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight and the hole an orb released by the button under it drops through into the gutter round the room, and its round vestibule north of it, alike on a smaller scale, where a second gutter lets the orb fly off toward the Bastion. */
+/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight, with the alchemy machine against its south wall, whose cannon shoots orbs across it into its round vestibule north of it, alike on a smaller scale, where a gutter lets them fly off toward the Bastion. */
 export default function ForgeRoom({glass, masonry, stone, wood}: {
   glass: Material
   /** the Bastion’s stone, which lines the vestibule’s arch onto its approach */
@@ -74,26 +51,20 @@ export default function ForgeRoom({glass, masonry, stone, wood}: {
     outline.lineTo(width / 2, depth / 2)
     outline.lineTo(-width / 2, depth / 2)
     outline.closePath()
-    // The hole orbs drop through into the gutter, in the shape’s x and −z
-    const hole = new Path
-    hole.absarc(dropX, -dropZ, forgeDrop.radius, 0, Math.PI * 2, true)
-    outline.holes.push(hole)
     return pierced(outline, forgeRooflight.radius)
   }, []))
-  const dropBead = useDisposable(useMemo(() => ring(forgeDrop.radius - dropBeadSize, forgeDrop.radius + dropBeadSize, dropBeadSize), []))
   return <group name='forge'>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
-        {ceilingSlabs.map(({half, middle}) => <CuboidCollider key={middle.join()} args={[half[0], 0.15, half[1]]} position={[middle[0], 5.9, middle[1]]} />)}
+        <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
       </RigidBody>
       <RoomFloor glass={glass} room={room} stone={stone} wood={wood} />
       <mesh castShadow geometry={ceiling} material={plaster} name='forge-ceiling' receiveShadow />
-      <mesh geometry={dropBead} material={gold} name='forge-gutter-drop-bead' position={[dropX, salonCeiling.underside - dropBeadSize, dropZ]} receiveShadow />
       <Rooflight gilt={gold} layout={forgeRooflight} name='forge-rooflight' plaster={plaster} />
     </group>
     <Vestibule floorReflections={floorReflections} masonry={masonry} plaster={plaster} />
-    <ForgeGutter plaster={plaster} />
-    <OrbRelease />
+    <ForgeGutter />
+    <AlchemyMachine />
   </group>
 }
 

@@ -20,7 +20,7 @@ export default function Orb({id, orb, position, withheld}: {
 }) {
   const material = useDisposable(useMemo(() => orb.createMaterial({radius: orbRadius}), [orb]))
   const ingredient = useMemo(() => orb.ingredient(environmentSeed), [orb])
-  return <GrabbableProp id={id ?? orb.propId} colliders='ball' consumable ingredient={ingredient} mood={orb.mood} orbit={{radius: orbRadius * 1.3}} position={position} remains={orb.remains} striker={orbStriker} title={orb.title} type='dynamic' withheld={withheld}>
+  return <GrabbableProp id={id ?? orb.propId} colliders='ball' consumable ingredient={ingredient} mood={orb.mood} orb={orb} orbit={{radius: orbRadius * 1.3}} position={position} remains={orb.remains} striker={orbStriker} title={orb.title} type='dynamic' withheld={withheld}>
     <mesh castShadow material={material}><sphereGeometry args={[orbRadius, 96, 64]} /></mesh>
   </GrabbableProp>
 }

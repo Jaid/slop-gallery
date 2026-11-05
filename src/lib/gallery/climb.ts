@@ -34,7 +34,7 @@ const steepest = 0.25
 const rampLength = (rise: number) => Math.abs(rise) * easedRampGradient(0.5, 1) / steepest
 /**
  * How steeply the paving of the hairpin and of the mouth’s elbow at its foot falls from both walls toward their middles: 1 in 11, like an old gutter of a street draining down its middle, see {@link RouteCrossfall}.
- * Orbs released in the Forge come out of the hairpin’s turn along the outer wall of its west leg at a good 4 m/s, and the fall carries them across toward the middle just in time to reach the gate right at the hatch in its middle.
+ * Orbs the Forge’s alchemy machine shoots off come out of the hairpin’s turn along the outer wall of its west leg at a good 4 m/s, and the fall carries them across toward the middle just in time to reach the gate right at the hatch in its middle.
  */
 export const climbCrossfall = 1 / 11
 /** the radius of the hairpin’s turn, round whose inner wall a meter of floor is left */
@@ -83,7 +83,7 @@ const route = new PassageRoute([westLegX, turnZ], Math.PI / 2, doorwayY, mouthHe
   },
 ])
 /**
- * Orbs released in the Forge roll down the hairpin on their own: down its east leg and round the outer wall of its turn, which sends every one of them out along the west leg’s west wall, however it came down; from there, the paving’s fall carries it across toward the middle, on through the mouth’s elbow to the gate in its north wall, see `bastionLinkGate`.
+ * Orbs the Forge’s alchemy machine shoots off roll down the hairpin on their own: down its east leg and round the outer wall of its turn, which sends every one of them out along the west leg’s west wall, however it came down; from there, the paving’s fall carries it across toward the middle, on through the mouth’s elbow to the gate in its north wall, see `bastionLinkGate`.
  * Its paving falls toward its middle all the way but for its top, where it eases out to meet the run’s level floor.
  */
 export const climbHairpin = new RoutedPassage('climb_hairpin', 'bastion', route, width, {

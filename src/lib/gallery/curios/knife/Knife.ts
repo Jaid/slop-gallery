@@ -124,7 +124,7 @@ function ring(x: number, [halfHeight, halfThickness]: readonly [number, number],
 
 /**
  * A heavy cleaver with a hand-forged blade, mottled with dark patina but for its honed edge, its square front a little rounded at the edge, on an oval ash handle held by three steel rivets and capped by a steel pommel.
- * It lies on the Banquet’s table, to steer the Forge’s orb release to a Horror Orb.
+ * It lies on the Banquet’s table, to steer the flavor the Forge’s alchemy machine gives a Transparent Orb to a Horror Orb.
  * In its own frame, the blade lies in the plane of x and y, its heel at the origin and its edge down, and the handle runs back along -x.
  */
 export default class Knife extends Curio {

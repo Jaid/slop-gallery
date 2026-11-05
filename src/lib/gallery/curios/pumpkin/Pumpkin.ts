@@ -48,7 +48,7 @@ function rind(u: number, v: number) {
   return [r * Math.sin(u), y, r * Math.cos(u)] as const
 }
 
-/** A ripe field pumpkin, uncarved: ten broad ribs creased between them round a squat body, a hollow round its stump of a stem and a dimple at its blossom end. It sits on the Banquet’s table, to steer the Forge’s orb release to a Halloween Orb. */
+/** A ripe field pumpkin, uncarved: ten broad ribs creased between them round a squat body, a hollow round its stump of a stem and a dimple at its blossom end. It sits on the Banquet’s table, to steer the flavor the Forge’s alchemy machine gives a Transparent Orb to a Halloween Orb. */
 export default class Pumpkin extends Curio {
   readonly id = 'pumpkin'
   readonly mass = 4.5

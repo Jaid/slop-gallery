@@ -10,10 +10,11 @@ import {bastionLinkGate, bastionNetwork, climbMouthHollow} from '../../../src/li
 import {climbArch, climbMouth} from '../../../src/lib/gallery/climb.ts'
 import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
 import forge from '../../../src/lib/gallery/forge.ts'
-import {forgeBore, forgeGutters} from '../../../src/lib/gallery/forgeGutter.ts'
+import {forgeGutter, forgeHopper} from '../../../src/lib/gallery/forgeGutter.ts'
 import {forgeRoundVestibule, vestibuleArches} from '../../../src/lib/gallery/forgeVestibule.ts'
 import gateGeometry from '../../../src/lib/gallery/gateGeometry.ts'
 import GutterGeometry from '../../../src/lib/gallery/GutterGeometry.ts'
+import HopperGeometry from '../../../src/lib/gallery/HopperGeometry.ts'
 import Passage from '../../../src/lib/gallery/passages/Passage.ts'
 import RouteVaultGeometry from '../../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../../src/lib/gallery/passages/VaultGeometry.ts'
@@ -72,7 +73,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, its gutters and the ledges between them. */
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, the hopper behind the opening the alchemy machine’s cannon shoots through and the gutter under it. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -95,14 +96,15 @@ export function forgeAndBastionColliders() {
   const [halfWidth, halfDepth] = [forge.size[0] / 2, forge.size[1] / 2]
   const [x, z] = forge.center
   colliders.hulls.push(slabCorners([[x - halfWidth, z - halfDepth], [x + halfWidth, z - halfDepth], [x + halfWidth, z + halfDepth], [x - halfWidth, z + halfDepth]], -0.24, 0))
-  for (const gutter of Object.values(forgeGutters)) {
-    const geometry = new GutterGeometry(gutter)
-    colliders.surface(geometry.collision, true)
-    geometry.dispose()
-  }
-  for (const {min, max} of forgeBore.ledges) {
-    colliders.hulls.push(slabCorners([[min[0], min[1]], [max[0], min[1]], [max[0], max[1]], [min[0], max[1]]], forgeBore.sill - forgeBore.ledgeThickness, forgeBore.sill))
-  }
+  const gutter = new GutterGeometry(forgeGutter)
+  colliders.surface(gutter.collision, true)
+  gutter.dispose()
+  const hopper = new HopperGeometry
+  colliders.surface(hopper.funnel.collision, true, forgeHopper.funnel.center)
+  hopper.dispose()
+  const {backstop, funnel} = forgeHopper
+  const [left, right] = [funnel.center[0] - backstop.width / 2, funnel.center[0] + backstop.width / 2]
+  colliders.cushions.push(slabCorners([[left, backstop.face - backstop.thickness], [right, backstop.face - backstop.thickness], [right, backstop.face], [left, backstop.face]], backstop.bottom, backstop.top))
   return colliders
 }
 
@@ -132,6 +134,8 @@ export function addOrb(world: RAPIER.World, position: Vec3) {
 
 /** Collects the shapes once, as the game builds them, to put into as many worlds as asked. */
 class Colliders {
+  /** hulls that whatever strikes them stops dead against, without bouncing off, like the hopper’s padded backstop */
+  readonly cushions: Array<Float32Array> = []
   readonly hulls: Array<Float32Array> = []
   readonly shapes: Array<Shape> = []
 
@@ -149,6 +153,9 @@ class Colliders {
     }
     for (const vertices of this.hulls) {
       world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!)
+    }
+    for (const vertices of this.cushions) {
+      world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!.setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min))
     }
   }
 

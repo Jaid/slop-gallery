@@ -15,7 +15,7 @@ import walls from './walls.ts'
 
 const {center: [vestibuleX, vestibuleZ], radius} = forgeVestibule
 
-/** A workshop where the gallery’s visitors are invited to make something of their own, starting with the orbs a button lets roll down its gutter. Lit through its round rooflight and its vestibule’s, without lamps of its own. */
+/** A workshop where the gallery’s visitors are invited to make something of their own, starting with the alchemy machine, which gives Transparent Orbs a flavor and shoots every orb thrown into it off toward the Bastion. Lit through its round rooflight and its vestibule’s, without lamps of its own. */
 export default class Forge extends Room {
   override readonly air = [
     floorBox(forge.size, 0, 5.8),

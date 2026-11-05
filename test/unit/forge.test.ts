@@ -133,9 +133,9 @@ describe('the Forge’s vestibule', () => {
       expect(pz).toBeCloseTo(northZ, 9)
       expect(wallPosition(wall, hole.u, 0, 0.5)[2]).toBeCloseTo(northZ + facing * 0.5, 9)
     }
-    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high; high up between them, the gutter comes in.
-    expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'gutter'])
-    for (const hole of ring.holes!.filter(value => value.name !== 'gutter')) {
+    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high; high up between them, orbs fly in.
+    expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'orbs'])
+    for (const hole of ring.holes!.filter(value => value.name !== 'orbs')) {
       const [left, right] = [-1, 1].map(side => wallPosition(ring, hole.u + side * hole.width / 2, 0, 0))
       expect(Math.hypot(left[0] - right[0], left[2] - right[2])).toBeCloseTo(climbArch.width, 9)
       expect([hole.height, hole.profile, hole.bottom]).toEqual([climbArch.height, climbArch.profile, undefined])

@@ -6,12 +6,12 @@ import {footstepVoices, impactFootstepStrength, playerSoundEffects} from '../../
 import {soundEffects} from '../../src/lib/audio/soundEffects.ts'
 import {switchSoundEffects} from '../../src/lib/audio/switchSoundEffects.ts'
 
-test('sound effect catalog has 26 stable unique IDs with playable recipes', () => {
-  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43', 'SFX-44', 'SFX-45', 'SFX-46', 'SFX-47', 'SFX-48', 'SFX-49'])
+test('sound effect catalog has 24 stable unique IDs with playable recipes', () => {
+  expect(soundEffects.map(effect => effect.id)).toEqual(['SFX-02', 'SFX-03', 'SFX-04', 'SFX-06', 'SFX-07', 'SFX-08', 'SFX-09', 'SFX-14', 'SFX-23', 'SFX-28', 'SFX-29', 'SFX-31', 'SFX-32', 'SFX-33', 'SFX-34', 'SFX-35', 'SFX-36', 'SFX-37', 'SFX-42', 'SFX-43', 'SFX-44', 'SFX-45', 'SFX-46', 'SFX-47'])
   const labels = new Set(soundEffects.map(effect => effect.label))
-  expect(labels.size).toBe(26)
+  expect(labels.size).toBe(24)
   const recipes = new Set(soundEffects.map(effect => JSON.stringify(effect.voices)))
-  expect(recipes.size).toBe(26)
+  expect(recipes.size).toBe(24)
   for (const effect of soundEffects) {
     expect(effect.voices.length).toBeGreaterThan(0)
     for (const voice of effect.voices) {
@@ -37,14 +37,6 @@ test('the light switch sounds apart switching on and off, and the selector apart
   // Switching on, the lights hum up for longer than they drop away switching off.
   expect(length(lightOn.voices)).toBeGreaterThan(length(lightOff.voices))
   expect(length(selector.voices)).toBeLessThan(length(lightOff.voices))
-})
-test('the orb release trips its catch and springs back, and only knocks against its stop while locked', () => {
-  const {release, releaseLocked} = switchSoundEffects
-  for (const effect of [release, releaseLocked]) {
-    expect(soundEffects).toContain(effect)
-  }
-  expect(length(releaseLocked.voices)).toBeLessThan(length(release.voices))
-  expect(releaseLocked.voices.length).toBeLessThan(release.voices.length)
 })
 test('all seven player cues are in the catalog with recipes of their own', () => {
   const cues = Object.values(playerSoundEffects)

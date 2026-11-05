@@ -122,7 +122,7 @@ const [, elbow] = bastionMouth.path
 
 /**
  * A knight’s close helmet of hand-forged steel, and nobody in it: an egg of a skull with a low comb over its crown, a visor of two plates standing proud of it, the upper one with its eye slits, the lower one creased down its prow and slotted to breathe through, a pointed chin, all on a bell of a gorget with a rolled border riveted all round, pointed at the front.
- * It stands in the corner of the Bastion’s mouth by the east bridge, looking out toward the doorway, waiting for a body of armor to wear it, and steers the Forge’s orb release to a Spook Orb.
+ * It stands in the corner of the Bastion’s mouth by the east bridge, looking out toward the doorway, waiting for a body of armor to wear it, and steers the flavor the Forge’s alchemy machine gives a Transparent Orb to a Spook Orb.
  * In its own frame it stands on the border of its gorget at the origin, looking along z.
  */
 export default class Helmet extends Curio {

@@ -1,10 +1,17 @@
+import type {Texture} from 'three/webgpu'
+
 import {color, mix, mx_noise_float, positionGeometry} from 'three/tsl'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
-/** Hand-rubbed architectural bronze: warm satin metal with soft, darker patina in places the hand never polishes. */
+/**
+ * Hand-rubbed architectural bronze: warm satin metal with soft, darker patina in places the hand never polishes.
+ * Given an `environment`, like a softly lit studio, it reflects that instead of the scene’s, which keeps a cast hanging in the open readable; it borrows the environment, never disposing it.
+ */
 export default class BronzeMaterial extends MeshStandardNodeMaterial {
-  constructor() {
+  constructor({environment}: {environment?: Texture} = {}) {
     super({
+      envMap: environment ?? null,
+      envMapIntensity: environment ? 0.5 : 1,
       metalness: 1,
       roughness: 0.34,
     })

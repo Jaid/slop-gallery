@@ -1,57 +1,80 @@
-import type {Vec3} from '#src/lib/gallery.ts'
-import type {Material} from 'three/webgpu'
-
+import {CoefficientCombineRule} from '@dimforge/rapier3d-compat'
 import {CuboidCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
-import Box from '#src/components/Scene/primitives.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {forgeBore, forgeGutters} from '#src/lib/gallery/forgeGutter.ts'
+import {forgeGutter, forgeHopper} from '#src/lib/gallery/forgeGutter.ts'
 import GutterGeometry from '#src/lib/gallery/GutterGeometry.ts'
+import HopperGeometry from '#src/lib/gallery/HopperGeometry.ts'
+import GrainedWoodMaterial from '#src/lib/materials/GrainedWoodMaterial.ts'
+import LeatherMaterial from '#src/lib/materials/LeatherMaterial.ts'
 
-/** The ledges under both ends of the opening orbs roll through between the gutters, by their middles and sizes, their tops level with its sill. */
-const ledges = forgeBore.ledges.map(({min, max}) => ({
-  position: [(min[0] + max[0]) / 2, forgeBore.sill - forgeBore.ledgeThickness / 2, (min[1] + max[1]) / 2] as Vec3,
-  size: [max[0] - min[0], forgeBore.ledgeThickness, max[1] - min[1]] as Vec3,
-}))
+const {backstop, funnel} = forgeHopper
+const [funnelX] = funnel.center
 
-/** The brass gutters round the Forge and its vestibule on their iron brackets and hangers, which orbs dropping through the ceiling roll down into the vestibule, and the `plaster` ledges they end and start on at both faces of the walls between them. */
-export default function ForgeGutter({plaster}: {plaster: Material}) {
+/** The brass gutter in the Forge’s vestibule on its iron hangers, and over its head the hopper behind the round opening the alchemy machine’s cannon shoots through: a padded backstop that stops every orb dead and a brass funnel that drops it into the gutter. */
+export default function ForgeGutter() {
   const parts = useDisposable(useMemo(() => {
-    const geometries = Object.values(forgeGutters).map(gutter => new GutterGeometry(gutter))
+    const gutter = new GutterGeometry(forgeGutter)
+    const hopper = new HopperGeometry
     return {
-      geometries,
-      collision: geometries.map(geometry => colliderGeometry(geometry.collision)),
+      gutter,
+      hopper,
+      gutterCollision: colliderGeometry(gutter.collision),
+      funnelCollision: colliderGeometry(hopper.funnel.collision),
       dispose() {
-        for (const geometry of geometries) {
-          geometry.dispose()
+        gutter.dispose()
+        hopper.dispose()
+      },
+    }
+  }, []))
+  const materials = useDisposable(useMemo(() => {
+    const brass = new MeshStandardNodeMaterial({
+      color: '#a88a56',
+      metalness: 0.8,
+      roughness: 0.38,
+    })
+    // The rooflights’ painted cast iron.
+    const iron = new MeshStandardNodeMaterial({
+      color: '#4c463c',
+      metalness: 0.2,
+      roughness: 0.7,
+    })
+    const oak = new GrainedWoodMaterial({
+      heartwood: ['#5e3a1c', '#8c5f33'],
+      latewood: '#3b2412',
+    }, {roughness: 0.5})
+    const leather = new LeatherMaterial({
+      tint: '#4a2416',
+      highlight: '#7a4128',
+    })
+    return {
+      brass,
+      iron,
+      oak,
+      leather,
+      dispose() {
+        for (const material of [brass, iron, oak, leather]) {
+          material.dispose()
         }
       },
     }
   }, []))
-  const brass = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#a88a56',
-    metalness: 0.8,
-    roughness: 0.38,
-  }), []))
-  // The rooflights’ painted cast iron.
-  const iron = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#4c463c',
-    metalness: 0.2,
-    roughness: 0.7,
-  }), []))
   return <RigidBody colliders={false} name='forge-gutter' type='fixed'>
-    {parts.collision.map((args, index) => <MeshSurfaceCollider key={index} args={args} />)}
-    {parts.geometries.map(({brackets, channel}, index) => <group key={index}>
-      <mesh castShadow geometry={channel} material={brass} name='forge-gutter-channel' receiveShadow />
-      <mesh castShadow geometry={brackets} material={iron} name='forge-gutter-brackets' receiveShadow />
-    </group>)}
-    {ledges.map(({position, size}) => <group key={position.join()}>
-      <CuboidCollider args={[size[0] / 2, size[1] / 2, size[2] / 2]} position={position} />
-      <Box material={plaster} name='forge-gutter-ledge' position={position} size={size} />
-    </group>)}
+    <MeshSurfaceCollider args={parts.gutterCollision} />
+    <mesh castShadow geometry={parts.gutter.channel} material={materials.brass} name='forge-gutter-channel' receiveShadow />
+    <mesh castShadow geometry={parts.gutter.brackets} material={materials.iron} name='forge-gutter-brackets' receiveShadow />
+    <group name='forge-hopper' position={funnel.center}>
+      <MeshSurfaceCollider args={parts.funnelCollision} />
+      <mesh castShadow geometry={parts.hopper.funnel.metal} material={materials.brass} name='forge-hopper-funnel' receiveShadow />
+      <mesh castShadow geometry={parts.hopper.board} material={materials.oak} name='forge-hopper-board' receiveShadow />
+      <mesh castShadow geometry={parts.hopper.cushion} material={materials.leather} name='forge-hopper-cushion' receiveShadow />
+      <mesh castShadow geometry={parts.hopper.iron} material={materials.iron} name='forge-hopper-hangers' receiveShadow />
+    </group>
+    {/* Stopping whatever strikes it dead: the cushion gives way, never bouncing anything back. */}
+    <CuboidCollider args={[backstop.width / 2, (backstop.top - backstop.bottom) / 2, backstop.thickness / 2]} position={[funnelX, (backstop.bottom + backstop.top) / 2, backstop.face - backstop.thickness / 2]} restitution={0} restitutionCombineRule={CoefficientCombineRule.Min} />
   </RigidBody>
 }

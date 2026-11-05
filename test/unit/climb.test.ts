@@ -269,7 +269,7 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
     expect(climbApproach.floorAt(backX, backZ)).toBe(0)
     expect(climbApproach.floorAt(frontX, frontZ)).toBeUndefined()
   })
-  test('the run north falls gently toward the hairpin, no steeper than 1 in 10, so orbs released in the Forge roll on down it, and lies level for its last meter before the screen wall', () => {
+  test('the run north falls gently toward the hairpin, no steeper than 1 in 10, so orbs the Forge’s alchemy machine shoots off roll on down it, and lies level for its last meter before the screen wall', () => {
     let previous = climbRun.route.y
     for (let distance = 0.05; distance <= climbRun.route.length; distance += 0.05) {
       const {y} = climbRun.route.at(distance)
