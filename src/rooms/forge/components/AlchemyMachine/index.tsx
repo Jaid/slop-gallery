@@ -6,7 +6,7 @@ import {useFrame} from '@react-three/fiber'
 import {CapsuleCollider, CuboidCollider, CylinderCollider, RigidBody} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useEffect, useMemo, useRef, useState} from 'react'
-import {color} from 'three/tsl'
+import {color, exp, positionLocal, smoothstep, vec3} from 'three/tsl'
 import {Euler, MeshStandardNodeMaterial, Quaternion, Vector3} from 'three/webgpu'
 
 import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
@@ -26,6 +26,7 @@ import {studioEnvironment} from '#src/lib/materials/metal.ts'
 import WroughtIronMaterial from '#src/lib/materials/WroughtIronMaterial.ts'
 
 import AlchemyWorks from './AlchemyWorks.ts'
+import CannonFx from './CannonFx.ts'
 
 const [benchX, benchZ] = workbench.center
 const [sinkX, sinkY, sinkZ] = alchemySink.center
@@ -69,7 +70,8 @@ const breechBlock = alchemyCannon.breech.map((value, axis) => value + alchemyCan
  */
 export default function AlchemyMachine() {
   const [orbs, setOrbs] = useState<ReadonlyArray<AlchemyOrb>>([AlchemyWorks.firstOrb])
-  const works = useMemo(() => new AlchemyWorks(orb => setOrbs(current => [...current, orb])), [])
+  const fx = useDisposable(useMemo(() => new CannonFx, []))
+  const works = useMemo(() => new AlchemyWorks(orb => setOrbs(current => [...current, orb]), fx), [fx])
   const barrel = useRef<Group>(null)
   const holder = useOrbHolder()
   const parts = useDisposable(useMemo(() => {
@@ -101,6 +103,11 @@ export default function AlchemyMachine() {
     const brass = new HammeredBrassMaterial
     const iron = new WroughtIronMaterial
     const bronze = new BronzeMaterial({environment: studioEnvironment})
+    // The swell running up the barrel as it gathers itself: wider round its axis where it is, but not out along the trunnions
+    const {at, size} = fx.swell
+    const around = positionLocal.xz.length()
+    const swell = exp(positionLocal.y.sub(at).div(0.13).pow(2).negate()).mul(size).mul(smoothstep(0.34, 0.3, around)).add(1)
+    bronze.positionNode = positionLocal.mul(vec3(swell, 1, swell))
     // Smoky glass, lit from inside by the work going on behind it
     const window = new MeshStandardNodeMaterial({
       color: '#1d130c',
@@ -120,7 +127,7 @@ export default function AlchemyMachine() {
         }
       },
     }
-  }, [works]))
+  }, [fx, works]))
   useEffect(() => works.restock(), [works])
   useFrame((_, delta) => {
     works.update(delta, barrel.current)
@@ -151,6 +158,7 @@ export default function AlchemyMachine() {
     <group position={alchemyCannon.breech} rotation={barrelTurn} ref={barrel}>
       <mesh castShadow geometry={parts.cannon.barrel} material={materials.bronze} name='alchemy-cannon' receiveShadow />
     </group>
+    <primitive object={fx.root} />
     {orbs.map(({id, orb, position, withheld}) => <Orb key={id} id={id} orb={orb} position={position} withheld={withheld} />)}
   </group>
 }

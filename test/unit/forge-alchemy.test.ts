@@ -5,7 +5,7 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import {mulberry32} from 'math/random'
-import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
+import {Mesh, MeshBasicMaterial, Object3D, Raycaster, Vector3} from 'three/webgpu'
 
 import {alchemyCannon, alchemyPipe, alchemySink, cannonFlight, cannonLaunch, cannonTarget, holderSpot, inSinkThroat, machineBody, southWallFace, workbench} from '../../src/lib/gallery/alchemy/alchemyMachine.ts'
 import CannonGeometry from '../../src/lib/gallery/alchemy/CannonGeometry.ts'
@@ -27,6 +27,7 @@ import {halloweenOrb, horrorOrb, orbRadius, randomOrbs, spookOrb, transparentOrb
 import {salonCeiling} from '../../src/lib/gallery/salon.ts'
 import {weldedSurfaceSkin} from '../../src/lib/physics/weldedSurface.ts'
 import {insideOpening, openingCircle, wallCoordinates} from '../../src/lib/placement/wallGeometry.ts'
+import CannonFx, {charging} from '../../src/rooms/forge/components/AlchemyMachine/CannonFx.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls from './fixtures/gallery.ts'
 import {addOrb, forgeAndBastionColliders, physicsWorld} from './helpers/bastionWorld.ts'
@@ -287,6 +288,56 @@ describe('the alchemy machine’s cannon', () => {
       expect(inside).toBeGreaterThan(0)
     }
     expect(north.holes!.map(hole => hole.name)).toEqual(['vestibule'])
+  })
+})
+describe('the alchemy machine’s cannon going off', () => {
+  test('gathers itself, squashing while a swell runs up its barrel, then stretches, kicks back and wobbles home with a bang out of its muzzle, and lets a new flavor’s effect burst out with the orb', () => {
+    const fx = new CannonFx
+    const barrel = new Object3D
+    const breech = new Vector3(...alchemyCannon.breech)
+    const fromBreech = () => barrel.position.distanceTo(breech)
+    try {
+      fx.update(0, barrel)
+      expect(barrel.scale.toArray()).toEqual([1, 1, 1])
+      expect(fromBreech()).toBe(0)
+      expect(fx.swell.size.value).toBe(0)
+      // A new Halloween Orb’s bats wait hidden in the cannon; a Transparent Orb brings no effect.
+      const halloween = `${halloweenOrb.propId}-alchemy-1`
+      fx.prepare(halloween, halloweenOrb.effect)
+      fx.prepare(transparentOrb.propId, transparentOrb.effect)
+      expect(fx.root.children).toHaveLength(2)
+      const [bats] = fx.root.children.filter(child => child !== fx.blast) as Array<CannonFx['blast']>
+      expect(bats.uniforms.clock.value).toBeLessThan(0)
+      fx.charge(1)
+      const swells = [1.04, 1.1, 1.16, 1.22].map(clock => {
+        fx.update(clock, barrel)
+        return fx.swell.at.value
+      })
+      expect(swells).toEqual(swells.toSorted((a, b) => a - b))
+      expect(fx.swell.size.value).toBeGreaterThan(0.2)
+      expect(barrel.scale.y).toBeLessThan(1)
+      expect(barrel.scale.x).toBeGreaterThan(1)
+      expect(fx.blast.uniforms.clock.value).toBeGreaterThan(10)
+      fx.fire(1 + charging, halloween)
+      fx.update(1 + charging + 0.02, barrel)
+      expect(barrel.scale.y).toBeGreaterThan(1.1)
+      expect(barrel.scale.x).toBeLessThan(1)
+      expect(fromBreech()).toBeGreaterThan(0.02)
+      expect(fx.swell.at.value).toBe(alchemyCannon.length)
+      expect(fx.blast.uniforms.clock.value).toBeCloseTo(0.02, 9)
+      expect(bats.uniforms.clock.value).toBeCloseTo(0.02, 9)
+      fx.update(1 + charging + 3, barrel)
+      for (const value of [barrel.scale.x, barrel.scale.y, barrel.scale.z]) {
+        expect(value).toBeCloseTo(1, 6)
+      }
+      expect(fromBreech()).toBe(0)
+      expect(fx.swell.size.value).toBe(0)
+      // Once the bats have flown off, they are gone.
+      fx.update(1 + charging + halloweenOrb.effect.afterglow + 1.5, barrel)
+      expect(fx.root.children).toEqual([fx.blast])
+    } finally {
+      fx.dispose()
+    }
   })
 })
 describe('the Forge’s redirection pipe', () => {

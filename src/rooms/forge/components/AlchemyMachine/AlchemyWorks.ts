@@ -1,6 +1,7 @@
 import type {PropHandle} from '#src/components/Scene/GrabbableProp.tsx'
 import type {Vec3} from '#src/lib/gallery.ts'
 import type {Orb} from '#src/lib/gallery/orbs/index.ts'
+import type CannonFx from './CannonFx.ts'
 import type {Object3D} from 'three/webgpu'
 
 import {uniform} from 'three/tsl'
@@ -15,6 +16,8 @@ import {orbAround, transmutedOrb} from '#src/lib/gallery/alchemy/flavor.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {orbRadius, transparentOrb} from '#src/lib/gallery/orbs/index.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
+
+import {charging} from './CannonFx.ts'
 
 /** an orb the machine brings into the world: in its holder, or made inside it, held hidden in the cannon’s barrel until it shoots it out */
 export type AlchemyOrb = {
@@ -41,8 +44,6 @@ const sinking = [0.3, 0.22] as const
 const brewing = 2.6
 /** how long after a shot the cannon shoots again at the soonest, in seconds, so orbs never meet on the way */
 const reload = 2
-/** how far the barrel kicks back along its axis when it shoots, in meters, and how quickly it eases back, in seconds */
-const recoil = [0.06, 0.45] as const
 /** where an orb waits in the holder: let down onto its lip from just over it */
 const holderSeat: Vec3 = [holderSpot[0], holderSpot[1] + orbSeat + 0.002, holderSpot[2]]
 const sinkPosition: Vec3 = [alchemySink.center[0], alchemySink.throatY, alchemySink.center[2]]
@@ -82,13 +83,18 @@ export default class AlchemyWorks {
   }
 
   private lastShot = -Infinity
+  /** the orb the cannon gathers itself to shoot, and since when */
+  private loaded: {
+    product: string
+    since: number
+  } | undefined
 
-  constructor(private readonly add: (orb: AlchemyOrb) => void) {}
+  constructor(private readonly add: (orb: AlchemyOrb) => void, private readonly fx: CannonFx) {}
 
   /** Puts another Transparent Orb into the holder whenever the player leaves the Bastion while no orb is left in the Forge or the Bastion and nothing lies in the holder’s way; returns the unsubscription. */
   restock() {
     return useGallery.subscribe((state, previous) => {
-      if (previous.room !== 'bastion' || state.room === 'bastion' || this.batches.length || orbAround(propPositions(), roomAt)) {
+      if (previous.room !== 'bastion' || state.room === 'bastion' || this.batches.length || this.loaded || orbAround(propPositions(), roomAt)) {
         return
       }
       for (const [, position] of propPositions()) {
@@ -104,7 +110,7 @@ export default class AlchemyWorks {
     })
   }
 
-  /** Runs the machine on by `delta` seconds: takes in what dropped down the throat, sinks it out of sight, shoots out what is done, lets the window glow and the cannon’s `barrel`, moved along the cannon’s axis, kick back. */
+  /** Runs the machine on by `delta` seconds: takes in what dropped down the throat, sinks it out of sight, shoots out what is done, lets the window glow and the cannon’s `barrel` go off, see {@link CannonFx}. */
   update(delta: number, barrel: Object3D | null) {
     const step = Math.min(delta, 0.1)
     this.clock += step
@@ -113,32 +119,40 @@ export default class AlchemyWorks {
     this.shoot()
     // The window glows up while the machine works on an orb and flashes as it shoots.
     const since = this.clock - this.lastShot
-    const working = this.batches.length ? 0.55 + 0.25 * Math.sin(this.clock * 7.3) * Math.sin(this.clock * 2.9) : 0
+    const working = this.batches.length || this.loaded ? 0.55 + 0.25 * Math.sin(this.clock * 7.3) * Math.sin(this.clock * 2.9) : 0
     const flash = since < 0.5 ? 2.2 * (1 - since / 0.5) : 0
     this.glow.value += (Math.max(working, flash) - this.glow.value) * Math.min(1, step * 6)
-    // The barrel kicks back and eases home again.
-    if (barrel) {
-      const kick = since < 0.04 ? since / 0.04 : Math.exp(-(since - 0.04) / recoil[1] * 4)
-      const back = since < recoil[1] * 3 ? recoil[0] * kick : 0
-      barrel.position.set(...alchemyCannon.breech.map((value, axis) => value - alchemyCannon.axis[axis] * back) as Vec3)
-    }
+    this.fx.update(this.clock, barrel)
   }
 
-  /** Shoots out what the machine is done with first, once the cannon is ready again and the orb has turned up. */
+  /** Shoots out what the machine is done with first, once the cannon is ready again and the orb has turned up: the cannon gathers itself for a moment, then goes off. */
   private shoot() {
-    const next = this.batches.at(0)
-    if (!next || next.since < brewing || this.clock - this.lastShot < reload) {
+    if (this.loaded) {
+      if (this.clock - this.loaded.since < charging) {
+        return
+      }
+      const {product: id} = this.loaded
+      this.loaded = undefined
+      this.lastShot = this.clock
+      const product = propObjects.get(id)
+      if (product) {
+        showPropAt(product, cannonLaunch.position)
+        product.unleash(cannonLaunch.velocity, [0, 0, 0])
+      }
+      this.fx.fire(this.clock, id)
+      playSound(cannonVoices(Math.random() * 2 - 1), `alchemy:shot:${++this.counts.sounds}`, alchemyCannon.muzzle)
       return
     }
-    const product = propObjects.get(next.product)
-    if (!product) {
+    const next = this.batches.at(0)
+    if (!next || next.since < brewing || this.clock - this.lastShot < reload || !propObjects.has(next.product)) {
       return
     }
     this.batches.shift()
-    this.lastShot = this.clock
-    showPropAt(product, cannonLaunch.position)
-    product.unleash(cannonLaunch.velocity, [0, 0, 0])
-    playSound(cannonVoices(Math.random() * 2 - 1), `alchemy:shot:${++this.counts.sounds}`, alchemyCannon.muzzle)
+    this.loaded = {
+      product: next.product,
+      since: this.clock,
+    }
+    this.fx.charge(this.clock)
   }
 
   /** Lets every orb just taken in sink down the throat, faster and faster, and hides it once it is out of sight, using it up if a new orb comes out in its stead. */
@@ -169,6 +183,7 @@ export default class AlchemyWorks {
     const output = transmutedOrb(orb, propPositions(), roomAt, Math.random())
     const product = output === orb ? id : `${output.propId}-alchemy-${++this.counts.made}`
     if (product !== id) {
+      this.fx.prepare(product, output.effect)
       this.add({
         id: product,
         orb: output,
