@@ -30,6 +30,7 @@ export default class ExhibitionEvidenceFrame extends PortraitFrame {
   override readonly description = 'Lit like evidence: a flat plate of matte black aluminium printed like a forensic photograph’s border, a white scale ticking off every half centimeter along the work’s edges, longer every five, the checkered L of a photographic scale on the lower left corner and a red evidence label stuck to the top right.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#151617'
   override readonly title = 'Forensic scale'

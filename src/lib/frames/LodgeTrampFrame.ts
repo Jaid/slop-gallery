@@ -77,6 +77,7 @@ export default class LodgeTrampFrame extends PortraitFrame {
   override readonly description = 'Tramp art, whittled by the fire: strips of cigar-box wood stacked into a pyramid of four layers, alternating dark walnut and pale pine, every edge of every layer chip-carved with V notches by a pocketknife, so the whole frame bristles like a pinecone.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#8a6a44'
   override readonly title = 'Tramp art'

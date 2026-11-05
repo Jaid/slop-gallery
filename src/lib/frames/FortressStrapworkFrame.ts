@@ -39,6 +39,7 @@ export default class FortressStrapworkFrame extends PortraitFrame {
   override readonly description = 'Forged for cold stone and long shadows: a broad flat bar of blackened wrought iron, hammered round at its edges, round a square rod at the sight edge, its corners bound by bent straps riveted through, with more rivets marching along every member and a bloom of rust where the damp gets in.'
   override readonly front = profile.front + 0.009
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#2a2826'
   override readonly title = 'Riveted strapwork'

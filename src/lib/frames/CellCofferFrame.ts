@@ -44,6 +44,7 @@ export default class CellCofferFrame extends PortraitFrame {
   override readonly description = 'Cut from the same walnut as the Cell’s coffered ceiling: a cassetta whose flat frieze is inlaid with two gilt fillets like the coffers’ overhead, between a walnut ovolo at the sight edge and a walnut ogee at the outside, a turned brass boss with a ribbed rose on every corner.'
   override readonly front = profile.front + 0.012
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#3a2414'
   override readonly title = 'Walnut coffer'

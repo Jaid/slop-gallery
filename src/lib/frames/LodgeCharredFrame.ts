@@ -28,6 +28,7 @@ export default class LodgeCharredFrame extends PortraitFrame {
   override readonly description = 'Wood that went through the Lodge’s fire, as Japanese carpenters char it: a broad, softly rounded board burned until it split into alligator scales of charcoal, black in their cracks and silvery where the light skims them, wire-brushed along the grain, round a slim fillet of rubbed copper.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#1a1716'
   override readonly title = 'Shou sugi ban'

@@ -37,6 +37,7 @@ export default class ExhibitionContainmentFrame extends PortraitFrame {
   override readonly description = 'Sealed, as if the work might get out: a heavy casing of black anodized metal stepping up from the work, a channel round it holding a strip of dim red light that a bright scan sweeps round every few seconds, its outer slope striped in yellow and black hazard chevrons.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#1a1a1a'
   override readonly title = 'Containment casing'

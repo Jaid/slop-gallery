@@ -46,6 +46,7 @@ export default class SiennaLeatherFrame extends PortraitFrame {
   override readonly description = 'Rich textures and questionable company: a panel of Spanish guadamecí, oxblood leather embossed with a Moorish interlace and gilded on its raised strapwork, its ground punched with a fine stipple, nailed down with two rows of brass studs between a walnut fillet and a walnut ogee.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#5a1a12'
   override readonly title = 'Tooled guadamecí'

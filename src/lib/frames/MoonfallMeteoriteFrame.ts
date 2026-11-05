@@ -30,6 +30,7 @@ export default class MoonfallMeteoriteFrame extends PortraitFrame {
   override readonly description = 'Out of the ordinary: a slab of meteoric iron, its faces cut, polished and etched to show the Widmanstätten pattern of nickel-iron plates crossing in three directions, each etched to a sheen of its own and outlined by bright ribbons, while the outer edge keeps the dark, rough fusion crust it burned through the sky with.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#7d8084'
   override readonly title = 'Meteoric iron'

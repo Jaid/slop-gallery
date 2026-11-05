@@ -36,6 +36,7 @@ export default class BanquetCheckerFrame extends PortraitFrame {
   override readonly description = 'The Banquet’s floor turned up onto the wall: a flat face laid with polished squares of white Carrara and black Nero Marquina, three across, each veined on its own, between a brass sight edge and a brass bead, finished with a rounded edge of black marble.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#d9d7d1'
   override readonly title = 'Marble checker'

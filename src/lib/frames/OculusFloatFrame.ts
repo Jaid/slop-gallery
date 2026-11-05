@@ -30,6 +30,7 @@ export default class OculusFloatFrame extends PortraitFrame {
   override readonly description = 'A float frame as a museum of modern art would hang it: the work mounted proud on a hidden block, seeming to hover over a deep black shadow gap, inside a slim box of brushed stainless steel no thicker than a pencil, its lip catching the light borrowed from the gallery above.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#9aa0a5'
   override readonly title = 'Steel float'

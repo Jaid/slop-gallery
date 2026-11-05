@@ -60,6 +60,7 @@ export default class BanquetDecoFrame extends PortraitFrame {
   override readonly description = 'An Art Deco ziggurat for the Banquet’s formal navy: black piano lacquer climbing in four steps to its crown and down again, a line of brass round the nosing of every step and a brass sunburst fanning out over every corner.'
   override readonly front = profile.front + 0.004
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#0d0d10'
   override readonly title = 'Art Deco ziggurat'

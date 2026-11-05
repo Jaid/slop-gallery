@@ -88,6 +88,7 @@ export default class SpookAbyssFrame extends PortraitFrame {
   override readonly description = 'A window onto the other side: a still pool of dark, clear portal fluid held round the work between two rims of polished obsidian, whose surface ripples back and forth while, far deeper than the frame could be, currents of green light and drifting motes stream round the work, one over the other and each against the next, sliding and bending with every step and every ripple.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#0a2a1e'
   override readonly title = 'Ectoplasm abyss'

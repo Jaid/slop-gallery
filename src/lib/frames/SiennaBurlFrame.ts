@@ -28,6 +28,7 @@ export default class SiennaBurlFrame extends PortraitFrame {
   override readonly description = 'A Victorian parlor frame for low light and rich textures: a broad, gently sloping panel of French-polished burl walnut, its swirling eyes catching the candles, between a gilt bead-and-reel at the sight edge and a walnut torus carved with a twisted ribbon.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#6b4425'
   override readonly title = 'Burl walnut parlor'

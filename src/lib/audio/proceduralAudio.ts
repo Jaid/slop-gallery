@@ -1,3 +1,8 @@
+import type {Vec3} from '../gallery/types.ts'
+import type {Hearing} from './hearing.ts'
+
+import {absorptionCutoff, hearingShare, listenerPosition} from './hearing.ts'
+
 export type SoundEffect = {
   id: string
   label: string
@@ -71,6 +76,8 @@ export function playVoices({context, master}: AudioOutput, voices: ReadonlyArray
   /** Fit the entire recipe, including delays, to this duration. */
   duration?: number
   gain?: number
+  /** Called once every voice has ended and the playback released its nodes. */
+  onEnded?: () => void
   /** Hold the envelopes until stop(); used for the quiet zoom layer. */
   sustain?: boolean
 } = {}): ProceduralPlayback {
@@ -132,6 +139,7 @@ export function playVoices({context, master}: AudioOutput, voices: ReadonlyArray
       sources.delete(source)
       if (!sources.size) {
         bus.disconnect()
+        options.onEnded?.()
       }
     }, {once: true})
     source.start(start)
@@ -155,4 +163,36 @@ export function playVoices({context, master}: AudioOutput, voices: ReadonlyArray
       }
     },
   }
+}
+
+/**
+ * Plays a recipe heard from `position` through an HRTF panner, at full level within `hearing.near` and fading linearly to silence at `hearing.far`, the air taking its highs on the way like an ambience emitter’s, by where the listener stands as it starts.
+ * The panner and its filter are released with the playback’s own nodes.
+ */
+export function playVoicesAt({context, master}: AudioOutput, voices: ReadonlyArray<Voice>, seed: string, [x, y, z]: Vec3, hearing: Hearing): ProceduralPlayback {
+  const panner = new PannerNode(context, {
+    panningModel: 'HRTF',
+    distanceModel: 'linear',
+    refDistance: hearing.near,
+    maxDistance: hearing.far,
+    rolloffFactor: 1,
+    positionX: x,
+    positionY: y,
+    positionZ: z,
+  })
+  const absorption = new BiquadFilterNode(context, {
+    type: 'lowpass',
+    frequency: absorptionCutoff(hearingShare([x, y, z], listenerPosition(context), hearing)),
+    Q: 0.5,
+  })
+  panner.connect(absorption).connect(master)
+  return playVoices({
+    context,
+    master: panner,
+  }, voices, seed, {
+    onEnded() {
+      panner.disconnect()
+      absorption.disconnect()
+    },
+  })
 }

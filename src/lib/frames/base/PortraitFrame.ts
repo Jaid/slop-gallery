@@ -1,3 +1,4 @@
+import type {FrameImpactSoundId} from '#src/lib/audio/frameImpacts.ts'
 import type {BufferGeometry, Material} from 'three/webgpu'
 
 import {MeshStandardNodeMaterial} from 'three/webgpu'
@@ -21,6 +22,8 @@ export default abstract class PortraitFrame {
   abstract readonly front: number
   /** how far in front of the work’s middle its image lies, recessed into the frame */
   abstract readonly imageDepth: number
+  /** the id of the sound its work makes striking something, by what the frame is made of, shared with every frame of the same stuff: gilded wood unless it says otherwise */
+  readonly impactSound: FrameImpactSoundId = 'gilt'
   /** how far the frame reaches out past the work’s edges, its mat included */
   abstract readonly reach: number
   /** the color the frame shows as, which its ghost takes while the player carries the work */

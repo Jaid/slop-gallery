@@ -24,6 +24,7 @@ export default class OculusAcrylicFrame extends PortraitFrame {
   override readonly description = 'Borrowed light, held in a slab: a thick frame of clear acrylic over a dark backing, black and glassy on its polished face and mirroring the room at grazing angles, the light caught inside it escaping as a cool cyan glow through every beveled edge.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#1d3236'
   override readonly title = 'Edge-lit acrylic'

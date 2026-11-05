@@ -1,3 +1,4 @@
+import type {Striker} from '#src/lib/audio/impactSounds.ts'
 import type {OrbitSettings} from '#src/lib/camera/OrbitInspection.ts'
 import type {Vec3} from '#src/lib/gallery.ts'
 import type {ItemIngredient} from '#src/lib/gallery/fusion/FusionRecipe.ts'
@@ -14,6 +15,7 @@ import Branch from 'branch-component'
 import {useEffect, useLayoutEffect, useRef} from 'react'
 import {Box3, Vector3} from 'three/webgpu'
 
+import {impactSounds} from '#src/lib/audio/impactSounds.ts'
 import {cameraPose, notify, requestItemFusion, useGallery} from '#src/lib/gallery.ts'
 import {handBack, settle} from '#src/lib/gallery/fusion/handBack.ts'
 import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
@@ -100,6 +102,8 @@ type GrabbablePropProps = Omit<RigidBodyProps, 'children' | 'position' | 'ref'> 
   remains?: Orb
   /** For props drawn elsewhere, e.g. by an instanced batch, whose children are only invisible stand-ins: builds what the studio photographs when the prop is thrown into a portrait. */
   snapshotSubject?: () => SnapshotSubject
+  /** what the prop sounds like striking something, like an orb’s glass; silent if left out */
+  striker?: Striker
   title: string
   /** whether the prop enters the world held by a fusion’s portal, as what the fusion leaves of an item it uses up: seized, out of the physics and invisible until the portal shows it in its middle, from the very first frame */
   withheld?: boolean
@@ -115,7 +119,7 @@ export default function GrabbableProp(props: GrabbablePropProps) {
 }
 
 /** The prop while it is still in the world. */
-function PresentProp({id, title, consumable, ingredient, mood, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, withheld = false, ...props}: GrabbablePropProps) {
+function PresentProp({id, title, consumable, ingredient, mood, orbit, children, canGrab, blockedMessage, onAttachmentChange, recoverAsDynamic, remains, snapshotSubject, striker, withheld = false, ...props}: GrabbablePropProps) {
   const body = useRef<RapierRigidBody>(null)
   const group = useRef<Group>(null)
   /** whether a fusion holds the prop, from the start if it is withheld */
@@ -254,6 +258,11 @@ function PresentProp({id, title, consumable, ingredient, mood, orbit, children, 
       propObjects.get(id)?.cancel()
     }
   }, [held, id])
+  useEffect(() => {
+    if (striker && body.current) {
+      return impactSounds.register(body.current, striker)
+    }
+  }, [striker])
   useFrame(() => {
     controller.current?.recover()
   })

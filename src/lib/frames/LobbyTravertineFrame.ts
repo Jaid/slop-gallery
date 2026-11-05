@@ -31,6 +31,7 @@ export default class LobbyTravertineFrame extends PortraitFrame {
   override readonly description = 'Carved from the Lobby’s own travertine like the architrave of a doorway: two fasciae stepping forward under a cyma reversa and a fillet, its bedding and voids running level across the whole frame as if it were cut from one block, round a slim slip of rubbed bronze.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#d3c4a6'
   override readonly title = 'Travertine architrave'

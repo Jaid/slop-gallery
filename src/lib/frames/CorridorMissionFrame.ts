@@ -28,6 +28,7 @@ export default class CorridorMissionFrame extends PortraitFrame {
   override readonly description = 'An Arts and Crafts frame for the timber passage: stiles and rails of fumed quartersawn oak, its medullary rays flashing silver, the rails tenoned right through the stiles and standing out past them, every joint fixed with two square pegs and the stiles running on past the rails, round a chamfered slip.'
   override readonly front = member.stile + 0.004
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = member.inner + member.width + member.horn
   override readonly tint = '#7a5a34'
   override readonly title = 'Through-tenon oak'

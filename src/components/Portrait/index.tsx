@@ -11,9 +11,10 @@ import {Quaternion, Vector3} from 'three/webgpu'
 
 import DynamicImageMaterial from '#component/DynamicImageMaterial'
 import PortraitLabel from '#component/PortraitLabel'
+import {impactSounds} from '#src/lib/audio/impactSounds.ts'
 import {frameBack} from '#src/lib/frames/base/PortraitFrame.ts'
 import {portraitFrame} from '#src/lib/frames/index.ts'
-import {chime, requestFusion, useGallery} from '#src/lib/gallery.ts'
+import {requestFusion, useGallery} from '#src/lib/gallery.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import world from '#src/worlds/current.ts'
 
@@ -25,7 +26,6 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
   const art = useRef<Group>(null)
   const placard = useRef<Group>(null)
   const held = useGallery(s => s.held === p.id)
-  const lastImpact = useRef(0)
   const w = p.width
   const h = p.height
   const frame = portraitFrame(p.frame)
@@ -42,6 +42,15 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
       portraitObjects.delete(p.id)
     }
   }, [p.id])
+  // Hung, held or flown around by a fusion, the body is fixed or disabled, so only a loose work strikes anything.
+  useEffect(() => {
+    if (body.current) {
+      return impactSounds.register(body.current, {
+        kind: 'frame',
+        sound: frame.impactSound,
+      })
+    }
+  }, [frame])
   // A fusion flies the work around by its group meanwhile, so its body neither stands in the way nor falls.
   useEffect(() => {
     body.current?.setEnabled(!held && !p.reserved && !p.fusing)
@@ -95,11 +104,6 @@ export default function Portrait({portrait: p}: {portrait: PortraitData}) {
     onCollisionEnter={event => {
       if (p.hung || p.reserved || held) {
         return
-      }
-      const now = performance.now()
-      if (now - lastImpact.current > 200) {
-        chime(160)
-        lastImpact.current = now
       }
       const other: unknown = event.other.rigidBodyObject?.userData.portraitId
       const target = useGallery.getState().portraits.find(a => a.id === other)

@@ -48,6 +48,7 @@ export default class LodgeTwigFrame extends PortraitFrame {
   override readonly description = 'An Adirondack camp frame for the Lodge: rough branches still in their furrowed, lichen-spotted bark, crossing at the corners and running on past them, nailed over a panel of paper birch bark banded with dark lenticels and peeling here and there.'
   override readonly front = -0.068 + 0.04
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = 0.12
   override readonly tint = '#6b5a48'
   override readonly title = 'Adirondack twig'

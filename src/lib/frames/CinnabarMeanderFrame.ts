@@ -71,6 +71,7 @@ export default class CinnabarMeanderFrame extends PortraitFrame {
   override readonly description = 'Cast bronze like the fittings of a Roman villa: a flat band chased with a running spiral meander, the Greek key, between beaded rounds, rubbed bright on its raised strokes and crusted with verdigris in the hollows between them.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#8a6a40'
   override readonly title = 'Bronze meander'

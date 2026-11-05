@@ -58,6 +58,7 @@ export default class CorridorKumikoFrame extends PortraitFrame {
   override readonly description = 'A frame from a Japanese joiner for the long way round: plain stiles of pale hinoki with crisp square arrises, between them a recessed band of kumiko, thin slats fitted without nails into the asanoha hemp-leaf pattern of six-pointed stars, over a dark ground that shows through the gaps.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#d8c39a'
   override readonly title = 'Kumiko asanoha'

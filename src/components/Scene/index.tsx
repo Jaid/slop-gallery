@@ -6,6 +6,7 @@ import AmbienceEmitterMarkers from '#component/AmbienceEmitterMarkers'
 import AmbienceListener from '#component/AmbienceListener'
 import FusionRemains from '#component/FusionRemains'
 import Fusions from '#component/Fusions'
+import ImpactSounds from '#component/ImpactSounds'
 import IntroCamera from '#component/IntroCamera'
 import Lamps from '#component/Lamps'
 import LightLevels from '#component/LightLevels'
@@ -57,6 +58,7 @@ export default function Scene() {
     <Moods />
     <LightLevels />
     <AmbienceListener />
+    <ImpactSounds />
     <Player />
     {/* After the Player, whose spawn releases the camera and which writes it before the intro every frame */}
     <Branch if={introOrbit !== null}><IntroCamera orbit={introOrbit!} /></Branch>

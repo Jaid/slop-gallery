@@ -36,6 +36,7 @@ export default class ExhibitionVitrineFrame extends PortraitFrame {
   override readonly description = 'Sealed behind glass, lit like evidence: a deep vitrine of black anodized aluminium, the work set at the back of a box lined in black felt behind a pane of museum glass that all but vanishes face on and mirrors the room at an angle, its case held by four screws and labeled with a small brass plate.'
   override readonly front = front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#202224'
   override readonly title = 'Sealed vitrine'

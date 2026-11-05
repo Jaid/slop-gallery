@@ -54,6 +54,7 @@ export default class FortressOakFrame extends PortraitFrame {
   override readonly description = 'A frame for a gatehouse: thick boards of weathered oak, gray at their worn arrises and open in the grain, their corners bound by forged iron brackets ending in spade-shaped curls, all of it fastened with square hand-cut nails.'
   override readonly front = profile.front + 0.006
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#6b5a45'
   override readonly title = 'Iron-bound oak'

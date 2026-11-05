@@ -34,6 +34,7 @@ export default class VesperRippleFrame extends PortraitFrame {
   override readonly description = 'A Dutch Golden Age frame in French-polished ebony for the old masters: a broad plain cove between rounds cut into fine ripples by the rippling machine, and a flat of waves swinging to and fro, the way Rembrandt’s Amsterdam framed its burghers.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#16110e'
   override readonly title = 'Dutch ripple'

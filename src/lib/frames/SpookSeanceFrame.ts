@@ -62,6 +62,7 @@ export default class SpookSeanceFrame extends PortraitFrame {
   override readonly description = 'Fetched from a medium’s parlor: polished ebony round a charred band burned with occult sigils that glow spectral green, flaring one after another as if something were spelling a message along them, and on every corner a crystal ball on a bronze stand, green mist swirling inside it.'
   override readonly front = inscription.z + ball.lift + ball.radius * 2
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'hardwood'
   override readonly reach = profile.reach
   override readonly tint = '#1a2a22'
   override readonly title = 'Séance'

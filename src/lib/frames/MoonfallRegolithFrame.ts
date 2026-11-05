@@ -44,6 +44,7 @@ export default class MoonfallRegolithFrame extends PortraitFrame {
   override readonly description = 'A piece of the crater itself: a heavy, lumpy round of pale gray lunar stone, pocked with craters of every size, each a bowl with a raised rim, the small ones scattered over the large, glinting with beads of impact glass, round a slim gold fillet like the crater’s rim on the floor.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth
+  override readonly impactSound = 'heavy'
   override readonly reach = profile.reach
   override readonly tint = '#a0a4a4'
   override readonly title = 'Lunar regolith'

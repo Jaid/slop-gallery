@@ -1,17 +1,24 @@
+import type {Vec3} from '../gallery/types.ts'
 import type {RoomAcoustics} from './acoustics/Acoustics.ts'
+import type {Hearing} from './hearing.ts'
 import type {FootstepSurface} from './playerSoundEffects.ts'
-import type {AudioOutput, ProceduralPlayback} from './proceduralAudio.ts'
+import type {AudioOutput, ProceduralPlayback, Voice} from './proceduralAudio.ts'
 
 import {clamp} from 'math'
 
 import Acoustics from './acoustics/Acoustics.ts'
 import {audioVolume} from './audioParameter.ts'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
-import {osc, playVoices} from './proceduralAudio.ts'
+import {osc, playVoices, playVoicesAt} from './proceduralAudio.ts'
 import {playSoundEffect} from './soundEffects.ts'
 
 // Boost procedural effects by 12 dB without changing narration.
 const effectsGain = 0.6 * 10 ** (12 / 20)
+/** how far the world’s one-shots carry from where they sound, like an orb striking the floor */
+const worldHearing: Hearing = {
+  near: 2,
+  far: 26,
+}
 
 export default class SoundEngine {
   private static instance: SoundEngine | undefined
@@ -84,6 +91,18 @@ export default class SoundEngine {
   playEffect(id: string, output: AudioOutput = this) {
     if (!this.muted) {
       playSoundEffect(output, id)
+    }
+  }
+
+  /** Plays a recipe in the world, heard from `position` if given, carrying as far as `hearing` says, or else right where the listener is. */
+  playInWorld(voices: ReadonlyArray<Voice>, seed: string, position?: Vec3, hearing = worldHearing) {
+    if (this.muted || !voices.length) {
+      return
+    }
+    if (position) {
+      playVoicesAt(this.world, voices, seed, position, hearing)
+    } else {
+      playVoices(this.world, voices, seed)
     }
   }
 
