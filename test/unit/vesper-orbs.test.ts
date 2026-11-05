@@ -7,8 +7,9 @@ import {vesper, vesperOrbPedestals} from '../../src/lib/gallery/vesper.ts'
 import {vesperOrbs} from '../../src/lib/gallery/vesperOrbs.ts'
 import {floorHeight, roomAt} from './fixtures/gallery.ts'
 
-test('the Vesper stands its six orbs on column pedestals in rows of two in the middle of floor tiles from its north half into its south half, clear of the walls and of each other', () => {
-  expect(vesperOrbPedestals).toHaveLength(6)
+test('the Vesper stands four orbs on column pedestals in two northern rows of two, centered on floor tiles and clear of the walls and each other', () => {
+  expect(vesperOrbPedestals).toHaveLength(4)
+  expect(vesperOrbPedestals.map(({position: [x, , z]}) => [x - vesper.center[0], z - vesper.center[1]])).toEqual([[-1, -7], [1, -7], [1, -3], [-1, -3]])
   const [centerX, centerZ] = vesper.center
   const middleX = vesperOrbPedestals.reduce((sum, {position: [x]}) => sum + x, 0) / vesperOrbPedestals.length
   const middleZ = vesperOrbPedestals.reduce((sum, {position: [, , z]}) => sum + z, 0) / vesperOrbPedestals.length
@@ -56,5 +57,5 @@ test('every pedestal’s orb is rolled by the seed among the random orbs, the sa
     expect(count / (200 * vesperOrbPedestals.length)).toBeGreaterThan(0.27)
     expect(count / (200 * vesperOrbPedestals.length)).toBeLessThan(0.4)
   }
-  expect(layouts.size).toBeGreaterThan(150)
+  expect(layouts.size).toBeGreaterThan(65)
 })

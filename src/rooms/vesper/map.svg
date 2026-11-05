@@ -5,7 +5,5 @@
     <circle cx="1" cy="-7" r="0.2777"/>
     <circle cx="1" cy="-3" r="0.2777"/>
     <circle cx="-1" cy="-3" r="0.2777"/>
-    <circle cx="1" cy="1" r="0.2777"/>
-    <circle cx="-1" cy="1" r="0.2777"/>
   </g>
 </svg>

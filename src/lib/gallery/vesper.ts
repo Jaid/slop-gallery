@@ -20,12 +20,12 @@ export const vesper = {
   height: 5.8,
 } as const satisfies FloorRectangle & {height: number}
 
-/** where the orb pedestals stand, in floor tiles from the room’s middle along x and z, every one in the middle of a tile, half a tile off the room’s axis, so the two of each row stand 2 m apart, middle to middle: the four of the northern two rows, from the north-west corner on clockwise as seen from above, then the two of the southern row, east and west */
-const orbPedestalTiles = [[-0.5, -3.5], [0.5, -3.5], [0.5, -1.5], [-0.5, -1.5], [0.5, 0.5], [-0.5, 0.5]] as const
+/** The four pedestals form a 2 m × 4 m rectangle over two northern floor-tile rows, ordered clockwise from the north-west corner. */
+const orbPedestalTiles = [[-0.5, -3.5], [0.5, -3.5], [0.5, -1.5], [-0.5, -1.5]] as const
 /** the middle of the two rows of orb pedestals, in floor tiles from the room’s middle along z */
 const orbPedestalMiddle = (Math.min(...orbPedestalTiles.map(([, z]) => z)) + Math.max(...orbPedestalTiles.map(([, z]) => z))) / 2
 
-/** The column pedestals in two rows of three either side of the room’s axis, from the north half into the south half, each carrying an orb, in the order of {@link orbPedestalTiles}. */
+/** Four column pedestals in two rows of two in the Vesper’s north half, each carrying an orb, in the order of {@link orbPedestalTiles}. */
 export const vesperOrbPedestals: ReadonlyArray<VesperOrbPedestal> = orbPedestalTiles.map(([x, z]) => ({
   position: [vesper.center[0] + x * floorTile, 0, vesper.center[1] + z * floorTile],
   rotation: Math.atan2(x, z - orbPedestalMiddle) + 0,
