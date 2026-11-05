@@ -2,7 +2,7 @@ import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
 import lobby from './lobby.ts'
-import salonWindow from './salonWindow.ts'
+import {salonWindow} from './lobbyWindows.ts'
 
 /**
  * The Salon sits north of the Banquet, behind the arch in the Banquet’s north wall. Its west wall backs onto the Lobby’s east extension, from

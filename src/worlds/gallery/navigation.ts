@@ -2,8 +2,8 @@ import type {Vec3} from '#src/lib/gallery/types.ts'
 import type PlacedRoom from '../base/PlacedRoom.ts'
 import type {GalleryRoom} from './SlopGallery.ts'
 
-import {cinnabarVestibuleFloor} from '#src/lib/gallery/cinnabarVestibule.ts'
 import {corridorLanding, corridorPassage, corridorStairFloor, insideCorridor} from '#src/lib/gallery/corridor.ts'
+import {forgeVestibuleFloor} from '#src/lib/gallery/forgeVestibule.ts'
 import {fortressFloors, insideFortress} from '#src/lib/gallery/fortressNetwork.ts'
 import {insideLodgeWindow, lodgeBayFloor, lodgeWindowFloor} from '#src/lib/gallery/lodge.ts'
 import lowerGallery, {rampFloorHeight, tunnelFloorHeight} from '#src/lib/gallery/lowerGallery.ts'
@@ -49,7 +49,7 @@ export default class GalleryNavigation {
       corridorPassage.floorAt(x, z),
       corridorLanding.floorAt(x, z),
       siennaVestibuleFloor(x, z),
-      cinnabarVestibuleFloor(x, z),
+      forgeVestibuleFloor(x, z),
       platformFloorHeight(x, z),
       tunnelContains([x, tunnelFloorHeight(z), z]) ? tunnelFloorHeight(z) : undefined,
       lodgeWindowFloor(x, z),
@@ -72,7 +72,7 @@ export default class GalleryNavigation {
     const ground = Math.min(room.floorY, groundOf(room, x, z))
     const main = inPlan(room, x, z)
     const ceiling = room.id === 'sienna' && !main ? siennaVestibule.height : room.air[0].max.y
-    // Up to the top of its box, the vault’s or the dome’s crown included, or the Sienna’s vestibule’s lower ceiling; the Cinnabar’s round one is as high as the room.
-    return y >= ground - 1 && y <= ceiling + 0.2 && (main || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined || room.id === 'sienna' && siennaVestibuleFloor(x, z) !== undefined || room.id === 'cinnabar' && cinnabarVestibuleFloor(x, z) !== undefined || room.id === 'oculus' && insideApse(x, z))
+    // Up to the top of its box, the vault’s or the dome’s crown included, or the Sienna’s vestibule’s lower ceiling; the Forge’s round one is as high as the room.
+    return y >= ground - 1 && y <= ceiling + 0.2 && (main || room.id === 'lodge' && lodgeBayFloor(x, z) !== undefined || room.id === 'sienna' && siennaVestibuleFloor(x, z) !== undefined || room.id === 'forge' && forgeVestibuleFloor(x, z) !== undefined || room.id === 'oculus' && insideApse(x, z))
   }
 }

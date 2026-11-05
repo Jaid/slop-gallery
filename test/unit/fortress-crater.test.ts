@@ -1,91 +1,27 @@
-import type {Vec3} from '../../src/lib/gallery/types.ts'
-
 import {afterAll, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor, {defaultEgoOptions} from 'ego-player/motor'
-import {mulberry32} from 'math/random'
 import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {bastionApproach, bastionRun} from '../../src/lib/gallery/bastion.ts'
-import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressCrater, fortressCurve, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
 import {rubbleShelf} from '../../src/lib/gallery/FortressCraterGeometry.ts'
-import {fortressNetwork} from '../../src/lib/gallery/fortressNetwork.ts'
 import {orbRadius} from '../../src/lib/gallery/orbs/index.ts'
-import Passage from '../../src/lib/gallery/passages/Passage.ts'
 import RouteVaultGeometry, {pavingThickness} from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
-import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
-import {vesperOrbPedestals} from '../../src/lib/gallery/vesper.ts'
-import GrabbableBody from '../../src/lib/physics/GrabbableBody.ts'
-import walls from './fixtures/gallery.ts'
-import {addFortressCrater, fortressCraterGeometry} from './helpers/fortressCrater.ts'
+import {fortressCraterGeometry} from './helpers/fortressCrater.ts'
+import {fortressColliders, physicsWorld} from './helpers/fortressWorld.ts'
 
 await RAPIER.init()
-const architecture = walls.filter(wall => wall.room === 'fortress').map(wall => ({
-  wall,
-  geometry: createArchitectureGeometry(wall),
-}))
-const vaults = fortressNetwork.map(passage => (passage instanceof Passage ? new VaultGeometry(passage) : new RouteVaultGeometry(passage)))
-const curve = vaults[fortressNetwork.indexOf(fortressCurve)] as RouteVaultGeometry
+const curve = new RouteVaultGeometry(fortressCurve)
 afterAll(() => {
-  for (const {geometry} of architecture) {
-    geometry.dispose()
-  }
-  for (const vault of vaults) {
-    vault.dispose()
-  }
+  curve.dispose()
 })
 const [centerX, floorY, centerZ] = fortressCrater.center
 /** how far the crater’s broken edge reaches from its middle, at most */
 const reach = Math.max(...fortressCrater.outline.map(([x, z]) => Math.hypot(x - centerX, z - centerZ)))
-/** The Fortress’ passages and walls as the game builds their colliders, with the crater and its guard stone. */
-function fortressWorld() {
-  const world = new RAPIER.World({
-    x: 0,
-    y: -9.81,
-    z: 0,
-  })
-  world.timestep = 1 / 60
-  // what `<Physics>` of @react-three/rapier sets by default
-  Object.assign(world.integrationParameters, {
-    normalizedAllowedLinearError: 0.001,
-    normalizedPredictionDistance: 0.002,
-  })
-  for (const {wall, geometry} of architecture) {
-    const rotation = new Quaternion
-    rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
-    for (const args of geometry.collision) {
-      world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(rotation))
-    }
-  }
-  for (const [index, passage] of fortressNetwork.entries()) {
-    const vault = vaults[index]
-    for (const geometry of [vault.shell, vault.ribs, ...vault instanceof RouteVaultGeometry ? [vault.paving] : []]) {
-      if (geometry.hasAttribute('position')) {
-        world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
-      }
-    }
-    // A straight passage’s floor and ceiling are slabs of their own, see CoveredPassage.
-    if (!(passage instanceof Passage)) {
-      continue
-    }
-    const crown = passage.floorY + passage.height
-    for (const floor of passage.floors) {
-      world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, passage.floorY - 0.24, passage.floorY))!)
-      world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, crown, crown + 0.24))!)
-    }
-  }
-  addFortressCrater(world)
-  return world
-}
-/** Whether an orb at the position lies in the crater, inside its broken edge and sunk into it by half its radius at least, on the rubble or on other orbs. */
-const inCrater = ({x, y, z}: {
-  x: number
-  y: number
-  z: number
-}) => y < floorY + orbRadius / 2 && Math.hypot(x - centerX, z - centerZ) < reach
+const colliders = fortressColliders()
+/** The Fortress’ passages and walls as the game builds their colliders, with the crater. */
+const fortressWorld = () => physicsWorld(colliders)
 test('the crater breaks through the landing’s paving on the link’s axis, its edge 10 cm short of the doorway’s line', () => {
   expect(centerX).toBe(fortressLinkStart.point[0])
   expect(Math.max(...fortressCrater.outline.map(([, z]) => z))).toBeLessThan(fortressLinkStart.point[1] - 0.1 + 1e-9)
@@ -138,63 +74,6 @@ test('the rubble meets the broken edge at the paving’s underside, and the brok
   // Tipped into the crater, the flags reach no higher than a little over the floor where they bend up with its edge.
   fortressCraterGeometry.flags.computeBoundingBox()
   expect(fortressCraterGeometry.flags.boundingBox!.max.y).toBeLessThan(0.03)
-})
-/**
- * Throws an orb at each of the points, 1.5 s apart, from where the climb’s approach turns east toward the Cinnabar, a little off its corner, as high as a player’s eyes, looking back south through the screen’s arch down the run; `apart`, they pass through each other.
- * Returns whether each lies down in the crater 45 s after the last throw, at rest.
- */
-function throwDownTheClimb(aims: ReadonlyArray<Vec3>, apart = false) {
-  const world = fortressWorld()
-  try {
-    world.step()
-    const [cornerX, cornerZ] = bastionApproach.path[1]
-    const eye: Vec3 = [cornerX + 0.6, bastionApproach.floorY + 1.6, cornerZ - 0.7]
-    const orbs = aims.map((_, index) => {
-      // parked far off until thrown, as GrabbableProp’s ball: 1.8 kg, friction 0.8 and restitution 0.32
-      const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(index * 2, 100, 0).setCcdEnabled(true))
-      const ball = RAPIER.ColliderDesc.ball(orbRadius).setMass(1.8).setFriction(0.8).setRestitution(0.32)
-      // Apart, each is the only member of the second group, which meets only the first, where everything else is.
-      world.createCollider(apart ? ball.setCollisionGroups(0x2 << 16 | 0x1) : ball, body)
-      return body
-    })
-    /** how many steps apart the orbs are thrown */
-    const interval = 90
-    for (let step = 0; step < interval * orbs.length + 60 * 45; step++) {
-      const index = step / interval
-      if (Number.isInteger(index) && index < orbs.length) {
-        const carried = new GrabbableBody(orbs[index], world)
-        expect(carried.grab()).toBe(true)
-        const line = aims[index].map((value, axis) => value - eye[axis])
-        const length = Math.hypot(...line)
-        const direction = line.map(value => value / length) as Vec3
-        // Let go of like GrabbableProp: from inside the capsule, under the eyes, toward where it floated in front of the chest.
-        const origin: Vec3 = [eye[0], eye[1] - 0.22, eye[2]]
-        const target: Vec3 = [eye[0] + direction[0] * 0.55, eye[1] + direction[1] * 0.55 - 0.14, eye[2] + direction[2] * 0.55]
-        carried.release(origin, target, true, direction)
-      }
-      world.step()
-    }
-    return orbs.map(body => {
-      const {x, y, z} = body.linvel()
-      return inCrater(body.translation()) && Math.hypot(x, y, z) < 0.05
-    })
-  } finally {
-    world.free()
-  }
-}
-const [runX, screenZ] = bastionRun.path[1]
-/** points on the run’s floor, from one side to the other, near the screen and further down */
-const aims = [-1, -0.5, 0, 0.5, 1].flatMap(across => [1.5, 3, 6].map((ahead): Vec3 => [runX + across, bastionRun.floorY, screenZ + ahead]))
-test('orbs thrown back down the western climb from the turn of the Cinnabar’s approach end up in the crater, aimed anywhere at the run’s floor', () => {
-  expect(throwDownTheClimb(aims, true)).toEqual(aims.map(() => true))
-})
-test('thrown one after another, nine in ten of all the gallery’s orbs end up in it, piling up', () => {
-  const state = mulberry32.create(5)
-  const caught = Array.from({length: 4}, () => {
-    const picked = aims.map(aim => [mulberry32.sample(state), aim] as const).toSorted(([a], [b]) => a - b).slice(0, vesperOrbPedestals.length).map(([, aim]) => aim)
-    return throwDownTheClimb(picked).filter(Boolean).length
-  })
-  expect(caught.reduce((sum, value) => sum + value, 0)).toBeGreaterThanOrEqual(Math.ceil(vesperOrbPedestals.length * caught.length * 0.9))
 })
 // North, west and east, over the level landing
 for (const heading of [0, Math.PI / 2, -Math.PI / 2]) {

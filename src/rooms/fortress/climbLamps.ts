@@ -2,7 +2,7 @@ import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {Vec3} from '#src/lib/gallery/types.ts'
 import type {Lamp} from '../base/Room.ts'
 
-import {bastionApproach, bastionHairpin, bastionLanterns, bastionMouth, bastionPassageLanterns, bastionRun} from '#src/lib/gallery/bastion.ts'
+import {bastionApproach, bastionApproachLantern, bastionHairpin, bastionLanterns, bastionMouth, bastionPassageLanterns, bastionRun, bastionRunLantern} from '#src/lib/gallery/bastion.ts'
 import {fortressOrigin} from '#src/lib/gallery/fortress.ts'
 import {passageLight, passageLightCount, routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
@@ -20,18 +20,16 @@ const lantern = ([x, y, z]: Vec3, shine: Pick<Lamp, 'decay' | 'range' | 'strengt
 /** The lights of the lanterns a straight passage keeps, by their mount order across its spans. */
 const keptLights = (passage: Passage, kept: ReadonlyArray<boolean>) => passage.spans.flatMap((_, span) => Array.from({length: passageLightCount(passage, span)}, (__, index) => passageLight(passage, span, index))).filter((_, mount) => kept[mount])
 const [mouth, elbow] = keptLights(bastionMouth, bastionPassageLanterns.mouth)
-const [run] = keptLights(bastionRun, bastionPassageLanterns.run)
-const [approach] = keptLights(bastionApproach, bastionPassageLanterns.approach)
 
 export default {
-  // Under the Cinnabar, halfway along the run west, which the Oculus sees through the doorway, and before the elbow at its end.
+  // Under the Forge, halfway along the run west, which the Oculus sees through the doorway, and before the elbow at its end.
   lantern_mouth: lantern(mouth),
   lantern_elbow: lantern(elbow),
   // Halfway up the west leg, round the apex of the turn and halfway up the east leg.
   lantern_west: lantern(routeLight(bastionHairpin, bastionLanterns.west)),
   lantern_turn: lantern(routeLight(bastionHairpin, bastionLanterns.turn)),
   lantern_climb: lantern(routeLight(bastionHairpin, bastionLanterns.east)),
-  // Halfway along the run north, over the Lodge’s roof, and along the approach east, right before the arch of the Cinnabar’s vestibule.
-  lantern_run: lantern(run),
-  lantern_strip: lantern(approach),
+  // Halfway along the run north, over the Lodge’s roof, and along the approach east, right before the arch of the Forge’s vestibule.
+  lantern_run: lantern(routeLight(bastionRun, bastionRunLantern)),
+  lantern_strip: lantern(routeLight(bastionApproach, bastionApproachLantern)),
 } satisfies Record<string, Lamp>

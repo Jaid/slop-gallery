@@ -5,6 +5,7 @@ import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
+import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
 import PendantLamps from '#component/PendantLamps'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import RouteVaultGeometry from '#src/lib/gallery/passages/RouteVaultGeometry.ts'
@@ -19,9 +20,12 @@ export default function CoveredRoute({passage, material, lanterns}: {
 }) {
   const geometry = useDisposable(useMemo(() => new RouteVaultGeometry(passage), [passage]))
   const mounts = useMemo(() => routePendantMounts(passage, [geometry.shell, geometry.ribs], lanterns), [geometry, lanterns, passage])
-  const collision = [geometry.paving, geometry.shell, geometry.ribs].map(colliderGeometry)
+  const paving = colliderGeometry(geometry.paving)
+  const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
+      {/* Welded, so orbs roll on along a runnel instead of catching on its facets’ edges */}
+      <MeshSurfaceCollider args={paving} />
       {collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
       <mesh castShadow geometry={geometry.paving} material={material} name='castle-paving' receiveShadow />
       <mesh castShadow geometry={geometry.shell} material={material} name='castle-barrel-vault' receiveShadow />

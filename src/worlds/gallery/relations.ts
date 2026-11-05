@@ -96,9 +96,9 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['oculus-west', 'fortress']],
   },
   {
-    // The arch out of the Cinnabar’s vestibule onto the Fortress’ approach; the arch between the Cinnabar and its vestibule lies within the Cinnabar.
-    rooms: ['fortress', 'cinnabar'],
-    holes: [['cinnabar-vestibule', 'fortress']],
+    // The arch out of the Forge’s vestibule onto the Fortress’ approach; the arch between the Forge and its vestibule lies within the Forge.
+    rooms: ['fortress', 'forge'],
+    holes: [['forge-vestibule', 'fortress']],
   },
   {
     rooms: ['lodge', 'corridor'],
@@ -113,6 +113,11 @@ export const openings: ReadonlyArray<Opening> = [
     rooms: ['lobby', 'salon'],
     holes: [['lobby-extension_east', 'salon_window'], ['salon-west', 'lobby_window']],
   },
+  {
+    // The glass wall between the Lobby extension and the Forge.
+    rooms: ['lobby', 'forge'],
+    holes: [['lobby-extension_west', 'forge_window'], ['forge-east', 'lobby_window']],
+  },
 ]
 
 /**
@@ -121,7 +126,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'oculus', 'sienna', 'exhibition', 'fortress'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'forge', 'oculus', 'sienna', 'exhibition', 'fortress'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -138,7 +143,7 @@ const relations = {
     },
   },
   vesper: {
-    rooms: ['lobby', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'corridor', 'oculus'],
+    rooms: ['lobby', 'fortress', 'sienna', 'banquet', 'antechamber', 'salon', 'forge', 'corridor', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -158,7 +163,7 @@ const relations = {
     },
   },
   banquet: {
-    rooms: ['lobby', 'salon', 'vesper', 'antechamber', 'oculus'],
+    rooms: ['lobby', 'salon', 'forge', 'vesper', 'antechamber', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -168,7 +173,7 @@ const relations = {
     },
   },
   antechamber: {
-    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'oculus'],
+    rooms: ['lobby', 'moonfall', 'vesper', 'banquet', 'salon', 'forge', 'oculus'],
     floorMirror: 'base',
     visibleLamps: {
       lobby: [
@@ -200,7 +205,7 @@ const relations = {
     },
   },
   salon: {
-    rooms: ['banquet', 'lobby', 'vesper', 'antechamber', 'oculus', 'sienna', 'exhibition'],
+    rooms: ['banquet', 'lobby', 'forge', 'vesper', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
@@ -210,8 +215,9 @@ const relations = {
       ],
     },
   },
-  cinnabar: {
-    rooms: ['fortress'],
+  forge: {
+    // Through its window, across the Lobby and through the Salon’s window, as the Salon sees across it the other way
+    rooms: ['fortress', 'lobby', 'salon', 'vesper', 'banquet', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
     // The last lantern along the approach hangs right before the vestibule’s arch.
     visibleLamps: {
@@ -243,7 +249,7 @@ const relations = {
     },
   },
   oculus: {
-    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'moonfall', 'banquet'],
+    rooms: ['lobby', 'exhibition', 'fortress', 'salon', 'forge', 'moonfall', 'banquet'],
     visibleLamps: {
       moonfall: [
         'planet_glow',
@@ -267,7 +273,7 @@ const relations = {
     },
   },
   exhibition: {
-    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon'],
+    rooms: ['oculus', 'moonfall', 'lobby', 'fortress', 'salon', 'forge'],
     floorMirror: 'moonfall',
     audibleAmbiences: {
       moonfall: 'orbital_sculpture',
@@ -305,7 +311,7 @@ const relations = {
     },
   },
   fortress: {
-    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'cinnabar', 'vesper'],
+    rooms: ['oculus', 'lodge', 'lobby', 'exhibition', 'corridor', 'salon', 'forge', 'vesper'],
     visibleLamps: {
       corridor: 'lantern_lodge',
       lodge: [

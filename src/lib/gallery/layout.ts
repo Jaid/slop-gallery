@@ -1,7 +1,7 @@
 import type {Vec3} from './types.ts'
 
-import cinnabar from './cinnabar.ts'
 import corridor from './corridor.ts'
+import forge from './forge.ts'
 import {fortressOrigin} from './fortress.ts'
 import lobby from './lobby.ts'
 import lodge from './lodge.ts'
@@ -17,14 +17,14 @@ const {moonfall, oculus} = lowerGallery
  */
 const roomOrigins = {
   lobby: [0, 0, (lobby.northZ + lobby.southZ) / 2],
-  // From the Cinnabar’s south wall to the Sienna’s north wall’s line, the Banquet’s mirror image.
+  // From the Forge’s south wall to the Sienna’s north wall’s line, the Banquet’s mirror image.
   vesper: [-14, 0, (salonSouthZ + 8) / 2],
   // From the Salon’s south wall to the Vesper’s south wall’s line.
   banquet: [14, 0, (salonSouthZ + 8) / 2],
   antechamber: [0, 0, staircase.z],
   sienna: [sienna.center[0], sienna.floorY, sienna.center[1]],
   salon: [salon.center[0], 0, salon.center[1]],
-  cinnabar: [cinnabar.center[0], 0, cinnabar.center[1]],
+  forge: [forge.center[0], 0, forge.center[1]],
   moonfall: [moonfall.center[0], lowerGallery.floorY, moonfall.center[1]],
   corridor: [corridor.center[0], corridor.floorY, corridor.center[1]],
   oculus: [oculus.center[0], oculus.floorY, oculus.center[1]],

@@ -1,4 +1,5 @@
 import type {FloorPolygon} from '#src/lib/gallery/floorPolygons.ts'
+import type FloorRunnel from '#src/lib/gallery/passages/FloorRunnel.ts'
 import type Passage from '#src/lib/gallery/passages/Passage.ts'
 import type {PassageCutout} from '#src/lib/gallery/passages/Passage.ts'
 import type PassageTransition from '#src/lib/gallery/passages/PassageTransition.ts'
@@ -10,6 +11,7 @@ import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 
 import FloorSlab from '#component/FloorSlab'
+import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
 import PendantLamps from '#component/PendantLamps'
 import TimberFrame from '#component/TimberFrame'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
@@ -31,15 +33,15 @@ const passageLanterns: Partial<Record<string, ReadonlyArray<boolean>>> = {
   'fortress-mouth': [],
   'fortress-approach': [],
   'fortress-climb_mouth': bastionPassageLanterns.mouth,
-  'fortress-climb_run': bastionPassageLanterns.run,
-  'fortress-climb_approach': bastionPassageLanterns.approach,
 }
-export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, transition}: {
+export default function CoveredPassage({passage, sole = false, material, paving: pavingOverride, timber, ribCutouts, runnel, transition}: {
   material: Material
   passage: Passage
   /** the floor laid in the passage’s material when other floors cover the rest; collision still uses the full passage floors */
   paving?: ReadonlyArray<FloorPolygon>
   ribCutouts?: ReadonlyArray<PassageCutout>
+  /** a runnel worn into its floor */
+  runnel?: FloorRunnel
   /** whether the passage’s lanterns are all that lights it, which spaces them out */
   sole?: boolean
   timber?: Material
@@ -50,7 +52,9 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   const lanterns = passageLanterns[passage.name]
   // Under timber, lanterns hang from the ribs rather than the planks between them.
   const mounts = useMemo(() => passagePendantMounts(passage, [geometry.shell, geometry.ribs], sole ? corridorLightSpacing : undefined, timber && geometry.ribs).filter((_, index) => lanterns?.[index] ?? !lanterns), [geometry, lanterns, sole, passage, timber])
-  const paving = pavingOverride ?? transition?.stoneFloors ?? passage.floors
+  // The runnel takes its strip out of the floors.
+  const floors = runnel ? passage.floors.flatMap(floor => runnel.cut(floor)) : passage.floors
+  const paving = pavingOverride ?? transition?.stoneFloors ?? floors
   // A timber lining’s crown is the ceiling along its spans; a slab there would share its plane. Only the open elbows show the slab.
   const ceilings = timber ? passage.junctions : passage.floors
   // A run too short for a rib has none to collide with.
@@ -58,12 +62,11 @@ export default function CoveredPassage({passage, sole = false, material, paving:
   const crown = passage.floorY + passage.height
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
-      {passage.floors.map((floor, i) => <group key={i}>
-        <ConvexHullCollider args={[slabCorners(floor, passage.floorY - slabDepth, passage.floorY)]} />
-        <ConvexHullCollider args={[slabCorners(floor, crown, crown + slabDepth)]} />
-      </group>)}
+      {floors.map((floor, i) => <ConvexHullCollider key={i} args={[slabCorners(floor, passage.floorY - slabDepth, passage.floorY)]} />)}
+      {passage.floors.map((floor, i) => <ConvexHullCollider key={i} args={[slabCorners(floor, crown, crown + slabDepth)]} />)}
       {ceilings.map((ceiling, i) => <FloorSlab key={i} bottom={crown} depth={slabDepth} material={material} polygon={ceiling} />)}
       {paving.map((floor, i) => <FloorSlab key={i} bottom={passage.floorY - slabDepth} depth={slabDepth} material={material} polygon={floor} />)}
+      <Branch if={runnel}><RunnelGroove material={material} runnel={runnel!} /></Branch>
       <Branch not={timber}>{collision.map((args, i) => <TrimeshCollider key={i} args={args} />)}</Branch>
       <Branch if={timber}><TimberFrame geometry={geometry} lining={material} material={timber!} /></Branch>
       <Branch not={timber}>
@@ -73,4 +76,17 @@ export default function CoveredPassage({passage, sole = false, material, paving:
     </RigidBody>
     <PendantLamps body={passageLantern} glow={passageLanternGlow} mounts={mounts} name={`${passage.name}-pendants`} />
   </group>
+}
+
+/** The round inside of a runnel worn into a passage’s floor, welded, so orbs roll on along it instead of catching on its facets’ edges. */
+function RunnelGroove({material, runnel}: {
+  material: Material
+  runnel: FloorRunnel
+}) {
+  const geometry = useDisposable(useMemo(() => runnel.geometry(), [runnel]))
+  const collision = useMemo(() => colliderGeometry(geometry), [geometry])
+  return <>
+    <MeshSurfaceCollider args={collision} />
+    <mesh geometry={geometry} material={material} name='castle-runnel' receiveShadow />
+  </>
 }

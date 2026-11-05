@@ -13,7 +13,7 @@ export type VesperOrbPedestal = {
   rotation: number
 }
 
-/** The Vesper’s floor plan, from the Cinnabar’s south wall to the Sienna’s north wall’s line, the Banquet’s mirror image across the Lobby, and the height its ceiling springs from. */
+/** The Vesper’s floor plan, from the Forge’s south wall to the Sienna’s north wall’s line, the Banquet’s mirror image across the Lobby, and the height its ceiling springs from. */
 export const vesper = {
   center: [roomOrigins.vesper[0], roomOrigins.vesper[2]],
   size: [12, 8 - salonSouthZ],

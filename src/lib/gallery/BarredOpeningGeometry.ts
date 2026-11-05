@@ -3,7 +3,7 @@ import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import {BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, Matrix4, ShapeUtils, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
-import {openingTop} from '../placement/wallGeometry.ts'
+import {openingArc, openingTop} from '../placement/wallGeometry.ts'
 import {wallFace} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 import openingOutline from './openingOutline.ts'
@@ -32,6 +32,79 @@ const embed = 0.06
 const margin = 0.25
 /** where the points lie on average */
 const centroid = (points: ReadonlyArray<Vector2>) => points.reduce((sum, point) => sum.add(point), new Vector2).multiplyScalar(1 / points.length)
+
+/**
+ * The iron in an opening through a wall, in the wall’s own frame and unbent: upright bars evenly spaced across it, at most {@link barSpacing} apart, reaching into the stone round it at both ends, and flat bands across them at the `bands` heights over the wall’s foot, all {@link barDepth} in front of the wall’s center line.
+ * A `hatch` leaves a low opening through the bars at their foot, framed by a flat strap bent round it: the bars over it stand on the strap, and bands lower than its head stop at it on both sides.
+ */
+export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {curveRadius, hatch}: {
+  /** the wall’s, along which the bands bend */
+  curveRadius?: number
+  /** the low opening through the bars, in the wall’s coordinates like the opening, from its foot */
+  hatch?: WallOpening
+} = {}) {
+  const bottom = hole.bottom ?? 0
+  const halfWidth = hole.width / 2
+  const parts: Array<BufferGeometry> = []
+  /** how far out from the hatch’s middle the strap round it reaches at the height, or 0 above it */
+  const strapReach = (y: number) => {
+    if (!hatch || y >= openingTop(hatch, hatch.u, bandHeight)) {
+      return 0
+    }
+    const {radius, center} = openingArc(hatch)
+    const jamb = hatch.width / 2 + bandHeight
+    const head = Math.sqrt(Math.max(0, (radius + bandHeight) ** 2 - (y - center) ** 2))
+    return y <= center ? jamb : Math.min(jamb, head)
+  }
+  const count = Math.ceil(hole.width / barSpacing) - 1
+  for (let i = 0; i < count; i++) {
+    const u = hole.u - halfWidth + hole.width * (i + 1) / (count + 1)
+    // Over the hatch, a bar stands on the middle of its strap.
+    const foot = Math.max(bottom - embed, hatch ? openingTop(hatch, u, bandHeight / 2) : -Infinity)
+    const head = openingTop(hole, u) + embed
+    const bar = new CylinderGeometry(barRadius, barRadius, head - foot, 8)
+    parts.push(bar.translate(u, (foot + head) / 2, barDepth))
+  }
+  /** a flat band from `from` to `to` along the wall at the height */
+  const band = (from: number, to: number, y: number) => {
+    const length = to - from
+    const geometry = new BoxGeometry(length, bandHeight, bandThickness, curveRadius ? curveSegments(length, curveRadius) * 4 : 1)
+    return geometry.translate((from + to) / 2, y, barDepth)
+  }
+  for (const y of bands) {
+    const from = hole.u - halfWidth - embed
+    const to = hole.u + halfWidth + embed
+    const reach = strapReach(y)
+    if (!hatch || !reach) {
+      parts.push(band(from, to, y))
+      continue
+    }
+    parts.push(band(from, hatch.u - reach, y), band(hatch.u + reach, to, y))
+  }
+  if (hatch) {
+    const {radius, center} = openingArc(hatch)
+    const middle = radius + bandHeight / 2
+    const jamb = hatch.width / 2 + bandHeight / 2
+    // Up both jambs from inside the floor to where the head springs, then over the head in chords.
+    const spring = center + Math.sqrt(Math.max(0, middle ** 2 - jamb ** 2))
+    const foot = (hatch.bottom ?? 0) - embed
+    for (const side of [-1, 1]) {
+      parts.push(new BoxGeometry(bandHeight, spring - foot, bandThickness).translate(hatch.u + side * jamb, (foot + spring) / 2, barDepth))
+    }
+    const start = Math.atan2(Math.sqrt(Math.max(0, middle ** 2 - jamb ** 2)), jamb)
+    const chords = 12
+    const sweep = (Math.PI - start * 2) / chords
+    for (let chord = 0; chord < chords; chord++) {
+      const angle = start + sweep * (chord + 0.5)
+      // A little longer than the chord, so neighbors meet on the outside of the bend.
+      const length = 2 * middle * Math.sin(sweep / 2) + bandHeight * Math.tan(sweep / 2)
+      const piece = new BoxGeometry(length, bandHeight, bandThickness)
+      piece.rotateZ(angle - Math.PI / 2)
+      parts.push(piece.translate(hatch.u + Math.cos(angle) * middle, center + Math.sin(angle) * middle, barDepth))
+    }
+  }
+  return parts
+}
 
 /**
  * The iron bars in an opening through a wall, and the stone reveal that lines the opening on through the gap behind the wall to the wall it meets there, like the apse’s gate and windows through the Oculus’ wall and the Fortress’ behind it.
@@ -76,22 +149,7 @@ export default class BarredOpeningGeometry {
       }
     }
     const reveal = solid.geometry()
-    const count = Math.ceil(hole.width / barSpacing) - 1
-    const bars = Array.from({length: count}, (_, i) => {
-      const u = hole.u - halfWidth + hole.width * (i + 1) / (count + 1)
-      const foot = bottom - embed
-      const head = openingTop(hole, u) + embed
-      const bar = new CylinderGeometry(barRadius, barRadius, head - foot, 8)
-      return bar.translate(u, (foot + head) / 2, barDepth)
-    })
-    const bandWidth = hole.width + embed * 2
-    const iron = [
-      ...bars,
-      ...bands.map(height => {
-        const band = new BoxGeometry(bandWidth, bandHeight, bandThickness, wall.curveRadius ? curveSegments(bandWidth, wall.curveRadius) * 4 : 1)
-        return band.translate(hole.u, height, barDepth)
-      }),
-    ]
+    const iron = barredIron(hole, bands, {curveRadius: wall.curveRadius})
     const place = new Matrix4
     place.makeRotationY(wall.rotation).setPosition(...wall.center)
     for (const part of [reveal, ...iron]) {

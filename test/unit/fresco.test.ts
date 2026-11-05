@@ -2,7 +2,7 @@ import {describe, expect, test} from 'bun:test'
 
 import {wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
 import {frescoLayout, pompeianFresco} from '../../src/lib/gallery/fresco.ts'
-import salonWindow from '../../src/lib/gallery/salonWindow.ts'
+import {salonWindow} from '../../src/lib/gallery/lobbyWindows.ts'
 import FrescoWallMaterial from '../../src/lib/materials/FrescoWallMaterial.ts'
 import walls from './fixtures/gallery.ts'
 
@@ -64,7 +64,12 @@ describe('the Salon’s fresco', () => {
   })
 })
 describe('a round wall’s fresco', () => {
-  const ring = wallById('cinnabar-vestibule')
+  // The Forge’s vestibule with its two arches, without the hole high up that its gutter comes in by
+  const vestibule = wallById('forge-vestibule')
+  const ring = {
+    ...vestibule,
+    holes: vestibule.holes!.filter(hole => hole.name !== 'gutter'),
+  }
   test('runs all round without a corner, its panels going on through the seam where its ends meet', () => {
     const {band, openingMargin, panelLength} = pompeianFresco
     const {bands, panels, period} = frescoLayout(ring)
@@ -83,7 +88,7 @@ describe('a round wall’s fresco', () => {
       expect(bands.some(at => Math.abs(wrap(at - panel.u[1] - band / 2 + period! / 2) - period! / 2) < 1e-9)).toBe(true)
     }
     // A bay round each arch; one narrow panel between both arches, and round the far side three of about a panel’s length.
-    for (const hole of ring.holes!) {
+    for (const hole of ring.holes) {
       const bay = panels.find(panel => panel.pierced && Math.abs(wrap((panel.u[0] + panel.u[1]) / 2 - hole.u + period! / 2) - period! / 2) < 1e-9)!
       expect(bay.u[1] - bay.u[0]).toBeCloseTo(hole.width + (wallOpeningTrim + openingMargin) * 2, 9)
     }

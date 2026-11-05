@@ -5,8 +5,8 @@ import {DoubleSide, Matrix3, Matrix4, Mesh, MeshBasicMaterial, Raycaster, Vector
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {bastionApproach, bastionArch} from '../../src/lib/gallery/bastion.ts'
-import cinnabar, {cinnabarRooflight, cinnabarVestibule} from '../../src/lib/gallery/cinnabar.ts'
-import {cinnabarRoundVestibule, cinnabarVestibuleFloor, vestibuleArches} from '../../src/lib/gallery/cinnabarVestibule.ts'
+import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
+import {forgeRoundVestibule, forgeVestibuleFloor, vestibuleArches} from '../../src/lib/gallery/forgeVestibule.ts'
 import {isRing} from '../../src/lib/gallery/fresco.ts'
 import roomOrigins from '../../src/lib/gallery/layout.ts'
 import lobby from '../../src/lib/gallery/lobby.ts'
@@ -19,9 +19,9 @@ import {openings} from '../../src/worlds/gallery/relations.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 
 await RAPIER.init()
-const room = rooms.find(candidate => candidate.id === 'cinnabar')!
+const room = rooms.find(candidate => candidate.id === 'forge')!
 const wallById = (id: string) => walls.find(wall => wall.id === id)!
-describe('the Cinnabar', () => {
+describe('the Forge', () => {
   test('mirrors the Salon across the Lobby’s north extension, north of the Vesper, which mirrors the Banquet', () => {
     const salonRoom = rooms.find(candidate => candidate.id === 'salon')!
     const vesperRoom = rooms.find(candidate => candidate.id === 'vesper')!
@@ -29,7 +29,7 @@ describe('the Cinnabar', () => {
     expect(room.floorY).toBe(0)
     expect(room.center).toEqual([-salonRoom.center[0], salonRoom.center[1]])
     expect(room.size).toEqual(salonRoom.size)
-    expect(cinnabar.size).toEqual(salon.size)
+    expect(forge.size).toEqual(salon.size)
     expect(vesperRoom.center).toEqual([-banquet.center[0], banquet.center[1]])
     expect(vesperRoom.size).toEqual(banquet.size)
     expect(vesper.size).toEqual([12, 24])
@@ -38,21 +38,21 @@ describe('the Cinnabar', () => {
     expect(room.center[0] + room.size[0] / 2).toBe(-8)
     expect(room.center[1] + room.size[1] / 2).toBe(vesperRoom.center[1] - vesperRoom.size[1] / 2)
     for (const [x, z] of [[-8.5, -19.5], [-19.5, -16.5], [-14, -24], [-8.5, -31.5], [-19.5, -31.5]]) {
-      expect(roomAt([x, 1.7, z])).toBe('cinnabar')
+      expect(roomAt([x, 1.7, z])).toBe('forge')
       expect(floorHeight([x, 1.7, z])).toBe(0)
     }
     expect(roomAt([-14, 1.7, -12])).toBe('vesper')
     // Behind its north wall lies its round vestibule, in the middle; beside that, nothing.
-    expect(roomAt([-14, 1.7, -32.5])).toBe('cinnabar')
+    expect(roomAt([-14, 1.7, -32.5])).toBe('forge')
     expect(insideGallery([-18, 1.7, -32.5])).toBe(false)
-    expect(roomAt(roomVisit(room).position)).toBe('cinnabar')
+    expect(roomAt(roomVisit(room).position)).toBe('forge')
   })
-  test('a solid shared wall separates the Vesper and the Cinnabar', () => {
+  test('a solid shared wall separates the Vesper and the Forge', () => {
     const vesperNorth = wallById('vesper-north')
-    const cinnabarSouth = wallById('cinnabar-south')
-    expect(vesperNorth.center).toEqual(cinnabarSouth.center)
-    expect(Math.abs(Math.cos(vesperNorth.rotation - cinnabarSouth.rotation) + 1)).toBeLessThan(1e-12)
-    for (const wall of [vesperNorth, cinnabarSouth]) {
+    const forgeSouth = wallById('forge-south')
+    expect(vesperNorth.center).toEqual(forgeSouth.center)
+    expect(Math.abs(Math.cos(vesperNorth.rotation - forgeSouth.rotation) + 1)).toBeLessThan(1e-12)
+    for (const wall of [vesperNorth, forgeSouth]) {
       expect(wall.holes ?? []).toHaveLength(0)
       const geometry = createArchitectureGeometry(wall)
       const material = new MeshBasicMaterial({side: DoubleSide})
@@ -82,9 +82,9 @@ describe('the Cinnabar', () => {
         material.dispose()
       }
     }
-    expect(openings.some(({rooms: pair}) => pair.includes('vesper') && pair.includes('cinnabar'))).toBe(false)
+    expect(openings.some(({rooms: pair}) => pair.includes('vesper') && pair.includes('forge'))).toBe(false)
     expect(roomAt([-14, 1.7, -15.9])).toBe('vesper')
-    expect(roomAt([-14, 1.7, -16.1])).toBe('cinnabar')
+    expect(roomAt([-14, 1.7, -16.1])).toBe('forge')
     // The Vesper keeps its doors to the Lobby and the Sienna.
     const vesperEast = wallById('vesper-east')
     expect(vesperEast.holes).toHaveLength(1)
@@ -94,7 +94,7 @@ describe('the Cinnabar', () => {
     expect(roomAt([-14, 1.7, 7.9])).toBe('vesper')
   })
   test('the rooflight is a round opening in whole panes, inside the room, under its slab, within the sun’s reach', () => {
-    const {bead, depth, frame, glassY, pane, radius} = cinnabarRooflight
+    const {bead, depth, frame, glassY, pane, radius} = forgeRooflight
     expect(radius * 2 / pane % 1).toBeCloseTo(0, 9)
     expect(radius + frame).toBeLessThan(Math.min(...room.size) / 2 - 1)
     expect(glassY).toBeLessThan(salonCeiling.underside)
@@ -103,19 +103,19 @@ describe('the Cinnabar', () => {
     expect(room.room.hasVolumetricSun).toBe(true)
   })
 })
-describe('the Cinnabar’s vestibule', () => {
-  const {center: [x, z], radius, rooflight} = cinnabarVestibule
-  const ring = wallById('cinnabar-vestibule')
-  const north = wallById('cinnabar-north')
-  const northZ = cinnabar.center[1] - cinnabar.size[1] / 2
+describe('the Forge’s vestibule', () => {
+  const {center: [x, z], radius, rooflight} = forgeVestibule
+  const ring = wallById('forge-vestibule')
+  const north = wallById('forge-north')
+  const northZ = forge.center[1] - forge.size[1] / 2
   const half = bastionArch.width / 2
   const archOf = (name: string) => ring.holes!.find(hole => hole.name === name)!
   test('is round, on the room’s axis, its wall touching the middle of the north wall back to back, where an arch opens through both', () => {
-    expect(x).toBe(cinnabar.center[0])
+    expect(x).toBe(forge.center[0])
     expect(z + radius).toBe(northZ)
     expect(isRing(ring)).toBe(true)
     expect(isRing(north)).toBe(false)
-    expect([ring.curveRadius, ring.height, ring.room, ring.sticky]).toEqual([radius, north.height, 'cinnabar', false])
+    expect([ring.curveRadius, ring.height, ring.room, ring.sticky]).toEqual([radius, north.height, 'forge', false])
     // All round its center at its radius, facing it
     for (let u = -ring.width / 2; u <= ring.width / 2; u += 0.5) {
       const [px, , pz] = wallPosition(ring, u, 0, 0)
@@ -124,7 +124,7 @@ describe('the Cinnabar’s vestibule', () => {
       expect(Math.hypot(fx - x, fz - z)).toBeCloseTo(radius - 1, 9)
     }
     // Where they touch, one faces north into the vestibule and the other south into the room, each with the approach’s arch in it.
-    const inner = archOf('cinnabar')
+    const inner = archOf('forge')
     const outer = north.holes!.find(hole => hole.name === 'vestibule')!
     expect(outer).toMatchObject(bastionArch)
     for (const [wall, hole, facing] of [[ring, inner, -1], [north, outer, 1]] as const) {
@@ -133,37 +133,43 @@ describe('the Cinnabar’s vestibule', () => {
       expect(pz).toBeCloseTo(northZ, 9)
       expect(wallPosition(wall, hole.u, 0, 0.5)[2]).toBeCloseTo(northZ + facing * 0.5, 9)
     }
-    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high.
-    expect(ring.holes!.map(hole => hole.name)).toEqual(vestibuleArches.map(arch => arch.name))
-    for (const hole of ring.holes!) {
+    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high; high up between them, the gutter comes in.
+    expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'gutter'])
+    for (const hole of ring.holes!.filter(value => value.name !== 'gutter')) {
       const [left, right] = [-1, 1].map(side => wallPosition(ring, hole.u + side * hole.width / 2, 0, 0))
       expect(Math.hypot(left[0] - right[0], left[2] - right[2])).toBeCloseTo(bastionArch.width, 9)
       expect([hole.height, hole.profile, hole.bottom]).toEqual([bastionArch.height, bastionArch.profile, undefined])
     }
     // The west one where the approach ends, the arch between the room and the vestibule within the room.
     const [wx, , wz] = wallPosition(ring, archOf('fortress').u, 0, 0)
-    expect(wx).toBeCloseTo(bastionApproach.path.at(-1)![0], 9)
-    expect(wz).toBeCloseTo(bastionApproach.path.at(-1)![1], 9)
-    expect(openings.filter(({rooms: pair}) => pair.includes('cinnabar'))).toEqual([{
-      rooms: ['fortress', 'cinnabar'],
-      holes: [['cinnabar-vestibule', 'fortress']],
-    }])
+    expect(wx).toBeCloseTo(bastionApproach.route.end.point[0], 9)
+    expect(wz).toBeCloseTo(bastionApproach.route.end.point[1], 9)
+    expect(openings.filter(({rooms: pair}) => pair.includes('forge'))).toEqual([
+      {
+        rooms: ['fortress', 'forge'],
+        holes: [['forge-vestibule', 'fortress']],
+      },
+      {
+        rooms: ['lobby', 'forge'],
+        holes: [['lobby-extension_west', 'forge_window'], ['forge-east', 'lobby_window']],
+      },
+    ])
   })
   test('navigation holds its round floor and its thresholds out under its arches, and nothing else behind its wall', () => {
     for (const [dx, dz] of [[0, 0], [2.6, 0], [-2.6, 0], [0, -2.9], [0, 2.9], [2, -2], [-2, 2]]) {
       const position = [x + dx, 1.7, z + dz] as const
-      expect(roomAt([...position])).toBe('cinnabar')
+      expect(roomAt([...position])).toBe('forge')
       expect(floorHeight([...position])).toBe(0)
       expect(insideGallery([...position])).toBe(true)
     }
     // Under the west arch, outside the wall’s center line, out to where the approach ends, as wide as it
     for (const along of [radius - 0.01, radius]) {
-      expect(cinnabarVestibuleFloor(x - along, z + half - 0.01)).toBe(0)
-      expect(cinnabarVestibuleFloor(x - along, z - half + 0.01)).toBe(0)
-      expect(cinnabarVestibuleFloor(x - along, z + half + 0.05)).toBeUndefined()
+      expect(forgeVestibuleFloor(x - along, z + half - 0.01)).toBe(0)
+      expect(forgeVestibuleFloor(x - along, z - half + 0.01)).toBe(0)
+      expect(forgeVestibuleFloor(x - along, z + half + 0.05)).toBeUndefined()
     }
-    expect(cinnabarVestibuleFloor(x - radius - 0.05, z)).toBeUndefined()
-    expect(cinnabarVestibuleFloor(x + half - 0.01, northZ)).toBe(0)
+    expect(forgeVestibuleFloor(x - radius - 0.05, z)).toBeUndefined()
+    expect(forgeVestibuleFloor(x + half - 0.01, northZ)).toBe(0)
     // Behind the wall, in the corners of its box, lies nothing.
     for (const [dx, dz] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) {
       expect(insideGallery([x + dx * (radius - 0.4), 1.7, z + dz * (radius - 0.4)])).toBe(false)
@@ -174,7 +180,7 @@ describe('the Cinnabar’s vestibule', () => {
   })
   test('its floor slab’s shape is what navigation holds: within the wall’s center line and out under each arch to the plane touching it', () => {
     // In the shape’s plane, y runs north.
-    const outline = roundVestibuleFloorShape(cinnabarRoundVestibule).getPoints(256)
+    const outline = roundVestibuleFloorShape(forgeRoundVestibule).getPoints(256)
     const contains = (px: number, py: number) => {
       let inside = false
       for (let i = 0, j = outline.length - 1; i < outline.length; j = i++) {
@@ -192,7 +198,7 @@ describe('the Cinnabar’s vestibule', () => {
         if (Math.abs(Math.hypot(dx, dz) - radius) < 0.01) {
           continue
         }
-        expect(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${contains(dx, -dz)}`).toBe(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${cinnabarVestibuleFloor(x + dx, z + dz) !== undefined}`)
+        expect(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${contains(dx, -dz)}`).toBe(`${dx.toFixed(2)}, ${dz.toFixed(2)}: ${forgeVestibuleFloor(x + dx, z + dz) !== undefined}`)
         compared++
       }
     }

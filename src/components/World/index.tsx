@@ -52,15 +52,18 @@ const loaders: Record<LaterRoom, () => Promise<RoomPart>> = {
     return ({joinery}) => <Room joinery={joinery} />
   },
   salon: async () => {
-    const [{default: Room}, {default: SalonWindow}] = await Promise.all([import('#src/rooms/salon/components/SalonRoom/index.tsx'), import('#component/SalonWindow')])
+    const [{default: Room}, {default: LobbyWindow}, {salonWindow}] = await Promise.all([import('#src/rooms/salon/components/SalonRoom/index.tsx'), import('#component/LobbyWindow'), import('#src/lib/gallery/lobbyWindows.ts')])
     return ({glass, stone, wood}) => <>
       <Room glass={glass.lobby} stone={stone} wood={wood} />
-      <SalonWindow glass={glass.salon} />
+      <LobbyWindow glass={glass.lobbyWindow} glazing={salonWindow} name='salon-window' />
     </>
   },
-  cinnabar: async () => {
-    const {default: Room} = await import('#src/rooms/cinnabar/components/CinnabarRoom/index.tsx')
-    return ({castleStone, glass, stone, wood}) => <Room glass={glass.lobby} masonry={castleStone} stone={stone} wood={wood} />
+  forge: async () => {
+    const [{default: Room}, {default: LobbyWindow}, {forgeWindow}] = await Promise.all([import('#src/rooms/forge/components/ForgeRoom/index.tsx'), import('#component/LobbyWindow'), import('#src/lib/gallery/lobbyWindows.ts')])
+    return ({castleStone, glass, stone, wood}) => <>
+      <Room glass={glass.lobby} masonry={castleStone} stone={stone} wood={wood} />
+      <LobbyWindow glass={glass.lobbyWindow} glazing={forgeWindow} name='forge-window' />
+    </>
   },
   lodge: async () => {
     const [{default: Room}, {default: LodgeWindow}, {default: LodgeThreshold}] = await Promise.all([import('#src/rooms/lodge/components/LodgeRoom/index.tsx'), import('#component/LodgeWindow'), import('#src/rooms/lodge/components/LodgeThreshold/index.tsx')])

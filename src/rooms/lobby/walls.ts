@@ -3,7 +3,7 @@ import type {RoomWall} from '../base/Room.ts'
 import mainEntrance from '#src/lib/gallery/entrance.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
-import {salonWindowHole} from '#src/lib/gallery/salonWindow.ts'
+import {forgeWindow, lobbyWindowHole, salonWindow} from '#src/lib/gallery/lobbyWindows.ts'
 
 const height = 5.5
 const [, , originZ] = roomOrigins.lobby
@@ -24,19 +24,24 @@ const doorway = (u: number) => ({
 const extensionZ = (lobby.northZ + lobby.previousNorthZ) / 2
 const extensionWidth = lobby.previousNorthZ - lobby.northZ
 const extensionEast = wall(lobby.width / 2, extensionZ, -Math.PI / 2, extensionWidth)
+const extensionWest = wall(-lobby.width / 2, extensionZ, Math.PI / 2, extensionWidth)
 
 export default {
   north: {
     ...wall(0, lobby.northZ, 0, lobby.width),
     reservations: [mainEntrance.reservation],
   },
-  // The original side walls and doorways stay where they were; the extension only reaches on north.
-  extension_west: wall(-lobby.width / 2, extensionZ, Math.PI / 2, extensionWidth),
-  // The cast-glass window into the Salon, whose glass stands in the shared plane.
+  // The original side walls and doorways stay where they were; the extension only reaches on north, with the cast-glass windows into the Forge and the Salon, whose glass stands in the shared planes.
+  extension_west: {
+    ...extensionWest,
+    holes: {
+      forge_window: lobbyWindowHole(forgeWindow, extensionWest, roomOrigins.lobby),
+    },
+  },
   extension_east: {
     ...extensionEast,
     holes: {
-      salon_window: salonWindowHole(extensionEast, roomOrigins.lobby),
+      salon_window: lobbyWindowHole(salonWindow, extensionEast, roomOrigins.lobby),
     },
   },
   west: wall(-lobby.width / 2, 0, Math.PI / 2, 16, {

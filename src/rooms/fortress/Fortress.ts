@@ -24,13 +24,13 @@ import walls from './walls.ts'
 const slack = 0.35
 
 /**
- * The connected castle-stone passages from both Oculus bridges, around its apse to the Lodge and up the western hairpin to the Cinnabar.
+ * The connected castle-stone passages from both Oculus bridges, around its apse to the Lodge and up the western hairpin to the Forge.
  * Laid out around the middle of its curve, at the height of its floor there.
  */
 export default class Fortress extends Room {
   override readonly air = chunkBoxes(fortressNetwork.flatMap(passage => passage.chunks(slack)), fortressOrigin)
   override readonly description = 'Cold stone. Long shadows. Light through iron bars.'
-  // Height-bounded because the west wing passes under Cinnabar and above Lodge. It also takes precedence over the Oculus’ apse box.
+  // Height-bounded because the west wing passes under Forge and above Lodge. It also takes precedence over the Oculus’ apse box.
   override readonly fence = new Geofence(this.air.map(box => ({
     ...footprint([box]),
     y: box.min.y - 1,
@@ -67,7 +67,7 @@ export default class Fortress extends Room {
       volumetricSun: 0,
       walls,
       map,
-      // From the apex of the western hairpin on, the climb shows on the upper floor with the Cinnabar it leads to.
+      // From the apex of the western hairpin on, the climb shows on the upper floor with the Forge it leads to.
       upperMap: {
         from: bastionApex.y - fortressOrigin[1],
         map: upperMap,

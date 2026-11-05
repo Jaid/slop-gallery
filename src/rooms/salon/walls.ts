@@ -1,8 +1,8 @@
 import type {RoomWall} from '../base/Room.ts'
 
 import roomOrigins from '#src/lib/gallery/layout.ts'
+import {lobbyWindowHole, salonWindow} from '#src/lib/gallery/lobbyWindows.ts'
 import salon from '#src/lib/gallery/salon.ts'
-import {salonWindowHole} from '#src/lib/gallery/salonWindow.ts'
 
 import {planWall} from '../lib/walls.ts'
 
@@ -21,7 +21,7 @@ export default {
   west: {
     ...west,
     holes: {
-      lobby_window: salonWindowHole(west, roomOrigins.salon),
+      lobby_window: lobbyWindowHole(salonWindow, west, roomOrigins.salon),
     },
   },
 } satisfies Record<string, RoomWall>

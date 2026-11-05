@@ -1,0 +1,171 @@
+import type {Vec3} from '../../../src/lib/gallery/types.ts'
+import type {BufferGeometry} from 'three/webgpu'
+
+import RAPIER from '@dimforge/rapier3d-compat'
+import {ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
+
+import {colliderGeometry, createArchitectureGeometry} from '../../../src/lib/gallery/architecture.ts'
+import {bastionArch, bastionMouth, bastionMouthRunnel} from '../../../src/lib/gallery/bastion.ts'
+import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
+import forge from '../../../src/lib/gallery/forge.ts'
+import {forgeGutter} from '../../../src/lib/gallery/forgeGutter.ts'
+import {forgeRoundVestibule, vestibuleArches} from '../../../src/lib/gallery/forgeVestibule.ts'
+import {fortressCrater} from '../../../src/lib/gallery/fortress.ts'
+import {fortressLinkGate, fortressNetwork} from '../../../src/lib/gallery/fortressNetwork.ts'
+import gateGeometry from '../../../src/lib/gallery/gateGeometry.ts'
+import GutterGeometry from '../../../src/lib/gallery/GutterGeometry.ts'
+import Passage from '../../../src/lib/gallery/passages/Passage.ts'
+import RouteVaultGeometry from '../../../src/lib/gallery/passages/RouteVaultGeometry.ts'
+import VaultGeometry from '../../../src/lib/gallery/passages/VaultGeometry.ts'
+import roundRevealGeometry from '../../../src/lib/gallery/roundRevealGeometry.ts'
+import {roundVestibuleFloorShape} from '../../../src/lib/gallery/roundVestibule.ts'
+import walls from '../fixtures/gallery.ts'
+import {fortressCraterGeometry} from './fortressCrater.ts'
+
+type Shape = {
+  /** welded, so nothing catches on its facets’ inner edges, like `MeshSurfaceCollider` */
+  fix?: boolean
+  rotation?: number
+  translation?: Vec3
+  triangles: [Float32Array, Uint32Array]
+}
+/** The Fortress’ walls, passages, runnels, gate and crater, as the game builds their colliders. */
+export function fortressColliders() {
+  const colliders = new Colliders
+  colliders.walls(['fortress'])
+  for (const passage of fortressNetwork) {
+    if (passage instanceof Passage) {
+      const vault = new VaultGeometry(passage)
+      for (const part of [vault.shell, vault.ribs].filter(geometry => geometry.hasAttribute('position'))) {
+        colliders.surface(part)
+      }
+      vault.dispose()
+      // A straight passage’s floor and ceiling are slabs of their own, the floor without its runnel’s strip, see CoveredPassage.
+      const runnel = passage === bastionMouth ? bastionMouthRunnel : undefined
+      const crown = passage.floorY + passage.height
+      for (const floor of passage.floors) {
+        colliders.hulls.push(slabCorners(floor, crown, crown + 0.24))
+        for (const piece of runnel ? runnel.cut(floor) : [floor]) {
+          colliders.hulls.push(slabCorners(piece, passage.floorY - 0.24, passage.floorY))
+        }
+      }
+      if (runnel) {
+        const groove = runnel.geometry()
+        colliders.surface(groove, true)
+        groove.dispose()
+      }
+      continue
+    }
+    const vault = new RouteVaultGeometry(passage)
+    colliders.surface(vault.paving, true)
+    colliders.surface(vault.shell)
+    colliders.surface(vault.ribs)
+    vault.dispose()
+  }
+  const gate = gateGeometry(fortressLinkGate)
+  colliders.surface(gate)
+  gate.dispose()
+  for (const part of [fortressCraterGeometry.flags, fortressCraterGeometry.rubble, fortressCraterGeometry.shards]) {
+    colliders.surface(part, true, fortressCrater.center)
+  }
+  return colliders
+}
+
+/** The Fortress’ colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and its gutter. */
+export function forgeAndFortressColliders() {
+  const colliders = fortressColliders()
+  colliders.walls(['forge'])
+  const floor = new ExtrudeGeometry(roundVestibuleFloorShape(forgeRoundVestibule), {
+    depth: 0.24,
+    bevelEnabled: false,
+    curveSegments: 96,
+  })
+  floor.rotateX(-Math.PI / 2).translate(forgeRoundVestibule.center[0], -0.24, forgeRoundVestibule.center[1])
+  colliders.surface(floor, true)
+  floor.dispose()
+  const ring = walls.find(wall => wall.id === 'forge-vestibule')!
+  const place = new Matrix4
+  place.makeRotationY(ring.rotation).setPosition(...ring.center)
+  for (const {name} of vestibuleArches) {
+    const reveal = roundRevealGeometry(ring, ring.holes!.find(hole => hole.name === name)!, bastionArch).applyMatrix4(place)
+    colliders.surface(reveal)
+    reveal.dispose()
+  }
+  const [halfWidth, halfDepth] = [forge.size[0] / 2, forge.size[1] / 2]
+  const [x, z] = forge.center
+  colliders.hulls.push(slabCorners([[x - halfWidth, z - halfDepth], [x + halfWidth, z - halfDepth], [x + halfWidth, z + halfDepth], [x - halfWidth, z + halfDepth]], -0.24, 0))
+  const gutter = new GutterGeometry(forgeGutter)
+  colliders.surface(gutter.collision, true)
+  gutter.dispose()
+  return colliders
+}
+
+/** A world stepping like the game’s, with the colliders in it. */
+export function physicsWorld(colliders: Colliders) {
+  const world = new RAPIER.World({
+    x: 0,
+    y: -9.81,
+    z: 0,
+  })
+  world.timestep = 1 / 60
+  // what `<Physics>` of @react-three/rapier sets by default
+  Object.assign(world.integrationParameters, {
+    normalizedAllowedLinearError: 0.001,
+    normalizedPredictionDistance: 0.002,
+  })
+  colliders.into(world)
+  return world
+}
+
+/** An orb’s body in the world at the position, as `GrabbableProp` builds it: a ball of 1.8 kg, friction 0.8 and restitution 0.32. */
+export function addOrb(world: RAPIER.World, position: Vec3) {
+  const body = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(...position).setCcdEnabled(true))
+  world.createCollider(RAPIER.ColliderDesc.ball(0.14).setMass(1.8).setFriction(0.8).setRestitution(0.32), body)
+  return body
+}
+
+/** Collects the shapes once, as the game builds them, to put into as many worlds as asked. */
+class Colliders {
+  readonly hulls: Array<Float32Array> = []
+  readonly shapes: Array<Shape> = []
+
+  /** Puts all of them into the world. */
+  into(world: RAPIER.World) {
+    for (const {fix, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
+      const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES) : RAPIER.ColliderDesc.trimesh(vertices, indices)
+      if (translation) {
+        shape.setTranslation(...translation)
+      }
+      if (rotation) {
+        shape.setRotation((new Quaternion).setFromAxisAngle(new Vector3(0, 1, 0), rotation))
+      }
+      world.createCollider(shape)
+    }
+    for (const vertices of this.hulls) {
+      world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!)
+    }
+  }
+
+  surface(geometry: BufferGeometry, fix = false, translation?: Vec3) {
+    this.shapes.push({
+      triangles: colliderGeometry(geometry),
+      fix,
+      ...translation ? {translation} : {},
+    })
+  }
+
+  /** Every wall of the rooms. */
+  walls(rooms: ReadonlyArray<string>) {
+    for (const wall of walls.filter(value => rooms.includes(value.room))) {
+      const geometry = createArchitectureGeometry(wall)
+      for (const triangles of geometry.collision) {
+        this.shapes.push({
+          triangles,
+          translation: wall.center,
+          rotation: wall.rotation,
+        })
+      }
+      geometry.dispose()
+    }
+  }
+}

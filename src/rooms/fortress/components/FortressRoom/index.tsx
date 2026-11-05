@@ -7,7 +7,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import CoveredPassage from '#component/CoveredPassage'
 import CoveredRoute from '#component/CoveredRoute'
 import TimberTransition from '#component/TimberTransition'
-import {bastionApproach, bastionHairpin, bastionLanterns, bastionMouth, bastionRun} from '#src/lib/gallery/bastion.ts'
+import {bastionApproach, bastionApproachLantern, bastionHairpin, bastionLanterns, bastionMouth, bastionMouthRunnel, bastionRun, bastionRunLantern} from '#src/lib/gallery/bastion.ts'
 import {fortressApproach, fortressCurve, fortressLanterns, fortressMouth, fortressTransition} from '#src/lib/gallery/fortress.ts'
 import {fortressLink, fortressLinkLanterns} from '#src/lib/gallery/fortressNetwork.ts'
 import {lodgeFloorPlanks} from '#src/lib/gallery/lodge.ts'
@@ -16,10 +16,11 @@ import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
 import FortressCrater from '#src/rooms/fortress/components/FortressCrater/index.tsx'
+import FortressGate from '#src/rooms/fortress/components/FortressGate/index.tsx'
 
 const lanterns = Object.values(fortressLanterns)
 
-/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Cinnabar, with the crater in the landing where the link opens. */
+/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Forge, with the crater in the landing where the link opens. */
 export default function FortressRoom({material, wood}: {
   material: NodeMaterial
   wood: Texture
@@ -29,11 +30,12 @@ export default function FortressRoom({material, wood}: {
   // The Lodge’s plank floor, continued board for board into the timber transition.
   const floor = useDisposable(useMemo(() => lightIndoors(new PlankMaterial(lodgeFloorPlanks)), []))
   return <group name='fortress-room'>
-    <CoveredPassage material={material} passage={bastionMouth} />
+    <CoveredPassage material={material} passage={bastionMouth} runnel={bastionMouthRunnel} />
     <CoveredRoute lanterns={Object.values(bastionLanterns)} material={material} passage={bastionHairpin} />
-    <CoveredPassage material={material} passage={bastionRun} />
-    <CoveredPassage material={material} passage={bastionApproach} />
+    <CoveredRoute lanterns={[bastionRunLantern]} material={material} passage={bastionRun} />
+    <CoveredRoute lanterns={[bastionApproachLantern]} material={material} passage={bastionApproach} />
     <CoveredRoute lanterns={fortressLinkLanterns} material={material} passage={fortressLink} />
+    <FortressGate />
     <CoveredPassage material={material} passage={fortressMouth} />
     <CoveredRoute lanterns={lanterns} material={material} passage={fortressCurve} />
     <FortressCrater stone={material} />

@@ -1,6 +1,7 @@
+import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
-import {bastionMouth, bastionPassages} from './bastion.ts'
+import {bastionMouth, bastionMouthRunnel, bastionPassages} from './bastion.ts'
 import {fortressLinkStart, fortressLinkStripZ, fortressLinkWidth, fortressPassages} from './fortress.ts'
 import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
@@ -37,15 +38,35 @@ const route = new PassageRoute([startX, startZ], heading, y, height, [
 export const fortressLink = new RoutedPassage('link', 'fortress', route, fortressLinkWidth)
 export const fortressLinkLanterns = [fortressLink.ribGap(4), fortressLink.ribGap(route.length - 5)]
 const mouthWall = bastionMouth.walls[2]
-// The tunnel opens into the mouth’s north wall at the elbow, the size of its vault and bare like the ends of the mouth’s own vaults there.
-mouthWall.holes = [
-  {
-    ...vaultOpening(fortressLinkWidth, height),
-    name: 'link',
-    u: endX - mouthWall.center[0],
-    casing: false,
+/** The tunnel opens into the mouth’s north wall at the elbow, the size of its vault and bare like the ends of the mouth’s own vaults there. */
+const linkHole = {
+  ...vaultOpening(fortressLinkWidth, height),
+  name: 'link',
+  u: endX - mouthWall.center[0],
+  casing: false,
+} as const satisfies WallOpening
+mouthWall.holes = [linkHole]
+/**
+ * The iron gate barring the tunnel where it opens into the mouth’s elbow, barred like the apse’s gate, low over the floor and on up its bars, but for a hatch in the middle of its foot, round-headed like a mouse hole: wide enough for an orb rolling at it to slip through and on down the tunnel, far too low for anyone to follow.
+ * The hatch lies on the line of the hairpin’s west leg, straight ahead of the runnel’s end at its foot, a hand’s breadth off the tunnel’s middle.
+ * In the frame of the mouth’s north wall, facing south into the elbow.
+ */
+export const fortressLinkGate = {
+  wall: mouthWall,
+  hole: linkHole,
+  hatch: {
+    u: bastionMouthRunnel.to[0] - mouthWall.center[0],
+    width: 0.6,
+    height: 0.5,
+    profile: 'arch',
   },
-]
+  bands: [0.15, 1.05, 1.95],
+} as const satisfies {
+  bands: ReadonlyArray<number>
+  hatch: WallOpening
+  hole: WallOpening
+  wall: Wall
+}
 export const fortressNetwork = [...fortressPassages, ...bastionPassages, fortressLink]
 
 /** All floors under a point, including the upper run where it crosses the lower passages. */

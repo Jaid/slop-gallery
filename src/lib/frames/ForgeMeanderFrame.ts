@@ -66,8 +66,8 @@ const relief = (surface: FrameSurface) => {
   }
 }
 
-/** The Cinnabar’s: cast bronze chased with a Greek key, the meander running round a flat band between beaded rounds, verdigris in its hollows. */
-export default class CinnabarMeanderFrame extends PortraitFrame {
+/** The Forge’s: cast bronze chased with a Greek key, the meander running round a flat band between beaded rounds, verdigris in its hollows. */
+export default class ForgeMeanderFrame extends PortraitFrame {
   override readonly description = 'Cast bronze like the fittings of a Roman villa: a flat band chased with a running spiral meander, the Greek key, between beaded rounds, rubbed bright on its raised strokes and crusted with verdigris in the hollows between them.'
   override readonly front = profile.front
   override readonly imageDepth = imageDepth

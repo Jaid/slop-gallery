@@ -6,13 +6,13 @@ import BanquetCheckerFrame from './BanquetCheckerFrame.ts'
 import BanquetDecoFrame from './BanquetDecoFrame.ts'
 import BanquetPerspectiveFrame from './BanquetPerspectiveFrame.ts'
 import CellCofferFrame from './CellCofferFrame.ts'
-import CinnabarMeanderFrame from './CinnabarMeanderFrame.ts'
 import ClassicFrame from './ClassicFrame.ts'
 import CorridorKumikoFrame from './CorridorKumikoFrame.ts'
 import CorridorMissionFrame from './CorridorMissionFrame.ts'
 import ExhibitionContainmentFrame from './ExhibitionContainmentFrame.ts'
 import ExhibitionEvidenceFrame from './ExhibitionEvidenceFrame.ts'
 import ExhibitionVitrineFrame from './ExhibitionVitrineFrame.ts'
+import ForgeMeanderFrame from './ForgeMeanderFrame.ts'
 import FortressOakFrame from './FortressOakFrame.ts'
 import FortressStrapworkFrame from './FortressStrapworkFrame.ts'
 import {readFrame} from './frameParameter.ts'
@@ -61,7 +61,7 @@ export const frames = {
   'salon-barbizon': new SalonBarbizonFrame,
   'salon-whistler': new SalonWhistlerFrame,
   'salon-impressionist': new SalonImpressionistFrame,
-  'cinnabar-meander': new CinnabarMeanderFrame,
+  'forge-meander': new ForgeMeanderFrame,
   'moonfall-meteorite': new MoonfallMeteoriteFrame,
   'moonfall-orbit': new MoonfallOrbitFrame,
   'moonfall-regolith': new MoonfallRegolithFrame,

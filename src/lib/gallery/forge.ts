@@ -22,20 +22,20 @@ export type Rooflight = {
 }
 
 /**
- * The Cinnabar sits north of the Vesper, across the Lobby’s north extension from the Salon, whose floor plan it mirrors: its east wall backs onto the Lobby’s west extension, from the Lobby’s north wall to the Vesper’s north wall’s line.
+ * The Forge sits north of the Vesper, across the Lobby’s north extension from the Salon, whose floor plan it mirrors: its east wall backs onto the Lobby’s west extension, from the Lobby’s north wall to the Vesper’s north wall’s line.
  * The Fortress climbs from the Oculus’ west bridge and enters its round vestibule, north of the room, from the west.
  */
-const cinnabar = {
+const forge = {
   center: [-salon.center[0], salon.center[1]],
   size: salon.size,
 } as const satisfies {
   center: readonly [number, number]
   size: readonly [number, number]
 }
-const northZ = cinnabar.center[1] - cinnabar.size[1] / 2
+const northZ = forge.center[1] - forge.size[1] / 2
 
 /** The round rooflight in the middle of the ceiling, relative to the room’s center. */
-export const cinnabarRooflight = {
+export const forgeRooflight = {
   radius: 2.5,
   frame: 0.55,
   depth: 0.34,
@@ -48,11 +48,11 @@ export const cinnabarRooflight = {
 
 const vestibuleRadius = 3
 /**
- * The vestibule north of the Cinnabar, still the Cinnabar’s: a round anteroom at its floor on its axis, whose wall touches the middle of its north wall back to back, where an arch opens through both into the room.
+ * The vestibule north of the Forge, still the Forge’s: a round anteroom at its floor on its axis, whose wall touches the middle of its north wall back to back, where an arch opens through both into the room.
  * The Fortress’ approach arrives through a second arch, from the west. Its ceiling is as high as the room’s, pierced in the middle by a round rooflight of its own.
  */
-export const cinnabarVestibule = {
-  center: [cinnabar.center[0], northZ - vestibuleRadius],
+export const forgeVestibule = {
+  center: [forge.center[0], northZ - vestibuleRadius],
   /** the radius of its wall’s center line */
   radius: vestibuleRadius,
   /** relative to the vestibule’s center: a smaller eye than the room’s, in panes half as large */
@@ -72,4 +72,4 @@ export const cinnabarVestibule = {
   rooflight: Rooflight
 }
 
-export default cinnabar
+export default forge

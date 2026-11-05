@@ -1,8 +1,8 @@
 import {Geofence} from 'geofency'
 
 import reverberation from '#src/lib/audio/transformers/reverberation.ts'
-import cinnabar, {cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
+import forge, {forgeVestibule} from '#src/lib/gallery/forge.ts'
 import RoomMood from '#src/lib/moods/RoomMood.ts'
 
 import Room from '../base/Room.ts'
@@ -13,32 +13,32 @@ import map from './map.svg?raw'
 import spawns from './spawns.ts'
 import walls from './walls.ts'
 
-const {center: [vestibuleX, vestibuleZ], radius} = cinnabarVestibule
+const {center: [vestibuleX, vestibuleZ], radius} = forgeVestibule
 
-/** Lit through its round rooflight and its vestibule’s, without lamps of its own. */
-export default class Cinnabar extends Room {
+/** A workshop where the gallery’s visitors are invited to make something of their own, starting with the orbs a button lets roll down its gutter. Lit through its round rooflight and its vestibule’s, without lamps of its own. */
+export default class Forge extends Room {
   override readonly air = [
-    floorBox(cinnabar.size, 0, 5.8),
+    floorBox(forge.size, 0, 5.8),
     // The round vestibule north of its arch, as high, where the Fortress arrives.
-    floorBox([radius * 2, radius * 2], 0, 5.8, [vestibuleX - cinnabar.center[0], vestibuleZ - cinnabar.center[1]]),
+    floorBox([radius * 2, radius * 2], 0, 5.8, [vestibuleX - forge.center[0], vestibuleZ - forge.center[1]]),
   ]
-  override readonly description = 'A round eye on the sky.'
-  // Everything over its floor plan and its vestibule’s from the slab up, the rooflights included; the Fortress’ western mouth passes underneath, below the slab, and its curve under the vestibule. It comes before the Fortress, so the vestibule’s wall with the arch onto the approach is the Cinnabar’s.
+  override readonly description = 'Make something of your own.'
+  // Everything over its floor plan and its vestibule’s from the slab up, the rooflights included; the Fortress’ western mouth passes underneath, below the slab, and its curve under the vestibule. It comes before the Fortress, so the vestibule’s wall with the arch onto the approach is the Forge’s.
   override readonly fence = new Geofence(this.air.map(box => ({
     ...footprint([box]),
     floor: groundFenceY,
   })))
   override readonly height = 5.8
-  override readonly id = 'cinnabar'
-  override readonly size = cinnabar.size
+  override readonly id = 'forge'
+  override readonly size = forge.size
   override readonly spawn = spawns['']
 
   constructor() {
     super({
-      title: 'The Cinnabar',
+      title: 'The Forge',
       moods: [
         new RoomMood({
-          id: 'cinnabar',
+          id: 'forge',
           title: 'Rooflit stone',
           // Plain stone and plaster round a rooflight, its round vestibule ringing faintly.
           transformer: reverberation({
@@ -50,7 +50,7 @@ export default class Cinnabar extends Room {
           }),
         }),
       ],
-      frame: 'cinnabar-meander',
+      frame: 'forge-meander',
       cameras,
       spawns,
       skybox: 'sky',

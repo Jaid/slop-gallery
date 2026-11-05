@@ -55,9 +55,10 @@ test('the rooms only relate rooms they can reach through up to three openings', 
       expect(`${room} relates ${reachable.has(other) ? '' : 'unreachable '}${other}`).toBe(`${room} relates ${other}`)
     }
   }
-  // The Cinnabar’s only doorway leads into the Fortress, so only the Fortress relates it.
-  expect(Object.entries(relations).filter(([, {rooms: related}]) => related.includes('cinnabar' as never)).map(([room]) => room)).toEqual(['fortress'])
-  expect(relations.cinnabar.rooms).toEqual(['fortress'])
+  // The Forge’s doorway leads into the Fortress and its glass wall looks into the Lobby, which both relate it first, and it them.
+  expect(relations.forge.rooms.slice(0, 2).toSorted()).toEqual(['fortress', 'lobby'])
+  expect(relations.fortress.rooms).toContain('forge' as never)
+  expect(relations.lobby.rooms).toContain('forge' as never)
 })
 test('a room shows the rooms behind the openings in view', () => {
   // From the Vesper through both side doors of the Lobby into the Banquet, through the Lobby’s glass wall into the Salon and through the Antechamber down the stairway to Moonfall, but no further.
@@ -67,9 +68,12 @@ test('a room shows the rooms behind the openings in view', () => {
   // The Salon’s glass wall shows the Lobby extension, and the Lobby’s shows the Salon.
   expect(visibleRooms('salon', view([16, 1.6, -20], [0, 1.6, -20])).has('lobby')).toBe(true)
   expect(visibleRooms('lobby', view([0, 1.6, -28], [8, 1.6, -24])).has('salon')).toBe(true)
+  // And so do the Forge’s and the Lobby’s across from them.
+  expect(visibleRooms('forge', view([-16, 1.6, -20], [0, 1.6, -20])).has('lobby')).toBe(true)
+  expect(visibleRooms('lobby', view([0, 1.6, -28], [-8, 1.6, -24])).has('forge')).toBe(true)
   // Facing the blank west wall of the Vesper.
   expect([...visibleRooms('vesper', view([-14, 1.6, 0], [-20, 1.6, 0]))]).toEqual(['vesper'])
-  // The north wall shared with the Cinnabar is closed.
+  // The north wall shared with the Forge is closed.
   expect([...visibleRooms('vesper', view([-14, 1.6, -12], [-14, 1.6, -24]))]).toEqual(['vesper'])
   // Facing south down the Lobby, the Oculus’ north arch into the Fortress lies behind the camera.
   const lobby = visibleRooms('lobby', view([0, 1.6, -28], [0, 1.6, 8]))
@@ -84,15 +88,14 @@ test('a mesh belongs to the room that names itself its owner nearest above it, w
   lobby.userData.room = 'lobby'
   const vault = new Mesh
   lobby.add(vault)
-  // The Lobby’s vault reaches over the Cinnabar, which does not relate the Lobby and so skips it.
+  // The Lobby’s vault reaches over the Forge, and yet it is the Lobby’s alone.
   expect(ownerOf(vault)).toBe('lobby')
-  expect(relations.cinnabar.rooms).not.toContain('lobby' as never)
   const wall = new Group
-  wall.userData.room = 'cinnabar'
+  wall.userData.room = 'forge'
   const wallMesh = new Mesh
   lobby.add(wall)
   wall.add(wallMesh)
-  expect(ownerOf(wallMesh)).toBe('cinnabar')
+  expect(ownerOf(wallMesh)).toBe('forge')
   expect(ownerOf(new Mesh)).toBeUndefined()
   // Knottingham’s rooms are no rooms of the gallery.
   const arena = new Group

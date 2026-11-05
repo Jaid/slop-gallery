@@ -91,7 +91,7 @@ test('hanging portraits belong to their wall’s floor even when rooms overlap v
     wallId: 'lobby-north',
   }).lower).toBe(false)
 })
-test('the Fortress shows on the lower floor up to the apex of its western hairpin and its climb to the Cinnabar from there on the upper floor', () => {
+test('the Fortress shows on the lower floor up to the apex of its western hairpin and its climb to the Forge from there on the upper floor', () => {
   const drawings = minimapRooms.filter(room => room.id === 'fortress')
   expect(drawings.map(room => room.lower)).toEqual([true, false])
   const [apexX, apexZ] = bastionApex.point

@@ -1,4 +1,4 @@
-import type {Rooflight as RooflightLayout} from '#src/lib/gallery/cinnabar.ts'
+import type {Rooflight as RooflightLayout} from '#src/lib/gallery/forge.ts'
 import type {Material, Texture} from 'three/webgpu'
 
 import {CuboidCollider, CylinderCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
@@ -12,24 +12,49 @@ import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {bastionArch} from '#src/lib/gallery/bastion.ts'
-import {cinnabarRooflight, cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
-import {cinnabarRoundVestibule, vestibuleArches} from '#src/lib/gallery/cinnabarVestibule.ts'
 import {floorThickness} from '#src/lib/gallery/floors.ts'
+import {forgeRooflight, forgeVestibule} from '#src/lib/gallery/forge.ts'
+import {forgeGutter} from '#src/lib/gallery/forgeGutter.ts'
+import {forgeRoundVestibule, vestibuleArches} from '#src/lib/gallery/forgeVestibule.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
 import {salonCeiling} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
+import ForgeGutter from '#src/rooms/forge/components/ForgeGutter/index.tsx'
+import OrbRelease from '#src/rooms/forge/components/OrbRelease/index.tsx'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
-const room = slopGallery.room('cinnabar')
-const vestibuleWall = slopGallery.walls.find(wall => wall.id === 'cinnabar-vestibule')!
+const room = slopGallery.room('forge')
+const vestibuleWall = slopGallery.walls.find(wall => wall.id === 'forge-vestibule')!
 const circleSegments = 96
 /** how far in from the vestibule’s wall its brass ring lies, on the line of the room’s inlays */
 const vestibuleInlay = 1.25
-/** The Cinnabar: a sculpture hall with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight, and its round vestibule north of it, alike on a smaller scale. */
-export default function CinnabarRoom({glass, masonry, stone, wood}: {
+/** the hole in the ceiling orbs drop through into the gutter, relative to the room’s center */
+const [dropX, dropZ] = [forgeGutter.drop[0] - room.center[0], forgeGutter.drop[1] - room.center[1]]
+/** the gilt bead round its edge, like the rooflights’ */
+const dropBeadSize = 0.03
+/**
+ * The ceiling’s colliders, boxes over the room relative to its center by their middles and half sizes in x and z, leaving out a square round the hole orbs drop through, so they fall into the room from above.
+ */
+const ceilingSlabs = (() => {
+  const [halfWidth, halfDepth] = [room.size[0] / 2, room.size[1] / 2]
+  const gap = forgeGutter.dropRadius
+  /** a box from one corner to the other */
+  const slab = (x0: number, z0: number, x1: number, z1: number) => ({
+    middle: [(x0 + x1) / 2, (z0 + z1) / 2] as const,
+    half: [(x1 - x0) / 2, (z1 - z0) / 2] as const,
+  })
+  return [
+    slab(-halfWidth, -halfDepth, dropX - gap, halfDepth),
+    slab(dropX + gap, -halfDepth, halfWidth, halfDepth),
+    slab(dropX - gap, -halfDepth, dropX + gap, dropZ - gap),
+    slab(dropX - gap, dropZ + gap, dropX + gap, halfDepth),
+  ]
+})()
+/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight and the hole an orb released by the button under it drops through into the gutter round the room, and its round vestibule north of it, alike on a smaller scale, where the gutter lets the orb fly off toward the Fortress. */
+export default function ForgeRoom({glass, masonry, stone, wood}: {
   glass: Material
   /** the Fortress’ stone, which lines the vestibule’s arch onto its approach */
   masonry: Material
@@ -49,18 +74,26 @@ export default function CinnabarRoom({glass, masonry, stone, wood}: {
     outline.lineTo(width / 2, depth / 2)
     outline.lineTo(-width / 2, depth / 2)
     outline.closePath()
-    return pierced(outline, cinnabarRooflight.radius)
+    // The hole orbs drop through into the gutter, in the shape’s x and −z
+    const hole = new Path
+    hole.absarc(dropX, -dropZ, forgeGutter.dropRadius, 0, Math.PI * 2, true)
+    outline.holes.push(hole)
+    return pierced(outline, forgeRooflight.radius)
   }, []))
-  return <group name='cinnabar'>
+  const dropBead = useDisposable(useMemo(() => ring(forgeGutter.dropRadius - dropBeadSize, forgeGutter.dropRadius + dropBeadSize, dropBeadSize), []))
+  return <group name='forge'>
     <group position={[room.center[0], 0, room.center[1]]}>
       <RigidBody colliders={false} type='fixed'>
-        <CuboidCollider args={[room.size[0] / 2, 0.15, room.size[1] / 2]} position={[0, 5.9, 0]} />
+        {ceilingSlabs.map(({half, middle}) => <CuboidCollider key={middle.join()} args={[half[0], 0.15, half[1]]} position={[middle[0], 5.9, middle[1]]} />)}
       </RigidBody>
       <RoomFloor glass={glass} room={room} stone={stone} wood={wood} />
-      <mesh castShadow geometry={ceiling} material={plaster} name='cinnabar-ceiling' receiveShadow />
-      <Rooflight gilt={gold} layout={cinnabarRooflight} name='cinnabar-rooflight' plaster={plaster} />
+      <mesh castShadow geometry={ceiling} material={plaster} name='forge-ceiling' receiveShadow />
+      <mesh geometry={dropBead} material={gold} name='forge-gutter-drop-bead' position={[dropX, salonCeiling.underside - dropBeadSize, dropZ]} receiveShadow />
+      <Rooflight gilt={gold} layout={forgeRooflight} name='forge-rooflight' plaster={plaster} />
     </group>
     <Vestibule floorReflections={floorReflections} masonry={masonry} plaster={plaster} />
+    <ForgeGutter plaster={plaster} />
+    <OrbRelease />
   </group>
 }
 
@@ -144,7 +177,7 @@ function Vestibule({floorReflections, masonry, plaster}: {
   masonry: Material
   plaster: Material
 }) {
-  const {center, radius, rooflight} = cinnabarVestibule
+  const {center, radius, rooflight} = forgeVestibule
   // Plain stone and plaster, like the room’s floor and walls.
   const paving = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#f3eddf',
@@ -161,11 +194,11 @@ function Vestibule({floorReflections, masonry, plaster}: {
     envMapIntensity: floorReflections ? 1 : 0,
   }), [floorReflections]))
   const linings = {
-    cinnabar: lining,
+    forge: lining,
     fortress: masonry,
   }
   const parts = useDisposable(useMemo(() => {
-    const slab = new ExtrudeGeometry(roundVestibuleFloorShape(cinnabarRoundVestibule), {
+    const slab = new ExtrudeGeometry(roundVestibuleFloorShape(forgeRoundVestibule), {
       depth: floorThickness,
       bevelEnabled: false,
       curveSegments: circleSegments,
@@ -194,21 +227,21 @@ function Vestibule({floorReflections, masonry, plaster}: {
     }
   }, [radius, rooflight]))
   return <>
-    <group name='cinnabar-vestibule' position={[center[0], 0, center[1]]}>
+    <group name='forge-vestibule' position={[center[0], 0, center[1]]}>
       <RigidBody colliders={false} type='fixed'>
         <TrimeshCollider args={parts.floorCollision} />
         <CylinderCollider args={[0.15, radius]} position={[0, 5.9, 0]} />
-        <mesh geometry={parts.slab} material={paving} name='cinnabar-vestibule-floor' receiveShadow />
-        <mesh geometry={parts.inlay} material={brass} name='cinnabar-vestibule-inlay' receiveShadow />
+        <mesh geometry={parts.slab} material={paving} name='forge-vestibule-floor' receiveShadow />
+        <mesh geometry={parts.inlay} material={brass} name='forge-vestibule-inlay' receiveShadow />
       </RigidBody>
-      <mesh castShadow geometry={parts.ceiling} material={plaster} name='cinnabar-vestibule-ceiling' receiveShadow />
-      <Rooflight gilt={gold} layout={rooflight} name='cinnabar-vestibule-rooflight' plaster={plaster} />
+      <mesh castShadow geometry={parts.ceiling} material={plaster} name='forge-vestibule-ceiling' receiveShadow />
+      <Rooflight gilt={gold} layout={rooflight} name='forge-vestibule-rooflight' plaster={plaster} />
     </group>
     {/* In the round wall’s own frame, as the reveals are built, where its paint knows which way its face looks. */}
-    <group name='cinnabar-vestibule-reveals' position={vestibuleWall.center} rotation={[0, vestibuleWall.rotation, 0]}>
+    <group name='forge-vestibule-reveals' position={vestibuleWall.center} rotation={[0, vestibuleWall.rotation, 0]}>
       <RigidBody colliders={false} type='fixed'>
         {parts.revealCollision.map((args, i) => <TrimeshCollider key={i} args={args} />)}
-        {parts.reveals.map(({name, geometry}) => <mesh key={name} castShadow geometry={geometry} material={linings[name]} name={`cinnabar-vestibule-reveal_${name}`} receiveShadow />)}
+        {parts.reveals.map(({name, geometry}) => <mesh key={name} castShadow geometry={geometry} material={linings[name]} name={`forge-vestibule-reveal_${name}`} receiveShadow />)}
       </RigidBody>
     </group>
   </>

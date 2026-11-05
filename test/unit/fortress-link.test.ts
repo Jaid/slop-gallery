@@ -7,22 +7,18 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
-import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
+import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands, vaultShellThickness, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionMouth} from '../../src/lib/gallery/bastion.ts'
-import {slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import {fortressCrater, fortressCurve, fortressLinkStart} from '../../src/lib/gallery/fortress.ts'
-import {fortressLink, fortressNetwork} from '../../src/lib/gallery/fortressNetwork.ts'
+import {fortressLink, fortressLinkGate} from '../../src/lib/gallery/fortressNetwork.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse from '../../src/lib/gallery/oculusApse.ts'
-import Passage from '../../src/lib/gallery/passages/Passage.ts'
-import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
-import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import {openingArc} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery, roomAt} from './fixtures/gallery.ts'
-import {addFortressCrater} from './helpers/fortressCrater.ts'
+import {fortressColliders, physicsWorld} from './helpers/fortressWorld.ts'
 
 await RAPIER.init()
 const {route} = fortressLink
@@ -30,13 +26,12 @@ const architecture = walls.filter(wall => ['fortress', 'lodge', 'oculus'].includ
   wall,
   geometry: createArchitectureGeometry(wall),
 }))
-const vaults = fortressNetwork.map(passage => (passage instanceof Passage ? new VaultGeometry(passage) : new RouteVaultGeometry(passage)))
+const colliders = fortressColliders()
+/** where the gate across the tunnel’s end stands, on the mouth’s north wall */
+const gateZ = fortressLinkGate.wall.center[2]
 afterAll(() => {
   for (const {geometry} of architecture) {
     geometry.dispose()
-  }
-  for (const vault of vaults) {
-    vault.dispose()
   }
 })
 const wallById = (id: string) => walls.find(wall => wall.id === id)!
@@ -189,39 +184,13 @@ test('it opens into the mouth’s elbow through a bare arch the size of its vaul
 })
 for (const returning of [false, true]) {
   for (const sprint of [false, true]) {
-    test(`the player crosses both doorways and the link, returning ${returning}, sprint ${sprint}`, () => {
-      const world = new RAPIER.World({
-        x: 0,
-        y: -9.81,
-        z: 0,
-      })
-      world.timestep = 1 / 60
-      for (const {wall, geometry} of architecture) {
-        const rotation = new Quaternion
-        rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
-        for (const args of geometry.collision) {
-          world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(rotation))
-        }
-      }
-      for (const vault of vaults) {
-        for (const geometry of [vault.shell, vault.ribs, ...vault instanceof RouteVaultGeometry ? [vault.paving] : []]) {
-          world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
-        }
-      }
-      for (const passage of fortressNetwork) {
-        if (passage instanceof Passage) {
-          for (const floor of passage.floors) {
-            world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, passage.floorY - 0.24, passage.floorY))!)
-          }
-        }
-      }
-      addFortressCrater(world)
-      // from the level landing west of the crater in front of the doorway, round its edge into the doorway, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater
+    test(`the player walks the link up to the gate from the landing’s doorway, or down to it from the mouth, but no further, returning ${returning}, sprint ${sprint}`, () => {
+      const world = physicsWorld(colliders)
+      // from the level landing west of the crater in front of the doorway, round its edge into the doorway, at a walk there and through the first 3 m of the tunnel, so as not to run into the crater, then on toward the mouth’s elbow behind the gate
       const [craterX, entranceY, craterZ] = fortressCrater.center
-      const path: Array<readonly [x: number, z: number, careful?: boolean]> = [[craterX - 1.8, craterZ, true], [craterX - 1.3, route.start[1] - 0.4, true], ...Array.from({length: Math.ceil(route.length / 0.4)}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const), route.end.point, bastionMouth.path[1]]
-      if (returning) {
-        path.reverse()
-      }
+      const tunnel = Array.from({length: Math.floor((route.length - 0.6) / 0.4) + 1}, (_, i) => [...route.at(i * 0.4).point, i * 0.4 < 3] as const)
+      const path: Array<readonly [x: number, z: number, careful?: boolean]> = returning ? [bastionMouth.path[1], [bastionMouth.path[1][0], gateZ + 0.6]] : [[craterX - 1.8, craterZ, true], [craterX - 1.3, route.start[1] - 0.4, true], ...tunnel]
+      const beyond = returning ? route.at(-3).point : bastionMouth.path[1]
       const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(path[0][0], (returning ? bastionMouth.floorY : entranceY) + 0.04, path[0][1]))
       const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.5, 0.3).setTranslation(0, 0.8, 0), body)
       const motor = new EgoMotor(RAPIER, world, body, collider)
@@ -248,11 +217,22 @@ for (const returning of [false, true]) {
           target,
           position: body.translation(),
         }).toMatchObject({target: path.length})
-        for (let frame = 0; frame < 60; frame++) {
-          motor.step(world.timestep, {}, facing)
+        // Pushing on against the gate for three seconds, the player stays on their side of its bars, crouching too.
+        for (let frame = 0; frame < 180; frame++) {
+          const {x, z} = body.translation()
+          facing.setFromAxisAngle(new Vector3(0, 1, 0), Math.atan2(-(beyond[0] - x), -(beyond[1] - z)))
+          motor.step(world.timestep, {
+            forward: true,
+            crouch: frame > 60,
+          }, facing)
           world.step()
         }
-        expect(body.translation().y).toBeCloseTo((returning ? entranceY : bastionMouth.floorY) + 0.02, 2)
+        const {z} = body.translation()
+        if (returning) {
+          expect(z).toBeGreaterThan(gateZ + 0.2)
+        } else {
+          expect(z).toBeLessThan(gateZ - 0.2)
+        }
         expect(motor.grounded).toBe(true)
       } finally {
         motor.dispose()

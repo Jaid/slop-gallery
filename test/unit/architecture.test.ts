@@ -134,9 +134,10 @@ describe('boolean architecture', () => {
         const meshes = [geometry.surface, ...geometry.trim].map(partGeometry => new Mesh(partGeometry, material))
         for (const hole of wall.holes!) {
           for (const side of [-1, 1]) {
-            // 40 cm past the jamb, or up to the casing of the next opening on that side, if that comes first
+            // 40 cm past the jamb, or up to the casing of the next opening on that side at its height, if that comes first
             const jamb = hole.u + side * hole.width / 2
-            const clear = Math.min(0.4, ...wall.holes!.filter(other => other !== hole && (other.u - hole.u) * side > 0).map(other => (other.u - side * (other.width / 2 + wallOpeningTrim) - jamb) * side - 0.01))
+            const beside = wall.holes!.filter(other => other !== hole && (other.u - hole.u) * side > 0 && (other.bottom ?? 0) - wallOpeningTrim < hole.height && other.height + wallOpeningTrim > (hole.bottom ?? 0))
+            const clear = Math.min(0.4, ...beside.map(other => (other.u - side * (other.width / 2 + wallOpeningTrim) - jamb) * side - 0.01))
             for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731]) {
               if (offsetY >= hole.height - (hole.bottom ?? 0)) {
                 continue
