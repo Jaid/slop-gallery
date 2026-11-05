@@ -5,6 +5,8 @@ import type {Group} from 'three/webgpu'
 import {useFrame} from '@react-three/fiber'
 import {useEffect, useRef} from 'react'
 
+import hangingVoices from '#src/lib/audio/hangingVoices.ts'
+import {playSound} from '#src/lib/gallery.ts'
 import HangingRun from '#src/lib/gallery/hanging/HangingRun.ts'
 import {takeHanging} from '#src/lib/gallery/hanging/hangings.ts'
 import world from '#src/worlds/current.ts'
@@ -13,7 +15,7 @@ import world from '#src/worlds/current.ts'
 const floorProbe = 0.3
 
 /**
- * Plays a work’s arrival on its wall once it was asked for and the work hangs there, moving its frame `art` and its `placard`, while its body already hangs still.
+ * Plays a work’s arrival on its wall once it was asked for and the work hangs there, moving its frame `art` and its `placard`, while its body already hangs still, and sounds it from where it hangs.
  * Anything taking the work off the wall, picking it up or fusing it ends the arrival at once.
  */
 export default function useHanging(portrait: Portrait, frame: PortraitFrame, held: boolean, art: {current: Group | null}, placard: {current: Group | null}) {
@@ -35,6 +37,11 @@ export default function useHanging(portrait: Portrait, frame: PortraitFrame, hel
         reach: frame.reach,
         width: portrait.width,
       })
+      playSound(hangingVoices({
+        impact: request.animation.impact,
+        sound: frame.impactSound,
+        variation: request.seed / 2 ** 31 - 1,
+      }), `hanging:${request.seed}`, portrait.position)
     }
     const current = run.current
     if (!current) {

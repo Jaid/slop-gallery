@@ -2,6 +2,7 @@ import type {Voice} from '../../src/lib/audio/proceduralAudio.ts'
 
 import arrivalVoices, {arrivalGap} from '../../src/lib/audio/arrivalVoices.ts'
 import {frameImpactSounds, frameImpactVoices} from '../../src/lib/audio/frameImpacts.ts'
+import hangingVoices from '../../src/lib/audio/hangingVoices.ts'
 import {orbImpactVoices} from '../../src/lib/audio/orbImpacts.ts'
 import {footstepVoices, impactFootstepStrength} from '../../src/lib/audio/playerSoundEffects.ts'
 import {playVoices, playVoicesAt, shiftVoices} from '../../src/lib/audio/proceduralAudio.ts'
@@ -100,7 +101,11 @@ export default async function verify() {
   assert(far.loudest < near.loudest * 0.6, 'A strike far away must sound quieter')
   const arrivals = {
     hung: await recipe('a work hung on arrival', arrivalVoices(true)),
-    slapped: await recipe('a work slapped onto its wall on arrival', arrivalVoices(true, 0, hangingAnimation.impact)),
+    slapped: await recipe('a work slapped onto its wall on arrival', [...arrivalVoices(true, 0, hangingAnimation.impact), ...hangingVoices({
+      impact: hangingAnimation.impact,
+      sound: 'gilt',
+      variation: 0,
+    })]),
     dropped: await recipe('a work dropped into the room', arrivalVoices(false)),
     three: await recipe('three works dropped together', [0, 1, 2].flatMap(index => shiftVoices(arrivalVoices(false, index - 1), index * arrivalGap))),
   }

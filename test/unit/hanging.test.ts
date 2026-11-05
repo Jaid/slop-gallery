@@ -6,6 +6,8 @@ import {describe, expect, test} from 'bun:test'
 import {mulberry32} from 'math/random'
 import {Group, Quaternion, Vector3} from 'three/webgpu'
 
+import {frameImpactSounds} from '../../src/lib/audio/frameImpacts.ts'
+import hangingVoices from '../../src/lib/audio/hangingVoices.ts'
 import {frameBack} from '../../src/lib/frames/base/PortraitFrame.ts'
 import HangingRun from '../../src/lib/gallery/hanging/HangingRun.ts'
 import {requestHanging, takeHanging} from '../../src/lib/gallery/hanging/hangings.ts'
@@ -189,5 +191,40 @@ describe('hanging runs', () => {
     const taken = takeHanging('work', [1, 2, 3], 0.5)
     expect(taken?.from).toEqual([1, 2, 5])
     expect(takeHanging('work', [1, 2, 3], 0.5)).toBeUndefined()
+  })
+})
+describe('the hanging sound', () => {
+  test('strikes as the work strikes its wall, in the sound of its frame, a little apart each time', () => {
+    const sounds = Object.keys(frameImpactSounds) as Array<keyof typeof frameImpactSounds>
+    const recipes = sounds.map(sound => hangingVoices({
+      impact: animation.impact,
+      sound,
+      variation: 0,
+    }))
+    const distinct = new Set(recipes.map(voices => JSON.stringify(voices)))
+    expect(distinct.size).toBe(sounds.length)
+    for (const voices of recipes) {
+      for (const voice of voices) {
+        expect(voice.duration).toBeGreaterThan(0)
+        expect(voice.delay ?? 0).toBeGreaterThanOrEqual(0)
+        expect(voice.volume).toBeGreaterThan(0)
+      }
+      // Only the swing of the arm sounds before the strike, and it swells into it.
+      const early = voices.filter(voice => (voice.delay ?? 0) < animation.impact - 1e-9)
+      expect(early).toHaveLength(1)
+      expect((early[0].delay ?? 0) + early[0].duration).toBeCloseTo(animation.impact)
+      expect(voices.some(voice => Math.abs((voice.delay ?? 0) - animation.impact) < 1e-9 && voice.volume >= 0.05)).toBe(true)
+    }
+    const options = {
+      impact: animation.impact,
+      sound: 'gilt',
+    } as const
+    expect(hangingVoices({
+      ...options,
+      variation: -0.5,
+    })).not.toEqual(hangingVoices({
+      ...options,
+      variation: 0.5,
+    }))
   })
 })

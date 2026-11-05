@@ -94,7 +94,6 @@ export default function createGrabController(camera: RootState['camera'], placem
           } : item
         }))
         requestHanging(id, candidate.position, candidate.rotation)
-        chime(620)
       } else {
         const reason = candidate?.reason ?? 'noWall'
         telemetry?.event('placement.refused', {
