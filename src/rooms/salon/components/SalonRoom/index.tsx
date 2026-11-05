@@ -18,6 +18,7 @@ import {narrate} from '#src/lib/gallery.ts'
 import {wallFace, wallOpeningTrim} from '#src/lib/gallery/architecture.ts'
 import {salonBench, salonBenchLegs, salonCeiling, salonPedestal, salonSkylight, salonTerrazzo, salonWainscot, wainscotFields, wallDressingSpans} from '#src/lib/gallery/salon.ts'
 import {environmentSeed} from '#src/lib/gameSeed.ts'
+import FauxMarbleMaterial, {gialloAntico, portoro} from '#src/lib/materials/FauxMarbleMaterial.ts'
 import gold from '#src/lib/materials/gold.ts'
 import TerrazzoFloorMaterial, {blackTerrazzo, venetianTerrazzo} from '#src/lib/materials/TerrazzoFloorMaterial.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
@@ -28,16 +29,15 @@ import slopGallery from '#src/worlds/gallery/index.ts'
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
 
-/** The Salon: walls frescoed in Pompeian red over a black socle and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
+/** The Salon: walls frescoed in Pompeian red over a socle painted as marble and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
 export default function SalonRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture
   wood: Texture
 }) {
-  const dado = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
-    color: '#16222f',
-    roughness: 0.78,
-  }), []))
+  // Painted as nero portoro round raised fields of giallo antico, the way Pompeian socles were.
+  const socle = useDisposable(useMemo(() => new FauxMarbleMaterial(portoro), []))
+  const fields = useDisposable(useMemo(() => new FauxMarbleMaterial(gialloAntico), []))
   const plaster = useDisposable(useMemo(() => new MeshStandardNodeMaterial({
     color: '#e6decb',
     roughness: 0.9,
@@ -91,7 +91,7 @@ export default function SalonRoom({glass, stone, wood}: {
       </group>)}
       <Skylight gilt={gold} glass={skylight} ironwork={ironwork} plaster={plaster} />
     </group>
-    {salonWalls.map(wall => <WallDressing key={wall.id} dado={dado} gilt={gold} wall={wall} />)}
+    {salonWalls.map(wall => <WallDressing key={wall.id} fields={fields} gilt={gold} socle={socle} wall={wall} />)}
     <Ottoman />
     <Pedestal {...pedestal} position={salonPedestal} />
     <KnotShowcase knots={knots} />
@@ -132,9 +132,12 @@ function Skylight({gilt, glass, ironwork, plaster}: {
     <mesh geometry={geometry} material={glass} name='salon-skylight-glass' position={[0, salonSkylight.glassY, 0]} rotation={[Math.PI / 2, 0, 0]} />
   </StaticBatch>
 }
-function WallDressing({dado, gilt, wall}: {
-  dado: Material
+function WallDressing({fields, gilt, socle, wall}: {
+  /** the raised fields */
+  fields: Material
   gilt: Material
+  /** the dado round them */
+  socle: Material
   wall: Wall
 }) {
   const {bottom, fieldDepth, margin, panelDepth, railBottom, railDepth, railHeight} = salonWainscot
@@ -144,8 +147,8 @@ function WallDressing({dado, gilt, wall}: {
   const rails = wallDressingSpans(wall, wallOpeningTrim, wallFace + (reachesCorners ? 0 : railDepth))
   return <StaticBatch name={`${wall.id}-wainscot`} position={wall.center} rotation={[0, wall.rotation, 0]}>
     {panels.map(([start, end]) => <group key={start}>
-      <Box material={dado} position={[(start + end) / 2, (bottom + railBottom) / 2, wallFace + panelDepth / 2]} size={[end - start, railBottom - bottom, panelDepth]} />
-      {wainscotFields(start, end).map(([center, width]) => <Box key={center} material={dado} position={[center, (bottom + railBottom) / 2, wallFace + panelDepth + fieldDepth / 2]} size={[width, railBottom - bottom - margin * 2, fieldDepth]} />)}
+      <Box material={socle} position={[(start + end) / 2, (bottom + railBottom) / 2, wallFace + panelDepth / 2]} size={[end - start, railBottom - bottom, panelDepth]} />
+      {wainscotFields(start, end).map(([center, width]) => <Box key={center} material={fields} position={[center, (bottom + railBottom) / 2, wallFace + panelDepth + fieldDepth / 2]} size={[width, railBottom - bottom - margin * 2, fieldDepth]} />)}
     </group>)}
     {rails.map(([start, end]) => <Box key={start} material={gilt} position={[(start + end) / 2, railBottom + railHeight / 2, wallFace + railDepth / 2]} size={[end - start, railHeight, railDepth]} />)}
   </StaticBatch>
