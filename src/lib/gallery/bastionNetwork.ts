@@ -82,10 +82,14 @@ const route = new PassageRoute([startX, startZ], heading, y, height, [
     ],
   },
 ])
-/** Its paving falls toward its middle like the hairpin’s, but for its last stretch to the gate, where it eases out to stand on a level floor; at the landing, it meets the landing’s floor on a sill along the doorway, a hand’s breadth over its middle. */
+/**
+ * How steeply the tunnel’s paving falls from both walls toward its middle: 1 in 20, gentler than the climb’s, so the sill it leaves along the doorway at the landing only slows orbs coming out of it into the crater instead of stopping them short of it.
+ */
+export const bastionLinkCrossfall = 1 / 20
+/** Its paving falls toward its middle, but for its last stretch to the gate, where it eases out to stand on a level floor; at the landing, it meets the landing’s floor on a sill along the doorway, a hand’s breadth over its middle. */
 export const bastionLink = new RoutedPassage('link', 'bastion', route, bastionLinkWidth, {
   crossfall: {
-    slope: climbCrossfall,
+    slope: bastionLinkCrossfall,
     easeOut: 1.5,
   },
 })

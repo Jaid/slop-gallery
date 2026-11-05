@@ -23,6 +23,7 @@ import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
+import {weldedSurfaceSkin} from '../../src/lib/physics/weldedSurface.ts'
 import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery, roomAt} from './fixtures/gallery.ts'
@@ -283,8 +284,9 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
       endY: 0,
     })
   })
-  test('the hairpin’s paving falls 1 in 20 from the faces of its walls toward its middle, easing out to meet the run’s level floor at its top, while the run’s and the approach’s lie level across', () => {
+  test('the hairpin’s paving falls 1 in 11 from the faces of its walls toward its middle, easing out to meet the run’s level floor at its top, while the run’s and the approach’s lie level across', () => {
     expect(climbHairpin.crossfall?.slope).toBe(climbCrossfall)
+    expect(climbCrossfall).toBe(1 / 11)
     const half = climbHairpin.width / 2 - wallFace
     for (const station of stations) {
       // short of the top, where it eases out
@@ -403,9 +405,9 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
     expect(lamps.map(({id}) => id).toSorted()).toEqual(ids)
     for (const {position} of lamps) {
       expect(roomAt(position)).toBe('bastion')
-      // Under the crown, over a person’s head
+      // Under the crown, over a person’s head, even over the middle of the hairpin, where its paving falls lowest
       expect(position[1] - floorHeight(position)).toBeGreaterThan(1.7)
-      expect(position[1] - floorHeight(position)).toBeLessThan(2.3)
+      expect(position[1] - floorHeight(position)).toBeLessThan(2.4)
     }
   })
   for (const sprint of [false, true]) {
@@ -421,16 +423,16 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
         for (const {wall, geometry} of architecture) {
           for (const args of geometry.collision) {
             const rotation = new Quaternion
-            world.createCollider(RAPIER.ColliderDesc.trimesh(...args).setTranslation(...wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
+            world.createCollider(RAPIER.ColliderDesc.trimesh(...args, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin).setTranslation(...wall.center).setRotation(rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)))
           }
         }
         for (const geometry of [ground, ...routeVaults.flatMap(vault => [vault.shell, vault.ribs]), mouthVault.shell, mouthVault.ribs, ...vestibuleParts]) {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
         }
-        // The paving and the mouth’s sunken paving welded, as the game builds them
+        // The paving and the mouth’s sunken paving welded, as the game builds them, like the walls
         for (const geometry of [...routeVaults.map(vault => vault.paving), sunkenPaving]) {
           const [vertices, indices] = colliderGeometry(geometry)
-          world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES))
+          world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin))
         }
         for (const floor of climbMouth.floors.flatMap(piece => climbMouthHollow.cut(piece))) {
           world.createCollider(RAPIER.ColliderDesc.convexHull(slabCorners(floor, climbMouth.floorY - 0.24, climbMouth.floorY))!)

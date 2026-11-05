@@ -8,6 +8,7 @@ import {BoxGeometry, Euler, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vect
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import staircase, {stairBlocks, stairFlights, stairFloorHeight, stairRailGeometry, stairRoofs, stairTurn} from '../../src/lib/gallery/staircase.ts'
+import {weldedSurfaceSkin} from '../../src/lib/physics/weldedSurface.ts'
 import {placementIssue, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {floorHeight, galleryPlacement, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
 
@@ -130,7 +131,7 @@ describe('lower gallery', () => {
               const rotation = new Quaternion
               rotation.setFromAxisAngle(new Vector3(0, 1, 0), wall.rotation)
               for (const [vertices, indices] of geometry.collision) {
-                world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices).setTranslation(...wall.center).setRotation(rotation))
+                world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin).setTranslation(...wall.center).setRotation(rotation))
               }
             }
             for (const block of stairBlocks) {
@@ -138,7 +139,7 @@ describe('lower gallery', () => {
             }
             for (const part of [stairTurn.floorGeometry(), stairTurn.roofGeometry(), stairRailGeometry('inner'), stairRailGeometry('outer')]) {
               const [vertices, indices] = colliderGeometry(part)
-              world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES))
+              world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin))
               part.dispose()
             }
             for (const beam of stairRoofs) {

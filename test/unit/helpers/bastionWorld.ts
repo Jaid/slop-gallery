@@ -19,11 +19,12 @@ import RouteVaultGeometry from '../../../src/lib/gallery/passages/RouteVaultGeom
 import VaultGeometry from '../../../src/lib/gallery/passages/VaultGeometry.ts'
 import roundRevealGeometry from '../../../src/lib/gallery/roundRevealGeometry.ts'
 import {roundVestibuleFloorShape} from '../../../src/lib/gallery/roundVestibule.ts'
+import {weldedSurfaceSkin} from '../../../src/lib/physics/weldedSurface.ts'
 import walls from '../fixtures/gallery.ts'
 import {bastionCraterGeometry} from './bastionCrater.ts'
 
 type Shape = {
-  /** welded, so nothing catches on its facets’ inner edges, like `MeshSurfaceCollider` */
+  /** welded, so nothing catches on its facets’ inner edges, with its skin, like `MeshSurfaceCollider` */
   fix?: boolean
   rotation?: number
   translation?: Vec3
@@ -137,7 +138,7 @@ class Colliders {
   /** Puts all of them into the world. */
   into(world: RAPIER.World) {
     for (const {fix, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
-      const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES) : RAPIER.ColliderDesc.trimesh(vertices, indices)
+      const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin) : RAPIER.ColliderDesc.trimesh(vertices, indices)
       if (translation) {
         shape.setTranslation(...translation)
       }

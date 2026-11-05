@@ -214,7 +214,7 @@ describe('the Forge’s orb release', () => {
     expect([0, 0.49, 0.5, 0.99].map(random => releasedOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(releaseCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
-  test('of the orbs it releases, which all roll round both gutters, nine in ten roll on out across the vestibule, down the climb on their own and through the gate’s hatch, and four in five of those into the Bastion’s crater', () => {
+  test('of the orbs it releases, which all roll round both gutters, nine in ten roll on out across the vestibule, down the climb on their own and through the gate’s hatch, and four in five of those into the Bastion’s crater, all the way as far as they’re going, never dragged across the welded surfaces', () => {
     const colliders = forgeAndBastionColliders()
     const state = mulberry32.create(7)
     const scatter = () => (mulberry32.sample(state) * 2 - 1) * 0.015
@@ -223,6 +223,9 @@ describe('the Forge’s orb release', () => {
     const releases = 20
     let through = 0
     let caught = 0
+    /** steps an orb rolled at a good pace, and of those, how many it moved much less than its velocity says */
+    let rolling = 0
+    let dragged = 0
     for (let release = 0; release < releases; release++) {
       const world = physicsWorld(colliders)
       try {
@@ -233,9 +236,19 @@ describe('the Forge’s orb release', () => {
         let mostOff = 0
         let atGate: number | undefined
         let previousZ = Infinity
+        let previous = body.translation()
         for (let step = 0; step < 60 * 80; step++) {
           world.step()
           const position = body.translation()
+          const velocity = body.linvel()
+          const speed = Math.hypot(velocity.x, velocity.y, velocity.z)
+          if (speed > 1) {
+            rolling++
+            if (Math.hypot(position.x - previous.x, position.y - previous.y, position.z - previous.z) < speed * world.timestep * 0.8) {
+              dragged++
+            }
+          }
+          previous = position
           // In the gutters, it keeps to their channels until the vestibule’s open end.
           if (!leftGutters && position.y > forgeBore.sill - 0.5) {
             const projection = forgeGutters[gutter].route.project(position.x, position.z)
@@ -270,5 +283,7 @@ describe('the Forge’s orb release', () => {
     }
     expect(through).toBeGreaterThanOrEqual(releases * 0.9)
     expect(caught).toBeGreaterThanOrEqual(through * 0.8)
+    // but where they strike something
+    expect(dragged / rolling).toBeLessThan(0.02)
   }, 120_000)
 })

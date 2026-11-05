@@ -16,6 +16,7 @@ import RopeRing from '../../src/lib/gallery/railings/RopeRing.ts'
 import StanchionRingGeometry from '../../src/lib/gallery/railings/StanchionRingGeometry.ts'
 import staircase from '../../src/lib/gallery/staircase.ts'
 import {triangleCount} from '../../src/lib/geometry.ts'
+import {weldedSurfaceSkin} from '../../src/lib/physics/weldedSurface.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import walls, {floorHeight, insideGallery, roomAt, rooms, roomVisit} from './fixtures/gallery.ts'
@@ -38,7 +39,7 @@ function worldAt(fps = 60) {
   })
   world.timestep = 1 / fps
   for (const args of surfaceCollisions) {
-    world.createCollider(RAPIER.ColliderDesc.trimesh(...args, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES))
+    world.createCollider(RAPIER.ColliderDesc.trimesh(...args, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin))
   }
   return world
 }

@@ -10,8 +10,8 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} fro
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {corniceBands, vaultShellThickness, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionCrater, bastionCurve, bastionLinkStart} from '../../src/lib/gallery/bastion.ts'
-import {bastionLink, bastionLinkGate, climbMouthHollow} from '../../src/lib/gallery/bastionNetwork.ts'
-import {climbCrossfall, climbMouth} from '../../src/lib/gallery/climb.ts'
+import {bastionLink, bastionLinkCrossfall, bastionLinkGate, climbMouthHollow} from '../../src/lib/gallery/bastionNetwork.ts'
+import {climbMouth} from '../../src/lib/gallery/climb.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lowerGallery from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse from '../../src/lib/gallery/oculusApse.ts'
@@ -69,17 +69,19 @@ test('both wings and the link belong to one Bastion', () => {
   expect(route.end.point[1]).toBeCloseTo(mouthNorthZ, 9)
   expect(route.end.heading).toBeCloseTo(Math.PI / 2, 9)
   expect(route.end.y).toBe(climbMouthHollow.outletY)
-  expect(climbMouth.floorY - route.end.y).toBeLessThan(0.3)
+  // under the elbow’s fall toward its middle and the hollow sunk into it
+  expect(climbMouth.floorY - route.end.y).toBeLessThan(0.35)
   expect(route.end.height).toBe(climbMouth.height)
 })
-test('its paving falls 1 in 20 from both walls toward its middle, like the hairpin’s, but levels out toward the gate, which stands on a level floor', () => {
-  expect(bastionLink.crossfall?.slope).toBe(climbCrossfall)
+test('its paving falls 1 in 20 from both walls toward its middle, but levels out toward the gate, which stands on a level floor', () => {
+  expect(bastionLink.crossfall?.slope).toBe(bastionLinkCrossfall)
+  expect(bastionLinkCrossfall).toBe(1 / 20)
   for (const along of [0, 5, 12, 20]) {
     const station = route.at(along)
     // falling from the faces of its walls
     const half = bastionLink.width / 2 - wallFace
-    expect(bastionLink.sag(station, 0)).toBeCloseTo(climbCrossfall * half, 9)
-    expect(bastionLink.sag(station, -half / 2)).toBeCloseTo(climbCrossfall * half / 2, 9)
+    expect(bastionLink.sag(station, 0)).toBeCloseTo(bastionLinkCrossfall * half, 9)
+    expect(bastionLink.sag(station, -half / 2)).toBeCloseTo(bastionLinkCrossfall * half / 2, 9)
     expect(bastionLink.sag(station, half)).toBe(0)
     expect(bastionLink.sag(station, bastionLink.width / 2)).toBe(0)
   }
@@ -87,7 +89,7 @@ test('its paving falls 1 in 20 from both walls toward its middle, like the hairp
   expect(bastionLink.sag(route.end, 0)).toBe(0)
   expect(bastionLinkGate.hole.bottom).toBeCloseTo(route.end.y - climbMouth.floorY, 9)
   // At the landing, it lies a hand’s breadth under the landing’s floor in its middle and meets it at the walls, a low sill along the doorway.
-  expect(bastionLink.floorAt(...route.start)).toBeCloseTo(bastionLinkStart.y - climbCrossfall * (bastionLink.width / 2 - wallFace), 9)
+  expect(bastionLink.floorAt(...route.start)).toBeCloseTo(bastionLinkStart.y - bastionLinkCrossfall * (bastionLink.width / 2 - wallFace), 9)
   expect(bastionCurve.floorAt(route.start[0], route.start[1] - 0.05)).toBe(bastionLinkStart.y)
 })
 test('beside the Lodge, the tunnel takes up all the room between the Lodge and the mouth of the western climb', () => {
@@ -231,7 +233,7 @@ for (const returning of [false, true]) {
           }, facing)
           world.step()
           // down the sill into the tunnel’s paving falling toward its middle at most
-          expect(position.y).toBeGreaterThan(entranceY - climbCrossfall * (bastionLink.width / 2 - wallFace) - 0.1)
+          expect(position.y).toBeGreaterThan(entranceY - bastionLinkCrossfall * (bastionLink.width / 2 - wallFace) - 0.1)
         }
         expect({
           target,

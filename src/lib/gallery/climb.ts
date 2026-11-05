@@ -33,10 +33,10 @@ const steepest = 0.25
 /** How long a ramp has to be to climb by `rise` without getting steeper than `steepest`. */
 const rampLength = (rise: number) => Math.abs(rise) * easedRampGradient(0.5, 1) / steepest
 /**
- * How steeply the paving of the hairpin, of the mouth’s elbow at its foot and of the tunnel beyond the gate falls from both walls toward their middles: 1 in 20, like an old street’s draining down its middle, see {@link RouteCrossfall}.
- * Orbs released in the Forge come out of the hairpin’s turn along the outer wall of its west leg, and the fall carries them across toward the middle, so they reach the gate right at the hatch in its middle.
+ * How steeply the paving of the hairpin and of the mouth’s elbow at its foot falls from both walls toward their middles: 1 in 11, like an old gutter of a street draining down its middle, see {@link RouteCrossfall}.
+ * Orbs released in the Forge come out of the hairpin’s turn along the outer wall of its west leg at a good 4 m/s, and the fall carries them across toward the middle just in time to reach the gate right at the hatch in its middle.
  */
-export const climbCrossfall = 1 / 20
+export const climbCrossfall = 1 / 11
 /** the radius of the hairpin’s turn, round whose inner wall a meter of floor is left */
 const turnRadius = 3
 /** How far past an elbow a straight stretch of vault runs before a hairpin’s ribs begin or a screen wall stands, like the Bastion’s mouth before its curve: an elbow’s reach and 0.8 m more. */
