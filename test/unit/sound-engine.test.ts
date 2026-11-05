@@ -1,4 +1,4 @@
-import {afterEach, expect, test} from 'bun:test'
+import {afterEach, expect, mock, test} from 'bun:test'
 
 import SoundEngine from '../../src/lib/audio/SoundEngine.ts'
 import audioFixture from './audioFixture.ts'
@@ -67,8 +67,8 @@ test('landing reuses the Soft Weight timbre and increases strength with fall spe
   const heavy = setup()
   heavy.sound.land('generic', 5, false, 9)
   expect(light.sources[0].frequency.setValueAtTime.mock.calls[0][0]).toBe(heavy.sources[0].frequency.setValueAtTime.mock.calls[0][0])
-  const lightPeak = Math.max(...light.gains.slice(3).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
-  const heavyPeak = Math.max(...heavy.gains.slice(3).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
+  const lightPeak = Math.max(...light.gains.slice(5).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
+  const heavyPeak = Math.max(...heavy.gains.slice(5).map(gain => gain.gain.linearRampToValueAtTime.mock.calls[0]?.[0] ?? 0))
   expect(heavyPeak).toBeGreaterThan(lightPeak)
 })
 test('landing prevents a duplicate footfall at impact, not subsequent strides', () => {
@@ -91,7 +91,7 @@ test('zoom sweeps use the transition duration and reversals fade the previous so
   context.currentTime = 0.1
   sound.zoomTransition(true, true, 0.3)
   expect(sources[0].stop).toHaveBeenLastCalledWith(0.125)
-  expect(gains[2].gain.cancelAndHoldAtTime).toHaveBeenCalledWith(0.1)
+  expect(gains[4].gain.cancelAndHoldAtTime).toHaveBeenCalledWith(0.1)
   expect(sources[2].frequency.setValueAtTime).toHaveBeenCalledWith(1260, 0.1)
   expect(sources[2].stop).toHaveBeenLastCalledWith(0.4)
   sound.zoomTransition(false, false, 0)
@@ -104,9 +104,9 @@ test('held zoom has one quiet bed, follows zoom amount, and stops on release', (
   }
   expect(sources).toHaveLength(2)
   expect(sources[0].stop).not.toHaveBeenCalled()
-  expect(gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 0, 0.025)
+  expect(gains[4].gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 0, 0.025)
   sound.zoomTransition(true, false, 0)
-  expect(gains[2].gain.setTargetAtTime).toHaveBeenLastCalledWith(1.35, 0, 0.025)
+  expect(gains[4].gain.setTargetAtTime).toHaveBeenLastCalledWith(1.35, 0, 0.025)
   context.currentTime = 1
   sound.setZoom(0)
   expect(sources[0].stop).toHaveBeenLastCalledWith(1.06)
@@ -148,16 +148,52 @@ test('viewing mode reversal cancels its delayed voices and completed nodes disco
     source.dispatchEvent(new Event('ended'))
     expect(source.disconnect).toHaveBeenCalledTimes(1)
   }
-  for (const node of [...gains.slice(2), ...filters]) {
+  for (const node of [...gains.slice(4), ...filters]) {
     expect(node.disconnect).toHaveBeenCalledTimes(1)
   }
-  expect(gains[0].disconnect).not.toHaveBeenCalled()
-  expect(gains[1].disconnect).not.toHaveBeenCalled()
+  for (const node of gains.slice(0, 4)) {
+    expect(node.disconnect).not.toHaveBeenCalled()
+  }
 })
 test('delayed footstep layers are intrinsically silent before their scheduled attack', () => {
   const {sound, gains} = setup()
   sound.step('generic', 9, false)
-  for (const envelope of gains.slice(3)) {
+  for (const envelope of gains.slice(5)) {
     expect(envelope.gain.value).toBe(0)
   }
+})
+test('world sounds reach the master through the listener’s room, the interface’s directly', () => {
+  const {sound, context, gains} = setup()
+  const [master, , world, outside] = gains
+  expect(sound.world.master).toBe(world as unknown as AudioNode)
+  expect(world.connect).toHaveBeenCalledWith(outside)
+  expect(outside.connect).toHaveBeenCalledWith(master)
+  expect(outside.gain.value).toBe(1)
+  const busOf = (play: () => void) => {
+    const count = gains.length
+    play()
+    return gains[count]
+  }
+  expect(busOf(() => sound.step('generic', 3, false)).connect).toHaveBeenCalledWith(world)
+  expect(busOf(() => sound.tone(320)).connect).toHaveBeenCalledWith(world)
+  expect(busOf(() => sound.playEffect('SFX-42')).connect).toHaveBeenCalledWith(master)
+  expect(busOf(() => sound.playEffect('SFX-44', sound.world)).connect).toHaveBeenCalledWith(world)
+  expect(busOf(() => sound.viewTransition(true)).connect).toHaveBeenCalledWith(master)
+  context.currentTime = 1
+  const release = mock(() => {})
+  const acoustics = mock((_context: BaseAudioContext, input: AudioNode, output: AudioNode) => {
+    input.connect(output)
+    return release
+  })
+  const before = gains.length
+  sound.enterRoom('lobby', acoustics)
+  sound.enterRoom('lobby', acoustics)
+  const lobby = gains[before]
+  expect(gains).toHaveLength(before + 1)
+  expect(acoustics).toHaveBeenCalledTimes(1)
+  expect(acoustics.mock.calls[0]).toEqual([context as unknown as BaseAudioContext, lobby as unknown as AudioNode, master as unknown as AudioNode])
+  expect(world.connect).toHaveBeenLastCalledWith(lobby)
+  expect(lobby.gain.value).toBe(0)
+  expect(lobby.gain.setTargetAtTime).toHaveBeenLastCalledWith(1, 1, 0.12)
+  expect(outside.gain.setTargetAtTime).toHaveBeenLastCalledWith(0, 1, 0.12)
 })

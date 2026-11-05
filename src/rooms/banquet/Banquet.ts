@@ -1,5 +1,6 @@
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import {banquet} from '#src/lib/gallery/banquet.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
@@ -31,6 +32,14 @@ export default class Banquet extends Room {
   constructor() {
     super({
       title: 'The Banquet',
+      // Polished marble checker under a hard ceiling: bright and lively.
+      acoustics: reverberation({
+        decay: 1.7,
+        predelay: 0.017,
+        brightness: [8500, 2400],
+        early: [[0.013, 0.42], [0.029, 0.28]],
+        wet: 0.18,
+      }),
       frame: ['banquet-perspective', 'banquet-deco', 'banquet-checker'],
       cameras,
       spawns,

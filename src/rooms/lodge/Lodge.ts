@@ -2,6 +2,7 @@ import type {GroundSurface} from '../base/Room.ts'
 
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import corridor, {lodgeThreshold} from '#src/lib/gallery/corridor.ts'
 import lodge, {lodgeBay, lodgeWindow} from '#src/lib/gallery/lodge.ts'
 
@@ -46,6 +47,14 @@ export default class Lodge extends Room {
   constructor() {
     super({
       title: 'Lodge',
+      // Timber and fieldstone round a fire: short and warm.
+      acoustics: reverberation({
+        decay: 0.85,
+        predelay: 0.007,
+        brightness: [5000, 1500],
+        early: [[0.006, 0.4], [0.014, 0.3]],
+        wet: 0.15,
+      }),
       frame: ['lodge-twig', 'lodge-tramp', 'lodge-charred'],
       cameras,
       spawns,

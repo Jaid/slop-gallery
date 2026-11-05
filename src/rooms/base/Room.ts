@@ -1,3 +1,4 @@
+import type {RoomAcoustics} from '#src/lib/audio/acoustics/Acoustics.ts'
 import type AmbienceEmitter from '#src/lib/audio/ambience/base/AmbienceEmitter.ts'
 import type {FrameChoice} from '#src/lib/frames/frameChoice.ts'
 import type {CameraBookmark, PortraitRatio, SpawnBookmark} from '#src/lib/gallery/types.ts'
@@ -61,6 +62,8 @@ export type RoomPortraitSlot = {
 /** a light fixed in a room */
 export type Lamp = PointLamp | SpotLamp
 export type RoomOptions = {
+  /** how the room transforms the sounds of the world heard in it, like a reverberation of what it is built of, see `reverberation`; left out, they sound dry */
+  acoustics?: RoomAcoustics
   /** the room’s ambient sounds by their id within the room, in snake_case */
   ambience?: Record<string, RoomAmbience>
   /** the camera bookmarks by their id within the room, in snake_case */
@@ -127,6 +130,8 @@ type Arrayable<T> = ReadonlyArray<T> | T
  * Field initializers of subclasses run after this constructor, so everything derived from them is a getter.
  */
 export default abstract class Room {
+  /** how the room transforms the sounds of the world heard in it, or undefined for dry */
+  readonly acoustics: RoomAcoustics | undefined
   /** the room’s air as one bounded box or several, from its floor (or the bottom of a sunken one) to its clear height; what culling and the analysis of a world count as inside the room */
   abstract readonly air: Arrayable<Box3>
   readonly ambience: ReadonlyMap<string, RoomAmbience>
@@ -163,8 +168,9 @@ export default abstract class Room {
   readonly volumetricSun: number
   readonly walls: ReadonlyMap<string, RoomWall>
 
-  constructor({title, lamps = {}, ambience = {}, cameras = {}, frame, map, upperMap, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
+  constructor({title, acoustics, lamps = {}, ambience = {}, cameras = {}, frame, map, upperMap, slots = {}, spawns = {}, walls = {}, skybox, sunlit = true, volumetricSun = 1}: RoomOptions) {
     this.title = title
+    this.acoustics = acoustics
     this.frame = frame
     this.map = map === undefined ? undefined : new RoomMap(map)
     this.upperMap = upperMap && {

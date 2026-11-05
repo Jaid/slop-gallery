@@ -1,8 +1,10 @@
+import type {RoomAcoustics} from './acoustics/Acoustics.ts'
 import type {FootstepSurface} from './playerSoundEffects.ts'
-import type {ProceduralPlayback} from './proceduralAudio.ts'
+import type {AudioOutput, ProceduralPlayback} from './proceduralAudio.ts'
 
 import {clamp} from 'math'
 
+import Acoustics from './acoustics/Acoustics.ts'
 import {audioVolume} from './audioParameter.ts'
 import {footstepVoices, impactFootstepStrength, playerSoundEffects} from './playerSoundEffects.ts'
 import {osc, playVoices} from './proceduralAudio.ts'
@@ -23,7 +25,10 @@ export default class SoundEngine {
   readonly master = this.context.createGain()
   /** where the effects and the narration meet, at the `?audio` volume */
   readonly output = this.context.createGain()
+  /** where the sounds of the world play, like footsteps, switches and ambience: through the acoustics of the room the listener is in, into the effects master, unlike the interface’s sounds, which play on the master directly */
+  readonly world: AudioOutput
 
+  private readonly acoustics: Acoustics
   private contactIndex = 0
   private extendedZoom = false
   private lastLanding = Number.NEGATIVE_INFINITY
@@ -38,6 +43,17 @@ export default class SoundEngine {
     this.output.gain.value = audioVolume
     this.master.connect(this.output)
     this.output.connect(this.context.destination)
+    const world = this.context.createGain()
+    this.world = {
+      context: this.context,
+      master: world,
+    }
+    this.acoustics = new Acoustics(this.context, world, this.master)
+  }
+
+  /** Hears the world in the room with the id `room` from now on, through its `acoustics`, if it has any; nothing happens while the listener stays in the same room. */
+  enterRoom(room: string, acoustics: RoomAcoustics | undefined) {
+    this.acoustics.enter(room, acoustics)
   }
 
   land(surface: FootstepSurface, speed: number, crouching: boolean, impactSpeed: number) {
@@ -46,7 +62,7 @@ export default class SoundEngine {
     }
     this.lastLanding = this.context.currentTime
     const index = this.contactIndex++
-    playVoices(this, footstepVoices(surface, speed, {
+    playVoices(this.world, footstepVoices(surface, speed, {
       crouching,
       strength: impactFootstepStrength(impactSpeed),
       variation: Math.sin(index * 2.39996),
@@ -64,9 +80,10 @@ export default class SoundEngine {
     }
   }
 
-  playEffect(id: string) {
+  /** Plays the catalog’s sound effect with the id, on the master like the interface’s sounds unless `output` is another, like {@link world}. */
+  playEffect(id: string, output: AudioOutput = this) {
     if (!this.muted) {
-      playSoundEffect(this, id)
+      playSoundEffect(output, id)
     }
   }
 
@@ -99,7 +116,7 @@ export default class SoundEngine {
     }
     // The stride callback owns cadence; no fixed cooldown may discard faster steps.
     const index = this.contactIndex++
-    playVoices(this, footstepVoices(surface, speed, {
+    playVoices(this.world, footstepVoices(surface, speed, {
       crouching,
       variation: Math.sin(index * 2.39996),
     }), `step:${index}`)
@@ -111,9 +128,10 @@ export default class SoundEngine {
     this.viewMotion = undefined
   }
 
+  /** A plain falling sine in the world, the sound of most interactions. */
   tone(frequency: number, duration = 0.3, volume = 0.055) {
     if (!this.muted) {
-      playVoices(this, [osc(frequency, duration, volume, {endFrequency: frequency * 0.55})], 'tone')
+      playVoices(this.world, [osc(frequency, duration, volume, {endFrequency: frequency * 0.55})], 'tone')
     }
   }
 

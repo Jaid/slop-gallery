@@ -3,6 +3,7 @@ import type {Vec3} from 'math'
 
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 import lobby from '#src/lib/gallery/lobby.ts'
 import lobbyVault from '#src/lib/gallery/lobbyVault.ts'
@@ -39,6 +40,14 @@ export default class Lobby extends Room {
   constructor() {
     super({
       title: 'Lobby',
+      // Marble under a glass vault: long and bright.
+      acoustics: reverberation({
+        decay: 2.1,
+        predelay: 0.022,
+        brightness: [9000, 2600],
+        early: [[0.011, 0.5], [0.023, 0.35], [0.041, 0.25]],
+        wet: 0.2,
+      }),
       frame: ['lobby-travertine', 'lobby-louis'],
       cameras,
       spawns,

@@ -2,6 +2,7 @@ import type {FloorSize, RoomSpawn} from '../base/Room.ts'
 
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import {antechamberDomeCrownY} from '#src/lib/gallery/antechamberDomeShape.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
@@ -39,6 +40,14 @@ export default class Antechamber extends Room {
   constructor() {
     super({
       title: 'The Antechamber',
+      // A small room under a tall plaster dome, which sends a sound back down from its crown.
+      acoustics: reverberation({
+        decay: 1.9,
+        predelay: 0.012,
+        brightness: [8000, 2200],
+        early: [[0.04, 0.38], [0.08, 0.2]],
+        wet: 0.19,
+      }),
       frame: 'antechamber-adam',
       cameras,
       skybox: 'sky',

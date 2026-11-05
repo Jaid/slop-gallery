@@ -1,5 +1,6 @@
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import cinnabar, {cinnabarVestibule} from '#src/lib/gallery/cinnabar.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 
@@ -34,6 +35,14 @@ export default class Cinnabar extends Room {
   constructor() {
     super({
       title: 'The Cinnabar',
+      // Plain stone and plaster round a rooflight, its round vestibule ringing faintly.
+      acoustics: reverberation({
+        decay: 1.8,
+        predelay: 0.018,
+        brightness: [7500, 2000],
+        early: [[0.03, 0.3], [0.06, 0.18]],
+        wet: 0.18,
+      }),
       frame: 'cinnabar-meander',
       cameras,
       spawns,

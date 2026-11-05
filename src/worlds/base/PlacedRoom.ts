@@ -27,6 +27,11 @@ export default class PlacedRoom<Kind extends Room = Room> {
     this.fence = room.fence.translate(origin)
   }
 
+  /** how the room transforms the sounds of the world heard in it, or undefined for dry */
+  get acoustics() {
+    return this.room.acoustics
+  }
+
   /** the room’s air in world meters */
   get air() {
     const offset = new Vector3(...this.origin)

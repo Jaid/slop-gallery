@@ -1,5 +1,6 @@
 import {Geofence} from 'geofency'
 
+import reverberation from '#src/lib/audio/acoustics/reverberation.ts'
 import {groundFenceY} from '#src/lib/gallery/floors.ts'
 import salon from '#src/lib/gallery/salon.ts'
 
@@ -28,6 +29,14 @@ export default class Salon extends Room {
   constructor() {
     super({
       title: 'The Salon',
+      // Terrazzo under walls hung frame to frame, whose canvases soak up the highs.
+      acoustics: reverberation({
+        decay: 1.2,
+        predelay: 0.014,
+        brightness: [6500, 1800],
+        early: [[0.012, 0.32], [0.027, 0.2]],
+        wet: 0.15,
+      }),
       frame: ['salon-barbizon', 'salon-whistler', 'salon-impressionist'],
       cameras,
       spawns,
