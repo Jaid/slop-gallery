@@ -5,6 +5,7 @@ import {Shape, Vector2} from 'three/webgpu'
 
 import LodgeCeiling from '#component/LodgeCeiling'
 import LodgeFire from '#component/LodgeFire'
+import LodgeFireGuard from '#component/LodgeFireGuard'
 import LodgeFurnishings from '#component/LodgeFurnishings'
 import Box from '#src/components/Scene/primitives.tsx'
 import lodge, {lodgeOutline} from '#src/lib/gallery/lodge.ts'
@@ -38,7 +39,7 @@ const ceilingCorners = slabCorners(lodge.height, lodge.height + ceilingSlab.dept
  * The walls themselves are drawn by `WallSurface` with `materials.logWall`; this adds everything inside them.
  */
 export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
-  const {hearth, mantel, chimney} = fireplace
+  const {hearth, raisedBed, mantel, chimney} = fireplace
   const pillarWidth = fireplace.width / 2 - fireplace.openingHalfWidth
   const breastDepth = breastBack - fireplace.front
   const lintelTop = fireplace.opening + fireplace.lintelHeight
@@ -54,6 +55,7 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
     <group name='lodge-fireplace' rotation={[0, Math.PI, 0]}>
       <RigidBody colliders='cuboid' type='fixed'>
         <Box material={materials.stone} name='lodge-hearth' position={[0, hearth.size[1] / 2, -hearth.z]} size={hearth.size} />
+        <Box material={materials.stone} name='lodge-firebox-raised-bed' position={[0, hearth.size[1] + raisedBed.size[1] / 2, -raisedBed.z]} size={raisedBed.size} />
         {[-1, 1].map(side => <Box key={side} material={materials.stone} name='lodge-fireplace-pillar' position={[side * (fireplace.openingHalfWidth + pillarWidth / 2), (hearth.size[1] + fireplace.opening) / 2, -(fireplace.front + breastDepth / 2)]} size={[pillarWidth, fireplace.opening - hearth.size[1], breastDepth]} />)}
         <Box material={materials.stone} name='lodge-fireplace-lintel' position={[0, fireplace.opening + fireplace.lintelHeight / 2, -(fireplace.front + breastDepth / 2)]} size={[fireplace.width, fireplace.lintelHeight, breastDepth]} />
         <Box material={materials.timber} name='lodge-mantel' position={[0, lintelTop + mantel.size[1] / 2, -(fireplace.front - mantel.overhang + mantel.size[2] / 2)]} size={mantel.size} />
@@ -61,6 +63,7 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
         <Box material={materials.soot} name='lodge-firebox-back' position={[0, (hearth.size[1] + fireplace.opening) / 2, -fireplace.back - 0.02]} size={[fireplace.openingHalfWidth * 2, fireplace.opening - hearth.size[1], 0.04]} />
       </RigidBody>
       <LodgeFire />
+      <LodgeFireGuard material={materials.iron} />
     </group>
     <LodgeFurnishings materials={materials} />
   </group>

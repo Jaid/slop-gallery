@@ -2,15 +2,16 @@ import type {Vec3} from '../types.ts'
 import type {LogShape} from './LogGeometry.ts'
 
 import lodge from '../lodge.ts'
+import lodgeInterior from '../lodgeInterior/layout.ts'
 
 /**
- * The lodge’s log fire, in the fire’s own frame: the origin sits on the room floor beneath the middle of the log pair, +y is up and +z points out of the firebox into the room. The hearth top is at 0.2 m.
+ * The lodge’s log fire, in the fire’s own frame: the origin sits on the room floor beneath the middle of the log pair, +y is up and +z points out of the firebox into the room. The fire is raised with the stone bed above the 0.2 m hearth.
  *
  * The fireplace group is turned by 180° around y, so this frame is mirrored relative to the room.
  */
 const fire = {
   /** fire origin inside the `lodge-fireplace` group */
-  position: [0, 0, -4.2] as Vec3,
+  position: [0, lodgeInterior.fireplace.raisedBed.size[1], -4.2] as Vec3,
   /** the plain log pair of fast graphics */
   logs: {
     /** z of each log’s axis */

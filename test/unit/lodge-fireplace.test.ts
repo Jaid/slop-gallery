@@ -7,7 +7,10 @@ import {Children, isValidElement} from 'react'
 import {Euler, Matrix4, Vector3} from 'three/webgpu'
 
 import LodgeFire from '../../src/components/LodgeFire/index.tsx'
+import LodgeFireGuard from '../../src/components/LodgeFireGuard/index.tsx'
+import LodgeFurnishings from '../../src/components/LodgeFurnishings/index.tsx'
 import fire, {fireWorldOrigin} from '../../src/lib/gallery/fireplace/config.ts'
+import createFireGuardGeometry, {guardBarrier, guardDepth} from '../../src/lib/gallery/fireplace/FireGuardGeometry.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
 import lodgeInterior from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import LodgeMaterials from '../../src/lib/materials/LodgeMaterials.ts'
@@ -34,6 +37,7 @@ test('the complete fireplace faces inward from the south wall without moving the
     const parts = descendants(fireplace.props.children)
     expect(parts.find(child => child.props.colliders === 'cuboid')!.props.type).toBe('fixed')
     expect(parts.some(child => child.type === LodgeFire)).toBe(true)
+    expect(parts.some(child => child.type === LodgeFireGuard)).toBe(true)
     const transform = new Matrix4
     transform.makeRotationFromEuler(new Euler(...fireplace.props.rotation!)).setPosition(lodge.center[0], lodge.floorY, lodge.center[1])
     const toWorld = (position: Vec3) => {
@@ -53,8 +57,8 @@ test('the complete fireplace faces inward from the south wall without moving the
     expect(toWorld([fire.position[0], fire.position[1], fire.position[2] + fire.light.position[2]]).z).toBeCloseTo(-31.1)
     const fireplaceForward = new Vector3(0, 0, 1)
     expect(fireplaceForward.transformDirection(transform).z).toBeCloseTo(-1)
-    expect(descendants(room).find(child => child.props.position?.[0] === -3.7)).toBeDefined()
-    expect(parts.some(child => child.props.position?.[0] === -3.7)).toBe(false)
+    expect(descendants(room).some(child => child.type === LodgeFurnishings)).toBe(true)
+    expect(parts.some(child => child.type === LodgeFurnishings)).toBe(false)
     // The stonework keeps the firebox the fire was built for: hearth top 0.2 m, inner pillar faces ±1.15 m, lintel underside 1.9 m and the back 0.47 m behind the logs.
     const part = (name: string) => parts.filter(child => child.props.name === name).map(child => ({
       position: child.props.position!,
@@ -62,6 +66,17 @@ test('the complete fireplace faces inward from the south wall without moving the
     }))
     const [hearthBox] = part('lodge-hearth')
     expect(hearthBox.position[1] + hearthBox.size[1] / 2).toBeCloseTo(0.2)
+    const [raisedBed] = part('lodge-firebox-raised-bed')
+    const raisedBedBottom = raisedBed.position[1] - raisedBed.size[1] / 2
+    const raisedBedTop = raisedBed.position[1] + raisedBed.size[1] / 2
+    expect(raisedBedBottom).toBeCloseTo(0.2)
+    expect(raisedBedTop).toBeCloseTo(0.44)
+    expect(fire.position[1]).toBeCloseTo(raisedBed.size[1])
+    expect(raisedBed.position[2] + raisedBed.size[2] / 2).toBeGreaterThan(lodgeInterior.fireplace.guard.footZ)
+    expect(raisedBed.position[2] - raisedBed.size[2] / 2).toBeLessThan(lodgeInterior.fireplace.guard.footZ)
+    expect(guardBarrier.position[1] - guardBarrier.halfExtents[1]).toBeCloseTo(raisedBedTop)
+    expect(guardBarrier.position[1] + guardBarrier.halfExtents[1]).toBeGreaterThan(1.6)
+    expect(guardBarrier.halfExtents[0]).toBeCloseTo(lodgeInterior.fireplace.openingHalfWidth)
     const pillars = part('lodge-fireplace-pillar')
     expect(pillars).toHaveLength(2)
     for (const pillar of pillars) {
@@ -84,5 +99,24 @@ test('the complete fireplace faces inward from the south wall without moving the
     expect(-(mantel.position[2] + mantel.size[2] / 2)).toBeLessThan(lodgeInterior.fireplace.front)
   } finally {
     materials.dispose()
+  }
+})
+test('the iron fireguard bows into the room and blocks the full firebox entrance', () => {
+  const {guard, hearth, raisedBed} = lodgeInterior.fireplace
+  const bottom = hearth.size[1] + raisedBed.size[1]
+  expect(guardDepth(bottom)).toBeCloseTo(guard.footZ)
+  expect(guardDepth(guard.top)).toBeCloseTo(guard.footZ)
+  expect(guardDepth((bottom + guard.top) / 2)).toBeCloseTo(guard.footZ + guard.bow)
+  expect(guardBarrier.position[2]).toBeGreaterThan(guard.footZ)
+  const geometry = createFireGuardGeometry()
+  try {
+    geometry.computeBoundingBox()
+    expect(geometry.boundingBox!.max.z).toBeGreaterThan(guard.footZ + 0.3)
+    expect(geometry.boundingBox!.min.x).toBeLessThan(-1)
+    expect(geometry.boundingBox!.max.x).toBeGreaterThan(1)
+    expect(geometry.boundingBox!.min.y).toBeLessThan(bottom + 0.01)
+    expect(geometry.boundingBox!.max.y).toBeGreaterThan(guard.top - 0.01)
+  } finally {
+    geometry.dispose()
   }
 })

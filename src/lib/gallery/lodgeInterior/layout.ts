@@ -74,12 +74,25 @@ const lodgeInterior = {
   /**
    * The fieldstone chimney breast on the south wall. Lengths are along the room’s z; the fireplace group itself is turned by 180°, so its frame uses the negated values.
    *
-   * The firebox keeps the dimensions the fire was built for: hearth top at 0.2 m, opening 2.3 m wide below a lintel at 1.9 m, back face 0.47 m behind the logs.
+   * The hearth is 0.2 m high; a raised stone bed lifts the fire inside the 2.3 m opening, with bowed iron bars guarding its front.
    */
   fireplace: {
     hearth: {
       size: [4.2, 0.2, 1.3] as Vec3,
       z: 4.35,
+    },
+    /** A new stone step inside the firebox: its top supports both the fire and the guard's feet. */
+    raisedBed: {
+      size: [2.3, 0.24, 0.9] as Vec3,
+      z: 4.18,
+    },
+    /** Wrought-iron fire screen, standing on the raised bed and curving toward the room. */
+    guard: {
+      width: 2.12,
+      bars: 7,
+      footZ: -3.82,
+      top: 1.72,
+      bow: 0.32,
     },
     /** front face of the breast and its pillars */
     front: 3.9,
