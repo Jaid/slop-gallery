@@ -1,6 +1,6 @@
 import type {Wall} from '../placement/wallGeometry.ts'
 
-import {defaultBaseboardHeight, wallFace} from './architectureDimensions.ts'
+import {baseboardCapHeight, defaultBaseboardHeight, wallFace} from './architectureDimensions.ts'
 
 type Point = readonly [number, number]
 
@@ -20,7 +20,7 @@ function trimKey(wall: Wall) {
   if (wall.trimStyle === 'none' || wall.baseboardProfile || wall.slope || wall.curveRadius) {
     return
   }
-  return JSON.stringify([wall.center[1], wall.height, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.baseboardHeight ?? defaultBaseboardHeight, wall.baseboardSection ?? null])
+  return JSON.stringify([wall.center[1], wall.height, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.baseboardHeight ?? defaultBaseboardHeight, wall.baseboardCapHeight ?? baseboardCapHeight, wall.baseboardSection ?? null])
 }
 const tolerance = 1e-6
 /**

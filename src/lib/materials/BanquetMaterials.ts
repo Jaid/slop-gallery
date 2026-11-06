@@ -27,6 +27,7 @@ export default class BanquetMaterials {
         }),
         trim: new BoiserieTrimMaterial({
           baseboardHeight: wall.baseboardHeight,
+          baseboardCapHeight: wall.baseboardCapHeight,
           holes: wall.holes,
           wallHeight: wall.height,
         }),

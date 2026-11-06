@@ -89,8 +89,9 @@ export function colliderGeometry(geometry: BufferGeometry): [Float32Array, Uint3
 function cutArchitecture(wall: Wall) {
   const top = wall.height + 0.3
   const baseboardHeight = wall.baseboardHeight ?? defaultBaseboardHeight
-  if (!Number.isFinite(baseboardHeight) || baseboardHeight <= baseboardCapHeight) {
-    throw new RangeError(`A baseboard needs a finite height greater than its ${baseboardCapHeight} m cap.`)
+  const capHeight = wall.baseboardCapHeight ?? baseboardCapHeight
+  if (!Number.isFinite(capHeight) || capHeight <= 0 || !Number.isFinite(baseboardHeight) || baseboardHeight <= capHeight) {
+    throw new RangeError('A baseboard needs a finite height greater than its positive cap height.')
   }
   if (wall.curveRadius && wall.slope) {
     throw new RangeError('Curved walls cannot rake; their baseboards can follow a sloping floor instead.')
@@ -212,12 +213,12 @@ function cutArchitecture(wall: Wall) {
     }
     const trim: Array<BufferGeometry> = []
     if (wall.trimStyle !== 'none') {
-      let molding = baseboardSection ? sectionBand(baseboardSection) : baseboardBand(0, baseboardHeight - baseboardCapHeight, 0.2)
+      let molding = baseboardSection ? sectionBand(baseboardSection) : baseboardBand(0, baseboardHeight - capHeight, 0.2)
       const join = (part: Brush) => {
         molding = evaluator.evaluate(molding, part, ADDITION, brush(new BufferGeometry))
       }
       if (!baseboardSection) {
-        join(baseboardBand(baseboardHeight - baseboardCapHeight, baseboardCapHeight, 0.25))
+        join(baseboardBand(baseboardHeight - capHeight, capHeight, 0.25))
       }
       for (const hole of holes) {
         if (hole.casing === false) {
@@ -312,7 +313,7 @@ export function createArchitectureGeometry(wall: Wall) {
   return withDisposal(cutArchitecture(wall))
 }
 
-const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? defaultBaseboardHeight, wall.baseboardSection ?? null, wall.miters ?? null, wall.baseboardMiters ?? null])
+const architectureKey = (wall: Wall) => JSON.stringify([wall.width, wall.height, wall.holes ?? [], wall.slope ?? 0, wall.baseboardProfile ?? null, wall.trimStyle ?? 'classic', wall.cornice ?? true, wall.curveRadius ?? 0, wall.baseboardHeight ?? defaultBaseboardHeight, wall.baseboardCapHeight ?? baseboardCapHeight, wall.baseboardSection ?? null, wall.miters ?? null, wall.baseboardMiters ?? null])
 /** Cuts each distinct layout among `walls` once. Called at module level on fixed walls, the build bakes the result for {@link provideArchitecture}. */
 export function cutArchitectures(walls: ReadonlyArray<Wall>) {
   const cuts = new Map<string, ArchitectureParts>

@@ -159,8 +159,8 @@ describe('boolean architecture', () => {
                 } else if (hole.casing === false) {
                   // Without a casing, only the baseboard stands out of the reveal; at a corner, it runs on square.
                   const baseboard = wall.baseboardHeight ?? defaultBaseboardHeight
-                  // The ray travels beyond the jamb, where the ramp can rise into its path.
-                  // Sample the highest floor contact across that reach, including internal profile knots.
+                  // A sloping floor can bring the taller cap into a horizontal ray farther beyond the jamb.
+                  // Sample both ends and intervening knots of the exposed baseboard along the ray.
                   const profile = wall.baseboardProfile
                   const floorAt = (u: number) => {
                     if (!profile) {
@@ -178,12 +178,16 @@ describe('boolean architecture', () => {
                     return y0 + (y1 - y0) * (u - u0) / (u1 - u0)
                   }
                   const end = hole.u + side * (hole.width / 2 + clear)
-                  const floor = Math.max(floorAt(jamb), floorAt(end), ...profile?.filter(([u]) => u >= Math.min(jamb, end) && u <= Math.max(jamb, end)).map(([, height]) => height) ?? [])
-                  const relativeY = y - floor
-                  if (relativeY >= baseboard) {
+                  const floors = [floorAt(jamb), floorAt(end), ...profile?.filter(([u]) => u >= Math.min(jamb, end) && u <= Math.max(jamb, end)).map(([, height]) => height) ?? []]
+                  const highestFloor = Math.max(...floors)
+                  const lowestFloor = Math.min(...floors)
+                  const lowerBand = baseboard - (wall.baseboardCapHeight ?? baseboardCapHeight)
+                  if (y >= highestFloor + baseboard) {
                     depth = wallFace
+                  } else if (y >= lowestFloor + lowerBand && y < highestFloor + baseboard) {
+                    depth = 0.25
                   } else {
-                    depth = relativeY < baseboard - baseboardCapHeight ? 0.2 : 0.25
+                    depth = 0.2
                   }
                 }
                 const direction = new Vector3(side, side * (wall.slope ?? 0), 0)

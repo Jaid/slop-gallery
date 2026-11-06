@@ -11,6 +11,7 @@ import {baseboardCapHeight, defaultBaseboardHeight} from '../../src/lib/gallery/
 import {bastionCurve} from '../../src/lib/gallery/bastion.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
+import {bastionBaseboard} from '../../src/rooms/bastion/walls.ts'
 import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
@@ -46,6 +47,36 @@ describe('floor-following wall baseboards', () => {
       geometry.dispose()
       material.dispose()
     }
+  })
+  test('the Bastion uses a 30 cm lower band and a 10 cm cap on every wall, without changing the Lobby', () => {
+    const bastionWalls = walls.filter(wall => wall.room === 'bastion')
+    expect(bastionWalls.length).toBeGreaterThan(0)
+    for (const wall of bastionWalls) {
+      expect(wall.baseboardHeight).toBe(bastionBaseboard.baseboardHeight)
+      expect(wall.baseboardCapHeight).toBe(bastionBaseboard.baseboardCapHeight)
+    }
+    const wall = bastionWalls.find(candidate => !candidate.baseboardProfile && !candidate.holes?.length)!
+    const geometry = createArchitectureGeometry(wall)
+    const material = new MeshBasicMaterial
+    try {
+      const trim = new Mesh(geometry.trim[0], material)
+      const x = 0
+      for (const [y, front] of [[0.29, 0.2], [0.31, 0.25], [0.39, 0.25], [0.41, null]] as const) {
+        const ray = new Raycaster(new Vector3(x, y, 1), new Vector3(0, 0, -1))
+        const hit = ray.intersectObject(trim)[0]
+        if (front === null) {
+          expect(hit).toBeUndefined()
+        } else {
+          expect(hit.point.z).toBeCloseTo(front, 5)
+        }
+      }
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+    const lobby = walls.find(candidate => candidate.id === 'lobby-south')!
+    expect(lobby.baseboardHeight ?? defaultBaseboardHeight).toBe(0.25)
+    expect(lobby.baseboardCapHeight ?? baseboardCapHeight).toBe(0.04)
   })
   for (const side of ['west', 'east'] as const) {
     test(`${side}: constant-height trim follows the floor, ramp and raised base without buried horizontal stubs`, () => {
@@ -141,13 +172,21 @@ describe('floor-following wall baseboards', () => {
           const floor = bastionCurve.floorAt(x, z)! - wall.center[1]
           const [localX, localZ] = wall.curveRadius ? [(wall.curveRadius - 0.23) * Math.sin(u / wall.curveRadius), wall.curveRadius - (wall.curveRadius - 0.23) * Math.cos(u / wall.curveRadius)] : [u, 0.23]
           const down = new Raycaster(new Vector3(localX, floor + 1, localZ), new Vector3(0, -1, 0), 0, 2)
-          expect(down.intersectObject(trim)[0].point.y).toBeCloseTo(floor + defaultBaseboardHeight, 3)
+          expect(down.intersectObject(trim)[0].point.y).toBeCloseTo(floor + bastionBaseboard.baseboardHeight, 3)
         }
       } finally {
         geometry.dispose()
       }
     }
     material.dispose()
+  })
+  test('geometry caching distinguishes baseboard cap profiles', () => {
+    const wall = walls.find(value => value.id === 'bastion-curve_wall_0')!
+    const original = architectureGeometry(wall)
+    expect(architectureGeometry({
+      ...wall,
+      baseboardCapHeight,
+    })).not.toBe(original)
   })
   test('geometry caching distinguishes mirrored and flat floor profiles', () => {
     const west = walls.find(value => value.id === 'oculus-west')!

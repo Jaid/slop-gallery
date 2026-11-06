@@ -6,14 +6,16 @@ import type {Node} from 'three/webgpu'
 import {abs, color, float, Fn, Loop, max, mix, normalGeometry, positionLocal, select, uniform, uniformArray, vec2} from 'three/tsl'
 import {MeshStandardNodeMaterial, Vector4} from 'three/webgpu'
 
-import {baseboardCapHeight, defaultBaseboardHeight, wallOpeningTrim} from '#src/lib/gallery/architectureDimensions.ts'
+import {baseboardCapHeight as defaultBaseboardCapHeight, defaultBaseboardHeight, wallOpeningTrim} from '#src/lib/gallery/architectureDimensions.ts'
 
 import {inside, line} from '../filters.ts'
 import {calacatta, marble} from '../marble/marble.ts'
 import {gilt, paintedPlaster, slateBoiserie} from './paint.ts'
 
 export type BoiserieTrimOptions = {
-  /** height of the baseboard, whose top 4 cm cap is gilded */
+  /** height of the projecting upper cap, 4 cm by default */
+  baseboardCapHeight?: number
+  /** total height of the baseboard, whose upper cap is gilded */
   baseboardHeight?: number
   /** the wall’s doorways, whose surrounds and plinths are carved from marble */
   holes?: ReadonlyArray<WallOpening>
@@ -55,13 +57,13 @@ const openingDistance = (point: Node<'vec2'>, hole: Node<'vec4'>): Float => {
  * Meant for the trim and cornice meshes of one wall, in its local coordinates (x along the wall from its center, y up from its floor, +z into the room).
  */
 export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
-  constructor({baseboardHeight = defaultBaseboardHeight, holes = [], marble: stone = calacatta, palette = slateBoiserie, wallHeight}: BoiserieTrimOptions) {
+  constructor({baseboardCapHeight = defaultBaseboardCapHeight, baseboardHeight = defaultBaseboardHeight, holes = [], marble: stone = calacatta, palette = slateBoiserie, wallHeight}: BoiserieTrimOptions) {
     super({
       roughness: 0.6,
       metalness: 0,
       envMapIntensity: 1,
     })
-    if (!(wallHeight > 1) || !(baseboardHeight > baseboardCapHeight)) {
+    if (!(wallHeight > 1) || !(baseboardCapHeight > 0) || !(baseboardHeight > baseboardCapHeight)) {
       throw new RangeError(`Boiserie trim needs a wall taller than 1 m and a baseboard taller than its ${baseboardCapHeight * 100} cm cap.`)
     }
     if (holes.length > maxHoles) {
