@@ -10,6 +10,7 @@ import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} fro
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
 import {barDepth} from '../../src/lib/gallery/BarredOpeningGeometry.ts'
 import {apseOpeningPoint, apseOpenings, bastionClearance, bastionCurve, bastionLanterns} from '../../src/lib/gallery/bastion.ts'
+import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'
 import oculusApse from '../../src/lib/gallery/oculusApse.ts'
 import OculusGroundGeometry from '../../src/lib/gallery/OculusGroundGeometry.ts'
@@ -153,6 +154,29 @@ describe('the apse’s barred gate and windows onto the Bastion', () => {
       const barRay = new Raycaster(light, bar.clone().sub(light).normalize(), 0, 30)
       const toBar = barRay.intersectObjects(bars)
       expect(toBar[0]?.object).toBe(bars[index])
+    }
+  })
+  test('the gate shares the Bastion gate’s mouse hole, while the windows are barred down to their sills', () => {
+    const {hatch} = bastionLinkGate
+    expect(hatch.width).toBe(0.6)
+    expect(hatch.height - (hatch.bottom ?? 0)).toBeCloseTo(0.5, 9)
+    const rayHitsBars = (index: number, u: number, height: number) => {
+      const {wall} = openings[index].apse
+      const y = wall.center[1] + height
+      const front = new Vector3(...wallPosition(wall, u, y, barDepth + 0.25))
+      const back = new Vector3(...wallPosition(wall, u, y, barDepth - 0.25))
+      const toward = back.sub(front)
+      const ray = new Raycaster(front, toward.clone().normalize(), 0, toward.length())
+      return ray.intersectObject(bars[index]).length > 0
+    }
+    const gate = openings[1].apse.hole
+    expect(gate.bottom ?? 0).toBe(0)
+    expect(rayHitsBars(1, gate.u, 0.25)).toBe(false)
+    expect(rayHitsBars(1, gate.u, 0.7)).toBe(true)
+    expect(rayHitsBars(1, gate.u + 0.45, 0.25)).toBe(true)
+    for (const index of [0, 2]) {
+      const window = openings[index].apse.hole
+      expect(rayHitsBars(index, window.u, (window.bottom ?? 0) + 0.25)).toBe(true)
     }
   })
   test('the bars stand closer than anyone can squeeze through, and the reveal closes the gap between both walls', () => {

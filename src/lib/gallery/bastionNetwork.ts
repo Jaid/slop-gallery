@@ -4,6 +4,7 @@ import type {Vec3} from './types.ts'
 import {wallFace} from './architectureDimensions.ts'
 import {bastionLinkStart, bastionLinkStripZ, bastionLinkWidth, bastionPassages} from './bastion.ts'
 import {climbCrossfall, climbHairpin, climbMouth, climbPassages} from './climb.ts'
+import gateMouseHole from './gateMouseHole.ts'
 import FloorHollow from './passages/FloorHollow.ts'
 import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
@@ -116,13 +117,10 @@ export const bastionLinkGate = {
     ...linkHole,
     bottom: gateFoot,
   },
-  hatch: {
+  hatch: gateMouseHole({
     u: linkHole.u,
-    width: 0.6,
     bottom: gateFoot,
-    height: gateFoot + 0.5,
-    profile: 'arch',
-  },
+  }),
   bands: [0.15, 1.05, 1.95],
 } as const satisfies {
   bands: ReadonlyArray<number>

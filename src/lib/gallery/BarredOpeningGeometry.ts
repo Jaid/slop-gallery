@@ -15,6 +15,8 @@ export type BarredOpeningOptions = {
   bands: ReadonlyArray<number>
   /** how far behind the wall’s center line the opening runs on, through the gap to the wall it meets there */
   depth: number
+  /** a low mouse hole through the bars, in the wall’s own coordinates */
+  hatch?: WallOpening
 }
 type Point = readonly [x: number, y: number, z: number]
 type Triangle = readonly [Point, Point, Point]
@@ -116,7 +118,7 @@ export default class BarredOpeningGeometry {
   readonly bars: BufferGeometry
   readonly reveal: BufferGeometry
 
-  constructor(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation' | 'width'>, hole: WallOpening, {bands, depth, back = hole}: BarredOpeningOptions) {
+  constructor(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation' | 'width'>, hole: WallOpening, {bands, depth, back = hole, hatch}: BarredOpeningOptions) {
     const bottom = hole.bottom ?? 0
     const halfWidth = hole.width / 2
     const front = openingOutline(hole)
@@ -149,7 +151,10 @@ export default class BarredOpeningGeometry {
       }
     }
     const reveal = solid.geometry()
-    const iron = barredIron(hole, bands, {curveRadius: wall.curveRadius})
+    const iron = barredIron(hole, bands, {
+      curveRadius: wall.curveRadius,
+      hatch,
+    })
     const place = new Matrix4
     place.makeRotationY(wall.rotation).setPosition(...wall.center)
     for (const part of [reveal, ...iron]) {

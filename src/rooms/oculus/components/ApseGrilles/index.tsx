@@ -9,6 +9,7 @@ import {MeshStandardNodeMaterial} from 'three/webgpu'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import BarredOpeningGeometry from '#src/lib/gallery/BarredOpeningGeometry.ts'
 import {apseOpeningPoint, apseOpenings, bastionClearance} from '#src/lib/gallery/bastion.ts'
+import gateMouseHole from '#src/lib/gallery/gateMouseHole.ts'
 import {mergeParts} from '#src/lib/geometry.ts'
 import {wallCoordinates} from '#src/lib/placement/wallGeometry.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
@@ -50,6 +51,7 @@ export function apseGrille(opening: ApseOpening) {
     },
     bands: opening.bands,
     depth: bastionClearance,
+    hatch: opening.name === 'gate' ? gateMouseHole(hole) : undefined,
   })
 }
 
