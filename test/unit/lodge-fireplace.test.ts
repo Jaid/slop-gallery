@@ -46,7 +46,7 @@ test('the complete fireplace faces inward from the south wall without moving the
     }
     const hearth = toWorld(parts.find(child => child.props.name === 'lodge-hearth')!.props.position!)
     expect(hearth.x).toBeCloseTo(lodge.center[0])
-    expect(hearth.z).toBeCloseTo(-30.65)
+    expect(hearth.z).toBeCloseTo(lodge.center[1] + lodgeInterior.fireplace.hearth.z)
     // The fire sits where its crackling sounds from.
     const origin = toWorld(fire.position)
     for (const [axis, value] of origin.toArray().entries()) {
@@ -66,6 +66,9 @@ test('the complete fireplace faces inward from the south wall without moving the
     }))
     const [hearthBox] = part('lodge-hearth')
     expect(hearthBox.position[1] + hearthBox.size[1] / 2).toBeCloseTo(0.2)
+    // The thicker hearth still meets the stone breast at the back, but now projects into the room.
+    expect(-hearthBox.position[2] - hearthBox.size[2] / 2).toBeCloseTo(3.35)
+    expect(-hearthBox.position[2] + hearthBox.size[2] / 2).toBeCloseTo(5)
     const [raisedBed] = part('lodge-firebox-raised-bed')
     const raisedBedBottom = raisedBed.position[1] - raisedBed.size[1] / 2
     const raisedBedTop = raisedBed.position[1] + raisedBed.size[1] / 2
@@ -111,7 +114,11 @@ test('the iron fireguard bows into the room and blocks the full firebox entrance
   const geometry = createFireGuardGeometry()
   try {
     geometry.computeBoundingBox()
-    expect(geometry.boundingBox!.max.z).toBeGreaterThan(guard.footZ + 0.3)
+    expect(geometry.boundingBox!.max.z).toBeGreaterThan(guard.footZ + 0.15)
+    // The gentler bow remains above the extended stone hearth, rather than hanging out over the floor.
+    expect(-geometry.boundingBox!.max.z).toBeGreaterThan(hearth.z - hearth.size[2] / 2)
+    expect(guard.bow).toBeLessThan(0.2)
+    expect(guard.footZ).toBeGreaterThan(-lodgeInterior.fireplace.front)
     expect(geometry.boundingBox!.min.x).toBeLessThan(-1)
     expect(geometry.boundingBox!.max.x).toBeGreaterThan(1)
     expect(geometry.boundingBox!.min.y).toBeLessThan(bottom + 0.01)
