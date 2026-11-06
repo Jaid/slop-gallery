@@ -1,4 +1,4 @@
-import {bastionNetwork} from '#src/lib/gallery/bastionNetwork.ts'
+import {bastionNetwork, lodgeSpurEnd} from '#src/lib/gallery/bastionNetwork.ts'
 import {climbScreen} from '#src/lib/gallery/climb.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 
@@ -11,7 +11,7 @@ export const bastionBaseboard = {
 } as const
 
 // The connected passage network’s walls and the screen before its narrow Forge approach.
-const walls = localWalls('bastion', roomOrigins.bastion, [...bastionNetwork.flatMap(passage => passage.walls), climbScreen])
+const walls = localWalls('bastion', roomOrigins.bastion, [...bastionNetwork.flatMap(passage => passage.walls), climbScreen, lodgeSpurEnd])
 export default Object.fromEntries(Object.entries(walls).map(([id, wall]) => [id, {
   ...wall,
   ...bastionBaseboard,

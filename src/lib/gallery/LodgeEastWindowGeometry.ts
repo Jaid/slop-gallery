@@ -3,6 +3,8 @@ import type {BufferGeometry} from 'three/webgpu'
 import {BoxGeometry} from 'three/webgpu'
 
 import {mergeParts} from '../geometry.ts'
+import {wallFace} from './architectureDimensions.ts'
+import {lodgeSpurWidth, lodgeSpurX} from './bastionNetwork.ts'
 import {lodgeEastWindow} from './lodge.ts'
 
 const box = (size: readonly [number, number, number], position: readonly [number, number, number]) => {
@@ -11,7 +13,7 @@ const box = (size: readonly [number, number, number], position: readonly [number
   return geometry
 }
 
-/** The glazed dead end of the Bastion's new branch, matching the Lodge's west window in brass, height and proportions. */
+/** A deep stone-lined side window from the Lodge to the Bastion’s blind branch. */
 export default class LodgeEastWindowGeometry {
   readonly frame: BufferGeometry
   readonly glass: BoxGeometry
@@ -21,17 +23,19 @@ export default class LodgeEastWindowGeometry {
     const {x, z, width, bottom, top, glassThickness} = lodgeEastWindow
     const height = top - bottom
     const middleY = (bottom + top) / 2
-    const reveal = 0.14
+    const tunnelX = lodgeSpurX - lodgeSpurWidth / 2 + wallFace
+    const depth = tunnelX - x
+    const middleX = (x + tunnelX) / 2
     const border = 0.09
     // The stone reveal wraps the opening into the Lodge's wall, with a projecting sill.
     this.lining = mergeParts([
-      box([0.27, 0.16, width + border * 2], [x + 0.03, bottom - 0.08, z]),
-      box([0.24, border, width + border * 2], [x + 0.02, top + border / 2, z]),
-      ...[-1, 1].map(side => box([0.24, height, border], [x + 0.02, middleY, z + side * (width + border) / 2])),
+      box([depth, 0.16, width + border * 2], [middleX, bottom - 0.08, z]),
+      box([depth, border, width + border * 2], [middleX, top + border / 2, z]),
+      ...[-1, 1].map(side => box([depth, height, border], [middleX, middleY, z + side * (width + border) / 2])),
     ])
-    this.glass = box([glassThickness, height, width], [x + reveal - glassThickness / 2, middleY, z])
+    this.glass = box([glassThickness, height, width], [tunnelX - glassThickness / 2, middleY, z])
     const stop = 0.035
-    const stopX = x + reveal + 0.0125
+    const stopX = tunnelX + 0.0125
     this.frame = mergeParts([
       ...[bottom + stop / 2, top - stop / 2].map(y => box([0.025, stop, width], [stopX, y, z])),
       ...[-1, 1].map(side => box([0.025, height - stop * 2, stop], [stopX, middleY, z + side * (width - stop) / 2])),

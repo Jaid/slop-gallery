@@ -1,7 +1,7 @@
 import type {Wall, WallOpening} from '../placement/wallGeometry.ts'
 import type {Vec3} from './types.ts'
 
-import {wallFace} from './architectureDimensions.ts'
+import {vaultShellThickness, wallFace} from './architectureDimensions.ts'
 import {bastionLinkStart, bastionLinkStripZ, bastionLinkWidth, bastionPassages} from './bastion.ts'
 import {climbCrossfall, climbHairpin, climbMouth, climbPassages} from './climb.ts'
 import gateMouseHole from './gateMouseHole.ts'
@@ -108,27 +108,37 @@ export const bastionLink = new RoutedPassage('link', 'bastion', route, bastionLi
     casing: false,
   }],
 })
-/** The short blind branch: north through the link's wall, around a rounded westward elbow, and up to the Lodge's glazed east wall. Its paving rises gently to the Lodge's level. */
-const spurRadius = 1.5
-const spurZ = lodgeEastWindow.z
-const spurEndX = lodgeEastWindow.x
+/** Straight north past the Lodge’s side window, stopping only where the existing passage toward the Lodge blocks further progress. The back of its closing wall clears that passage’s vault by 1 cm. */
+const spurEndZ = lodge.tunnelZ + lodge.passageWidth / 2 + vaultShellThickness + wallFace + 0.01
 const spurRoute = new PassageRoute([lodgeSpurX, lodgeSpurStartZ], -Math.PI / 2, lodgeSpurFloorY, height, [{
   y: lodge.floorY,
   height: 3.55,
-  steps: [
-    {length: lodgeSpurStartZ - spurZ - spurRadius},
-    {
-      radius: spurRadius,
-      angle: -Math.PI / 2,
-    },
-    {length: lodgeSpurX - spurRadius - spurEndX},
-  ],
-}])
-export const lodgeSpur = new RoutedPassage('lodge-spur', 'bastion', spurRoute, lodgeSpurWidth)
-export const lodgeSpurLanterns = [lodgeSpur.ribGap(2)]
-if (Math.hypot(spurRoute.end.point[0] - spurEndX, spurRoute.end.point[1] - spurZ) > 1e-6) {
-  throw new Error('The Lodge spur must end squarely against the Lodge east wall.')
+  steps: [{length: 2}],
+}, {length: lodgeSpurStartZ - spurEndZ - 2}])
+export const lodgeSpur = new RoutedPassage('lodge-spur', 'bastion', spurRoute, lodgeSpurWidth, {
+  openings: [{
+    name: 'lodge_window',
+    along: lodgeSpurStartZ - lodgeEastWindow.z,
+    side: -1,
+    width: lodgeEastWindow.width,
+    bottom: lodgeEastWindow.bottom - lodge.floorY,
+    height: lodgeEastWindow.top - lodge.floorY,
+    profile: 'rectangle',
+    casing: false,
+  }],
+})
+export const lodgeSpurEnd: Wall = {
+  id: 'bastion-lodge-spur_end',
+  room: 'bastion',
+  center: [lodgeSpurX, lodge.floorY, spurEndZ],
+  rotation: 0,
+  width: lodgeSpurWidth,
+  height: spurRoute.end.height + vaultShellThickness,
+  sticky: false,
+  trimStyle: 'plain',
+  cornice: false,
 }
+export const lodgeSpurLanterns = [lodgeSpur.ribGap(2)]
 export const bastionLinkLanterns = [bastionLink.ribGap(4), bastionLink.ribGap(route.length - 5)]
 const mouthWall = climbMouth.walls[2]
 /** The tunnel opens into the mouth’s north wall at the elbow, the size of its vault and bare like the ends of the mouth’s own vaults there. */

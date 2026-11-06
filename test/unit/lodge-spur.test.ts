@@ -3,8 +3,9 @@ import {afterAll, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {bastionLink, insideBastion, lodgeSpur, lodgeSpurLanterns, lodgeSpurWidth, lodgeSpurX} from '../../src/lib/gallery/bastionNetwork.ts'
-import {lodgeEastWindow, lodgeWindow} from '../../src/lib/gallery/lodge.ts'
+import {vaultShellThickness, wallFace} from '../../src/lib/gallery/architectureDimensions.ts'
+import {bastionLink, insideBastion, lodgeSpur, lodgeSpurEnd, lodgeSpurLanterns, lodgeSpurWidth, lodgeSpurX} from '../../src/lib/gallery/bastionNetwork.ts'
+import lodge, {lodgeEastWindow, lodgeWindow} from '../../src/lib/gallery/lodge.ts'
 import LodgeEastWindowGeometry from '../../src/lib/gallery/LodgeEastWindowGeometry.ts'
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import {routePendantMounts} from '../../src/lib/gallery/pendants/mounts.ts'
@@ -41,15 +42,21 @@ test('the link wall at the marked point has a walkable bare arch leading into th
   expect(wallHit(linkWall, [lodgeSpurX, start.y + 1.2, -28], [0, 0, -1])).toBeUndefined()
   expect(wallHit(linkWall, [lodgeSpurX - 3, start.y + 1.2, -28], [0, 0, -1])).toBeDefined()
 })
-test('the vaulted passage turns toward the Lodge and ends at its east window, without connecting to another passage', () => {
+test('the vaulted passage stays straight past the window and closes just short of the existing northern passage', () => {
   const end = lodgeSpur.route.end
-  expect(end.point).toEqual([lodgeEastWindow.x, lodgeEastWindow.z])
-  expect(end.heading).toBeCloseTo(-Math.PI, 9)
+  expect(end.point[0]).toBeCloseTo(lodgeSpurX, 9)
+  expect(end.point[1]).toBeLessThan(lodgeEastWindow.z - lodgeEastWindow.width / 2)
+  expect(end.point[1] - wallFace).toBeCloseTo(lodge.tunnelZ + lodge.passageWidth / 2 + vaultShellThickness + 0.01, 9)
+  expect(end.heading).toBeCloseTo(-Math.PI / 2, 9)
   expect(end.y).toBe(-5)
-  expect(lodgeSpur.floorAt(end.point[0] + 0.1, end.point[1])).toBeDefined()
-  expect(lodgeSpur.floorAt(lodgeEastWindow.x - 0.2, lodgeEastWindow.z)).toBeUndefined()
+  expect(lodgeSpur.floorAt(end.point[0], end.point[1] + 0.1)).toBeDefined()
+  expect(lodgeSpur.floorAt(end.point[0], end.point[1] - 0.2)).toBeUndefined()
+  expect(walls.some(wall => wall.id === lodgeSpurEnd.id)).toBe(true)
+  expect(wallHit(lodgeSpurEnd, [lodgeSpurX, end.y + 1.6, end.point[1] + 0.5], [0, 0, -1])).toBeDefined()
+  expect(wallHit(lodgeSpurEnd, [lodgeSpurX, end.y + end.height - 0.01, end.point[1] + 0.5], [0, 0, -1])).toBeDefined()
   for (let along = 0.1; along < lodgeSpur.route.length - 0.1; along += 0.1) {
     const {point: [x, z], y} = lodgeSpur.route.at(along)
+    expect(x).toBeCloseTo(lodgeSpurX, 9)
     expect(insideBastion([x, y + 1, z])).toBe(true)
     expect(lodgeSpur.floorAt(x, z)).toBeCloseTo(y, 7)
   }
@@ -75,14 +82,14 @@ test('the east Lodge wall opens to one matching glazed window, not another doorw
   window.glass.computeBoundingBox()
   const pane = window.glass.boundingBox!
   expect(pane.min.x).toBeGreaterThan(lodgeEastWindow.x)
-  expect(pane.max.x).toBeLessThan(lodgeEastWindow.x + 0.25)
+  expect(pane.max.x).toBeCloseTo(lodgeSpurX - lodgeSpurWidth / 2 + wallFace, 5)
   expect(pane.min.y).toBeCloseTo(lodgeEastWindow.bottom, 6)
   expect(pane.max.y).toBeCloseTo(lodgeEastWindow.top, 6)
   expect(pane.min.z).toBeCloseTo(lodgeEastWindow.z - lodgeEastWindow.width / 2, 5)
   const glassMesh = new Mesh(window.glass, new MeshBasicMaterial({side: DoubleSide}))
   try {
-    const ray = new Raycaster(new Vector3(-18.8, -3, lodgeEastWindow.z), new Vector3(-1, 0, 0))
-    expect(ray.intersectObject(glassMesh)[0]?.point.x).toBeCloseTo(lodgeEastWindow.x + 0.14, 2)
+    const ray = new Raycaster(new Vector3(lodgeSpurX, -3, lodgeEastWindow.z), new Vector3(-1, 0, 0))
+    expect(ray.intersectObject(glassMesh)[0]?.point.x).toBeCloseTo(lodgeSpurX - lodgeSpurWidth / 2 + wallFace, 5)
   } finally {
     glassMesh.material.dispose()
   }
@@ -90,4 +97,33 @@ test('the east Lodge wall opens to one matching glazed window, not another doorw
     rooms: ['bastion', 'lodge'],
     holes: [['lodge-east', 'east_window']],
   })
+})
+test('the entrance clears the parent vault and ribs at walking height, and the side window clears the spur', () => {
+  const material = new MeshBasicMaterial({side: DoubleSide})
+  const link = new RouteVaultGeometry(bastionLink)
+  const spur = new RouteVaultGeometry(lodgeSpur)
+  try {
+    const start = lodgeSpur.route.at(0)
+    for (const dx of [-0.6, 0, 0.6]) {
+      const ray = new Raycaster(new Vector3(lodgeSpurX + dx, start.y + 1.7, -28), new Vector3(0, 0, -1), 0, 2.2)
+      for (const geometry of [link.shell, link.ribs]) {
+        expect(ray.intersectObject(new Mesh(geometry, material))).toHaveLength(0)
+      }
+      // Cutting the doorway must leave a connected roof, rather than an opening to the sky.
+      for (const z of [-28.4, -29, -29.7]) {
+        const up = new Raycaster(new Vector3(lodgeSpurX + dx, start.y + 1.7, z), new Vector3(0, 1, 0), 0, 1.1)
+        expect(up.intersectObject(new Mesh(link.shell, material)).length).toBeGreaterThan(0)
+      }
+    }
+    const ray = new Raycaster(new Vector3(lodgeSpurX, -3, lodgeEastWindow.z), new Vector3(-1, 0, 0), 0, 3.1)
+    for (const geometry of [spur.shell, spur.ribs]) {
+      expect(ray.intersectObject(new Mesh(geometry, material))).toHaveLength(0)
+    }
+    const side = lodgeSpur.walls.find(wall => wall.holes?.some(hole => hole.name === 'lodge_window'))!
+    expect(wallHit(side, [lodgeSpurX, -3, lodgeEastWindow.z], [-1, 0, 0])).toBeUndefined()
+  } finally {
+    material.dispose()
+    link.dispose()
+    spur.dispose()
+  }
 })

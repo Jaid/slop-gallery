@@ -70,7 +70,7 @@ export const lodgeWindow = {
   lining: 0.1,
   glassThickness: 0.04,
 } as const
-/** Glazing closing the new blind stone passage beside the east side of the Lodge. */
+/** The Lodge’s east window looks sideways into the straight blind stone passage. */
 export const lodgeEastWindow = {
   x: lodge.center[0] + lodge.size[0] / 2,
   z: lodgeWindow.z,
