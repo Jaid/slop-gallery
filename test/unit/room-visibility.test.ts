@@ -59,6 +59,8 @@ test('the rooms only relate rooms they can reach through up to three openings', 
   expect(relations.forge.rooms.slice(0, 2).toSorted()).toEqual(['bastion', 'lobby'])
   expect(relations.bastion.rooms).toContain('forge' as never)
   expect(relations.lobby.rooms).toContain('forge' as never)
+  // Moonfall’s stairway is visible through the Antechamber from the Lobby.
+  expect(relations.lobby.rooms).toContain('moonfall' as never)
 })
 test('a room shows the rooms behind the openings in view', () => {
   // From the Vesper through both side doors of the Lobby into the Banquet, through the Lobby’s glass wall into the Salon and through the Antechamber down the stairway to Moonfall, but no further.
@@ -80,6 +82,8 @@ test('a room shows the rooms behind the openings in view', () => {
   expect(lobby.has('bastion')).toBe(false)
   expect(lobby.has('lodge')).toBe(false)
   expect(lobby.has('antechamber')).toBe(true)
+  // The Moonfall stairway is visible from the Lobby at the reported camera position.
+  expect(visibleRegions(['lobby'], viewProjection([-2.321, 1.62, 5.655], [5.248, 0.815, 13.195])).has('moonfall')).toBe(true)
 })
 /** the owner room of the object, by its ancestors like RoomCulling’s traversal */
 const ownerOf = (object: Object3D): GalleryRoomId | undefined => ownerRoom(object, object.parent ? ownerOf(object.parent) : undefined)

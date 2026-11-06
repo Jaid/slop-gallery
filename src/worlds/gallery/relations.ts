@@ -126,7 +126,7 @@ export const openings: ReadonlyArray<Opening> = [
  */
 const relations = {
   lobby: {
-    rooms: ['vesper', 'banquet', 'antechamber', 'salon', 'forge', 'oculus', 'sienna', 'exhibition', 'bastion'],
+    rooms: ['vesper', 'banquet', 'antechamber', 'moonfall', 'salon', 'forge', 'oculus', 'sienna', 'exhibition', 'bastion'],
     floorMirror: 'base',
     visibleLamps: {
       banquet: [
