@@ -1,5 +1,6 @@
 import {afterAll, expect, test} from 'bun:test'
 
+import {acceleratedRaycast, MeshBVH} from 'three-mesh-bvh'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
@@ -41,6 +42,36 @@ test('the link wall at the marked point has a walkable bare arch leading into th
   expect(start.y).toBeCloseTo(bastionLink.floorAt(lodgeSpurX, start.point[1])!, 7)
   expect(wallHit(linkWall, [lodgeSpurX, start.y + 1.2, -28], [0, 0, -1])).toBeUndefined()
   expect(wallHit(linkWall, [lodgeSpurX - 3, start.y + 1.2, -28], [0, 0, -1])).toBeDefined()
+})
+test('the link’s junction roof is continuous across the doorway and faces into the passage', () => {
+  const vault = new RouteVaultGeometry(bastionLink)
+  const material = new MeshBasicMaterial({side: DoubleSide})
+  vault.shell.boundsTree = new MeshBVH(vault.shell)
+  const mesh = new Mesh(vault.shell, material)
+  mesh.raycast = acceleratedRaycast
+  const ray = new Raycaster(new Vector3, new Vector3(0, 1, 0), 0, 4)
+  ray.firstHitOnly = true
+  try {
+    // The reported view used to hit a sliced rib hanging across this intersection.
+    const direction = new Vector3(1.302, 0.59, -0.602)
+    const reported = new Raycaster(new Vector3(-18.748, -3.21, -27.967), direction.normalize(), 0, 2)
+    expect(reported.intersectObject(new Mesh(vault.ribs, material))).toHaveLength(0)
+    // Dense columns cover both shoulders, the intersection and the roof beyond it.
+    // The former shell unions left triangular holes between the handful of entrance probes.
+    for (let x = lodgeSpurX - 1.8; x <= lodgeSpurX + 1.8; x += 0.035) {
+      for (let z = -29.8; z <= -26.2; z += 0.035) {
+        const floor = bastionLink.floorAt(x, z)!
+        ray.ray.origin.set(x, floor + 0.3, z)
+        const hit = ray.intersectObject(mesh)[0]
+        expect(hit).toBeDefined()
+        expect(hit.face!.normal.y).toBeLessThan(-0.01)
+        expect(hit.point.y).toBeLessThan(-2.2)
+      }
+    }
+  } finally {
+    vault.dispose()
+    material.dispose()
+  }
 })
 test('the vaulted passage stays straight past the window and closes just short of the existing northern passage', () => {
   const end = lodgeSpur.route.end

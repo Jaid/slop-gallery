@@ -7,13 +7,12 @@ import {BufferGeometry, ExtrudeGeometry, Float32BufferAttribute, MeshBasicNodeMa
 import {mergeParts} from '../../geometry.ts'
 import {openingShape} from '../architecture.ts'
 import {vaultShellThickness} from '../architectureDimensions.ts'
+import {routeRibDepth, routeRibThickness} from './RoutedPassage.ts'
 
 type Profile = ReadonlyArray<readonly [lateral: number, up: number]>
 /** the cross section of a swept solid at a station, as faces in the order they follow around it, each a polyline from where the previous one ended; every station’s has as many points in each face */
 type Section = (station: RouteStation) => ReadonlyArray<Profile>
 
-const ribDepth = 0.22
-const ribThickness = 0.085
 /** how thick the slab of a routed passage’s paving is, under its floor */
 export const pavingThickness = 0.24
 /** how wide the strips its paving is cut into across at most, in meters */
@@ -133,14 +132,14 @@ function breakPits(paving: BufferGeometry, passage: RoutedPassage) {
     material.dispose()
   }
 }
-/** Side openings pass through the barrel and ribs. Their vaulted reveals bridge the cut back to the parent barrel, closing the roof over the junction. */
-function openVault(geometry: BufferGeometry, passage: RoutedPassage, air?: BufferGeometry) {
+/** Join overlapping solid vault envelopes before hollowing them out. Unioning thin shells against the same air surface leaves coplanar cuts that tear holes through the barrel. */
+function openVault(geometry: BufferGeometry, passage: RoutedPassage, air: BufferGeometry) {
   const openings = passage.walls.flatMap(wall => (wall.curveRadius ? [] : (wall.holes ?? []).map(hole => ({
     wall,
     hole,
   }))))
   if (!openings.length) {
-    air?.dispose()
+    air.dispose()
     return geometry
   }
   const extrude = ({wall, hole}: typeof openings[number], padding: number, back: number) => {
@@ -152,6 +151,8 @@ function openVault(geometry: BufferGeometry, passage: RoutedPassage, air?: Buffe
     return result.translate(0, 0, back).rotateY(wall.rotation).translate(...wall.center)
   }
   const evaluator = new Evaluator
+  // Constrained triangulation preserves the intersection edges at the vault’s shallow angles.
+  Object.assign(evaluator, {useCDTClipping: true})
   evaluator.useGroups = false
   evaluator.attributes = ['position', 'normal']
   const material = new MeshBasicNodeMaterial
@@ -165,13 +166,10 @@ function openVault(geometry: BufferGeometry, passage: RoutedPassage, air?: Buffe
   let retained: BufferGeometry | undefined
   try {
     let result = brush(geometry)
-    if (air) {
-      const interior = brush(air)
-      for (const opening of openings) {
-        const reveal = evaluator.evaluate(brush(extrude(opening, vaultShellThickness, 0)), interior, SUBTRACTION, brush(new BufferGeometry))
-        result = evaluator.evaluate(result, reveal, ADDITION, brush(new BufferGeometry))
-      }
+    for (const opening of openings) {
+      result = evaluator.evaluate(result, brush(extrude(opening, vaultShellThickness, 0)), ADDITION, brush(new BufferGeometry))
     }
+    result = evaluator.evaluate(result, brush(air), SUBTRACTION, brush(new BufferGeometry))
     for (const opening of openings) {
       result = evaluator.evaluate(result, brush(extrude(opening, 0, -vaultShellThickness - 0.01)), SUBTRACTION, brush(new BufferGeometry))
     }
@@ -229,17 +227,18 @@ export default class RouteVaultGeometry {
         [[middle - half - outer, spring], [middle - half - inner, spring]],
       ]
     }
-    // The original passage’s air trims the side opening’s roof into the barrel’s curved intersection.
-    const air = passage.walls.some(wall => !wall.curveRadius && wall.holes?.length) ? mergeParts(sweep(runs(0, route.length), station => {
+    // The outer envelope stops at the spring; only the air extends down to the floor. Extending the outer solid down would backfill the passage’s separate walls and their windows.
+    const solid = (padding: number, below?: number) => mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))
-      const foot = -station.height - 0.5
+      const foot = below === undefined ? spring : -station.height - below
       return [
-        arch((right - left) / 2, (left + right) / 2, rise, spring),
-        [[right, spring], [right, foot], [-left, foot], [-left, spring]],
+        arch((right - left) / 2, (left + right) / 2 + padding, rise + padding, spring),
+        below === undefined ? [[right + padding, spring], [-left - padding, spring]] : [[right + padding, spring], [right + padding, foot], [-left - padding, foot], [-left - padding, spring]],
       ]
-    }, true)) : undefined
-    this.shell = openVault(mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true)), passage, air)
-    this.ribs = openVault(mergeParts(passage.ribs.flatMap(along => sweep(runs(along - ribDepth / 2, along + ribDepth / 2), ring(-ribThickness, 0), true))), passage)
+    }, true))
+    const hasOpenings = passage.walls.some(wall => !wall.curveRadius && wall.holes?.length)
+    this.shell = hasOpenings ? openVault(solid(vaultShellThickness), passage, solid(0, 0.5)) : mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
+    this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - routeRibDepth / 2, along + routeRibDepth / 2), ring(-routeRibThickness, 0), true)))
     /** how many strips the paving is cut into from either wall to the centerline, at most `pavingStrip` wide, so it bends with its crossfall and stays close to flat through the twist of a ramp round a turn */
     const strips = Math.ceil(width / 2 / pavingStrip)
     this.paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {

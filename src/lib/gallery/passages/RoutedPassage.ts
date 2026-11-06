@@ -4,7 +4,7 @@ import type {Vec3} from '../types.ts'
 import type {RoutePiece, RouteStation} from './PassageRoute.ts'
 
 import {wallCoordinates} from '../../placement/wallGeometry.ts'
-import {wallFace} from '../architectureDimensions.ts'
+import {vaultShellThickness, wallFace} from '../architectureDimensions.ts'
 import PassageRoute from './PassageRoute.ts'
 
 /** the box around a stretch of a passage’s air, from its lowest floor to its highest ceiling */
@@ -72,8 +72,10 @@ type PlacedWall = {
   wall: Omit<Wall, 'id'>
 }
 
-/** At most this far apart along the route, the vault’s ribs stand evenly spaced, like those of straight passages. */
+/** The vault’s ribs are spaced at most this far apart before omitting those that intersect side vaults. */
 export const routeRibSpacing = 3.2
+export const routeRibDepth = 0.22
+export const routeRibThickness = 0.085
 /** Turns are cut into steps of at most this many radians, like the curved walls beside them, for the vault and the paving as for the baseboards along an outline’s walls. */
 export const routeTurnStep = 1 / 32
 /** how far the first and the last rib stand in from the route’s ends */
@@ -129,7 +131,11 @@ export default class RoutedPassage {
     // Not an accessor: the build bakes the walls’ openings, and its evaluator leaves accessors out.
     this.name = `${room}-${id}`
     const count = Math.max(1, Math.ceil(route.length / routeRibSpacing))
-    this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count)
+    // A side vault replaces the barrel here. Leave its intersection bare instead of slicing ribs into hanging fragments.
+    this.ribs = Array.from({length: count + 1}, (_, rib) => ribInset + (route.length - ribInset * 2) * rib / count).filter(along => openings.every(opening => {
+      const station = route.at(opening.along)
+      return opening.height < station.height - width / 2 - routeRibThickness || Math.abs(along - opening.along) > opening.width / 2 + vaultShellThickness + routeRibDepth / 2
+    }))
     const sides = new Set(outlines.map(({side}) => side))
     if (sides.size !== outlines.length) {
       throw new RangeError(`${this.name} takes at most one outline on each side.`)
