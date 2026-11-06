@@ -6,6 +6,7 @@ import {afterAll, describe, expect, test} from 'bun:test'
 import {DoubleSide, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {defaultBaseboardHeight} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionMouth} from '../../src/lib/gallery/bastion.ts'
 import miterCorners from '../../src/lib/gallery/cornerMiters.ts'
 import corridor, {corridorLanding, corridorPassage} from '../../src/lib/gallery/corridor.ts'
@@ -157,7 +158,7 @@ describe('inside corners of room walls', () => {
         const point = corner.clone().addScaledVector(inward(a), alongA).addScaledVector(inward(b), alongB)
         // the baseboard’s cap from above, the cornice’s lower band from below and its upper band from above
         const probes = [
-          ...baseboard ? [[floorY + 1, -1, floorY + 0.44]] as const : [],
+          ...baseboard ? [[floorY + 1, -1, floorY + defaultBaseboardHeight]] as const : [],
           [floorY + top - 1, 1, floorY + top - 0.47],
           [floorY + top + 0.25, -1, floorY + top - 0.105],
         ] as const

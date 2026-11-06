@@ -15,6 +15,7 @@ import PipeGeometry from '../../src/lib/gallery/alchemy/PipeGeometry.ts'
 import SinkGeometry from '../../src/lib/gallery/alchemy/SinkGeometry.ts'
 import WorkbenchGeometry from '../../src/lib/gallery/alchemy/WorkbenchGeometry.ts'
 import {colliderGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
+import {defaultBaseboardHeight} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
 import {climbApproach, climbArch} from '../../src/lib/gallery/climb.ts'
@@ -447,7 +448,7 @@ describe('the Forge’s redirection pipe', () => {
       expect(hole.bottom!).toBeGreaterThan(0)
     }
     const inlet = ring.holes!.find(hole => hole.name === 'pipe_inlet')!
-    expect(inlet.bottom! - 0.04).toBeGreaterThan(ring.baseboardHeight ?? 0.44)
+    expect(inlet.bottom! - 0.04).toBeGreaterThan(ring.baseboardHeight ?? defaultBaseboardHeight)
   })
 })
 describe('the alchemy machine’s orbs', () => {

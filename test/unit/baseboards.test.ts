@@ -7,12 +7,14 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {baseboardCapHeight, defaultBaseboardHeight} from '../../src/lib/gallery/architectureDimensions.ts'
 import {bastionCurve} from '../../src/lib/gallery/bastion.ts'
 import lowerGallery, {oculusPlatform, oculusRamps} from '../../src/lib/gallery/lowerGallery.ts'
 import {wallPosition} from '../../src/lib/placement/wallGeometry.ts'
 import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
+const lowerBandHeight = defaultBaseboardHeight - baseboardCapHeight
 /** a half circle in the 128 chords the openings’ cutters and casings take */
 const halfDisc = (radius: number) => 64 * radius ** 2 * Math.sin(Math.PI / 128)
 /** The area of the casing round a hole with a sill, on the wall’s face. */
@@ -25,6 +27,26 @@ function casingArea({width, height, bottom = 0, profile}: WallOpening) {
   return (width + 2 * trim) * (spring - bottom + trim) + halfDisc(width / 2 + trim) - width * (spring - bottom) - halfDisc(width / 2)
 }
 describe('floor-following wall baseboards', () => {
+  test('the Lobby baseboard has a 21 cm lower band and a 4 cm cap', () => {
+    const wall = walls.find(value => value.id === 'lobby-south')!
+    const geometry = createArchitectureGeometry(wall)
+    const material = new MeshBasicMaterial
+    try {
+      const trim = new Mesh(geometry.trim[0], material)
+      for (const [y, front] of [[0.2, 0.2], [0.22, 0.25], [0.26, null]] as const) {
+        const ray = new Raycaster(new Vector3(4, y, 1), new Vector3(0, 0, -1))
+        const hit = ray.intersectObject(trim)[0]
+        if (front === null) {
+          expect(hit).toBeUndefined()
+        } else {
+          expect(hit.point.z).toBeCloseTo(front, 5)
+        }
+      }
+    } finally {
+      geometry.dispose()
+      material.dispose()
+    }
+  })
   for (const side of ['west', 'east'] as const) {
     test(`${side}: constant-height trim follows the floor, ramp and raised base without buried horizontal stubs`, () => {
       const wall = walls.find(value => value.id === `oculus-${side}`)!
@@ -45,30 +67,30 @@ describe('floor-following wall baseboards', () => {
         for (const z of [-34.7, -30.01, -30, -29.99, -28, -24, -22.3, -21.01, -21, -20.99, -18.81, -18.79, -18.2, -15.2]) {
           const u = (z - wall.center[2]) * (side === 'east' ? 1 : -1)
           const floor = (z <= ramp.startZ + ramp.width ? ramp.floorY - lowerGallery.oculus.floorY : 0) + Math.max(0, Math.min(ramp.rise, (ramp.startZ - z) / ramp.run * ramp.rise))
-          for (const offset of [-0.02, 0.02, 0.19, 0.379, 0.381, 0.41, 0.439, 0.46]) {
+          for (const offset of [-0.02, 0.02, 0.19, 0.209, 0.211, 0.24, 0.249, 0.251, 0.46]) {
             const origin = new Vector3(u, floor + offset, 1)
             const direction = new Vector3(0, 0, -1)
             const faceRay = new Raycaster(origin, direction, 0, 1)
             const hits = faceRay.intersectObjects(meshes)
             const collision = world.castRay(new RAPIER.Ray(origin, direction), 1, true)
-            const visible = offset > 0 && offset < 0.44
+            const visible = offset > 0 && offset < defaultBaseboardHeight
             expect(hits.length > 0).toBe(visible)
             expect(collision !== null).toBe(visible)
             if (!visible) {
               continue
             }
-            const front = offset < 0.38 ? 0.2 : 0.25
+            const front = offset < lowerBandHeight ? 0.2 : 0.25
             expect(hits[0].point.z).toBeCloseTo(front, 5)
             expect(collision!.timeOfImpact).toBeCloseTo(1 - front, 5)
           }
           const topRay = new Raycaster(new Vector3(u, floor + 0.6, 0.23), new Vector3(0, -1, 0), 0, 1)
-          expect(topRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(floor + 0.44, 5)
+          expect(topRay.intersectObjects(meshes)[0].point.y).toBeCloseTo(floor + defaultBaseboardHeight, 5)
         }
         const volume = geometry.trim.reduce((sum, part) => sum + computeMeshVolume(part), 0)
         // Besides the baseboard, the trim only cases the door at the balcony’s level, down to the sill buried in the balcony, and the arched doorway at the bridge’s end, into the Bastion’s mouth on the east and into its western climb on the west.
         expect(wall.holes!.map(hole => hole.name)).toEqual(['staff_door', 'bastion'])
         const casing = wall.holes!.reduce((sum, hole) => sum + casingArea(hole), 0) * (0.25 - wallFace)
-        expect(volume).toBeCloseTo(wall.width * (0.38 * (0.2 - wallFace) + 0.06 * (0.25 - wallFace)) + casing, 4)
+        expect(volume).toBeCloseTo(wall.width * (lowerBandHeight * (0.2 - wallFace) + baseboardCapHeight * (0.25 - wallFace)) + casing, 4)
       } finally {
         world.free()
         geometry.dispose()
@@ -91,7 +113,7 @@ describe('floor-following wall baseboards', () => {
         const u = 0.3 - wall.width / 2
         const radius = wall.curveRadius!
         const trimTopRay = new Raycaster(new Vector3((radius - 0.23) * Math.sin(u / radius), 1, radius - (radius - 0.23) * Math.cos(u / radius)), new Vector3(0, -1, 0))
-        expect(trimTopRay.intersectObject(new Mesh(geometry.trim[0], material))[0].point.y).toBeCloseTo(0.44)
+        expect(trimTopRay.intersectObject(new Mesh(geometry.trim[0], material))[0].point.y).toBeCloseTo(defaultBaseboardHeight)
         // Up to the ceiling, like the side walls
         expect(wall.center[1] + geometry.surface.boundingBox!.max.y).toBeCloseTo(lowerGallery.oculus.ceiling.topY - lowerGallery.oculus.ceiling.thickness)
       } finally {
@@ -105,7 +127,7 @@ describe('floor-following wall baseboards', () => {
     // the runs and turns down from the east doorway and up toward the Lodge, the straight east wall and the chamfer outside them
     expect(ramped.map(wall => wall.id)).toEqual([0, 1, 4, 14, 15].map(index => `bastion-curve_wall_${index}`))
     // The western climb’s hairpin climbs on all six of its walls and its run north falls toward it on both of its; see climb.test.ts.
-    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !/^bastion-(?:climb_hairpin|climb_run|link)_/.test(wall.id)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
+    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !/^bastion-(?:climb_hairpin|climb_run|link|lodge-spur)_/.test(wall.id)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
     expect(ramped.filter(wall => wall.curveRadius)).toHaveLength(1)
     const material = new MeshBasicMaterial
     for (const wall of ramped) {
@@ -119,7 +141,7 @@ describe('floor-following wall baseboards', () => {
           const floor = bastionCurve.floorAt(x, z)! - wall.center[1]
           const [localX, localZ] = wall.curveRadius ? [(wall.curveRadius - 0.23) * Math.sin(u / wall.curveRadius), wall.curveRadius - (wall.curveRadius - 0.23) * Math.cos(u / wall.curveRadius)] : [u, 0.23]
           const down = new Raycaster(new Vector3(localX, floor + 1, localZ), new Vector3(0, -1, 0), 0, 2)
-          expect(down.intersectObject(trim)[0].point.y).toBeCloseTo(floor + 0.44, 3)
+          expect(down.intersectObject(trim)[0].point.y).toBeCloseTo(floor + defaultBaseboardHeight, 3)
         }
       } finally {
         geometry.dispose()

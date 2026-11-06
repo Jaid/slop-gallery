@@ -1,3 +1,8 @@
+/** Height of the default two-band baseboard above the floor. */
+export const defaultBaseboardHeight = 0.25
+/** Height of the projecting upper cap on the default baseboard. */
+export const baseboardCapHeight = 0.04
+
 export const wallTop = 5.8
 export const wallFace = 0.105
 export const wallOpeningTrim = 0.17

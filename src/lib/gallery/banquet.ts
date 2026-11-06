@@ -131,7 +131,7 @@ export type WallRectangle = {
 
 /**
  * Gilded boiserie on the Banquet’s painted walls, after the mockup: tall picture-frame panels above a chair rail, and a dado painted a
- * shade deeper below it. The dado between the 44 cm baseboard and the rail is too low for panels of its own; they would only
+ * shade deeper below it. The dado between the 25 cm baseboard and the rail is too low for panels of its own; they would only
  * stack more gilt lines over the baseboard cap. All heights are measured from the floor, in meters.
  */
 export const banquetBoiserie = {

@@ -4,9 +4,11 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {architectureGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {baseboardCapHeight, defaultBaseboardHeight} from '../../src/lib/gallery/architectureDimensions.ts'
 import walls from './fixtures/gallery.ts'
 
 await RAPIER.init()
+const lowerBandHeight = defaultBaseboardHeight - baseboardCapHeight
 describe('plain doorway trim', () => {
   test('both Oculus jambs meet the baseboard cap without protruding plinths or doubled surfaces', () => {
     const wall = walls.find(value => value.id === 'oculus-south')!
@@ -28,13 +30,13 @@ describe('plain doorway trim', () => {
       for (const hole of wall.holes!) {
         for (const side of [-1, 1]) {
           for (const offset of [0.04, wallOpeningTrim - 0.001, wallOpeningTrim + 0.001, 0.21, 0.3]) {
-            for (const y of [0.02, 0.2, 0.379, 0.381, 0.399, 0.401, 0.439, 0.441, 1.2, 3]) {
+            for (const y of [0.02, 0.2, 0.209, 0.211, 0.239, 0.241, 0.249, 0.251, 1.2, 3]) {
               const origin = new Vector3(hole.u + side * (hole.width / 2 + offset), y, 1)
               const direction = new Vector3(0, 0, -1)
               let front = wallFace
-              if (offset < wallOpeningTrim || y >= 0.38 && y < 0.44) {
+              if (offset < wallOpeningTrim || y >= lowerBandHeight && y < defaultBaseboardHeight) {
                 front = 0.25
-              } else if (y < 0.38) {
+              } else if (y < lowerBandHeight) {
                 front = 0.2
               }
               const jambRay = new Raycaster(origin, direction, 0, 2)

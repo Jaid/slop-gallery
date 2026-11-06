@@ -6,14 +6,14 @@ import type {Node} from 'three/webgpu'
 import {abs, color, float, Fn, Loop, max, mix, normalGeometry, positionLocal, select, uniform, uniformArray, vec2} from 'three/tsl'
 import {MeshStandardNodeMaterial, Vector4} from 'three/webgpu'
 
-import {wallOpeningTrim} from '#src/lib/gallery/architectureDimensions.ts'
+import {baseboardCapHeight, defaultBaseboardHeight, wallOpeningTrim} from '#src/lib/gallery/architectureDimensions.ts'
 
 import {inside, line} from '../filters.ts'
 import {calacatta, marble} from '../marble/marble.ts'
 import {gilt, paintedPlaster, slateBoiserie} from './paint.ts'
 
 export type BoiserieTrimOptions = {
-  /** height of the baseboard, whose top 6 cm cap is gilded */
+  /** height of the baseboard, whose top 4 cm cap is gilded */
   baseboardHeight?: number
   /** the wall’s doorways, whose surrounds and plinths are carved from marble */
   holes?: ReadonlyArray<WallOpening>
@@ -55,14 +55,14 @@ const openingDistance = (point: Node<'vec2'>, hole: Node<'vec4'>): Float => {
  * Meant for the trim and cornice meshes of one wall, in its local coordinates (x along the wall from its center, y up from its floor, +z into the room).
  */
 export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
-  constructor({baseboardHeight = 0.44, holes = [], marble: stone = calacatta, palette = slateBoiserie, wallHeight}: BoiserieTrimOptions) {
+  constructor({baseboardHeight = defaultBaseboardHeight, holes = [], marble: stone = calacatta, palette = slateBoiserie, wallHeight}: BoiserieTrimOptions) {
     super({
       roughness: 0.6,
       metalness: 0,
       envMapIntensity: 1,
     })
-    if (!(wallHeight > 1) || !(baseboardHeight > 0.06)) {
-      throw new RangeError('Boiserie trim needs a wall taller than 1 m and a baseboard taller than its 6 cm cap.')
+    if (!(wallHeight > 1) || !(baseboardHeight > baseboardCapHeight)) {
+      throw new RangeError(`Boiserie trim needs a wall taller than 1 m and a baseboard taller than its ${baseboardCapHeight * 100} cm cap.`)
     }
     if (holes.length > maxHoles) {
       throw new RangeError(`Boiserie trim holds up to ${maxHoles} openings.`)
@@ -112,7 +112,7 @@ export default class BoiserieTrimMaterial extends MeshStandardNodeMaterial {
     // The gilt cap of the baseboard, and the cornice’s lower band.
     const baseboard = uniform(baseboardHeight)
     const height = uniform(wallHeight)
-    const cap = inside(baseboard.sub(0.06).sub(v)).mul(inside(v.sub(baseboard.add(0.001))))
+    const cap = inside(baseboard.sub(baseboardCapHeight).sub(v)).mul(inside(v.sub(baseboard.add(0.001))))
     const corniceBand = inside(height.sub(0.47).sub(v)).mul(inside(v.sub(height.sub(0.37))))
     const giltShare = mix(cap.max(corniceBand), bead, surroundShare).toVar('trimGilt')
     const plaster = paintedPlaster({

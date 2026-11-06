@@ -63,7 +63,7 @@ test('the panels stay in front of the baseboard and the keystone tucks under the
     const position = geometry.leaves.getAttribute('position')
     let shallowest = Infinity
     for (let index = 0; index < position.count; index++) {
-      // Baseboard cap: 0.38–0.44 m high, 0.25 m in front of the wall line.
+      // Baseboard cap: 0.21–0.25 m high, 0.25 m in front of the wall line.
       if (position.getY(index) < 0.45) {
         shallowest = Math.min(shallowest, position.getZ(index) > 0.2 ? position.getZ(index) : Infinity)
       }

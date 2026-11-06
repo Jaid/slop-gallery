@@ -7,6 +7,7 @@ import {computeMeshVolume} from 'three-bvh-csg'
 import {BufferGeometry, DoubleSide, Float32BufferAttribute, Mesh, MeshBasicMaterial, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace, wallOpeningTrim} from '../../src/lib/gallery/architecture.ts'
+import {baseboardCapHeight, defaultBaseboardHeight} from '../../src/lib/gallery/architectureDimensions.ts'
 import {insideOpening, openingArc, openingCircle, openingTop} from '../../src/lib/placement/wallGeometry.ts'
 import walls, {galleryPlacement} from './fixtures/gallery.ts'
 
@@ -140,8 +141,9 @@ describe('boolean architecture', () => {
             // 40 cm past the jamb, or up to the casing of the next opening on that side at its height, if that comes first
             const jamb = hole.u + side * hole.width / 2
             const beside = wall.holes!.filter(other => other !== hole && (other.u - hole.u) * side > 0 && (other.bottom ?? 0) - wallOpeningTrim < hole.height && other.height + wallOpeningTrim > (hole.bottom ?? 0))
-            const clear = Math.min(0.4, ...beside.map(other => (other.u - side * (other.width / 2 + wallOpeningTrim) - jamb) * side - 0.01))
-            for (const offsetY of [0.173, 0.393, 0.417, 0.613, 1.731]) {
+            // Classic doorway plinths extend another 6.5 cm beyond their casing, including beside bare openings.
+            const clear = Math.min(0.4, ...beside.map(other => (other.u - side * (other.width / 2 + wallOpeningTrim + (other.casing === false || wall.trimStyle === 'plain' ? 0 : 0.065)) - jamb) * side - 0.01))
+            for (const offsetY of [0.14, 0.393, 0.417, 0.613, 1.731]) {
               if (offsetY >= hole.height - (hole.bottom ?? 0)) {
                 continue
               }
@@ -156,11 +158,32 @@ describe('boolean architecture', () => {
                   depth = wallFace
                 } else if (hole.casing === false) {
                   // Without a casing, only the baseboard stands out of the reveal; at a corner, it runs on square.
-                  const baseboard = wall.baseboardHeight ?? 0.44
-                  if (y >= baseboard) {
+                  const baseboard = wall.baseboardHeight ?? defaultBaseboardHeight
+                  // The ray travels beyond the jamb, where the ramp can rise into its path.
+                  // Sample the highest floor contact across that reach, including internal profile knots.
+                  const profile = wall.baseboardProfile
+                  const floorAt = (u: number) => {
+                    if (!profile) {
+                      return 0
+                    }
+                    const above = profile.findIndex(([at]) => at >= u)
+                    if (above === -1) {
+                      return profile.at(-1)![1]
+                    }
+                    if (above === 0) {
+                      return profile[0][1]
+                    }
+                    const [u0, y0] = profile[above - 1]
+                    const [u1, y1] = profile[above]
+                    return y0 + (y1 - y0) * (u - u0) / (u1 - u0)
+                  }
+                  const end = hole.u + side * (hole.width / 2 + clear)
+                  const floor = Math.max(floorAt(jamb), floorAt(end), ...profile?.filter(([u]) => u >= Math.min(jamb, end) && u <= Math.max(jamb, end)).map(([, height]) => height) ?? [])
+                  const relativeY = y - floor
+                  if (relativeY >= baseboard) {
                     depth = wallFace
                   } else {
-                    depth = y < baseboard - 0.06 ? 0.2 : 0.25
+                    depth = relativeY < baseboard - baseboardCapHeight ? 0.2 : 0.25
                   }
                 }
                 const direction = new Vector3(side, side * (wall.slope ?? 0), 0)
@@ -169,6 +192,11 @@ describe('boolean architecture', () => {
                 const hits = ray.intersectObjects(meshes)
                 expect(hits.length).toBe(z < depth ? 1 : 0)
                 if (hits.length === 0) {
+                  continue
+                }
+                if (hole.casing === false && wall.baseboardProfile && hits[0].distance > hole.width / 2 + 1e-5) {
+                  // The rising baseboard can enter the ray beyond the jamb, where its top meets the ray's height.
+                  expect(hits[0].distance).toBeLessThanOrEqual(hole.width / 2 + clear + 1e-5)
                   continue
                 }
                 if (hole.profile === 'round') {

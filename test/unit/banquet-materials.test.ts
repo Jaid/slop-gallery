@@ -222,7 +222,7 @@ describe('The Banquet’s boiserie materials', () => {
     expect(() => new BoiserieTrimMaterial({wallHeight: 0.5})).toThrow(RangeError)
     expect(() => new BoiserieTrimMaterial({
       wallHeight: 5.5,
-      baseboardHeight: 0.05,
+      baseboardHeight: 0.03,
     })).toThrow(RangeError)
   })
 })

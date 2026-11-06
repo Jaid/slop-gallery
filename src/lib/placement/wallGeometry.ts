@@ -43,7 +43,7 @@ export type WallReservation = WallOpening & {
 }
 
 export type Wall = {
-  /** how high the default baseboard’s two plain bands reach, 0.44 m unless the wall says otherwise; a {@link baseboardSection} sets its own */
+  /** how high the default baseboard’s two plain bands reach, 0.25 m unless the wall says otherwise; a {@link baseboardSection} sets its own */
   baseboardHeight?: number
   /** How far the baseboard’s ends slant back where they differ from `miters`: square where the other wall of the corner is opened down to the floor right at it, so this baseboard runs on into whatever continues past the opening. */
   baseboardMiters?: readonly [number, number]
