@@ -1,8 +1,7 @@
 import type {Vec3} from '../../types.ts'
 import type {LatticePoint} from '../lattice.ts'
 
-import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
-import {BufferGeometry, CatmullRomCurve3, Float32BufferAttribute, MeshStandardNodeMaterial, TubeGeometry, Vector3} from 'three/webgpu'
+import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
 
 import ForgedSteelMaterial from '#src/lib/materials/ForgedSteelMaterial.ts'
 import GrainedWoodMaterial from '#src/lib/materials/GrainedWoodMaterial.ts'
@@ -103,28 +102,6 @@ function haftGeometry() {
     end: {position: [0, 0.004, 0]},
   }), (x, y, z) => [y, x + z * 0.35], 0.43)
 }
-/** The leather thong is part of the pickup, not of the immovable hook. */
-function hangingLoopGeometry() {
-  // Ends lie under the swell at the butt; the loop bows around the hook's upturned end.
-  const loop = new TubeGeometry(new CatmullRomCurve3([
-    new Vector3(-0.026, 0.055, 0),
-    new Vector3(-0.03, -0.035, 0),
-    new Vector3(-0.019, -0.124, 0),
-    new Vector3(0, -0.147, 0),
-    new Vector3(0.019, -0.124, 0),
-    new Vector3(0.03, -0.035, 0),
-    new Vector3(0.026, 0.055, 0),
-  ]), 32, 0.0045, 6, false)
-  const wrap = new TubeGeometry(new CatmullRomCurve3(Array.from({length: 18}, (_unused, index) => {
-    const angle = 2 * Math.PI * index / 18
-    return new Vector3(0.028 * Math.sin(angle), 0.055, 0.018 * Math.cos(angle))
-  }), true), 36, 0.0048, 6, true)
-  const geometry = mergeGeometries([loop, wrap])
-  loop.dispose()
-  wrap.dispose()
-  return geometry
-}
-
 /**
  * A short camp hatchet with a flared, honed forged-steel head and a curved ash haft.
  * It hangs by a leather loop from a hook on the Lodge’s fireplace pillar, and steers a Transparent Orb in the Forge to a Horror Orb.
@@ -160,14 +137,6 @@ export default class Hatchet extends Curio {
           heartwood: ['#69472a', '#a67b4d'],
           latewood: '#422b1a',
         }, {roughness: 0.57}),
-      },
-      {
-        name: 'hatchet-leather-loop',
-        geometry: hangingLoopGeometry(),
-        material: new MeshStandardNodeMaterial({
-          color: '#442d1c',
-          roughness: 0.9,
-        }),
       },
     ])
   }

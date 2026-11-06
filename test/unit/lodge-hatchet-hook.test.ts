@@ -3,7 +3,7 @@ import {describe, expect, test} from 'bun:test'
 import {Box3} from 'three/webgpu'
 
 import lodgeInterior, {lodgeHatchetHook} from '../../src/lib/gallery/lodgeInterior/layout.ts'
-import createLodgeHatchetHookGeometry from '../../src/lib/gallery/lodgeInterior/LodgeHatchetHookGeometry.ts'
+import createLodgeHatchetHookGeometry, {createLodgeHatchetLeatherGeometry} from '../../src/lib/gallery/lodgeInterior/LodgeHatchetHookGeometry.ts'
 
 describe('the Lodge’s hatchet hook', () => {
   test('mounts on the room-facing surface of the right fireplace pillar', () => {
@@ -27,6 +27,21 @@ describe('the Lodge’s hatchet hook', () => {
       expect(geometry.index!.count / 3).toBeLessThan(1000)
     } finally {
       geometry.dispose()
+    }
+  })
+  test('keeps the leather band in the static hook frame when the hatchet is picked up', () => {
+    const leather = createLodgeHatchetLeatherGeometry()
+    try {
+      const bounds = new Box3
+      bounds.setFromBufferAttribute(leather.getAttribute('position') as never)
+      // The band is already transformed into the hook's frame, around its upturned tip.
+      expect(bounds.max.y).toBeGreaterThan(0)
+      expect(bounds.max.y).toBeLessThan(0.04)
+      expect(bounds.min.z).toBeLessThan(-0.2)
+      expect(bounds.max.z).toBeGreaterThan(-0.21)
+      expect(leather.index!.count).toBeGreaterThan(0)
+    } finally {
+      leather.dispose()
     }
   })
 })

@@ -87,7 +87,7 @@ describe('the curios', () => {
     expect(stem.boundingBox!.min.y).toBeLessThan(size.y - 0.02)
     model.dispose()
     const axe = hatchet.createModel()
-    expect(axe.parts.map(({material}) => material.name)).toEqual(['Forged steel', '', ''])
+    expect(axe.parts.map(({material}) => material.name)).toEqual(['Forged steel', ''])
     expect(axe.parts[1].geometry.hasAttribute('woodGrain')).toBe(true)
     expect(sizeOf(axe.parts[0].geometry).y).toBeGreaterThan(0.24)
     axe.dispose()
@@ -154,16 +154,10 @@ describe('where a game begins, each curio comes to rest where it lies', () => {
     ])
     const model = hatchet.createModel()
     try {
-      const [head, , loop] = model.parts
-      const loopBounds = new Box3
-      loopBounds.setFromBufferAttribute(loop.geometry.getAttribute('position') as never)
+      expect(model.parts.map(part => part.name)).toEqual(['hatchet-steel', 'hatchet-haft'])
+      const [head] = model.parts
       const headBounds = new Box3
       headBounds.setFromBufferAttribute(head.geometry.getAttribute('position') as never)
-      expect(loopBounds.min.y).toBeLessThan(-0.14)
-      // After a half-turn around x, the loop sits over the upturned end of the iron hook.
-      const loopTop = hatchet.position[1] - loopBounds.min.y
-      expect(loopTop - (lodge.floorY + lodgeHatchetHook.position[1])).toBeGreaterThan(0)
-      expect(loopTop - (lodge.floorY + lodgeHatchetHook.position[1])).toBeLessThan(0.04)
       expect(hatchet.position[1] - headBounds.max.y).toBeGreaterThan(lodge.floorY + 0.7)
     } finally {
       model.dispose()
