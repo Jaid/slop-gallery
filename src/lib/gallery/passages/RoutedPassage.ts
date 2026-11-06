@@ -41,6 +41,8 @@ export type RoutedPassageOptions = {
   cornice?: boolean
   /** its paving falling toward its centerline, level across if left out */
   crossfall?: RouteCrossfall
+  /** repair internal paving edges for rolling objects; disable on straight paving where Rapier’s edge repair destabilizes resting convex hulls */
+  fixPavingEdges?: boolean
   openings?: ReadonlyArray<RouteOpening>
   /** at most one for each side */
   outlines?: ReadonlyArray<RouteOutline>
@@ -101,6 +103,7 @@ export default class RoutedPassage {
   readonly creases: ReadonlyArray<number>
   /** how its paving falls toward its centerline, if it does */
   readonly crossfall?: RouteCrossfall
+  readonly fixPavingEdges: boolean
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
   readonly name: string
   /** the outlines, each with the stretch along the route it stands in for its side’s walls on */
@@ -112,7 +115,8 @@ export default class RoutedPassage {
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, crossfall, openings = [], outlines = [], pits = []}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, crossfall, openings = [], outlines = [], pits = [], fixPavingEdges = true}: RoutedPassageOptions = {}) {
+    this.fixPavingEdges = fixPavingEdges
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
     }

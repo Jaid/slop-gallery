@@ -116,6 +116,7 @@ const spurRoute = new PassageRoute([lodgeSpurX, lodgeSpurStartZ], -Math.PI / 2, 
   steps: [{length: 2}],
 }, {length: lodgeSpurStartZ - spurEndZ - 2}])
 export const lodgeSpur = new RoutedPassage('lodge-spur', 'bastion', spurRoute, lodgeSpurWidth, {
+  fixPavingEdges: false,
   openings: [{
     name: 'lodge_window',
     along: lodgeSpurStartZ - lodgeEastWindow.z,

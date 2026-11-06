@@ -58,7 +58,7 @@ export function bastionColliders() {
       continue
     }
     const vault = new RouteVaultGeometry(passage)
-    colliders.surface(vault.paving, true)
+    colliders.surface(vault.paving, passage.fixPavingEdges)
     colliders.surface(vault.shell)
     colliders.surface(vault.ribs)
     vault.dispose()
