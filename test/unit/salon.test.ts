@@ -82,9 +82,9 @@ describe('the Salon', () => {
     }
     expect(placementIssue(banquetNorth, wallPosition(banquetNorth, 0, 2.6), 1, 1, [])).toBe('doorway')
   })
-  test('the ottoman stands on the room’s axis at the glass wall’s south end, leaving the doorway path and the walls clear', () => {
+  test('the ottoman stands centered along the glass wall, leaving the doorway path and walls clear', () => {
     const {depth, position, width} = salonBench
-    expect(position).toEqual([14, 0, salonWindow.z + salonWindow.width / 2])
+    expect(position).toEqual([14, 0, salonWindow.z])
     expect(room.center[1] + room.size[1] / 2 - (position[2] + depth / 2)).toBeGreaterThan(3)
     expect(Math.abs(position[0] - room.center[0]) + width / 2).toBeLessThan(room.size[0] / 2 - 3)
     expect(salonBench.seatHeight).toBeCloseTo(0.49, 5)
@@ -96,7 +96,7 @@ describe('the Salon', () => {
     expect(salonPedestal).toEqual([14, 0, salonWindow.z - salonWindow.width / 2])
     expect(roomAt([x, 1.7, z])).toBe('salon')
     expect(y).toBe(floorHeight([x, 1.7, z]))
-    expect(salonBench.position[2] - salonBench.depth / 2 - (z + half)).toBeGreaterThan(4)
+    expect(salonBench.position[2] - salonBench.depth / 2 - (z + half)).toBeGreaterThan(2.5)
     expect(z - half - (room.center[1] - room.size[1] / 2)).toBeGreaterThan(2)
   })
   test('the skylight sits inside the room, under its slab, along the glass wall, in whole panes', () => {

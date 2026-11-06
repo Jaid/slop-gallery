@@ -77,9 +77,9 @@ export function wainscotFields(start: number, end: number) {
   return Array.from({length: count}, (_, i) => [start + pitch * (i + 0.5), pitch - margin * 2] as const).filter(([, width]) => width > 0.1)
 }
 
-/** A double-sided velvet ottoman on the room’s axis, centered on the line of the glass wall’s south end, facing the pedestal on the line of its north end. */
+/** A double-sided velvet ottoman on the room axis, centered along the glass wall. */
 export const salonBench = {
-  position: [salon.center[0], 0, salonWindow.z + salonWindow.width / 2] as Vec3,
+  position: [salon.center[0], 0, salonWindow.z] as Vec3,
   width: 3.2,
   depth: 0.9,
   legHeight: 0.28,

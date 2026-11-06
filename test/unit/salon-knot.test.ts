@@ -144,11 +144,11 @@ test('a contact skin thicker than Fiber’s prediction distance topples a standi
     resources.dispose()
   }
 })
-test('the Knot’s nameplate stands on the Salon’s floor north of the ottoman, facing it', () => {
+test('the Knot nameplate stands southeast of the ottoman, facing it', () => {
   const {position: [x, y, z], rotation} = salonKnotSign
   expect(y).toBe(knotSign.elevation)
   expect(z).toBeGreaterThan(salonPedestal[2] + 1.5)
-  expect(z).toBeLessThan(salonBench.position[2] - salonBench.depth / 2 - 1)
+  expect(z).toBeGreaterThan(salonBench.position[2] + salonBench.depth / 2 + 1)
   // Facing +z at no rotation, turned toward the ottoman’s middle.
   const facing = [Math.sin(rotation), Math.cos(rotation)]
   const toBench = [salonBench.position[0] - x, salonBench.position[2] - z]
