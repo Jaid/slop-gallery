@@ -18,10 +18,10 @@ export const salonKnotRarityChances = [
   [ethereal, 0.05],
 ] as const satisfies ReadonlyArray<readonly [Rarity, number]>
 
-/** how tall the Salon’s Knot stands on its pedestal, in meters */
+/** the Salon Knot’s scale, measured as the height of its standing pose in meters */
 export const salonKnotHeight = 1
 
-/** the Knots that stand at the Salon’s size without sinking visibly into the pedestal: those whose shader pushes their surface out no further than a standing Knot may sink */
+/** Keep the seed’s existing Knot pool stable when restoring the floating showcase. */
 export const salonKnots = knots.filter(knot => (knot.displacement ?? 0) * salonKnotHeight / knotStandingHeight <= standingKnotSink)
 
 const [signX, signZ] = [17, -21.6]
@@ -34,7 +34,7 @@ export const salonKnotSign = {
 
 const knotsByRarity = Map.groupBy(salonKnots, knot => knot.rarity)
 
-/** The Knot standing on the Salon’s pedestal in the environment of `seed`, facing the room: its rarity is rolled by `salonKnotRarityChances` first, then a Knot of that rarity, so the seed alone decides it. */
+/** The Knot hovering over the Salon’s pedestal in the environment of `seed`: rarity is rolled first, then a Knot of that rarity, so the seed alone decides it. */
 export default function salonKnot(seed: number): ShowcasedKnot {
   const rarity = environmentWeightedPick(seed, 'salon-knot-rarity', salonKnotRarityChances)
   return {

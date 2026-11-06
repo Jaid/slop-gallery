@@ -29,7 +29,7 @@ import slopGallery from '#src/worlds/gallery/index.ts'
 const room = slopGallery.room('salon')
 const salonWalls = slopGallery.walls.filter(wall => wall.room === 'salon')
 
-/** The Salon: walls frescoed in Pompeian red over a socle painted as marble and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a Knot the seed picks standing on it. */
+/** The Salon: walls frescoed in Pompeian red over a socle painted as marble and hung frame to frame, polished terrazzo underfoot, a coffered skylight overhead and a sculpture pedestal with a floating Knot chosen by the seed. */
 export default function SalonRoom({glass, stone, wood}: {
   glass: Material
   stone: Texture

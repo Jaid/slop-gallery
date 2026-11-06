@@ -1,31 +1,62 @@
 import type {ShowcasedKnot} from '#src/lib/gallery/showcasedKnots.ts'
 
-import {ConvexHullCollider} from '@react-three/rapier'
+import {ConvexHullCollider, useBeforePhysicsStep} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import DirectKnotMaterials from 'knot-materials/knotMaterials/DirectKnotMaterials.ts'
 import loadKnotMaterial from 'knot-materials/materials.ts'
 import {useEffect, useMemo, useSyncExternalStore} from 'react'
 
 import InteractiveObject from '#component/InteractiveObject'
-import GrabbableProp from '#src/components/Scene/GrabbableProp.tsx'
+import GrabbableProp, {propObjects} from '#src/components/Scene/GrabbableProp.tsx'
 import KnotNarration from '#src/lib/audio/KnotNarration.ts'
 import {narrator} from '#src/lib/audio/narration.ts'
+import {frozenSeconds} from '#src/lib/frozenTime.ts'
 import {galleryEvents, narrateModel, useGallery} from '#src/lib/gallery.ts'
-import showcasedKnots from '#src/lib/gallery/showcasedKnots.ts'
+import showcasedKnots, {knotShowcaseHoverGap} from '#src/lib/gallery/showcasedKnots.ts'
 import {trackLoadingItems} from '#src/lib/loadingItems.ts'
-import {knotStandingRoll, standKnot} from '#src/lib/physics/standingKnot.ts'
+import KnotRotation from '#src/lib/physics/KnotRotation.ts'
+import {readKnotRotation} from '#src/lib/physics/rotatingKnots.ts'
+import {standKnot} from '#src/lib/physics/standingKnot.ts'
 import {getPmremEnvironment} from '#src/lib/rendering/pmrem.ts'
 
 const propId = ({entry}: ShowcasedKnot) => `prop-knot-${entry.id}`
+const isRotating = readKnotRotation()
 /** A core sits inside its shell, which takes every hit. */
 const ignoreRaycast = () => {}
 
 /**
- * Knots the gallery showcases, each standing on its own as a loose prop on the bridge between two of its lobes, scaled to its height, to be knocked over, grabbed and thrown like any other; inspecting one announces its title and its model.
+ * Knots floating above their pedestals, rotating until struck for the first time, then falling as loose props to be grabbed or thrown; inspecting one announces its title and its model.
  * Their materials and the announcements only load with them. A Knot only enters once its shader has arrived and then wears its full material right away, leaving it to the renderer to stream it in like the rest of the gallery.
  * `knots` must keep its identity while it stays the same, since a new one builds every material anew.
  */
 export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKnot>}) {
+  const rotation = useMemo(() => new KnotRotation, [])
+  useBeforePhysicsStep(world => {
+    if (isRotating) {
+      if (frozenSeconds === undefined) {
+        rotation.advance(world.timestep)
+      } else {
+        rotation.set(frozenSeconds)
+      }
+    }
+    for (const knot of knots) {
+      const body = propObjects.get(propId(knot))?.body
+      if (body) {
+        rotation.step(body)
+      }
+    }
+  })
+  useEffect(() => {
+    globalThis.slopGallery ??= {}
+    const gallery = globalThis.slopGallery
+    const reset = () => rotation.reset()
+    gallery.resetKnotRotation = reset
+    return () => {
+      if (gallery.resetKnotRotation === reset) {
+        delete gallery.resetKnotRotation
+      }
+    }
+  }, [rotation])
   const materials = useDisposable(useMemo(() => new DirectKnotMaterials(knots.map(knot => knot.entry), loadKnotMaterial, getPmremEnvironment()), [knots]))
   const worn = useSyncExternalStore(materials.subscribe, materials.getSnapshot, materials.getSnapshot)
   useEffect(() => trackLoadingItems(() => materials.pendingMaterials.map(material => `knot-material:${material}`)), [materials])
@@ -100,12 +131,26 @@ export default function KnotShowcase({knots}: {knots: ReadonlyArray<ShowcasedKno
       }
       const {entry, position: [x, y, z], rotation: yaw = 0} = knot
       const {geometry} = resources.items[index]
-      const {lift, scale, vertices} = stances[index]
+      const {scale, vertices} = stances[index]
       const {coreMaterial} = material
       const id = propId(knot)
-      return <GrabbableProp key={id} id={id} colliders={false} orbit={{radius: geometry.boundingSphere!.radius * scale}} position={[x, y + lift, z]} rotation={[0, yaw, knotStandingRoll]} title={`${entry.title} · ${entry.modelTitle}`} type='dynamic'>
-        {/* No contact skin for the displacement, which would topple it, see standingKnotSink. */}
-        <ConvexHullCollider args={[vertices]} />
+      const skin = (entry.displacement ?? 0) * scale
+      const radius = geometry.boundingSphere!.radius * scale + skin
+      const body = () => propObjects.get(id)?.body
+      const outOfShowcase = () => {
+        const current = body()
+        return current !== undefined && !rotation.isShowcased(current)
+      }
+      return <GrabbableProp
+        key={id} id={id} blockedMessage={() => 'Knock this Knot out of its showcase first.'} canGrab={outOfShowcase} colliders={false} orbit={{radius}} position={[x, y + radius + knotShowcaseHoverGap, z]} recoverAsDynamic={outOfShowcase} rotation={[0, yaw, 0]} title={`${entry.title} · ${entry.modelTitle}`} type='fixed'
+      >
+        <ConvexHullCollider
+          args={[vertices]} contactSkin={skin} onContactForce={({target}) => {
+            if (target.rigidBody) {
+              rotation.release(target.rigidBody)
+            }
+          }}
+        />
         <InteractiveObject id={id} action='Listen' inspectable title={entry.title} onActivate={() => narrateModel(id)}>
           <mesh castShadow material={material} name={`knot-${entry.id}`} raycast={resources.raycast} receiveShadow scale={scale}>
             <primitive attach='geometry' object={geometry} />
