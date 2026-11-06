@@ -4,6 +4,7 @@ import type {RouteCrossfall} from './passages/RoutedPassage.ts'
 import {bastionClearance, bastionDoorway} from './bastion.ts'
 import {easedRampGradient} from './easedRamp.ts'
 import forge, {forgeVestibule} from './forge.ts'
+import {forgeTurn} from './forgeTurn.ts'
 import lowerGallery from './lowerGallery.ts'
 import Passage from './passages/Passage.ts'
 import PassageRoute from './passages/PassageRoute.ts'
@@ -107,6 +108,10 @@ export const climbRun = new RoutedPassage('climb_run', 'bastion', new PassageRou
 ]), width, {cornice: false})
 /** how long the approach’s straight stretch is, from its turn to the vestibule’s arch */
 const approachStraight = vestibuleWestX - eastLegX - approachTurn
+/** The marked point, 5.4 cm along the curved outer wall from the middle of the approach's elbow. */
+const pipeOutletAlong = approachTurn * (Math.PI / 4 + 0.054 / (approachTurn + stripWidth / 2))
+const pipeOutletY = forgeTurn.at(forgeTurn.crossings.outlet).point[1]
+const pipeOpeningRadius = 0.38
 /** From the arch in the screen wall north round a smooth turn east, then straight on to the west arch of the Forge’s vestibule. */
 export const climbApproach = new RoutedPassage('climb_approach', 'bastion', new PassageRoute([eastLegX, screenZ], -Math.PI / 2, forgeFloorY, levelHeight, [
   {
@@ -114,7 +119,19 @@ export const climbApproach = new RoutedPassage('climb_approach', 'bastion', new 
     angle: Math.PI / 2,
   },
   {length: approachStraight},
-]), stripWidth, {cornice: false})
+]), stripWidth, {
+  cornice: false,
+  openings: [{
+    name: 'pipe_outlet',
+    side: -1,
+    along: pipeOutletAlong,
+    width: pipeOpeningRadius * 2,
+    bottom: pipeOutletY - pipeOpeningRadius,
+    height: pipeOutletY + pipeOpeningRadius,
+    profile: 'round',
+    casing: false,
+  }],
+})
 /** The arch through the screen wall, as wide and as high as the approach’s vault, and so are the arches of the Forge’s vestibule. */
 export const climbArch = {
   width: stripWidth,

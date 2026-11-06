@@ -61,13 +61,12 @@ export default {
     ],
   },
   west,
-  // The vestibule’s round wall, one ring facing its center, with the arch back into the room, the one out onto the Bastion’s approach and, low on its north and its east side, the holes the redirection pipe runs out and in again by.
+  // The vestibule’s round wall, one ring facing its center, with its two arches and the redirection pipe’s inlet on the north side.
   vestibule: {
     ...vestibule,
     holes: {
       ...vestibule.holes,
-      pipe_inlet: forgeTurnHole(vestibule, roomOrigins.forge, 'inlet'),
-      pipe_outlet: forgeTurnHole(vestibule, roomOrigins.forge, 'outlet'),
+      pipe_inlet: forgeTurnHole(vestibule, roomOrigins.forge),
     },
   },
 } satisfies Record<string, RoomWall>

@@ -25,27 +25,23 @@ const [mouthX, mouthY, mouthZ] = (() => {
 })()
 /** how far the mouth stands out from the vestibule’s north wall */
 const reach = mouthZ - (vestibuleZ - radius + wallFace)
-/** how high the middle of its outlet lies, just high enough for the brass to clear the floor */
-const outletY = 0.305
+/** The outlet's center, at the height marked on the Bastion approach wall. */
+const outletY = 0.63
 /** how steeply it still falls toward its outlet, per meter along it */
 const endFall = 0.01
 /** from its mouth straight north to the center line of the vestibule’s wall */
 const inletRun = mouthZ - (vestibuleZ - radius)
-/** The 180° counter-clockwise hairpin behind the north wall. Its far leg reaches back into the vestibule near the west arch. */
-const turnRadius = 1.05
+/** One semicircular counter-clockwise hairpin behind the north wall, ending opposite the requested Bastion approach opening. */
+const returnX = vestibuleX - 8.3
+const turnRadius = (vestibuleX - returnX) / 2
 const loop = turnRadius * Math.PI
 const loopCenter = [vestibuleX - turnRadius, vestibuleZ - radius] as const
-const returnX = vestibuleX - 2 * turnRadius
-/** The return leg follows the vestibule’s west side, then a broad elbow lines its outlet up with the Bastion arch. */
-const returnEndZ = vestibuleZ - 0.85
-const returnRun = returnEndZ - (vestibuleZ - radius)
-const elbowRadius = 0.85
-const elbow = elbowRadius * Math.PI / 2
-const outletRun = 0.2
-const length = inletRun + loop + returnRun + elbow + outletRun
-/** Where the returning leg crosses the north-west quadrant of the circular wall, into the vestibule. */
-const outletCrossing = inletRun + loop + radius - Math.sqrt(radius ** 2 - (2 * turnRadius) ** 2)
-const outletFace = inletRun + loop + radius - Math.sqrt((radius - wallFace) ** 2 - (2 * turnRadius) ** 2)
+/** The pipe returns straight south into the curved Bastion approach wall near its middle. */
+const outletWallZ = vestibuleZ - 0.08
+const outletRun = 0.27
+const returnRun = outletWallZ - (vestibuleZ - radius)
+const length = inletRun + loop + returnRun + outletRun
+const outletCrossing = inletRun + loop + returnRun
 /** how far along it its fall eases from the shot’s, which it takes over at its mouth, to its gentle fall toward the outlet, as much as the drop from its mouth to its outlet allows */
 const ease = 3 * (mouthY - outletY - endFall * length) / (startFall - endFall)
 if (mouthX !== vestibuleX || !(reach > 0) || !(ease > 0 && ease < length)) {
@@ -79,28 +75,15 @@ function plan(along: number): {
       direction: [-Math.sin(angle), -Math.cos(angle)],
     }
   }
-  if (along <= inletRun + loop + returnRun) {
-    return {
-      point: [returnX, vestibuleZ - radius + along - inletRun - loop],
-      direction: [0, 1],
-    }
-  }
-  if (along <= inletRun + loop + returnRun + elbow) {
-    const angle = (along - inletRun - loop - returnRun) / elbowRadius
-    return {
-      point: [returnX - elbowRadius + elbowRadius * Math.cos(angle), returnEndZ + elbowRadius * Math.sin(angle)],
-      direction: [-Math.sin(angle), Math.cos(angle)],
-    }
-  }
   return {
-    point: [returnX - elbowRadius - (along - inletRun - loop - returnRun - elbow), returnEndZ + elbowRadius],
-    direction: [-1, 0],
+    point: [returnX, vestibuleZ - radius + along - inletRun - loop],
+    direction: [0, 1],
   }
 }
 
 /**
- * The redirection pipe in the Forge’s vestibule, which turns every orb the alchemy machine’s cannon shoots through the arch round toward the Bastion, without slowing it: from its mouth low on the vestibule’s north wall, facing the arch, it runs north through the wall, round a 180° counter-clockwise hairpin behind it, and south through the north-west wall again. A rounded elbow in the vestibule aims its outlet west, sending the orb through the arch onto the Bastion’s approach.
- * It takes the shot over at its mouth at the very slope it falls there, the orb already resting on the bottom of its bore, and eases out into a gentle fall down to its outlet, just over the floor. Its bore is polished brass, which an orb slides round like a bobsled, without rolling and without bouncing, though pressed onto the bends at many times its weight, it leaves with only about three fifths of the speed it flew in with.
+ * The Forge redirection pipe takes each cannon shot north through the vestibule wall, turns it once through a 180° counter-clockwise semicircle behind the wall, then runs straight south into the Bastion's curved approach wall. Its outlet is centered on the marked spot, without another elbow.
+ * The pipe meets the orb at the cannon shot’s falling slope, then eases to a gentle descent toward the outlet above the approach's baseboard. Its polished bore guides the orb around the hairpin and launches it into the passage.
  * All values are in meters, in the world’s frame.
  */
 export const forgeTurn = {
@@ -113,15 +96,14 @@ export const forgeTurn = {
     start: inletRun,
     end: inletRun + loop,
   },
-  /** how far along it in plan it crosses the center line of the vestibule’s wall, running in and running out again */
+  /** distances along the centerline where it crosses the north vestibule wall and then the Bastion approach wall */
   crossings: {
     inlet: inletRun,
     outlet: outletCrossing,
   },
-  /** how far along it in plan it crosses the face of the vestibule’s wall, running in and running out again */
+  /** where the inlet crosses the near face of the vestibule wall */
   faces: {
     inlet: inletRun - wallFace,
-    outlet: outletFace,
   },
   fall,
   /** Where the pipe’s middle lies `along` meters along it in plan and which way it runs there, in 3D. */
@@ -136,36 +118,23 @@ export const forgeTurn = {
   },
 } as const
 
-/** The low arch clears the return leg where it passes obliquely through the curved wall and alongside its projecting baseboard. */
-const outletSlot = {
-  halfWidth: 0.56,
-  bottom: 0.03,
-  height: 0.61,
-  rise: 0.18,
-} as const
-
-/** Half the width of the opening where the pipe crosses the vestibule’s wall: a close-fitting round inlet and a broader baseboard-height arch on the return. */
-export function forgeTurnHoleHalfWidth(crossing: keyof typeof forgeTurn.crossings) {
-  if (crossing === 'outlet') {
-    return outletSlot.halfWidth
-  }
+/** Half-width of the close-fitting, round inlet on the vestibule wall. */
+export function forgeTurnHoleHalfWidth() {
   const down = fall(forgeTurn.crossings.inlet)
   return (forgeTurn.bore + forgeTurn.thickness) * Math.hypot(1, down) + wallFace * down + 0.01
 }
 
-/** The bare aperture through the vestibule’s wall, in the wall’s coordinates relative to the room’s `origin`. */
-export function forgeTurnHole(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation'>, origin: Vec3, crossing: keyof typeof forgeTurn.crossings): WallOpening {
-  const [x, y, z] = forgeTurn.at(forgeTurn.crossings[crossing]).point
-  const halfWidth = forgeTurnHoleHalfWidth(crossing)
-  const inlet = crossing === 'inlet'
-  const bottom = inlet ? y - halfWidth - origin[1] - wall.center[1] : outletSlot.bottom
+/** The pipe inlet's bare circular aperture through the vestibule wall. */
+export function forgeTurnHole(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation'>, origin: Vec3): WallOpening {
+  const [x, y, z] = forgeTurn.at(forgeTurn.crossings.inlet).point
+  const halfWidth = forgeTurnHoleHalfWidth()
+  const bottom = y - halfWidth - origin[1] - wall.center[1]
   return {
     u: wallCoordinates(wall, [x - origin[0], 0, z - origin[2]]),
     width: halfWidth * 2,
     bottom,
-    height: inlet ? bottom + halfWidth * 2 : outletSlot.height,
-    profile: inlet ? 'round' : 'arch',
-    ...inlet ? {} : {rise: outletSlot.rise},
+    height: bottom + halfWidth * 2,
+    profile: 'round',
     casing: false,
   }
 }

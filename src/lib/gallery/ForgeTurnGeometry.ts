@@ -30,12 +30,12 @@ function bore(curve: ForgeTurnCurve, [segments, sides]: readonly [number, number
   return tube
 }
 /** The brass plate on the face of the vestibule’s wall round the pipe where its mouth runs in, falling steeply, covering the hole: its inner edge round the pipe’s section on the face, stretched by its fall, its outer edge round the hole, bent round the wall’s curve. */
-function wallPlate(crossing: keyof typeof forgeTurn.crossings) {
+function wallPlate() {
   const outside = forgeTurn.bore + forgeTurn.thickness
-  const stretch = Math.hypot(1, forgeTurn.fall(forgeTurn.faces[crossing]))
-  const [x, y, z] = forgeTurn.at(forgeTurn.faces[crossing]).point
+  const stretch = Math.hypot(1, forgeTurn.fall(forgeTurn.faces.inlet))
+  const [x, y, z] = forgeTurn.at(forgeTurn.faces.inlet).point
   const shape = new Shape
-  shape.absarc(0, 0, forgeTurnHoleHalfWidth(crossing) + plate[0], 0, Math.PI * 2, false)
+  shape.absarc(0, 0, forgeTurnHoleHalfWidth() + plate[0], 0, Math.PI * 2, false)
   const hole = new Path
   hole.absellipse(0, 0, outside, outside * stretch, 0, Math.PI * 2, true, 0)
   shape.holes.push(hole)
@@ -80,7 +80,7 @@ export default class ForgeTurnGeometry {
       const rim = new RingGeometry(forgeTurn.bore, outside, visible[1])
       parts.push(rim.applyQuaternion(turn).translate(point.x, point.y, point.z))
     }
-    parts.push(wallPlate('inlet'))
+    parts.push(wallPlate())
     this.pipe = mergeParts(parts)
   }
 
