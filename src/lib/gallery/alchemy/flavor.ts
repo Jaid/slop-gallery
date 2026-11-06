@@ -1,15 +1,15 @@
 import type {Orb} from '../orbs/index.ts'
 import type {Vec3} from '../types.ts'
 
-import {helmet, knife, pumpkin} from '../curios/index.ts'
+import {hatchet, helmet, pumpkin} from '../curios/index.ts'
 import {halloweenOrb, horrorOrb, randomOrbs, spookOrb, transparentOrb} from '../orbs/index.ts'
 
 /** the rooms an orb the alchemy machine shoots out passes through on its way down to the Bastion’s crater */
 export const alchemyRooms: ReadonlySet<string> = new Set(['bastion', 'forge'])
-/** the props that, lying in the Forge or carried into it, steer the flavor the alchemy machine gives a Transparent Orb to an orb of their own, by their ids: the pumpkin to the Halloween Orb, the cleaver to the Horror Orb and the helmet to the Spook Orb */
+/** the props that, lying in the Forge or carried into it, steer the flavor the alchemy machine gives a Transparent Orb to an orb of their own, by their ids: the pumpkin to the Halloween Orb, the hatchet to the Horror Orb and the helmet to the Spook Orb */
 export const flavorSteering: ReadonlyMap<string, Orb> = new Map<string, Orb>([
   [pumpkin.propId, halloweenOrb],
-  [knife.propId, horrorOrb],
+  [hatchet.propId, horrorOrb],
   [helmet.propId, spookOrb],
 ])
 

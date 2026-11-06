@@ -7,7 +7,8 @@ import RAPIER from '@dimforge/rapier3d-compat'
 import {Box3, Euler, Quaternion, Vector3} from 'three/webgpu'
 
 import {banquet, banquetTable, banquetTableColliders} from '../../src/lib/gallery/banquet.ts'
-import {curios, helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
+import {curios, hatchet, helmet, pumpkin} from '../../src/lib/gallery/curios/index.ts'
+import lodge from '../../src/lib/gallery/lodge.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import {bastionColliders, physicsWorld} from './helpers/bastionWorld.ts'
 
@@ -29,11 +30,11 @@ const signedVolume = (geometry: BufferGeometry) => {
 const sizeOf = (geometry: BufferGeometry) => (new Box3).setFromBufferAttribute(geometry.getAttribute('position') as never).getSize(new Vector3)
 describe('the curios', () => {
   test('each is a prop of its own, lying in its room when a game begins', () => {
-    expect(curios.map(curio => curio.propId)).toEqual(['prop-pumpkin', 'prop-knife', 'prop-helmet'])
+    expect(curios.map(curio => curio.propId)).toEqual(['prop-pumpkin', 'prop-hatchet', 'prop-helmet'])
     for (const curio of curios) {
       expect(slopGallery.roomAt(curio.position)?.id).toBe(curio.room)
     }
-    expect([pumpkin.room, knife.room, helmet.room]).toEqual(['banquet', 'banquet', 'bastion'])
+    expect([pumpkin.room, hatchet.room, helmet.room]).toEqual(['banquet', 'lodge', 'bastion'])
   })
   for (const curio of curios) {
     test(`the ${curio.id}’s meshes face out, carry what their materials read and fit its reach`, () => {
@@ -65,14 +66,14 @@ describe('the curios', () => {
       }
     })
   }
-  test('the pumpkin and the helmet keep within 16 384 triangles each, their fine relief left to their materials', () => {
-    for (const curio of [pumpkin, helmet]) {
+  test('all three curios keep within 16 384 triangles each, their fine relief left to their materials', () => {
+    for (const curio of curios) {
       const model = curio.createModel()
       expect(model.parts.reduce((sum, {geometry}) => sum + geometry.index!.count / 3, 0)).toBeLessThanOrEqual(16_384)
       model.dispose()
     }
   })
-  test('the pumpkin is a squat one a third of a meter across, its stem rising out of the hollow at its top, and the cleaver’s handle wood and its blade, pommel and rivets steel', () => {
+  test('the pumpkin is a squat one a third of a meter across, its stem rising out of the hollow at its top, and the hatchet’s haft wood and its head steel', () => {
     const model = pumpkin.createModel()
     const [rind, stem] = model.parts.map(({geometry}) => geometry)
     const size = sizeOf(rind)
@@ -83,11 +84,11 @@ describe('the curios', () => {
     expect(stem.boundingBox!.max.y).toBeGreaterThan(size.y + 0.02)
     expect(stem.boundingBox!.min.y).toBeLessThan(size.y - 0.02)
     model.dispose()
-    const cleaver = knife.createModel()
-    expect(cleaver.parts.map(({material}) => material.name)).toEqual(['Forged steel', ''])
-    expect(cleaver.parts[1].geometry.hasAttribute('woodGrain')).toBe(true)
-    expect(sizeOf(cleaver.parts[0].geometry).x).toBeGreaterThan(0.32)
-    cleaver.dispose()
+    const axe = hatchet.createModel()
+    expect(axe.parts.map(({material}) => material.name)).toEqual(['Forged steel', ''])
+    expect(axe.parts[1].geometry.hasAttribute('woodGrain')).toBe(true)
+    expect(sizeOf(axe.parts[0].geometry).y).toBeGreaterThan(0.24)
+    axe.dispose()
   })
 })
 /** Drops the curio where it lies when a game begins into the world, its body as `Curio` builds it, lets it settle for four seconds, and returns where it went, which way its own up then points and whether it has fallen asleep. */
@@ -106,7 +107,7 @@ function settle(curio: Curio, world: RAPIER.World) {
       asleep: body.isSleeping(),
       moved: Math.hypot(x - curio.position[0], z - curio.position[2]),
       y,
-      /** its own up, and the axis its cleaver’s blade faces along, in the world */
+      /** its own up, and the axis its hatchet’s head faces along, in the world */
       up: new Vector3(0, 1, 0).applyQuaternion(new Quaternion(qx, qy, qz, w)),
       facing: new Vector3(0, 0, 1).applyQuaternion(new Quaternion(qx, qy, qz, w)),
     }
@@ -141,14 +142,20 @@ describe('where a game begins, each curio comes to rest where it lies', () => {
       world.free()
     }
   })
-  test('the cleaver lies flat on the table, on its side', () => {
-    const world = banquetWorld()
+  test('the hatchet rests on its side beside the Lodge hearth', () => {
+    const world = new RAPIER.World({
+      x: 0,
+      y: -9.81,
+      z: 0,
+    })
+    world.timestep = 1 / 60
+    world.createCollider(RAPIER.ColliderDesc.cuboid(lodge.size[0] / 2, 0.12, lodge.size[1] / 2).setTranslation(lodge.center[0], lodge.floorY - 0.12, lodge.center[1]))
     try {
-      const {asleep, facing, moved, y} = settle(knife, world)
+      const {asleep, facing, moved, y} = settle(hatchet, world)
       expect(asleep).toBe(true)
-      expect(moved).toBeLessThan(0.03)
-      expect(y).toBeGreaterThan(banquetTable.height)
-      expect(y).toBeLessThan(banquetTable.height + 0.02)
+      expect(moved).toBeLessThan(0.04)
+      expect(y).toBeGreaterThan(lodge.floorY + 0.01)
+      expect(y).toBeLessThan(lodge.floorY + 0.05)
       expect(facing.y).toBeGreaterThan(0.95)
     } finally {
       world.free()

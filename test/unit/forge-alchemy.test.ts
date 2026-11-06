@@ -18,7 +18,7 @@ import {colliderGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
 import {climbApproach} from '../../src/lib/gallery/climb.ts'
-import {helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
+import {hatchet, helmet, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
 import {forgeTurn, forgeTurnHoleHalfWidth} from '../../src/lib/gallery/forgeTurn.ts'
 import ForgeTurnGeometry from '../../src/lib/gallery/ForgeTurnGeometry.ts'
@@ -470,7 +470,7 @@ describe('the alchemy machine’s orbs', () => {
       }
     }
     expect([0, 0.4, 0.99].map(random => transmutedOrb(transparentOrb, [], roomAt, random))).toEqual([transparentOrb, spookOrb, halloweenOrb])
-    expect(transmutedOrb(transparentOrb, [['prop-knife', [forge.center[0], 1, forge.center[1]]]], roomAt, 0.3)).toBe(horrorOrb)
+    expect(transmutedOrb(transparentOrb, [['prop-hatchet', [forge.center[0], 1, forge.center[1]]]], roomAt, 0.3)).toBe(horrorOrb)
   })
   test('gives a Transparent Orb a flavor of its pool at random while nothing in the Forge steers it, each of them as often, but never the Horror Orb', () => {
     expect(randomOrbs).toEqual([transparentOrb, spookOrb, halloweenOrb])
@@ -485,21 +485,22 @@ describe('the alchemy machine’s orbs', () => {
     expect(flavoredOrb([], roomAt, 0)).toBe(transparentOrb)
     expect(flavoredOrb([], roomAt, 1 - 1e-12)).toBe(halloweenOrb)
   })
-  test('gives it the flavor of a pumpkin, a knife or a helmet lying in the Forge or carried into it, and of those there one at random, but heeds neither them outside it nor other props in it', () => {
+  test('gives it the flavor of a pumpkin, a hatchet or a helmet lying in the Forge or carried into it, and of those there one at random, but heeds neither them outside it nor other props in it', () => {
     const inForge: Vec3 = [forge.center[0], 1, forge.center[1]]
     const inVestibule: Vec3 = [forgeVestibule.center[0], 1.4, forgeVestibule.center[1]]
     const inLobby: Vec3 = [0, 1, -20]
     expect(roomAt(inVestibule)).toBe('forge')
     expect(roomAt(inLobby)).not.toBe('forge')
-    expect([pumpkin, knife, helmet].map(curio => curio.propId)).toEqual(['prop-pumpkin', 'prop-knife', 'prop-helmet'])
+    expect([pumpkin, hatchet, helmet].map(curio => curio.propId)).toEqual(['prop-pumpkin', 'prop-hatchet', 'prop-helmet'])
     expect(flavorCandidates([['prop-pumpkin', inForge]], roomAt)).toEqual([halloweenOrb])
-    expect(flavorCandidates([['prop-knife', inVestibule]], roomAt)).toEqual([horrorOrb])
+    expect(flavorCandidates([['prop-hatchet', inVestibule]], roomAt)).toEqual([horrorOrb])
+    expect(flavorCandidates([['prop-knife', inForge]], roomAt)).toBe(randomOrbs)
     expect(flavorCandidates([['prop-helmet-2', inForge]], roomAt)).toEqual([spookOrb])
     // Where they lie when a game begins, none of them is in the Forge yet.
-    expect(flavorCandidates([pumpkin, knife, helmet].map(curio => [curio.propId, curio.position] as const), roomAt)).toBe(randomOrbs)
+    expect(flavorCandidates([pumpkin, hatchet, helmet].map(curio => [curio.propId, curio.position] as const), roomAt)).toBe(randomOrbs)
     // Several of a kind steer it no harder than one.
-    expect(flavorCandidates([['prop-pumpkin', inForge], ['prop-pumpkin-2', inForge], ['prop-knife', inForge]], roomAt)).toEqual([halloweenOrb, horrorOrb])
-    expect([0, 0.49, 0.5, 0.99].map(random => flavoredOrb([['prop-pumpkin', inForge], ['prop-knife', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
+    expect(flavorCandidates([['prop-pumpkin', inForge], ['prop-pumpkin-2', inForge], ['prop-hatchet', inForge]], roomAt)).toEqual([halloweenOrb, horrorOrb])
+    expect([0, 0.49, 0.5, 0.99].map(random => flavoredOrb([['prop-pumpkin', inForge], ['prop-hatchet', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(flavorCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
   test('scattered cannon shots pass the arch untouched, keep over half their speed round the redirection pipe and travel on down the Bastion to its crater, never dragged across the welded surfaces', () => {
