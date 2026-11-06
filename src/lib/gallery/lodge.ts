@@ -70,6 +70,16 @@ export const lodgeWindow = {
   lining: 0.1,
   glassThickness: 0.04,
 } as const
+/** Glazing closing the new blind stone passage beside the east side of the Lodge. */
+export const lodgeEastWindow = {
+  x: lodge.center[0] + lodge.size[0] / 2,
+  z: lodgeWindow.z,
+  width: lodgeWindow.width,
+  bottom: lodgeWindow.bottom,
+  top: lodgeWindow.top,
+  glassThickness: lodgeWindow.glassThickness,
+} as const
+
 export const lodgeWindowCutout: PassageCutout = {
   position: [(lodgeWindow.roomX + lodge.approachX) / 2, (lodgeWindow.bottom + lodgeWindow.top) / 2, lodgeWindow.z],
   size: [lodgeWindow.roomX - lodge.approachX + 0.04, lodgeWindow.top - lodgeWindow.bottom + lodgeWindow.lining * 2, lodgeWindow.width + lodgeWindow.lining * 2],

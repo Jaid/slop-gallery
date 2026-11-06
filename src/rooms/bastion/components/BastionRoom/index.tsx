@@ -8,7 +8,7 @@ import CoveredPassage from '#component/CoveredPassage'
 import CoveredRoute from '#component/CoveredRoute'
 import TimberTransition from '#component/TimberTransition'
 import {bastionApproach, bastionCurve, bastionLanterns, bastionMouth, bastionTransition} from '#src/lib/gallery/bastion.ts'
-import {bastionLink, bastionLinkLanterns, climbMouthHollow} from '#src/lib/gallery/bastionNetwork.ts'
+import {bastionLink, bastionLinkLanterns, climbMouthHollow, lodgeSpur, lodgeSpurLanterns} from '#src/lib/gallery/bastionNetwork.ts'
 import {climbApproach, climbApproachLantern, climbHairpin, climbLanterns, climbMouth, climbRun, climbRunLantern} from '#src/lib/gallery/climb.ts'
 import {lodgeFloorPlanks} from '#src/lib/gallery/lodge.ts'
 import lodgeTimber from '#src/lib/gallery/lodgeTimber.ts'
@@ -35,6 +35,7 @@ export default function BastionRoom({material, wood}: {
     <CoveredRoute lanterns={[climbRunLantern]} material={material} passage={climbRun} />
     <CoveredRoute lanterns={[climbApproachLantern]} material={material} passage={climbApproach} />
     <CoveredRoute lanterns={bastionLinkLanterns} material={material} passage={bastionLink} />
+    <CoveredRoute lanterns={lodgeSpurLanterns} material={material} passage={lodgeSpur} />
     <BastionGate />
     <CoveredPassage material={material} passage={bastionMouth} />
     <CoveredRoute lanterns={lanterns} material={material} passage={bastionCurve} />

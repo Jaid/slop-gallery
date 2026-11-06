@@ -2,7 +2,7 @@ import type {RoomWall} from '../base/Room.ts'
 
 import {bastionApproach} from '#src/lib/gallery/bastion.ts'
 import {corridorPassage} from '#src/lib/gallery/corridor.ts'
-import lodge, {lodgeBay, lodgeWindow} from '#src/lib/gallery/lodge.ts'
+import lodge, {lodgeBay, lodgeEastWindow, lodgeWindow} from '#src/lib/gallery/lodge.ts'
 
 import {planWall} from '../lib/walls.ts'
 
@@ -53,6 +53,13 @@ export default {
         width: lodge.passageWidth,
         height: bastionApproach.height,
         profile: 'arch',
+      },
+      east_window: {
+        u: lodgeEastWindow.z - lodge.center[1],
+        width: lodgeEastWindow.width,
+        bottom: lodgeEastWindow.bottom - lodge.floorY,
+        height: lodgeEastWindow.top - lodge.floorY,
+        profile: 'rectangle',
       },
     },
   }),

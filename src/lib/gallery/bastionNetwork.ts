@@ -5,6 +5,7 @@ import {wallFace} from './architectureDimensions.ts'
 import {bastionLinkStart, bastionLinkStripZ, bastionLinkWidth, bastionPassages} from './bastion.ts'
 import {climbCrossfall, climbHairpin, climbMouth, climbPassages} from './climb.ts'
 import gateMouseHole from './gateMouseHole.ts'
+import lodge, {lodgeEastWindow} from './lodge.ts'
 import FloorHollow from './passages/FloorHollow.ts'
 import PassageRoute from './passages/PassageRoute.ts'
 import RoutedPassage from './passages/RoutedPassage.ts'
@@ -87,13 +88,47 @@ const route = new PassageRoute([startX, startZ], heading, y, height, [
  * How steeply the tunnel’s paving falls from both walls toward its middle: 1 in 20, gentler than the climb’s, so the sill it leaves along the doorway at the landing only slows orbs coming out of it into the crater instead of stopping them short of it.
  */
 export const bastionLinkCrossfall = 1 / 20
+/** A narrow branch from the wall facing the Lodge, at the place seen from the connecting tunnel. */
+export const lodgeSpurWidth = 2.6
+export const lodgeSpurX = -16.93
+const lodgeSpurAlong = route.project(lodgeSpurX, bastionLinkStripZ)!.along
+const lodgeSpurFloorY = route.at(lodgeSpurAlong).y
+const lodgeSpurStartZ = bastionLinkStripZ - bastionLinkWidth / 2
 /** Its paving falls toward its middle, but for its last stretch to the gate, where it eases out to stand on a level floor; at the landing, it meets the landing’s floor on a sill along the doorway, a hand’s breadth over its middle. */
 export const bastionLink = new RoutedPassage('link', 'bastion', route, bastionLinkWidth, {
   crossfall: {
     slope: bastionLinkCrossfall,
     easeOut: 1.5,
   },
+  openings: [{
+    ...vaultOpening(lodgeSpurWidth, height),
+    name: 'lodge_spur',
+    along: lodgeSpurAlong,
+    side: 1,
+    casing: false,
+  }],
 })
+/** The short blind branch: north through the link's wall, around a rounded westward elbow, and up to the Lodge's glazed east wall. Its paving rises gently to the Lodge's level. */
+const spurRadius = 1.5
+const spurZ = lodgeEastWindow.z
+const spurEndX = lodgeEastWindow.x
+const spurRoute = new PassageRoute([lodgeSpurX, lodgeSpurStartZ], -Math.PI / 2, lodgeSpurFloorY, height, [{
+  y: lodge.floorY,
+  height: 3.55,
+  steps: [
+    {length: lodgeSpurStartZ - spurZ - spurRadius},
+    {
+      radius: spurRadius,
+      angle: -Math.PI / 2,
+    },
+    {length: lodgeSpurX - spurRadius - spurEndX},
+  ],
+}])
+export const lodgeSpur = new RoutedPassage('lodge-spur', 'bastion', spurRoute, lodgeSpurWidth)
+export const lodgeSpurLanterns = [lodgeSpur.ribGap(2)]
+if (Math.hypot(spurRoute.end.point[0] - spurEndX, spurRoute.end.point[1] - spurZ) > 1e-6) {
+  throw new Error('The Lodge spur must end squarely against the Lodge east wall.')
+}
 export const bastionLinkLanterns = [bastionLink.ribGap(4), bastionLink.ribGap(route.length - 5)]
 const mouthWall = climbMouth.walls[2]
 /** The tunnel opens into the mouth’s north wall at the elbow, the size of its vault and bare like the ends of the mouth’s own vaults there. */
@@ -128,7 +163,7 @@ export const bastionLinkGate = {
   hole: WallOpening
   wall: Wall
 }
-export const bastionNetwork = [...bastionPassages, ...climbPassages, bastionLink]
+export const bastionNetwork = [...bastionPassages, ...climbPassages, bastionLink, lodgeSpur]
 
 /** All floors under a point, including the upper run where it crosses the lower passages. */
 export function bastionFloors(x: number, z: number) {

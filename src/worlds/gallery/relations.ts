@@ -92,6 +92,10 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['lodge-east', 'bastion']],
   },
   {
+    rooms: ['bastion', 'lodge'],
+    holes: [['lodge-east', 'east_window']],
+  },
+  {
     rooms: ['oculus', 'bastion'],
     holes: [['oculus-west', 'bastion']],
   },
@@ -307,7 +311,7 @@ const relations = {
         'lantern_middle',
         'lantern_south',
       ],
-      bastion: 'lantern_north',
+      bastion: ['lantern_north', 'lantern_spur_0'],
     },
   },
   bastion: {

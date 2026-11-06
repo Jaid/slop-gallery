@@ -1,7 +1,7 @@
 import type {Lamp} from '../base/Room.ts'
 
 import {bastionCurve, bastionLanterns, bastionOrigin} from '#src/lib/gallery/bastion.ts'
-import {bastionLink, bastionLinkLanterns} from '#src/lib/gallery/bastionNetwork.ts'
+import {bastionLink, bastionLinkLanterns, lodgeSpur, lodgeSpurLanterns} from '#src/lib/gallery/bastionNetwork.ts'
 import {routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
 import climbLamps from './climbLamps.ts'
@@ -26,6 +26,13 @@ export default {
   ...Object.fromEntries(bastionLinkLanterns.map((along, index) => {
     const [x, y, z] = routeLight(bastionLink, along)
     return [`lantern_link_${index}`, {
+      ...climbLamps.lantern_mouth,
+      position: [x - originX, y - 0.3 - originY, z - originZ] as const,
+    }]
+  })),
+  ...Object.fromEntries(lodgeSpurLanterns.map((along, index) => {
+    const [x, y, z] = routeLight(lodgeSpur, along)
+    return [`lantern_spur_${index}`, {
       ...climbLamps.lantern_mouth,
       position: [x - originX, y - 0.3 - originY, z - originZ] as const,
     }]
