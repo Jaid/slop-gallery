@@ -155,4 +155,12 @@ export function lodgeFurnitureColliders(): Array<FurnitureCollider> {
   ]
 }
 
+/** An iron hook centered on the room-facing side of the fireplace’s right-hand pillar. */
+export const lodgeHatchetHook = {
+  /** In the Lodge’s local frame, with the plate inset slightly into the stone face. */
+  position: [-(lodgeInterior.fireplace.width / 2 + lodgeInterior.fireplace.openingHalfWidth) / 2, 1.6, lodgeInterior.fireplace.front - 0.018] as Vec3,
+  /** The hatchet’s origin: its leather loop rests in the end of the forward-curved hook. */
+  hatchetOffset: [0, -0.12, -0.205] as Vec3,
+} as const
+
 export default lodgeInterior

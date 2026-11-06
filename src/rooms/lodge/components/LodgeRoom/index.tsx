@@ -7,6 +7,7 @@ import LodgeCeiling from '#component/LodgeCeiling'
 import LodgeFire from '#component/LodgeFire'
 import LodgeFireGuard from '#component/LodgeFireGuard'
 import LodgeFurnishings from '#component/LodgeFurnishings'
+import LodgeHatchetHook from '#component/LodgeHatchetHook'
 import Box from '#src/components/Scene/primitives.tsx'
 import lodge, {lodgeOutline} from '#src/lib/gallery/lodge.ts'
 import lodgeInterior from '#src/lib/gallery/lodgeInterior/layout.ts'
@@ -66,5 +67,6 @@ export default function LodgeRoom({materials}: {materials: LodgeMaterials}) {
       <LodgeFireGuard material={materials.iron} />
     </group>
     <LodgeFurnishings materials={materials} />
+    <LodgeHatchetHook material={materials.iron} />
   </group>
 }

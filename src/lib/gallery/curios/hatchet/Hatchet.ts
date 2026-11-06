@@ -1,13 +1,15 @@
 import type {Vec3} from '../../types.ts'
 import type {LatticePoint} from '../lattice.ts'
 
-import {BufferGeometry, Float32BufferAttribute} from 'three/webgpu'
+import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js'
+import {BufferGeometry, CatmullRomCurve3, Float32BufferAttribute, MeshStandardNodeMaterial, TubeGeometry, Vector3} from 'three/webgpu'
 
 import ForgedSteelMaterial from '#src/lib/materials/ForgedSteelMaterial.ts'
 import GrainedWoodMaterial from '#src/lib/materials/GrainedWoodMaterial.ts'
 import {studioEnvironment} from '#src/lib/materials/metal.ts'
 
 import lodge from '../../lodge.ts'
+import {lodgeHatchetHook} from '../../lodgeInterior/layout.ts'
 import {withWoodGrain} from '../../woodGrain.ts'
 import Curio, {CurioModel} from '../base/Curio.ts'
 import latticeGeometry from '../lattice.ts'
@@ -101,22 +103,48 @@ function haftGeometry() {
     end: {position: [0, 0.004, 0]},
   }), (x, y, z) => [y, x + z * 0.35], 0.43)
 }
+/** The leather thong is part of the pickup, not of the immovable hook. */
+function hangingLoopGeometry() {
+  // Ends lie under the swell at the butt; the loop bows around the hook's upturned end.
+  const loop = new TubeGeometry(new CatmullRomCurve3([
+    new Vector3(-0.026, 0.055, 0),
+    new Vector3(-0.03, -0.035, 0),
+    new Vector3(-0.019, -0.124, 0),
+    new Vector3(0, -0.147, 0),
+    new Vector3(0.019, -0.124, 0),
+    new Vector3(0.03, -0.035, 0),
+    new Vector3(0.026, 0.055, 0),
+  ]), 32, 0.0045, 6, false)
+  const wrap = new TubeGeometry(new CatmullRomCurve3(Array.from({length: 18}, (_unused, index) => {
+    const angle = 2 * Math.PI * index / 18
+    return new Vector3(0.028 * Math.sin(angle), 0.055, 0.018 * Math.cos(angle))
+  }), true), 36, 0.0048, 6, true)
+  const geometry = mergeGeometries([loop, wrap])
+  loop.dispose()
+  wrap.dispose()
+  return geometry
+}
 
 /**
  * A short camp hatchet with a flared, honed forged-steel head and a curved ash haft.
- * It lies beside the hearth in the Lodge, and steers a Transparent Orb in the Forge to a Horror Orb.
+ * It hangs by a leather loop from a hook on the Lodge’s fireplace pillar, and steers a Transparent Orb in the Forge to a Horror Orb.
  * In its own frame the haft rises along +y, and the blade points toward -x.
  */
 export default class Hatchet extends Curio {
   readonly id = 'hatchet'
   readonly mass = 1.25
-  // Just left of the wide stone hearth, outside the seating and the fireplace guard.
-  readonly position: Vec3 = [lodge.center[0] - 3.05, lodge.floorY + 0.035, lodge.center[1] + 2.85]
+  // Suspended in front of the right-hand pillar, with the head pointing down.
+  readonly position: Vec3 = [
+    lodge.center[0] + lodgeHatchetHook.position[0] + lodgeHatchetHook.hatchetOffset[0],
+    lodge.floorY + lodgeHatchetHook.position[1] + lodgeHatchetHook.hatchetOffset[1],
+    lodge.center[1] + lodgeHatchetHook.position[2] + lodgeHatchetHook.hatchetOffset[2],
+  ]
   readonly reach = 0.37
   readonly room = 'lodge'
-  // Rest on its side with the wide faces of the blade upward.
-  override readonly rotation: Vec3 = [-Math.PI / 2, 0, -0.55]
+  // Turn the head downward while leaving the blade facing the outside of the hearth.
+  override readonly rotation: Vec3 = [Math.PI, 0, 0]
   readonly title = 'A well-used hatchet, sharp as a warning'
+  override readonly type = 'fixed'
 
   createModel() {
     return new CurioModel([
@@ -132,6 +160,14 @@ export default class Hatchet extends Curio {
           heartwood: ['#69472a', '#a67b4d'],
           latewood: '#422b1a',
         }, {roughness: 0.57}),
+      },
+      {
+        name: 'hatchet-leather-loop',
+        geometry: hangingLoopGeometry(),
+        material: new MeshStandardNodeMaterial({
+          color: '#442d1c',
+          roughness: 0.9,
+        }),
       },
     ])
   }

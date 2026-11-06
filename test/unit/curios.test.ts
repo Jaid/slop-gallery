@@ -9,6 +9,7 @@ import {Box3, Euler, Quaternion, Vector3} from 'three/webgpu'
 import {banquet, banquetTable, banquetTableColliders} from '../../src/lib/gallery/banquet.ts'
 import {curios, hatchet, helmet, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import lodge from '../../src/lib/gallery/lodge.ts'
+import {lodgeHatchetHook} from '../../src/lib/gallery/lodgeInterior/layout.ts'
 import slopGallery from '../../src/worlds/gallery/index.ts'
 import {bastionColliders, physicsWorld} from './helpers/bastionWorld.ts'
 
@@ -35,6 +36,7 @@ describe('the curios', () => {
       expect(slopGallery.roomAt(curio.position)?.id).toBe(curio.room)
     }
     expect([pumpkin.room, hatchet.room, helmet.room]).toEqual(['banquet', 'lodge', 'bastion'])
+    expect(curios.map(curio => curio.type)).toEqual(['dynamic', 'fixed', 'dynamic'])
   })
   for (const curio of curios) {
     test(`the ${curio.id}’s meshes face out, carry what their materials read and fit its reach`, () => {
@@ -85,7 +87,7 @@ describe('the curios', () => {
     expect(stem.boundingBox!.min.y).toBeLessThan(size.y - 0.02)
     model.dispose()
     const axe = hatchet.createModel()
-    expect(axe.parts.map(({material}) => material.name)).toEqual(['Forged steel', ''])
+    expect(axe.parts.map(({material}) => material.name)).toEqual(['Forged steel', '', ''])
     expect(axe.parts[1].geometry.hasAttribute('woodGrain')).toBe(true)
     expect(sizeOf(axe.parts[0].geometry).y).toBeGreaterThan(0.24)
     axe.dispose()
@@ -142,23 +144,29 @@ describe('where a game begins, each curio comes to rest where it lies', () => {
       world.free()
     }
   })
-  test('the hatchet rests on its side beside the Lodge hearth', () => {
-    const world = new RAPIER.World({
-      x: 0,
-      y: -9.81,
-      z: 0,
-    })
-    world.timestep = 1 / 60
-    world.createCollider(RAPIER.ColliderDesc.cuboid(lodge.size[0] / 2, 0.12, lodge.size[1] / 2).setTranslation(lodge.center[0], lodge.floorY - 0.12, lodge.center[1]))
+  test('the hatchet hangs head-down by its loop on the Lodge’s right fireplace pillar', () => {
+    expect(hatchet.type).toBe('fixed')
+    expect(hatchet.rotation).toEqual([Math.PI, 0, 0])
+    expect(hatchet.position).toEqual([
+      lodge.center[0] + lodgeHatchetHook.position[0] + lodgeHatchetHook.hatchetOffset[0],
+      lodge.floorY + lodgeHatchetHook.position[1] + lodgeHatchetHook.hatchetOffset[1],
+      lodge.center[1] + lodgeHatchetHook.position[2] + lodgeHatchetHook.hatchetOffset[2],
+    ])
+    const model = hatchet.createModel()
     try {
-      const {asleep, facing, moved, y} = settle(hatchet, world)
-      expect(asleep).toBe(true)
-      expect(moved).toBeLessThan(0.04)
-      expect(y).toBeGreaterThan(lodge.floorY + 0.01)
-      expect(y).toBeLessThan(lodge.floorY + 0.05)
-      expect(facing.y).toBeGreaterThan(0.95)
+      const [head, , loop] = model.parts
+      const loopBounds = new Box3
+      loopBounds.setFromBufferAttribute(loop.geometry.getAttribute('position') as never)
+      const headBounds = new Box3
+      headBounds.setFromBufferAttribute(head.geometry.getAttribute('position') as never)
+      expect(loopBounds.min.y).toBeLessThan(-0.14)
+      // After a half-turn around x, the loop sits over the upturned end of the iron hook.
+      const loopTop = hatchet.position[1] - loopBounds.min.y
+      expect(loopTop - (lodge.floorY + lodgeHatchetHook.position[1])).toBeGreaterThan(0)
+      expect(loopTop - (lodge.floorY + lodgeHatchetHook.position[1])).toBeLessThan(0.04)
+      expect(hatchet.position[1] - headBounds.max.y).toBeGreaterThan(lodge.floorY + 0.7)
     } finally {
-      world.free()
+      model.dispose()
     }
   })
   test('the helmet stands on its gorget in the Bastion’s mouth', () => {

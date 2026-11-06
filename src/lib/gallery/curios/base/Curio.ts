@@ -69,6 +69,8 @@ export default abstract class Curio {
   /** how it is turned when a game begins, as Euler angles */
   readonly rotation: Vec3 = [0, 0, 0]
   abstract readonly title: string
+  /** Whether it is attached to the scenery at the start, before its first pickup. */
+  readonly type: 'dynamic' | 'fixed' = 'dynamic'
 
   get propId() {
     return `prop-${this.id}`
