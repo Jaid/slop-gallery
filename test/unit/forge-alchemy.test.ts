@@ -17,10 +17,10 @@ import WorkbenchGeometry from '../../src/lib/gallery/alchemy/WorkbenchGeometry.t
 import {colliderGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
-import {climbApproach} from '../../src/lib/gallery/climb.ts'
+import {climbApproach, climbArch} from '../../src/lib/gallery/climb.ts'
 import {helmet, knife, pumpkin} from '../../src/lib/gallery/curios/index.ts'
 import forge, {forgeRooflight, forgeVestibule} from '../../src/lib/gallery/forge.ts'
-import {forgeTurn, forgeTurnHoleRadius} from '../../src/lib/gallery/forgeTurn.ts'
+import {forgeTurn, forgeTurnHoleHalfWidth} from '../../src/lib/gallery/forgeTurn.ts'
 import ForgeTurnGeometry from '../../src/lib/gallery/ForgeTurnGeometry.ts'
 import {orbSeat} from '../../src/lib/gallery/OrbHolderGeometry.ts'
 import {halloweenOrb, horrorOrb, orbRadius, randomOrbs, spookOrb, transparentOrb} from '../../src/lib/gallery/orbs/index.ts'
@@ -344,7 +344,7 @@ describe('the Forge’s redirection pipe', () => {
   const [vestibuleX, vestibuleZ] = forgeVestibule.center
   const outside = forgeTurn.bore + forgeTurn.thickness
   const fromMiddle = ([x, , z]: Vec3) => Math.hypot(x - vestibuleX, z - vestibuleZ)
-  test('takes the shot over at its mouth low on the north wall, in front of it, falling as steeply as the orb, turns it round 270° behind the wall and lets it out again low on the east side, heading west for the arch onto the Bastion’s approach', () => {
+  test('takes the shot over at the north wall, turns it counter-clockwise through 180° behind the wall and returns through the north-west side, heading west toward the Bastion arch', () => {
     expect(forgeTurn.bore - orbRadius - weldedSurfaceSkin).toBeGreaterThan(0.05)
     const mouth = forgeTurn.at(0)
     // Its middle as far over the orb’s as the orb rests under it on the bottom of its bore, square to the way both run
@@ -356,34 +356,50 @@ describe('the Forge’s redirection pipe', () => {
     expect(-mouth.direction[1] / -mouth.direction[2]).toBeCloseTo(cannonFlight.fall, 9)
     expect(mouth.point[1]).toBeLessThan(1)
     const outlet = forgeTurn.at(forgeTurn.length)
+    const bendStart = forgeTurn.at(forgeTurn.bend.start)
+    const bendMid = forgeTurn.at((forgeTurn.bend.start + forgeTurn.bend.end) / 2)
+    const bendEnd = forgeTurn.at(forgeTurn.bend.end)
+    expect(bendStart.direction[2] / Math.hypot(bendStart.direction[0], bendStart.direction[2])).toBeCloseTo(-1, 9)
+    expect(bendMid.point[0]).toBeLessThan(vestibuleX)
+    expect(bendMid.direction[0]).toBeLessThan(-0.99)
+    expect(bendEnd.direction[2] / Math.hypot(bendEnd.direction[0], bendEnd.direction[2])).toBeCloseTo(1, 9)
+    expect(bendEnd.point[0]).toBeCloseTo(vestibuleX - forgeTurn.bend.radius * 2, 9)
     expect(outlet.point[2]).toBeCloseTo(vestibuleZ, 9)
-    expect(outlet.point[0]).toBeGreaterThan(vestibuleX)
+    expect(outlet.point[0]).toBeLessThan(vestibuleX)
     expect(outlet.direction[0]).toBeLessThan(-0.99)
     expect(outlet.direction[1]).toBeLessThan(0)
     expect(climbApproach.route.end.point[1]).toBeCloseTo(vestibuleZ, 9)
     // Its brass clears the floor at its outlet, where an orb drops out onto the floor.
     expect(outlet.point[1] - outside).toBeGreaterThan(0.02)
     expect(outlet.point[1] - (forgeTurn.bore - orbRadius) - orbRadius).toBeLessThan(0.1)
-    // Inside the vestibule only in front of the wall’s face, behind it clear of the wall’s back face all round the loop; it only falls, never rises.
+    // The hairpin clears the wall’s back, the return leg clears its front, and the final elbow leaves through the Bastion arch; the pipe only falls.
     let previousY = Infinity
     for (let along = 0; along <= forgeTurn.length; along += 0.02) {
       const {point} = forgeTurn.at(along)
       const distance = fromMiddle(point)
-      if (along < forgeTurn.faces.inlet || along > forgeTurn.faces.outlet) {
+      if (along < forgeTurn.faces.inlet) {
         expect(distance).toBeLessThan(forgeVestibule.radius - wallFace)
       } else if (along > forgeTurn.crossings.inlet + 0.6 && along < forgeTurn.crossings.outlet - 0.6) {
         expect(distance - outside).toBeGreaterThan(forgeVestibule.radius + wallFace)
+      } else if (along > forgeTurn.faces.outlet && Math.abs(point[2] - vestibuleZ) > climbArch.width / 2) {
+        expect(distance).toBeLessThan(forgeVestibule.radius - wallFace)
       }
       expect(point[1]).toBeLessThan(previousY)
       expect(point[1] - outside).toBeGreaterThan(0)
       previousY = point[1]
     }
-    // Where it crosses the wall’s center line, it runs straight through it, square to it.
+    // Both crossings are on the wall’s center line; the return leg passes through it obliquely.
     for (const crossing of ['inlet', 'outlet'] as const) {
       const {direction, point} = forgeTurn.at(forgeTurn.crossings[crossing])
       expect(fromMiddle(point)).toBeCloseTo(forgeVestibule.radius, 9)
       const radial = [point[0] - vestibuleX, point[2] - vestibuleZ].map(value => value / forgeVestibule.radius)
-      expect(Math.abs(direction[0] * radial[0] + direction[2] * radial[1]) / Math.hypot(direction[0], direction[2])).toBeCloseTo(1, 9)
+      const incidence = Math.abs(direction[0] * radial[0] + direction[2] * radial[1]) / Math.hypot(direction[0], direction[2])
+      if (crossing === 'inlet') {
+        expect(incidence).toBeCloseTo(1, 9)
+      } else {
+        expect(incidence).toBeGreaterThan(0.7)
+        expect(incidence).toBeLessThan(0.8)
+      }
     }
     // Both its ends lie open.
     const material = new MeshBasicMaterial
@@ -403,15 +419,22 @@ describe('the Forge’s redirection pipe', () => {
       material.dispose()
     }
   })
-  test('runs through round holes in the vestibule’s wall, wide enough round its brass, snug at the outlet and covered by a plate at the inlet, above the baseboard', () => {
+  test('crosses the vestibule wall through a round plated inlet and a low arched slot clearing its return leg and the baseboard', () => {
     const ring = wallById('forge-vestibule')
     expect(ring.holes!.filter(hole => hole.name?.startsWith('pipe')).map(hole => hole.name)).toEqual(['pipe_inlet', 'pipe_outlet'])
     for (const crossing of ['inlet', 'outlet'] as const) {
       const hole = ring.holes!.find(candidate => candidate.name === `pipe_${crossing}`)!
-      expect([hole.profile, hole.casing]).toEqual(['round', false])
-      const {center, radius} = openingCircle(hole)
-      expect(radius).toBeCloseTo(forgeTurnHoleRadius(crossing), 9)
-      expect(ring.center[1] + center).toBeCloseTo(forgeTurn.at(forgeTurn.crossings[crossing]).point[1], 9)
+      expect(hole.casing).toBe(false)
+      expect(hole.width / 2).toBeCloseTo(forgeTurnHoleHalfWidth(crossing), 9)
+      if (crossing === 'inlet') {
+        expect(hole.profile).toBe('round')
+        const {center} = openingCircle(hole)
+        expect(ring.center[1] + center).toBeCloseTo(forgeTurn.at(forgeTurn.crossings.inlet).point[1], 9)
+      } else {
+        expect(hole.profile).toBe('arch')
+        expect(hole.rise).toBeCloseTo(0.18, 9)
+        expect(hole.height).toBeCloseTo(0.61, 9)
+      }
       // Over the wall’s whole thickness, the brass round the pipe stays inside the hole.
       const stretch = Math.hypot(1, forgeTurn.fall(forgeTurn.crossings[crossing]))
       for (const offset of [-wallFace, 0, wallFace]) {

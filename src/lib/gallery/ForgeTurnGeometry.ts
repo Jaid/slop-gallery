@@ -5,7 +5,7 @@ import {Curve, ExtrudeGeometry, Path, Quaternion, RingGeometry, Shape, TubeGeome
 import {mergeParts} from '../geometry.ts'
 import {wallFace} from './architectureDimensions.ts'
 import {forgeVestibule} from './forge.ts'
-import {forgeTurn, forgeTurnHoleRadius} from './forgeTurn.ts'
+import {forgeTurn, forgeTurnHoleHalfWidth} from './forgeTurn.ts'
 
 /** how many pieces the bore’s collider is cut into along the pipe and round it: finely enough for an orb pressed onto the loop at many times its weight to slide round it without knocking against their seams, which would cost it most of its speed */
 const collision = [1500, 48] as const
@@ -35,7 +35,7 @@ function wallPlate(crossing: keyof typeof forgeTurn.crossings) {
   const stretch = Math.hypot(1, forgeTurn.fall(forgeTurn.faces[crossing]))
   const [x, y, z] = forgeTurn.at(forgeTurn.faces[crossing]).point
   const shape = new Shape
-  shape.absarc(0, 0, forgeTurnHoleRadius(crossing) + plate[0], 0, Math.PI * 2, false)
+  shape.absarc(0, 0, forgeTurnHoleHalfWidth(crossing) + plate[0], 0, Math.PI * 2, false)
   const hole = new Path
   hole.absellipse(0, 0, outside, outside * stretch, 0, Math.PI * 2, true, 0)
   shape.holes.push(hole)

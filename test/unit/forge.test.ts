@@ -133,7 +133,7 @@ describe('the Forge’s vestibule', () => {
       expect(pz).toBeCloseTo(northZ, 9)
       expect(wallPosition(wall, hole.u, 0, 0.5)[2]).toBeCloseTo(northZ + facing * 0.5, 9)
     }
-    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high; low on its north and its east side, the redirection pipe runs out and in again.
+    // Both arches of the ring span as much straight across between their jambs as the approach’s arch, and stand as high; low on its north and north-west side, the redirection pipe runs out and in again.
     expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'pipe_inlet', 'pipe_outlet'])
     for (const hole of ring.holes!.filter(value => !value.name?.startsWith('pipe'))) {
       const [left, right] = [-1, 1].map(side => wallPosition(ring, hole.u + side * hole.width / 2, 0, 0))
