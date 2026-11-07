@@ -13,6 +13,7 @@ import {readScale, readWarmupScale} from '../../src/lib/rendering/scale.ts'
 import {readShowWireframe} from '../../src/lib/rendering/showWireframe.ts'
 import {readWireframeHighlight} from '../../src/lib/rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from '../../src/lib/roomAnnouncements.ts'
+import {readDumpScreenshot} from '../../src/lib/telemetry/dumpScreenshot.ts'
 import {readTelemetry} from '../../src/lib/telemetry/telemetryParameter.ts'
 
 describe('URL options', () => {
@@ -29,6 +30,14 @@ describe('URL options', () => {
     expect(readTelemetry('?graphics=fast&telemetry&logs_ingestion_endpoint=https://logs.test/insert/jsonline?_stream_fields=service.name')).toBe(true)
     for (const search of ['', '?telemetry=false', '?telemetry=1', '?telemetry=TRUE']) {
       expect(readTelemetry(search)).toBe(false)
+    }
+  })
+  test('?dump_screenshot is enabled by a bare or true flag only', () => {
+    expect(readDumpScreenshot('?dump_screenshot')).toBe(true)
+    expect(readDumpScreenshot('?dump_screenshot=true')).toBe(true)
+    expect(readDumpScreenshot('?development&dump_screenshot')).toBe(true)
+    for (const search of ['', '?development', '?dump_screenshot=false', '?dump_screenshot=1', '?dump_screenshot=TRUE', '?dump_screenshots=true']) {
+      expect(readDumpScreenshot(search)).toBe(false)
     }
   })
   test('?flying only takes effect with ?development', () => {

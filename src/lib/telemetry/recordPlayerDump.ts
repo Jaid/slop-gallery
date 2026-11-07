@@ -9,6 +9,7 @@ import SoundEngine from '../audio/SoundEngine.ts'
 import {isDevelopmentMode} from '../developmentMode.ts'
 import {useGallery} from '../gallery.ts'
 import readQueryOverrides from '../queryOverrides.ts'
+import {isSavingDumpScreenshots} from './dumpScreenshot.ts'
 import {telemetry} from './index.ts'
 import saveDumpScreenshot from './saveDumpScreenshot.ts'
 
@@ -46,7 +47,7 @@ export function snapshotPlayerDump(dump: EgoDump) {
   }
 }
 
-/** Log an X-key dump, copy it to the clipboard as Clank, confirm it audibly and download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
+/** Log an X-key dump, copy it to the clipboard as Clank, confirm it audibly and, with `?dump_screenshot`, download the current frame. Only wired up in development mode, see `playerDumpHandler`. */
 export default function recordPlayerDump(dump: EgoDump) {
   const snapshot = snapshotPlayerDump(dump)
   const {context} = snapshot
@@ -67,9 +68,11 @@ export default function recordPlayerDump(dump: EgoDump) {
       console.warn('Dump confirmation sound could not be played.', error)
     })
   }
-  saveDumpScreenshot(`${world.id}-${dump.id}`).catch(error => {
-    console.warn('Dump screenshot could not be captured.', error)
-  })
+  if (isSavingDumpScreenshots) {
+    saveDumpScreenshot(`${world.id}-${dump.id}`).catch(error => {
+      console.warn('Dump screenshot could not be captured.', error)
+    })
+  }
   if (!telemetry) {
     return
   }

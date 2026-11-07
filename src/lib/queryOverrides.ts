@@ -29,6 +29,7 @@ import {readShowWireframe} from './rendering/showWireframe.ts'
 import {readStreamBudget} from './rendering/streamBudget.ts'
 import {readWireframeHighlight} from './rendering/wireframeHighlight.ts'
 import {readRoomAnnouncements} from './roomAnnouncements.ts'
+import {readDumpScreenshot} from './telemetry/dumpScreenshot.ts'
 import {readTelemetry} from './telemetry/telemetryParameter.ts'
 
 type Reader = (input: string) => unknown
@@ -52,6 +53,7 @@ const readers: Record<string, Reader> = {
   audio: readAudio,
   crosshair: readCrosshair,
   development: readDevelopmentMode,
+  dump_screenshot: readDumpScreenshot,
   edit_lamps: readEditLamps,
   edit_portrait_slots: readPortraitSlotEditing,
   flying: readFlying,

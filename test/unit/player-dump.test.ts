@@ -7,7 +7,7 @@ import {BoxGeometry, Mesh, MeshBasicMaterial, PerspectiveCamera, Scene} from 'th
 
 import EgoDiagnostics from '../../packages/ego-player/src/EgoDiagnostics.ts'
 
-test('player dumps are development-only, name the page host, join separate hit logs and respect disabled telemetry', async () => {
+test('player dumps are development-only, name the page host, join separate hit logs, respect disabled telemetry and only download screenshots with ?dump_screenshot', async () => {
   const source = resolve(import.meta.dir, '../../src/lib/telemetry/recordPlayerDump.ts')
   const scene = new Scene
   const camera = new PerspectiveCamera
@@ -44,7 +44,7 @@ test('player dumps are development-only, name the page host, join separate hit l
     },
   })
   try {
-    for (const [enabled, sound, audioFails, development] of [[true, true, false, true], [false, true, false, true], [true, false, false, true], [false, false, false, true], [true, true, true, true], [false, true, true, true], [true, true, false, false]]) {
+    for (const [enabled, sound, audioFails, development, screenshot] of [[true, true, false, true, true], [false, true, false, true, false], [true, false, false, true, false], [false, false, false, true, true], [true, true, true, true, false], [false, true, true, true, true], [true, true, false, false, true]]) {
       const build = await Bun.build({
         entrypoints: [source],
         target: 'bun',
@@ -79,6 +79,10 @@ test('player dumps are development-only, name the page host, join separate hit l
               builder.onLoad({filter: /telemetry[/\\]saveDumpScreenshot\.ts$/u}, () => ({
                 loader: 'ts',
                 contents: 'export const screenshots = []; export default async name => {screenshots.push(name)}',
+              }))
+              builder.onLoad({filter: /telemetry[/\\]dumpScreenshot\.ts$/u}, () => ({
+                loader: 'ts',
+                contents: `export const isSavingDumpScreenshots = ${screenshot}`,
               }))
               builder.onLoad({filter: /lib[/\\]queryOverrides\.ts$/u}, () => ({
                 loader: 'ts',
@@ -126,7 +130,8 @@ test('player dumps are development-only, name the page host, join separate hit l
         delete (globalThis as {location?: unknown}).location
       }
       await Bun.sleep(0)
-      expect(module.screenshots).toEqual([`knottingham-${dump.id}`])
+      // Only ?dump_screenshot downloads the frame.
+      expect(module.screenshots).toEqual(screenshot ? [`knottingham-${dump.id}`] : [])
       expect(clipboard.pop()).toMatch(new RegExp(String.raw`^<details><summary>Knottingham at \d{2} [A-Z][a-z]{2} \d{4} \d{2}:\d{2}</summary><dump id=${dump.id} date="${dump.time}">player .* context \{ world knottingham room lobby .*\}${hosted ? ' host vite.tower.lan' : ''}${enabled ? String.raw` query \{ development true seed 42 graphics true\}` : ''}</dump></details>$`, 'u'))
       expect(module.played).toEqual(sound && !audioFails ? ['SFX-04'] : [])
       expect(module.SoundEngine.requests).toBe(sound ? 1 : 0)
