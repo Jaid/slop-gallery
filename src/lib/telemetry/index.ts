@@ -1,5 +1,8 @@
 import type {Point3} from 'telemethree-ego'
 
+import ErrorTelemetry from 'victoria-browser-errors'
+
+import {staleChunkReloads} from '../staleChunks.ts'
 import SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 import {readTelemetry} from './telemetryParameter.ts'
 
@@ -19,8 +22,18 @@ export const playerTelemetry: {read: (() => {
   velocity: Point3
 } | null) | null} = {read: null}
 
+// Connected as the client is made, so errors while the world still loads count too.
+const errorTelemetry = telemetry && typeof window !== 'undefined' ? new ErrorTelemetry({
+  telemetry,
+  eventNamePrefix: 'gallery.',
+  getContext: () => telemetry.getContext(),
+}) : undefined
+const disconnectErrors = errorTelemetry?.connect()
+// A reload for a stale chunk names the session it ends, which the next page’s report links to.
+staleChunkReloads.sessionId = telemetry?.sessionId
 if (import.meta.env.DEV) {
   import.meta.hot.dispose(() => {
+    disconnectErrors?.()
     telemetry?.shutdown().catch(() => {})
   })
 }

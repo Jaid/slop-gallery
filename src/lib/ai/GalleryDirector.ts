@@ -13,6 +13,7 @@ import {openFusion} from '../gallery/fusion/fusions.ts'
 import {encodeGeneratedImage, imageSize} from '../gallery/ImageImporter.ts'
 import {validateImage} from '../gallery/imagePolicy.ts'
 import {useGallery} from '../gallery/store.ts'
+import FusionTrace from '../telemetry/FusionTrace.ts'
 import {telemetry} from '../telemetry/index.ts'
 import {hasAccess} from './openRouterAccess.ts'
 import {tieredModel} from './settings.ts'
@@ -28,6 +29,8 @@ export default class GalleryDirector {
   private fusing = new Map<string, symbol>
   /** this director’s fusions in progress */
   private fusions = new Set<Fusion>
+  /** the spans of the fusions in progress, with telemetry */
+  private traces = new Map<Fusion, FusionTrace>
   constructor(private settings: AiSettings, private access: OpenRouterAccess) {
     this.narrator = new PortraitNarration(settings, access)
   }
@@ -43,8 +46,10 @@ export default class GalleryDirector {
     // Everything they hold snaps back before the fusions let go of the portraits.
     for (const fusion of this.fusions) {
       fusion.abort()
+      this.traces.get(fusion)?.end()
     }
     this.fusions.clear()
+    this.traces.clear()
     for (const [id, token] of this.fusing) {
       this.releaseFusion(id, token)
     }
@@ -316,6 +321,7 @@ export default class GalleryDirector {
       broken.reject(fusion.signal.reason)
     }
     fusion.signal.addEventListener('abort', breakOff, {once: true})
+    const trace = this.traces.get(fusion)
     let fused: Pick<Portrait, 'height' | 'source' | 'width'> | undefined
     if (!recipe.unchanged) {
       try {
@@ -333,12 +339,9 @@ export default class GalleryDirector {
             ...imageSize(width, height, a.width * a.height * 10_000),
           }
         }
-        fused = await Promise.race([telemetry ? telemetry.wrap('gallery.fusion', generate, {attributes: {
-          mode: this.usingAi ? 'ai' : 'local',
-          aspect: a.width / a.height,
-          ingredients: recipe.ingredients.length,
-        }}) : generate(), broken.promise])
-      } catch {
+        fused = await Promise.race([trace ? trace.generate(generate) : generate(), broken.promise])
+      } catch (error) {
+        trace?.fail(error)
         await failed()
         return
       }
@@ -386,7 +389,8 @@ export default class GalleryDirector {
     const {held, placement} = state
     try {
       state.commit(state.portraits.filter(p => p.id !== remove).map(p => (p.id === a.id ? result : p)))
-    } catch {
+    } catch (error) {
+      trace?.fail(error)
       notify(failure)
       return
     }
@@ -406,6 +410,8 @@ export default class GalleryDirector {
 
   private endFusion(fusion: Fusion) {
     this.fusions.delete(fusion)
+    this.traces.get(fusion)?.end()
+    this.traces.delete(fusion)
     fusion.finish()
   }
 
@@ -428,6 +434,14 @@ export default class GalleryDirector {
     const fusion = this.openFusion(spec)
     fusion.resultFrame = recipe.frame ?? arrivalFrame(fusion.launch().position, spec.work.position, spec.work.id)
     this.fusions.add(fusion)
+    if (telemetry) {
+      this.traces.set(fusion, new FusionTrace(telemetry, fusion, recipe.unchanged, {
+        mode: this.usingAi ? 'ai' : 'local',
+        aspect: spec.work.width / spec.work.height,
+        ingredients: recipe.ingredients.length,
+        room: useGallery.getState().room,
+      }))
+    }
     return fusion
   }
 }

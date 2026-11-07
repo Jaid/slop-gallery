@@ -1,5 +1,5 @@
 import type {GalleryState, GalleryStore, SlopGalleryTelemetryOptions} from './types.ts'
-import type {Attributes, Span, SpanOptions} from 'victoria-browser-client'
+import type {Attributes, LogLevel, Span, SpanOptions} from 'victoria-browser-client'
 
 import VictoriaClient from 'victoria-browser-client'
 
@@ -145,13 +145,13 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     }
   }
 
-  event(name: string, attributes: Attributes = {}, message = `Gallery event: ${name}`) {
+  event(name: string, attributes: Attributes = {}, message = `Gallery event: ${name}`, level: LogLevel = 'info') {
     this.increment('gallery.events', 1, {attributes: {event: name}})
     const parent = this.gameplay ?? this.startup ?? this.session
     const span = parent ?? this.startSpan(`gallery.${name}`, {attributes})
     parent?.addEvent(`gallery.${name}`, attributes)
     this.log(message, {
-      level: 'info',
+      level,
       attributes: {
         'event.name': `gallery.${name}`,
         ...attributes,

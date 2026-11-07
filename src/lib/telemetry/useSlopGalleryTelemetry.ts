@@ -3,17 +3,21 @@ import type {GalleryStore} from './types.ts'
 
 import {useEffect} from 'react'
 
+import recordEnvironment from './recordEnvironment.ts'
 import recordPermalink from './recordPermalink.ts'
+import recordStaleChunkReload from './recordStaleChunkReload.ts'
 
 export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, store: GalleryStore, events?: EventTarget) {
   useEffect(() => {
     if (!telemetry) {
       return
     }
-    // Every attachment starts a session span of its own, which the permalink it runs with belongs in.
+    // Every attachment starts a session span of its own, which the permalink and the environment it runs with belong in.
     const connect = () => {
       const disconnect = telemetry.connect(store, events)
       recordPermalink(telemetry)
+      recordStaleChunkReload(telemetry)
+      recordEnvironment(telemetry).catch(() => {})
       return disconnect
     }
     let stop: (() => void) | undefined = connect()

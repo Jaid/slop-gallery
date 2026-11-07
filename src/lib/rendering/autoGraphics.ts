@@ -32,13 +32,22 @@ export function isHeavyCapable(hints: HeavyCapabilityHints) {
   return verdicts.architecture === 'met' && verdicts.deviceMemory === 'met' && verdicts.cpuPerformance !== 'unmet'
 }
 
-/** Ask the navigator, and the adapter that three is going to request without a power preference too, for the hints. */
-export async function requestHeavyCapabilityHints(): Promise<HeavyCapabilityHints> {
+/** Request the adapter that three is going to request without a power preference too, or null without WebGPU. A failed request only leaves the GPU unknown; three reports a GPU that is really missing itself. */
+const requestAdapter = () => (typeof navigator !== 'undefined' && 'gpu' in navigator ? navigator.gpu.requestAdapter().catch(() => null) : Promise.resolve(null))
+let adapter: Promise<GPUAdapter | null> | undefined
+
+/** The adapter of this page, requested on the first call only, so `?graphics=auto`, the menu and the telemetry share one request. */
+export function readAdapter() {
+  adapter ??= requestAdapter()
+  return adapter
+}
+
+/** Ask the navigator and the adapter, requested anew unless given, for the hints. */
+export async function requestHeavyCapabilityHints(gpuAdapter = requestAdapter()): Promise<HeavyCapabilityHints> {
   const {cpuPerformance, deviceMemory} = navigator as Navigator & Pick<HeavyCapabilityHints, 'cpuPerformance' | 'deviceMemory'>
-  // A failed request only leaves the GPU family unknown; three reports a GPU that is really missing itself.
-  const adapter = 'gpu' in navigator ? await navigator.gpu.requestAdapter().catch(() => null) : null
+  const gpu = await gpuAdapter
   return {
-    architecture: adapter?.info.architecture,
+    architecture: gpu?.info.architecture,
     cpuPerformance,
     deviceMemory,
   }
@@ -48,6 +57,6 @@ let hints: Promise<HeavyCapabilityHints> | undefined
 
 /** The hints of this page, requested on the first call only, so `?graphics=auto` and the menu share one adapter request. */
 export function readHeavyCapabilityHints() {
-  hints ??= requestHeavyCapabilityHints()
+  hints ??= requestHeavyCapabilityHints(readAdapter())
   return hints
 }

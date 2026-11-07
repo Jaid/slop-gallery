@@ -22,6 +22,7 @@ import {registerOrbitable} from '#src/lib/gallery/orbitables.ts'
 import GrabbableBody from '#src/lib/physics/GrabbableBody.ts'
 import {bodyThrow, clearBodyThrow} from '#src/lib/physics/ThrowState.ts'
 import {snapshotObject} from '#src/lib/rendering/StudioSnapshotRenderer.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 
 export type PropHandle = {
   body: RapierRigidBody
@@ -86,6 +87,17 @@ const holdLine = (position: Vec3, direction: Vec3, distance: number, up: Vec3 = 
     target: position.map((value, axis) => value + tilt[axis] * distance) as Vec3,
   }
 }
+/** what the player does with a prop, logged as `gallery.prop.<event>` */
+type PropEvent = 'dropped' | 'grabbed' | 'thrown'
+/** why a dropped prop left the hand: let go of, put back where it was picked up for want of room, or put back as carrying it was canceled */
+type DropCause = 'canceled' | 'no_room' | 'released'
+const propVerbs: Record<PropEvent, string> = {
+  dropped: 'Dropped',
+  grabbed: 'Grabbed',
+  thrown: 'Threw',
+}
+/** Round to millimeters, or millimeters per second, without negative zero. */
+const round = (value: number) => Math.round(value * 1000) / 1000 || 0
 const eye = new Vector3
 const look = new Vector3
 const viewUp = new Vector3
@@ -188,6 +200,27 @@ function PresentProp({id, title, consumable, ingredient, mood, orb, orbit, child
     if (seized.current) {
       rigidBody.setEnabled(false)
     }
+    const record = (event: PropEvent, cause?: DropCause) => {
+      if (!telemetry) {
+        return
+      }
+      const {x, y, z} = rigidBody.translation()
+      const velocity = event === 'thrown' ? rigidBody.linvel() : undefined
+      telemetry.event(`prop.${event}`, {
+        'prop.id': id,
+        ...orb ? {'orb.id': orb.id} : {},
+        room: useGallery.getState().room,
+        'position.x': round(x),
+        'position.y': round(y),
+        'position.z': round(z),
+        ...velocity ? {
+          'velocity.x': round(velocity.x),
+          'velocity.y': round(velocity.y),
+          'velocity.z': round(velocity.z),
+        } : {},
+        ...cause ? {'drop.cause': cause} : {},
+      }, `${propVerbs[event]} ${title}`)
+    }
     const handle: PropHandle = {
       body: rigidBody,
       group: prop,
@@ -236,6 +269,8 @@ function PresentProp({id, title, consumable, ingredient, mood, orb, orbit, child
         }
         bounds.setFromObject(prop).getSize(size)
         holdDistance.current = holdGap + holdSpread * Math.max(size.x, size.y, size.z) / 2
+        // Where it was picked up, as its body stays there while carried.
+        record('grabbed')
         return true
       },
       cancel: () => {
@@ -243,14 +278,25 @@ function PresentProp({id, title, consumable, ingredient, mood, orb, orbit, child
         if (carried.active) {
           carried.cancel()
           settle(rigidBody, prop)
+          record('dropped', 'canceled')
         }
       },
       release: throwing => {
         // Let go of where it was shown, or before it was ever shown, where the camera holds it.
         const {direction, origin, target} = shownOn.current ?? holdLine(cameraPose.position, cameraPose.direction, holdDistance.current)
         shownOn.current = null
-        carried.release(origin, target, throwing, direction)
+        const carrying = carried.active
+        const returned = carried.release(origin, target, throwing, direction)
         settle(rigidBody, prop)
+        if (!carrying) {
+          return
+        }
+        // With no room to let go of it anywhere along the line, it went back where it was picked up, also when thrown.
+        if (returned) {
+          record('dropped', 'no_room')
+        } else {
+          record(throwing ? 'thrown' : 'dropped', throwing ? undefined : 'released')
+        }
       },
     }
     propObjects.set(id, handle)
