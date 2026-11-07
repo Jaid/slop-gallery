@@ -1,7 +1,7 @@
 import type {Material} from 'three/webgpu'
 
 import {CoefficientCombineRule} from '@dimforge/rapier3d-compat'
-import {CuboidCollider, RigidBody, TrimeshCollider} from '@react-three/rapier'
+import {RigidBody, TrimeshCollider} from '@react-three/rapier'
 import useDisposable from 'disposable-lifetime/react'
 import {useMemo} from 'react'
 import {MeshStandardNodeMaterial} from 'three/webgpu'
@@ -11,7 +11,7 @@ import MeshSurfaceCollider from '#component/MeshSurfaceCollider'
 import PendantLamps from '#component/PendantLamps'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
 import {vaultShellThickness, wallFace} from '#src/lib/gallery/architectureDimensions.ts'
-import {cistern, cisternBackstop, cisternDomeRibs, cisternInflow, cisternLantern} from '#src/lib/gallery/cistern/cistern.ts'
+import {cistern, cisternDomeRibs, cisternInflow, cisternLantern} from '#src/lib/gallery/cistern/cistern.ts'
 import CisternGeometry, {cisternWindowGeometry} from '#src/lib/gallery/cistern/CisternGeometry.ts'
 import DrainGeometry from '#src/lib/gallery/cistern/DrainGeometry.ts'
 import HalfDomeGeometry from '#src/lib/gallery/cistern/HalfDomeGeometry.ts'
@@ -25,8 +25,8 @@ import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 const mounts = [cisternLantern]
 
 /**
- * The Bastion’s cistern behind the Forge’s vestibule: its floor with the channel sunk into it, the inflow’s pipe pouring water into it and the water running along it, the backstop over the channel behind the window, the half dome with its ribs and its lantern, the window’s reveal, and the drain in the approach’s floor that the channel’s water spills into out of the culvert.
- * The backstop’s iron face gives nothing back and the channel’s water swallows any bounce: an orb shot against the backstop drops dead into the channel and rolls out with the water through the culvert.
+ * The Bastion’s cistern behind the Forge’s vestibule: its floor with the channel sunk into it, the inflow’s pipe pouring water into it and the water running along it, the half dome with its ribs and its lantern, the window’s reveal, and the drain in the approach’s floor that the channel’s water spills into out of the culvert.
+ * The channel’s water swallows any bounce: an orb the cannon shoots in comes down into the channel and rides it round and out through the culvert.
  */
 export default function BastionCistern({stone}: {stone: Material}) {
   const isHeavy = useGraphicsMode()
@@ -61,8 +61,6 @@ export default function BastionCistern({stone}: {stone: Material}) {
   const water = useDisposable(useMemo(() => lightIndoors(new CisternWaterMaterial(cisternInflow.along)), []))
   const sump = useDisposable(useMemo(() => lightIndoors(new CisternWaterMaterial), []))
   const falling = useDisposable(useMemo(() => lightIndoors(new FountainWaterMaterial(true, isHeavy)), [isHeavy]))
-  const [depth, width, height] = cisternBackstop.size
-  const [faceX, , faceZ] = cisternBackstop.face
   const dead = {
     restitution: 0,
     restitutionCombineRule: CoefficientCombineRule.Min,
@@ -72,15 +70,11 @@ export default function BastionCistern({stone}: {stone: Material}) {
       <MeshSurfaceCollider args={collision.floor} />
       {/* Its water swallows whatever drops into it. */}
       <MeshSurfaceCollider args={collision.channel} {...dead} />
-      {/* Its iron face gives nothing back, and nothing slides along it. */}
-      <CuboidCollider args={[width / 2, height / 2, depth / 2]} friction={0} frictionCombineRule={CoefficientCombineRule.Min} position={[faceX, cisternBackstop.underside + height / 2, faceZ - depth / 2]} {...dead} />
       <TrimeshCollider args={collision.dome} />
       <TrimeshCollider args={collision.inflow} />
       <TrimeshCollider args={collision.reveal} />
       <mesh geometry={parts.floor} material={stone} name='cistern-floor' receiveShadow />
       <mesh castShadow geometry={parts.channel} material={stone} name='cistern-channel' receiveShadow />
-      <mesh castShadow geometry={parts.backstop} material={stone} name='cistern-backstop' receiveShadow />
-      <mesh castShadow geometry={parts.plate} material={iron} name='cistern-backstop-plate' receiveShadow />
       <mesh castShadow geometry={dome.shell} material={stone} name='cistern-dome' receiveShadow />
       <mesh castShadow geometry={dome.ribs} material={stone} name='cistern-dome-ribs' receiveShadow />
       <mesh castShadow geometry={reveal} material={stone} name='cistern-window-reveal' receiveShadow />

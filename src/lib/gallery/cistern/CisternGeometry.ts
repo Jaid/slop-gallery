@@ -1,11 +1,11 @@
 import type {Vec3} from '../types.ts'
 
-import {BoxGeometry, BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2, Vector3} from 'three/webgpu'
+import {BufferGeometry, Float32BufferAttribute, ShapeUtils, Vector2, Vector3} from 'three/webgpu'
 
 import {mergeParts} from '../../geometry.ts'
 import {openingReveal} from '../BarredOpeningGeometry.ts'
 import {climbCulvert, climbDrain} from '../climb.ts'
-import {cistern, cisternBackstop, cisternChannel, cisternFloorHeight, cisternInflow, cisternWalls} from './cistern.ts'
+import {cistern, cisternChannel, cisternFloorHeight, cisternInflow, cisternWalls} from './cistern.ts'
 import {cisternWindow} from './window.ts'
 
 type Section = ReadonlyArray<readonly [lateral: number, y: number]>
@@ -20,8 +20,6 @@ export const channelWaterDepth = 0.06
 const backwater = 0.3
 /** how many pieces the cistern’s floor is cut into along each of the channel’s legs and round its turn, and how many rings it is cut into inside and outside the channel */
 const [legSegments, turnSegments, innerRings, outerRings] = [8, 80, 14, 6] as const
-/** how thick the backstop’s iron plate is */
-const plateThickness = 0.012
 /** how long the water takes from the channel’s lip down into the drain, a little past the floor, through the grate */
 const outfallBelow = 0.04
 /** how fast the inflow’s water leaves its spout, downward, and how wide its stream is there */
@@ -193,20 +191,16 @@ function floorSkirt(from: number, to: number) {
 }
 
 /**
- * The cistern’s floor, sunk into which its channel winds, the water in the channel, pouring into it out of the inflow’s spout and falling off its lip, and the backstop over the channel behind the window, all in the world’s frame, see {@link cistern} and {@link cisternChannel}.
- * The floor collides as it shows, the channel’s groove through `channelCollision`, cut more finely; the backstop as its box.
+ * The cistern’s floor, sunk into which its channel winds, and the water in the channel, pouring into it out of the inflow’s spout and falling off its lip, all in the world’s frame, see {@link cistern} and {@link cisternChannel}.
+ * The floor collides as it shows, the channel’s groove through `channelCollision`, cut more coarsely.
  */
 export default class CisternGeometry {
-  /** the backstop’s stone block over the channel */
-  readonly backstop: BufferGeometry
   /** the channel’s groove and, through the walls, the stone it runs out in, and its lip */
   readonly channel: BufferGeometry
   readonly channelCollision: BufferGeometry
   /** the water pouring out of the inflow’s spout into the channel and falling off the channel’s lip into the drain, its UV v the water’s age in seconds, with the attributes the fountain’s falling water reads */
   readonly falling: BufferGeometry
   readonly floor: BufferGeometry
-  /** the iron plate on the backstop’s face */
-  readonly plate: BufferGeometry
   /** the water running along the channel from where the inflow pours it in, its UV v how far along it */
   readonly water: BufferGeometry
 
@@ -254,20 +248,10 @@ export default class CisternGeometry {
       floorSkirt(cx - cistern.innerEdge, cx + cistern.innerEdge),
       floorSkirt(cx + cistern.outerEdge, cx + cistern.radius),
     ])
-    const [depth, width, height] = cisternBackstop.size
-    const [x, y, z] = cisternBackstop.face
-    const block = new BoxGeometry(width, height, depth - plateThickness)
-    this.backstop = block.translate(x, cisternBackstop.underside + height / 2, z - plateThickness - (depth - plateThickness) / 2)
-    const plate = new BoxGeometry(width - 0.12, height - 0.08, plateThickness)
-    this.plate = plate.translate(x, cisternBackstop.underside + height / 2, z - plateThickness / 2)
-    // Its face stands square to the shot, at the height of the shot’s orb as it strikes it.
-    if (Math.abs(y - cisternBackstop.impact[1]) > 1e-9) {
-      throw new RangeError('The backstop’s face has to meet the shot’s orb.')
-    }
   }
 
   dispose() {
-    for (const geometry of [this.backstop, this.channel, this.channelCollision, this.falling, this.floor, this.plate, this.water]) {
+    for (const geometry of [this.channel, this.channelCollision, this.falling, this.floor, this.water]) {
       geometry.dispose()
     }
   }

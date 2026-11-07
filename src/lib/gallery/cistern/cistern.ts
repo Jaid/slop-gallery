@@ -34,14 +34,8 @@ const outletRun = wallFace * 2 + lip
 const length = loop + outletRun
 /** how high the floor stands by the channel at the window: a step under the window’s sill */
 const floorAtWindow = cisternWindow.sill - cisternWindow.step
-/** how far the backstop stands from the face of the flat wall: far enough for a player who crawled in through the window to stand up between them */
-const backstopGap = (defaultEgoOptions.radius + defaultEgoOptions.contactOffset) * 2 + 0.06
-/** how deep the backstop is, along the channel, and how far it reaches to either side of the channel’s middle */
-const backstopSize = [0.35, 0.55] as const
-/** how much room the orb has under the backstop, drifting along the channel’s bottom */
-const backstopClearance = 0.05
-/** where the channel’s bottom lies at its start, low enough under the floor at the backstop for an orb to drift on under it */
-const startBottom = floorAtWindow - orbRadius * 2 - backstopClearance - 0.03
+/** where the channel’s bottom lies at its start, as deep under the floor there as keeps an orb rolling along it a hand under the floor */
+const startBottom = floorAtWindow - orbRadius * 2 - 0.08
 /** where it lies at its lip, a few centimeters over the culvert’s sill */
 const lipBottom = climbCulvert.bottom + 0.04
 /** how steeply the channel falls, evenly all along */
@@ -81,7 +75,8 @@ function plan(along: number): {
 
 /**
  * The channel round the cistern’s floor: a groove of stone with a round bottom and low upright sides, sunk into the floor, from behind the window, where it rises flush with the floor, straight north, round a half turn counter-clockwise, straight back south to the flat wall and on out through the culvert in the approach’s north wall, on the run’s axis, its lip over the approach’s floor.
- * It falls evenly all along. Its water pours into it from the inflow’s spout just past the backstop, runs along it and spills off its lip onto the drain in front of the culvert. Whatever drops into it rolls out with the water, steeply enough that an orb set down in it never comes to rest.
+ * The cannon’s shot dives into its first leg past its head and rides it round, as fast as it comes: straight first, its turn holds the orb in the groove.
+ * It falls evenly all along. Its water pours into it from the inflow’s spout near the end of its first leg, runs along it and spills off its lip onto the drain in front of the culvert. Whatever drops into it rolls out with the water, steeply enough that an orb set down in it never comes to rest.
  * All values are in meters, in the world’s frame.
  */
 export const cisternChannel = {
@@ -120,14 +115,14 @@ export const cisternChannel = {
   },
 } as const
 
-/** where the shot’s orb meets the backstop: its middle an orb’s radius in front of the backstop’s face, as Rapier steps it there */
-const impact = (() => {
-  const z = faceZ - backstopGap + orbRadius
+/** where the shot’s orb comes down into the channel, as Rapier steps it: how far along it its middle lies as it sinks to an orb’s radius over the floor at the window, into the groove */
+export const cisternShotLanding = (() => {
+  const y = floorAtWindow + orbRadius
   let previous = cannonLaunch.position
   for (const point of flight(cannonLaunch.position, cannonLaunch.velocity)) {
-    if (point[2] <= z) {
-      const share = (previous[2] - z) / (previous[2] - point[2])
-      return previous.map((value, axis) => value + (point[axis] - value) * share) as Vec3
+    if (point[1] <= y) {
+      const share = (previous[1] - y) / (previous[1] - point[1])
+      return faceZ - (previous[2] + (point[2] - previous[2]) * share)
     }
     previous = point
   }
@@ -145,25 +140,8 @@ const apronSlope = (floorAtWindow - rim(loop)) / loop
 const apronEdge = (along: number) => floorAtWindow - apronSlope * Math.min(along, loop)
 /** how far the floor reaches from the line between the ends of the channel’s legs to its sides, inside its turn and outside of it */
 const [innerEdge, outerEdge] = [turnRadius - bore, turnRadius + bore]
-/** how far along the channel the backstop stands, from its south face to its north face */
-const backstopAlong = [backstopGap, backstopGap + backstopSize[0]] as const
-/** flat, as high as the floor beside the channel at its north face, where the floor lies lowest under it: sunk into the floor a little everywhere else */
-const backstopUnderside = apronEdge(backstopAlong[1])
-if (rim(0) > apronEdge(0) || head[1] > faceZ - impact[2] || bottom(backstopAlong[0]) + orbRadius * 2 + backstopClearance > backstopUnderside + 1e-9 || impact[1] < backstopUnderside + 0.05 || backstopAlong[1] > leg) {
-  throw new RangeError('The cistern’s channel needs to sink into its floor, and its backstop to stop the shot over the channel’s first leg, past its head, which runs on under it.')
-}
-
-/**
- * The backstop over the channel behind the window: a block of stone lying across the channel on the floor, faced with an iron plate square to the cannon’s shot, which stops every orb dead, drops it into the channel and lets it drift on under it.
- * Its face’s middle and its size are in the world’s frame: its depth along the channel, its width across it, and its height over its underside.
- */
-export const cisternBackstop = {
-  /** the middle of its face, on the shot’s line, at the height of the orb’s middle as it meets it */
-  face: [windowX, impact[1], faceZ - backstopGap] as Vec3,
-  /** where the shot’s orb has its middle as it meets it */
-  impact,
-  underside: backstopUnderside,
-  size: [backstopSize[0], backstopSize[1] * 2, impact[1] + orbRadius + 0.1 - backstopUnderside] as const,
+if (rim(0) > apronEdge(0) || cisternShotLanding < head[1] || cisternShotLanding > leg) {
+  throw new RangeError('The cistern’s channel needs to sink into its floor, and the shot to come down into its first leg, past its head.')
 }
 
 /**
@@ -214,14 +192,14 @@ export const cisternLantern = (() => {
   }
 })()
 
-/** how far down the channel the inflow’s water pours into it, just past the backstop */
-const inflowAlong = backstopAlong[1] + 0.12
+/** how far down the channel the inflow’s water pours into it, near the end of its first leg */
+const inflowAlong = leg - 0.05
 /** how high the inflow’s pipe leaves the foot of the half dome, and how high it turns down over the channel */
 const [inflowLeaves, inflowTurns] = [3.35, 2.95]
 /** how high its spout’s mouth hangs, clear over the head of a player standing beside the channel under it */
 const inflowMouth = apronEdge(inflowAlong) + defaultEgoOptions.height + 0.12
 /**
- * The pipe that feeds the cistern’s channel: out of the foot of the half dome near the east end of the round wall, halfway to its first rib, sloping down over the floor toward the channel and turning down over it just past the backstop, into a short spout the water pours out of into the channel.
+ * The pipe that feeds the cistern’s channel: out of the foot of the half dome near the east end of the round wall, halfway to its first rib, sloping down over the floor toward the channel and turning down over it near the end of its first leg, into a short spout the water pours out of into the channel.
  * Its corners in the world’s frame: where it leaves the half dome’s inside, with the dome’s normal there, facing into the cistern, where it turns down, and its mouth; and how far down the channel its water lands, and how high the water’s surface lies there.
  */
 export const cisternInflow = (() => {

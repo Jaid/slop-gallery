@@ -7,7 +7,6 @@ import {ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 import {colliderGeometry, createArchitectureGeometry} from '../../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate, bastionNetwork, climbMouthHollow} from '../../../src/lib/gallery/bastionNetwork.ts'
-import {cisternBackstop} from '../../../src/lib/gallery/cistern/cistern.ts'
 import CisternGeometry, {cisternWindowGeometry} from '../../../src/lib/gallery/cistern/CisternGeometry.ts'
 import InflowGeometry from '../../../src/lib/gallery/cistern/InflowGeometry.ts'
 import {climbMouth} from '../../../src/lib/gallery/climb.ts'
@@ -77,7 +76,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and the Bastion’s cistern behind the vestibule, its floor, its dead channel, its polished backstop, its inflow’s pipe and the window onto the vestibule. */
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and the Bastion’s cistern behind the vestibule, its floor, its dead channel, its inflow’s pipe and the window onto the vestibule. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -108,12 +107,6 @@ export function forgeAndBastionColliders() {
     dead: true,
   })
   cistern.dispose()
-  const [depth, width, height] = cisternBackstop.size
-  const [faceX, , faceZ] = cisternBackstop.face
-  colliders.boxes.push({
-    halfExtents: [width / 2, height / 2, depth / 2],
-    translation: [faceX, cisternBackstop.underside + height / 2, faceZ - depth / 2],
-  })
   const inflow = new InflowGeometry
   colliders.surface(inflow.collision)
   inflow.dispose()
@@ -149,12 +142,6 @@ export function addOrb(world: RAPIER.World, position: Vec3) {
 
 /** Collects the shapes once, as the game builds them, to put into as many worlds as asked. */
 class Colliders {
-  /** boxes without friction, giving nothing back, like the cistern’s backstop */
-  readonly boxes: Array<{
-    halfExtents: Vec3
-    translation: Vec3
-  }> = []
-
   readonly hulls: Array<Float32Array> = []
   readonly shapes: Array<Shape> = []
 
@@ -176,9 +163,6 @@ class Colliders {
     }
     for (const vertices of this.hulls) {
       world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!)
-    }
-    for (const {halfExtents, translation} of this.boxes) {
-      world.createCollider(RAPIER.ColliderDesc.cuboid(...halfExtents).setTranslation(...translation).setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min))
     }
   }
 

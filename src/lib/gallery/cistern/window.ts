@@ -12,31 +12,31 @@ const [vestibuleX, vestibuleZ] = forgeVestibule.center
 const wallZ = vestibuleZ - forgeVestibule.radius
 /** low enough to jump onto, well over the baseboards on both sides */
 const sill = 1
-/** how far its sill stands over the cistern’s floor behind it: so high that no orb rolling along the floor rolls out over it, and so low that a player walks out over it without a step, its edge as steep as a slope a player still climbs */
-const step = 0.08
-/** how much room a player crawling through it has all round, past the character controller’s own gap */
+/** how far its sill stands over the cistern’s floor behind it: so high that no orb rolling along the floor rolls out over it, and so low that a player walks out over it without a step */
+const step = 0.05
+/** how much room a player crawling through it has over the head, past the character controller’s own gap */
 const slack = 0.05
-const {contactOffset, crouchHeight, radius: playerRadius} = defaultEgoOptions
-/** just wide enough for a crouching player */
-const width = (playerRadius + contactOffset + slack) * 2
+const {contactOffset, crouchHeight} = defaultEgoOptions
+/** how high it opens over its sill, at the crown of its arch: just high enough for a crouching player, and as wide, so it opens in a square round its arch */
+const height = contactOffset * 2 + crouchHeight + slack
 
 /**
- * The bare window between the Forge’s vestibule and the Bastion’s cistern, through both walls where they touch on the vestibule’s axis: a narrow opening under a round arch, which a player who jumps onto its sill and ducks just fits through, and nobody standing.
- * The alchemy machine’s cannon shoots every orb through it, a hand over its sill, against the backstop over the cistern’s channel behind it.
+ * The bare window between the Forge’s vestibule and the Bastion’s cistern, through both walls where they touch on the vestibule’s axis: an opening under a round arch, as wide as it is high, which a player who jumps onto its sill and ducks just fits through, and nobody standing.
+ * The alchemy machine’s cannon shoots every orb through it, a hand over its sill, down into the cistern’s channel behind it.
  * In the world’s frame; its sill and spring stand over the floor.
  */
 export const cisternWindow = {
   /** the middle of the opening where both walls touch, on their center line */
   center: [vestibuleX, wallZ] as const,
   /** how wide it opens straight across, in the cistern’s flat wall */
-  width,
+  width: height,
   sill,
   step,
-  /** where its round arch springs: concentric with the top of a crouching player standing on its sill, so the player has the same room under the arch as beside the jambs */
-  spring: sill + contactOffset + crouchHeight - playerRadius,
-  rise: width / 2,
+  /** where its round arch springs, half its width under its crown */
+  spring: sill + height / 2,
+  rise: height / 2,
   /** how far the vestibule’s round wall curves away behind the flat wall at its jambs, both walls’ center lines apart there, which its reveal lines */
-  gap: forgeVestibule.radius - Math.sqrt(forgeVestibule.radius ** 2 - (width / 2) ** 2),
+  gap: forgeVestibule.radius - Math.sqrt(forgeVestibule.radius ** 2 - (height / 2) ** 2),
   /** the face of the cistern’s wall behind it, where the cistern’s channel begins */
   channelZ: wallZ - wallFace,
   /** where the cannon’s shot passes it, a hand over its sill in the middle, where both walls touch */

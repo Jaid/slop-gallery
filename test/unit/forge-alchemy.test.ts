@@ -18,7 +18,7 @@ import WorkbenchGeometry from '../../src/lib/gallery/alchemy/WorkbenchGeometry.t
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
-import {cistern, cisternBackstop, cisternChannel, cisternDomeHeight, cisternFloorHeight, cisternInflow} from '../../src/lib/gallery/cistern/cistern.ts'
+import {cistern, cisternChannel, cisternDomeHeight, cisternFloorHeight, cisternInflow, cisternShotLanding} from '../../src/lib/gallery/cistern/cistern.ts'
 import CisternGeometry from '../../src/lib/gallery/cistern/CisternGeometry.ts'
 import InflowGeometry from '../../src/lib/gallery/cistern/InflowGeometry.ts'
 import {cisternWindow} from '../../src/lib/gallery/cistern/window.ts'
@@ -436,32 +436,19 @@ describe('the Bastion’s cistern', () => {
       expect(bed(along + 0.01)).toBeLessThan(bed(along))
     }
     for (let along = end; along <= cisternChannel.length; along += 0.1) {
-      expect(bed(along)).toBe(bottom(along))
+      expect(bed(along)).toBeCloseTo(bottom(along), 9)
     }
-    expect(cisternWindow.channelZ - cisternBackstop.impact[2]).toBeGreaterThan(end)
+    expect(cisternShotLanding).toBeGreaterThan(end)
   })
-  test('its backstop stands over the channel behind the window, its iron face square to the shot where the orb strikes it, with room for the orb to drift on under it and for a player to stand up between it and the wall', () => {
-    const [x, y, z] = cisternBackstop.face
-    const [depth, width, height] = cisternBackstop.size
+  test('the shot comes down through the window into the channel’s first leg, past its head', () => {
+    const [x, y, z] = crossing(cisternWindow.channelZ - cisternShotLanding)
     expect(x).toBe(windowX)
-    const strike = crossing(z + orbRadius)
-    expect(strike[1]).toBeCloseTo(y, 6)
-    expect(cisternBackstop.impact[1]).toBeCloseTo(y, 9)
-    // The orb meets its face, not the edge under it, and not over its top.
-    expect(y - cisternBackstop.underside).toBeGreaterThan(0.05)
-    expect(cisternBackstop.underside + height - y).toBeGreaterThan(orbRadius + 0.05)
-    expect(width / 2).toBeGreaterThan(cisternChannel.bore + 0.2)
-    // It lies on the floor beside the channel’s first leg, and the orb drifts under it.
-    expect(cisternWindow.channelZ - (z - depth)).toBeLessThan(leg)
-    for (let along = z; along >= z - depth; along -= 0.02) {
-      const at = cisternWindow.channelZ - along
-      expect(bottom(at) + orbRadius * 2 + 0.04).toBeLessThan(cisternBackstop.underside)
-      expect(cistern.apronEdge(at)).toBeGreaterThanOrEqual(cisternBackstop.underside - 1e-9)
-    }
-    // A player who ducked in through the window has room to stand up clear of the wall over it before the backstop.
-    expect(cisternWindow.channelZ - z).toBeGreaterThan((defaultEgoOptions.radius + defaultEgoOptions.contactOffset) * 2 + 0.03)
+    expect(y).toBeCloseTo(cisternWindow.sill - cisternWindow.step + orbRadius, 6)
+    expect(cisternShotLanding).toBeGreaterThan(cisternChannel.head[1])
+    expect(cisternShotLanding).toBeLessThan(leg - 0.3)
+    expect(z).toBeLessThan(cisternWindow.channelZ)
   })
-  test('the window opens through the vestibule’s round wall and the cistern’s flat wall where they touch, under the same round arch, just wide and high enough for a crouching player, but not for one standing', () => {
+  test('the window opens through the vestibule’s round wall and the cistern’s flat wall where they touch, under the same round arch, as wide as it is high, just high enough for a crouching player, but not for one standing', () => {
     const ring = wallById('forge-vestibule')
     const flat = wallById('bastion-cistern_flat')
     const inRing = ring.holes!.find(hole => hole.name === 'cistern')!
@@ -482,19 +469,23 @@ describe('the Bastion’s cistern', () => {
     // How far the round wall’s center line stands behind the flat wall’s at the jambs
     const jamb = wallPosition(ring, inRing.u + inRing.width / 2, 0, 0)
     expect(jamb[2] - wallZ).toBeCloseTo(cisternWindow.gap, 9)
-    // A round arch, as wide as a crouching player and a few centimeters more, and as high over the sill as the player standing on it, its top concentric with the arch
+    // A round arch on jambs half as high, square round it, a few centimeters over a crouching player standing on the sill in its middle
     const {contactOffset, crouchHeight, height, radius} = defaultEgoOptions
+    const opening = cisternWindow.spring + cisternWindow.rise - cisternWindow.sill
     expect(cisternWindow.rise).toBeCloseTo(cisternWindow.width / 2, 9)
-    const room = cisternWindow.width / 2 - radius - contactOffset
+    expect(cisternWindow.width).toBeCloseTo(opening, 9)
+    // The middle of the crouching player’s rounded top, and how much room it leaves under the arch past the gap the character controller keeps
+    const top = cisternWindow.sill + contactOffset + crouchHeight - radius
+    const room = cisternWindow.rise - (top - cisternWindow.spring) - radius - contactOffset
     expect(room).toBeGreaterThan(0.03)
     expect(room).toBeLessThan(0.08)
-    expect(cisternWindow.spring - (cisternWindow.sill + contactOffset + crouchHeight - radius)).toBeCloseTo(0, 9)
-    expect(cisternWindow.spring + cisternWindow.rise - cisternWindow.sill).toBeLessThan(height)
+    expect(cisternWindow.width / 2 - radius - contactOffset).toBeGreaterThan(0.2)
+    expect(opening).toBeLessThan(height)
     // Low enough to jump onto, standing
     expect(cisternWindow.sill).toBeLessThan(defaultEgoOptions.jumpHeight - 0.4)
     expect(openings.filter(({rooms: pair}) => pair.includes('forge') && pair.includes('bastion')).map(({holes}) => holes)).toEqual([[['forge-vestibule', 'bastion']], [['forge-vestibule', 'cistern']]])
   })
-  test('a player jumps onto the window’s sill from the vestibule, ducks through it into the cistern, stands up behind it and ducks back out', () => {
+  test('a player jumps onto the window’s sill from the vestibule, ducks through it into the cistern, stands up there and ducks back out', () => {
     const world = physicsWorld(forgeAndBastionColliders())
     const body = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(windowX, 0.02, wallZ + 0.8))
     const collider = world.createCollider(RAPIER.ColliderDesc.capsule(0.55, 0.3).setTranslation(0, 0.85, 0), body)
@@ -512,7 +503,7 @@ describe('the Bastion’s cistern', () => {
       expect(body.translation().z).toBeGreaterThan(wallZ + wallFace + defaultEgoOptions.radius)
       for (let frame = 0; frame < 150; frame++) {
         step({
-          forward: true,
+          forward: body.translation().z > cisternWindow.channelZ - 0.5,
           jump: frame < 40,
           crouch: frame > 2,
         })
@@ -526,7 +517,7 @@ describe('the Bastion’s cistern', () => {
         step({})
       }
       expect(motor.crouching).toBe(false)
-      for (let frame = 0; frame < 120; frame++) {
+      for (let frame = 0; frame < 300; frame++) {
         step({
           backward: true,
           crouch: true,
@@ -541,7 +532,7 @@ describe('the Bastion’s cistern', () => {
       world.free()
     }
   }, 30_000)
-  test('its inflow’s pipe leaves the foot of the half dome near the round wall’s east end, slopes down toward the channel and turns down over it just past the backstop, its spout clear over a standing player’s head, pouring into the channel', () => {
+  test('its inflow’s pipe leaves the foot of the half dome near the round wall’s east end, slopes down toward the channel and turns down over it near the end of its first leg, its spout clear over a standing player’s head, pouring into the channel', () => {
     const {leaves, mouth, normal, turns} = cisternInflow
     // On the half dome’s inside, between the round wall’s east end and its first rib, a little over its spring
     expect(leaves[1]).toBeGreaterThan(cistern.spring)
@@ -550,18 +541,17 @@ describe('the Bastion’s cistern', () => {
     expect(azimuth).toBeGreaterThan(0)
     expect(azimuth).toBeLessThan(Math.PI / 8)
     expect(normal[0]).toBeLessThan(0)
-    // Sloping down from it toward the channel, then straight down over the water just past the backstop
+    // Sloping down from it toward the channel, then straight down over the water near the end of its first leg
     expect(turns[1]).toBeLessThan(leaves[1] - 0.2)
     expect([mouth[0], mouth[2]]).toEqual([turns[0], turns[2]])
     const [x, , z] = cisternChannel.at(cisternInflow.along).point
     expect([turns[0], turns[2]]).toEqual([x, z])
-    const backstopEnd = cisternWindow.channelZ - cisternBackstop.face[2] + cisternBackstop.size[0]
-    expect(cisternInflow.along - backstopEnd).toBeGreaterThan(0.05)
-    expect(cisternInflow.along - backstopEnd).toBeLessThan(0.3)
+    expect(cisternInflow.along).toBeGreaterThan(cisternShotLanding)
     expect(cisternInflow.along).toBeLessThan(leg)
+    expect(leg - cisternInflow.along).toBeLessThan(0.2)
     expect(mouth[1] - cistern.apronEdge(cisternInflow.along) - defaultEgoOptions.height).toBeGreaterThan(0.08)
     // Far over the shot’s line
-    expect(mouth[1]).toBeGreaterThan(cisternBackstop.underside + cisternBackstop.size[2] + 1)
+    expect(mouth[1]).toBeGreaterThan(cisternWindow.spring + cisternWindow.rise + 0.2)
     // Its pipe collides; its stream reaches from its mouth down under the water’s surface.
     const pipe = new InflowGeometry
     const parts = new CisternGeometry
@@ -605,13 +595,13 @@ describe('the Bastion’s cistern', () => {
   test('its floor falls toward the channel from everywhere, so whatever lands on it rolls into the channel and out through the culvert, as does whatever lands in the channel', () => {
     const colliders = forgeAndBastionColliders()
     const [cx, cz] = turn.center
-    // Round the turn, and beside both legs: between the window and the backstop, and further on, clear of the backstop
+    // Round the turn, and beside both legs, near the window and further on
     const spokes = [
       ...[0.08, 0.4, 0.9, 1.5, 2.1, 2.7, 3.06].map(angle => ({
         base: [cx, cz] as const,
         direction: [Math.cos(angle), -Math.sin(angle)] as const,
       })),
-      ...[0.4, 1].flatMap(into => [1, -1].filter(side => side < 0 || into < 0.5).map(side => ({
+      ...[0.4, 1].flatMap(into => [1, -1].map(side => ({
         base: [cx, cisternWindow.channelZ - into] as const,
         direction: [side, 0] as const,
       }))),
@@ -735,14 +725,17 @@ describe('the alchemy machine’s orbs', () => {
     expect([0, 0.49, 0.5, 0.99].map(random => flavoredOrb([['prop-pumpkin', inForge], ['prop-hatchet', inForge]], roomAt, random))).toEqual([halloweenOrb, halloweenOrb, horrorOrb, horrorOrb])
     expect(flavorCandidates([['prop-pumpkin', inLobby], ['prop-cube', inForge], ['prop-pumpkinseed', inForge], [halloweenOrb.propId, inForge]], roomAt)).toBe(randomOrbs)
   })
-  test('scattered cannon shots pass the arch and the window untouched, drop dead at the cistern’s backstop into its channel, drift out through the culvert and travel on down the Bastion to its crater, never dragged across the welded surfaces', () => {
+  test('scattered cannon shots pass the arch and the window untouched, come down into the cistern’s channel and ride it round without leaving its groove, out through the culvert and on down the Bastion to its crater, never dragged across the welded surfaces', () => {
     const colliders = forgeAndBastionColliders()
     const state = mulberry32.create(7)
     const scatter = (size: number) => (mulberry32.sample(state) * 2 - 1) * size
     const {hatch, wall} = bastionLinkGate
     const [hatchX, gateZ] = [wall.center[0] + hatch.u, wall.center[2]]
     const shots = 20
-    const backstopZ = cisternBackstop.face[2] + orbRadius
+    const [cx, cz] = cisternChannel.turn.center
+    const [windowX] = cisternWindow.center
+    /** how far the point in plan lies from the channel’s middle, in the cistern */
+    const offCenter = (x: number, z: number) => (z >= cz ? Math.min(Math.abs(x - windowX), Math.abs(x - climbCulvert.x)) : Math.abs(Math.hypot(x - cx, z - cz) - cisternChannel.turn.radius))
     const lipZ = climbCulvert.z + wallFace + cisternChannel.lip
     const exitSpeeds: Array<number> = []
     let through = 0
@@ -763,7 +756,7 @@ describe('the alchemy machine’s orbs', () => {
         }, true)
         let untouched = true
         let struck = false
-        let stopped = false
+        let strayed = 0
         let exited = false
         let atGate: number | undefined
         let previousZ = Infinity
@@ -774,13 +767,15 @@ describe('the alchemy machine’s orbs', () => {
           const position = body.translation()
           const velocity = body.linvel()
           const pace = Math.hypot(velocity.x, velocity.y, velocity.z)
-          // Flying freely right up to the backstop, gravity alone changing its velocity, until it strikes it, which stops its flight dead: sliding down its face through the rest of that step, it may glance off its foot a little.
+          // Flying freely through the window, gravity alone changing its velocity, down into the channel’s groove, until the groove first steers it
           if (!struck && Math.hypot(velocity.x - before.x, velocity.z - before.z) > 1e-6) {
             struck = true
-            if (Math.abs(position.z - backstopZ) > 0.03 || Math.abs(before.z) < 15) {
+            if (position.z > cisternWindow.channelZ - cisternChannel.head[1] || offCenter(position.x, position.z) > cisternChannel.bore) {
               untouched = false
             }
-            stopped = Math.abs(velocity.z) < 0.05 && Math.hypot(velocity.x, velocity.z) < 1
+          }
+          if (struck && !exited && position.z < cisternWindow.channelZ) {
+            strayed = Math.max(strayed, offCenter(position.x, position.z))
           }
           if (struck && !exited && position.z > lipZ && Math.abs(position.x - climbCulvert.x) < climbCulvert.width / 2) {
             exited = true
@@ -800,7 +795,7 @@ describe('the alchemy machine’s orbs', () => {
           previousZ = position.z
         }
         expect(untouched).toBe(true)
-        expect(stopped).toBe(true)
+        expect(strayed).toBeLessThan(cisternChannel.bore)
         expect(exited).toBe(true)
         if (atGate === undefined) {
           continue
@@ -815,9 +810,9 @@ describe('the alchemy machine’s orbs', () => {
         world.free()
       }
     }
-    // Out of the culvert, they come at a walking pace, the channel’s fall all they gained.
-    expect(Math.min(...exitSpeeds)).toBeGreaterThan(1)
-    expect(Math.max(...exitSpeeds)).toBeLessThan(4)
+    // Out of the culvert, they come at a brisk pace, slower than they came in.
+    expect(Math.min(...exitSpeeds)).toBeGreaterThan(2)
+    expect(Math.max(...exitSpeeds)).toBeLessThan(5)
     expect(through).toBeGreaterThanOrEqual(shots * 0.9)
     expect(caught).toBeGreaterThanOrEqual(through * 0.8)
     // but where they strike something
