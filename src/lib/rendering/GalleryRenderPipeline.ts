@@ -13,7 +13,7 @@ import {ssgi} from 'three/addons/tsl/display/SSGINode.js'
 import {ssr} from 'three/addons/tsl/display/SSRNode.js'
 import {sss} from 'three/addons/tsl/display/SSSNode.js'
 import {traa} from 'three/addons/tsl/display/TRAANode.js'
-import {convertToTexture, diffuseColor, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
+import {convertToTexture, diffuseColor, exp, float, int, interleavedGradientNoise, length, luminance, max, metalness, min, mix, mrt, normalView, output, pass, renderOutput, roughness, rtt, screenCoordinate, screenSize, screenUV, smoothstep, uniform, uv, vec2, vec3, vec4, velocity} from 'three/tsl'
 import {BlendMode, DirectionalLight, HalfFloatType, NoBlending, NormalBlending, PerspectiveCamera, RenderPipeline, Vector2} from 'three/webgpu'
 
 import {mountedRooms, pendingRooms} from '../gallery/roomLoading.ts'
@@ -22,6 +22,7 @@ import ConditionalTexture from './ConditionalTexture.ts'
 import {GalleryRenderer} from './GalleryRenderer.ts'
 import KnotBokeh from './KnotBokeh.ts'
 import {gradeMood} from './moodGrade.ts'
+import {impactActive, screenImpact} from './screenImpact.ts'
 import tiltShift from './tiltShift.ts'
 import ZoomBlur from './ZoomBlur.ts'
 
@@ -333,12 +334,14 @@ export default class GalleryRenderPipeline extends RenderPipeline {
       const luminanceCap = uniform(0)
       set(luminanceCap, 'bloomLuminanceCap')
       // Stock high pass, but brightness-capped: a subpixel specular hit (clearcoat or glint on a rotating knot) would otherwise flash a full halo whenever it lands on a pixel.
+      // A fusion’s impact lifts the cap along with the bloom’s strength.
+      const cap = luminanceCap.mul(screenImpact.cap)
       glow.highPassFn = ({input, threshold, smoothWidth}) => {
         const value = luminance(input.rgb)
-        const capped = input.rgb.mul(min(float(1), luminanceCap.div(max(value, 1e-4))))
+        const capped = input.rgb.mul(min(float(1), cap.div(max(value, 1e-4))))
         return vec4(capped.mul(smoothstep(threshold, threshold.add(smoothWidth), value)), 1)
       }
-      current = vec4(current.rgb.add(glow.rgb.mul(mask)), 1)
+      current = vec4(current.rgb.add(glow.rgb.mul(mask).mul(screenImpact.bloom)), 1)
     } else if (heavy) {
       // Without glow, the inspection mask in alpha has nothing left to hold back.
       current = vec4(current.rgb, 1)
@@ -346,14 +349,30 @@ export default class GalleryRenderPipeline extends RenderPipeline {
     if (heavy) {
       const resolved = current
       const zoomEnabled = () => zoom() > 0
-      // With no AA, only the blur needs a texture; keep the sharp path inline and skip its RTT outside zoom.
-      const zoomSource = antiAliasing ? convertToTexture(resolved) : own(new ConditionalTexture(resolved, zoomEnabled))
+      // With no AA, only the blur and a fusion’s impact need a texture; keep the sharp path inline and skip its RTT outside them.
+      const zoomSource = antiAliasing ? convertToTexture(resolved) : own(new ConditionalTexture(resolved, () => zoomEnabled() || impactActive()))
       if (!antiAliasing) {
         zoomSource.name = 'zoomSource'
       }
       const zoomAmount = uniform(0).onRenderUpdate(zoom)
       const zoomBlur = own(new ZoomBlur(zoomSource, zoomAmount, zoomEnabled))
       current = tiltShift(resolved, zoomBlur, zoomAmount)
+      // A fusion’s impact resamples the resolved view: kicked in and shaken, bent by the ring running out from where it landed and split into its colors there.
+      const {aberration, center, punch, ring, ringStrength, shake} = screenImpact
+      const moving = uniform(0).onRenderUpdate(() => (impactActive() ? 1 : 0))
+      const aspect = vec2(screenSize.x.div(screenSize.y), 1)
+      const kicked = screenUV.sub(0.5).mul(float(1).sub(punch)).add(0.5).add(shake.div(aspect))
+      const toward = kicked.sub(center).mul(aspect)
+      const distance = length(toward)
+      const outward = toward.div(max(distance, 1e-4))
+      const crest = distance.sub(ring).div(0.07)
+      const wave = exp(crest.mul(crest).negate()).mul(ringStrength)
+      const bent = kicked.sub(outward.mul(wave).div(aspect))
+      const split = outward.mul(aberration.mul(distance.min(1)).add(wave.mul(0.35))).div(aspect)
+      const red = zoomSource.sample(bent.add(split).clamp(0, 1)).r
+      const green = zoomSource.sample(bent.clamp(0, 1)).g
+      const blue = zoomSource.sample(bent.sub(split).clamp(0, 1)).b
+      current = mix(current, vec4(red, green, blue, 1), moving)
       const edge = smoothstep(float(0.26), float(0.78), length(screenUV.sub(0.5)))
       const vignette = uniform(0)
       set(vignette, 'vignette')

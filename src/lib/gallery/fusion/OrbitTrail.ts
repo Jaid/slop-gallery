@@ -39,6 +39,8 @@ export default class OrbitTrail extends Mesh<PlaneGeometry, MeshBasicNodeMateria
     /** how far out on the orbit it lies, 1 on it and 0 in the portal’s middle */
     reach: uniform(1),
     rim: uniform(new Color),
+    /** how much farther out than its head its tail lies, as a share of the head’s reach, which winds it into a spiral */
+    spiral: uniform(0),
     swirl: uniform(new Color),
     /** along the wall */
     tangent: uniform(new Vector3(1, 0, 0)),
@@ -60,7 +62,7 @@ export default class OrbitTrail extends Mesh<PlaneGeometry, MeshBasicNodeMateria
     material.mrtNode = new TransparentSpriteOutputsNode
     super(new PlaneGeometry(1, 1, 128, 1), material)
     this.name = 'fusion-orbit-trail'
-    const {across, along, angle, center, clock, energy, length, normal, reach, rim, swirl, tangent, tilt, width} = this.uniforms
+    const {across, along, angle, center, clock, energy, length, normal, reach, rim, spiral, swirl, tangent, tilt, width} = this.uniforms
     // A uniform rather than a constant, so every trail shares one pipeline.
     const offset = uniform(seed)
     // 0 at its tail, 1 at its head
@@ -68,7 +70,7 @@ export default class OrbitTrail extends Mesh<PlaneGeometry, MeshBasicNodeMateria
     const theta = angle.sub(length.mul(float(1).sub(share)))
     const up = vec3(0, 1, 0)
     /** the point of the orbit at `turn` radians, like `orbitPoint` */
-    const point = (turn: Node<'float'>) => center.add(tangent.mul(along.mul(cos(turn))).add(normal.mul(across.mul(sin(turn)))).sub(up.mul(tilt.mul(sin(turn)))).mul(reach))
+    const point = (turn: Node<'float'>) => center.add(tangent.mul(along.mul(cos(turn))).add(normal.mul(across.mul(sin(turn)))).sub(up.mul(tilt.mul(sin(turn)))).mul(reach.mul(spiral.mul(float(1).sub(share)).add(1))))
     const base = point(theta)
     const direction = tangent.mul(along.mul(sin(theta)).negate()).add(normal.mul(across.mul(cos(theta)))).sub(up.mul(tilt.mul(cos(theta)))).normalize()
     // Across the trail, so that its front faces the camera.

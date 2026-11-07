@@ -12,11 +12,11 @@ import PortalShow from './PortalShow.ts'
 /** A fusion’s portal, with its light, its sound and what orbits it, for as long as the fusion is open. The player breaks the fusion off by jumping into it, which throws them back the way they came; walking up to it does nothing. */
 export default function FusionPortal({fusion}: {fusion: Fusion}) {
   const show = useDisposable(useMemo(() => new PortalShow(fusion), [fusion]))
-  useFrame(() => {
+  useFrame(({camera}) => {
     if (!bodyPose.grounded && touchesPortal(fusion.frame, bodyPose) && fusion.cancel()) {
       flingPlayer(portalRebound(fusion.frame, bodyPose))
     }
-    show.update(fusion.elapsed())
+    show.update(fusion.elapsed(), camera)
   })
   return <primitive object={show.root} />
 }

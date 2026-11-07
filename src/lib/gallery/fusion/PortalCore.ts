@@ -1,6 +1,6 @@
 import type {Node, TextureNode} from 'three/webgpu'
 
-import {atan, cameraProjectionMatrix, cameraViewMatrix, cameraWorldMatrix, cos, exp, float, log, max, mix, modelWorldMatrix, mx_fractal_noise_float, mx_noise_float, positionGeometry, rotate, screenUV, sin, smoothstep, texture, uniform, uv, vec2, vec3, vec4, viewportSharedTexture} from 'three/tsl'
+import {atan, cameraProjectionMatrix, cameraViewMatrix, cameraWorldMatrix, cos, exp, float, log, max, mix, modelWorldMatrix, mx_fractal_noise_float, mx_noise_float, positionGeometry, rotate, screenUV, sin, smoothstep, step, texture, uniform, uv, vec2, vec3, vec4, viewportSharedTexture} from 'three/tsl'
 import {AdditiveBlending, Color, DataTexture, Group, Mesh, MeshBasicNodeMaterial, PlaneGeometry, SRGBColorSpace} from 'three/webgpu'
 
 import TransparentSpriteOutputsNode from '../../rendering/TransparentSpriteOutputsNode.ts'
@@ -31,6 +31,8 @@ export type PortalPalette = {
 export default class PortalCore extends Group {
   /** the image the disc shows, swapped for each of the images */
   readonly image: TextureNode
+  /** the images of up to four ingredients, which the confluence marbles together */
+  readonly ingredients: ReadonlyArray<TextureNode>
   readonly uniforms = {
     /** width divided by height of the shown image */
     aspect: uniform(1),
@@ -39,6 +41,12 @@ export default class PortalCore extends Group {
     /** seconds the portal is open, which drives its turbulence */
     clock: uniform(0),
     core: uniform(new Color),
+    /** how far out the image has crystallized out of the confluence, in radii of the disc */
+    crystal: uniform(0),
+    /** how many of the ingredients’ images the confluence marbles */
+    ingredientCount: uniform(2),
+    /** how strongly the confluence shows, 0–1 */
+    marble: uniform(0),
     /** how strongly the whole portal glows, about 1 while it brews */
     energy: uniform(0),
     /** a white blaze over the middle, for the moment the result flips out */
@@ -65,6 +73,7 @@ export default class PortalCore extends Group {
     this.name = 'fusion-portal'
     const {aspect, clarity, clock, core, energy, flash, lens, phase, pulse, pulseStrength, radius, rim, swirl} = this.uniforms
     this.image = texture(blank)
+    this.ingredients = Array.from({length: 4}, () => texture(blank))
     const geometry = new PlaneGeometry(2, 2)
     // Facing the camera: the corners lie along its right and up in the world, which the group is only shifted from.
     const right = cameraWorldMatrix.mul(vec4(1, 0, 0, 0)).xyz
@@ -94,7 +103,28 @@ export default class PortalCore extends Group {
     const ripple = vec2(sin(turned.y.mul(8).add(clock.mul(3.1))), sin(turned.x.mul(7).sub(clock.mul(2.7)))).mul(outward.mul(outward).mul(0.04).add(0.018))
     const imageUV = turned.add(ripple).div(half.mul(2)).add(0.5).toVar('portalImageUV')
     const split = p.div(max(rho, 0.001)).mul(unclear.mul(0.02).add(0.007)).mul(outward.mul(outward).mul(1.6).add(0.4))
-    const picture = vec3(this.image.sample(imageUV.add(split)).r, this.image.sample(imageUV).g, this.image.sample(imageUV.sub(split)).b)
+    const sampled = (image: TextureNode) => vec3(image.sample(imageUV.add(split)).r, image.sample(imageUV).g, image.sample(imageUV.sub(split)).b)
+    // The confluence: every ingredient’s image pours into arms of the vortex of its own and marbles into the others, until the image crystallizes out of the mix from the middle outward behind a glowing front.
+    const {crystal, ingredientCount, marble} = this.uniforms
+    const warp = mx_fractal_noise_float(vec3(swirlPoint.mul(1.4), clock.mul(0.9)), 3).mul(2.6)
+    const stirred = swirled.add(warp).toVar('portalStirred')
+    let total: Node<'float'> = float(0.0001)
+    let strongest: Node<'float'> = float(0)
+    let mixed: Node<'vec3'> = vec3(0)
+    for (const [index, image] of this.ingredients.entries()) {
+      // Two arms each, so they alternate around the vortex.
+      const arm = cos(stirred.mul(2).sub(float(Math.PI * 2 * index).div(ingredientCount)))
+      const weight = exp(arm.sub(1).mul(5)).mul(step(index + 0.5, ingredientCount))
+      mixed = mixed.add(sampled(image).mul(weight))
+      total = total.add(weight)
+      strongest = max(strongest, weight)
+    }
+    const marbled = mixed.div(total)
+    // Where two arms meet, a vein of the swirl glows between them.
+    const vein = smoothstep(0.8, 0.5, strongest.div(total)).mul(marble)
+    const outsideCrystal = smoothstep(crystal.sub(0.07), crystal.add(0.07), rho)
+    const picture = mix(sampled(this.image), marbled.add(swirl.mul(vein).mul(1.6)), marble.mul(outsideCrystal))
+    const crystalFront = exp(rho.sub(crystal).abs().mul(-28)).mul(marble).mul(smoothstep(1.15, 0.95, crystal))
     const shimmer = sin(p.x.mul(7.2).add(p.y.mul(5.4)).sub(clock.mul(5))).mul(0.2).add(sin(rho.mul(14).sub(clock.mul(7))).mul(0.08)).add(1.12)
     const framed = smoothstep(0, 0.02, imageUV.x).mul(smoothstep(1, 0.98, imageUV.x)).mul(smoothstep(0, 0.02, imageUV.y)).mul(smoothstep(1, 0.98, imageUV.y))
     // It surfaces through the noise and sinks back the same way, with a glowing seam along the edge of what is there.
@@ -102,7 +132,7 @@ export default class PortalCore extends Group {
     const surfaced = smoothstep(grain.sub(0.12), grain.add(0.02), clarity.mul(1.15).sub(0.05))
     const seam = surfaced.mul(float(1).sub(surfaced)).mul(4).mul(framed)
     const shown = surfaced.mul(framed).mul(smoothstep(1, 0.8, rho)).toVar('portalShown')
-    const discColor = mix(swirlColor, picture.mul(shimmer).add(swirl.mul(0.06)), shown).add(swirl.mul(seam).mul(energy).mul(1.6))
+    const discColor = mix(swirlColor, picture.mul(shimmer).add(swirl.mul(0.06)), shown).add(swirl.mul(seam).mul(energy).mul(1.6)).add(rim.mul(crystalFront).mul(energy.min(1.5)).mul(2.2))
     const discAlpha = smoothstep(1.04, 0.92, rho).mul(0.96)
     // Around the disc, the view bends toward it like light around a star and twists along with the vortex.
     const middle = cameraProjectionMatrix.mul(cameraViewMatrix).mul(modelWorldMatrix.mul(vec4(0, 0, 0, 1)))
