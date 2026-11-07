@@ -10,11 +10,10 @@ export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry 
     }
     let stop: (() => void) | undefined = telemetry.connect(store, events)
     const pagehide = () => {
+      // From pagehide on, BrowserVictoriaClient dispatches every admitted record right away, so the
+      // session/gameplay spans and the detach log that closing the attachment produces still leave the page.
       stop?.()
       stop = undefined
-      // BrowserVictoriaClient also flushes pagehide. This second pass admits the
-      // session/gameplay spans that closing the gallery attachment just produced.
-      void telemetry.flush().catch(() => {})
     }
     const pageshow = () => {
       stop ??= telemetry.connect(store, events)
