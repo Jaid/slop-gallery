@@ -30,7 +30,7 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
     super({
       interval: 1000,
       ...clientOptions,
-      serviceName: world.id,
+      serviceName: 'slop.gallery',
       endpoints: {
         logs: endpoints.logs ? {
           url: endpoints.logs,
@@ -43,8 +43,9 @@ export default class SlopGalleryTelemetry extends VictoriaClient {
         traces: endpoints.traces ?? false,
       },
       resource: {
-        'service.namespace': 'games',
+        'service.namespace': 'web',
         'service.version': version,
+        world: world.id,
         'deployment.environment.name': environment,
         ...resource,
         ...sessionId ? {'service.instance.id': sessionId} : {},

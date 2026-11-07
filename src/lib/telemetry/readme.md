@@ -21,7 +21,7 @@ const disconnect = telemetry.connect(galleryStore, galleryEvents)
 - Traces: session/startup/gameplay parents, state-change events, label generation and local/AI fusion, plus sparse renderer hitch diagnostics.
 - Ego measurements use the controller’s physical feet position and collision-corrected velocity, plus the existing `AimInspector` semantics. The camera provides aim, not locomotion. Raycasting runs once per second, not every rendered frame.
 
-Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps (only with `?development`) additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. `victoria-browser-client` supplies the 15-character `service.instance.id` used to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
+Automatic telemetry selects only counts, flags, state names and numeric player/aim measurements. Explicit X-key dumps (only with `?development`) additionally include scene object names and scalar metadata as described below. Those automatic samples do not serialize keys, artwork sources, titles, descriptions, prompts, event payloads or exception messages. Every world reports as `service.name=slop.gallery` in `service.namespace=web`; the `world` resource attribute (`gallery`, `knottingham` or `sandbox`) tells them apart and becomes a metric label, a log field and `resource_attr:world` in traces. `victoria-browser-client` supplies the 15-character `service.instance.id` used to distinguish concurrent clients and counter lifetimes. New sessions create new series; retention/cardinality policy belongs to the deployment.
 
 ## Victoria delivery
 
@@ -44,21 +44,21 @@ Native WebMCP `get_telemetry` returns the session ID plus `collectionStatus()` a
 MetricsQL:
 
 ```text
-{__name__="three.fps","service.name"="gallery"}
-{__name__="three.frame.duration.p99","service.name"="gallery"}
-{__name__="ego.speed","service.name"="gallery"}
+{__name__="three.fps","service.name"="slop.gallery"}
+{__name__="three.frame.duration.p99","service.name"="slop.gallery"}
+{__name__="ego.speed","service.name"="slop.gallery"}
 ```
 
 VictoriaLogs LogsQL:
 
 ```text
-_time:10m "service.name":="gallery"
+_time:10m "service.name":="slop.gallery"
 ```
 
 VictoriaTraces’ underlying LogsQL fields use a resource prefix:
 
 ```text
-_time:10m "resource_attr:service.name":="gallery"
+_time:10m "resource_attr:service.name":="slop.gallery"
 ```
 
 ## Performance capture workflow
@@ -84,26 +84,26 @@ Example MetricsQL for the proportion of locked frames slower than 33.33 millisec
 ```text
 100 *
 sum by (room, graphics.profile) (
-  increase({__name__="three.frames.slow","service.name"="gallery",locked="true","threshold.ms"="33.33"}[10m])
+  increase({__name__="three.frames.slow","service.name"="slop.gallery",locked="true","threshold.ms"="33.33"}[10m])
 )
 /
 (sum by (room, graphics.profile) (
-  increase({__name__="three.frames","service.name"="gallery",locked="true"}[10m])
+  increase({__name__="three.frames","service.name"="slop.gallery",locked="true"}[10m])
 ) > 0)
 ```
 
 Thresholds overlap; never sum different thresholds together. Counter increases need at least two exported samples; use traces to inspect a one-off short interval.
 
 ```text
-{__name__=~"three.gpu.render.(duration|frame_duration)","service.name"="gallery"}
-{__name__="three.render.passes.mean","service.name"="gallery"}
-{__name__=~"three.memory.*bytes","service.name"="gallery"}
+{__name__=~"three.gpu.render.(duration|frame_duration)","service.name"="slop.gallery"}
+{__name__="three.render.passes.mean","service.name"="slop.gallery"}
+{__name__=~"three.memory.*bytes","service.name"="slop.gallery"}
 ```
 
 Hitch spans in VictoriaTraces:
 
 ```text
-`resource_attr:service.name`:=gallery name:=three.frame.hitch _time:30m
+`resource_attr:service.name`:=slop.gallery name:=three.frame.hitch _time:30m
 | sort by (_time desc)
 | limit 50
 ```
@@ -114,7 +114,7 @@ Use the returned trace ID for the gameplay/startup/operation context. Detailed p
 
 With `?development` (or `?development=true`), press X while playing to capture a detached diagnostic snapshot. Without that flag, X does nothing: the player gets no dump handler, so ego-player ignores the key and never creates its diagnostic raycaster. The app prints the snapshot with `console.dir`, copies it to the clipboard in Clank format (via `stringify-clank`) as `<details><summary>{world title} at {local DD MMM YYYY HH:mm}</summary><dump id=… date="…">…</dump></details>`, with the page’s URL host name as `host` right before `query`. The clipboard snapshot carries the CSS viewport size in `context.viewport` next to the camera’s fov and aspect, plus a `query` map of every query parameter that differs from its default (known parameters normalized, unknown ones as given) and emits an `ego.dump` log, followed by one `ego.dump.hit` log per visible mesh/instance hit. Join records by `dump.id`; `hit.index` preserves near-to-far order. The summary includes the closest hit as `hit`, expected hit count, player state, camera pose/FOV, timestamp, world, room and session ID. The dump format (rounded, no matrices or UUIDs) is described in `packages/ego-player/readme.md`; `context` leaves out `active`, `held`, `inspecting` and `sessionId` while they are unset. Its `camera.position` with `yaw`/`pitch` is the pose a camera bookmark needs, minus the eye height above `player.position`. Per-hit records keep long sightlines from overflowing a single telemetry record. Normal queue/delivery limits still apply; compare the expected hit count when reconstructing a dump. No dump is sent when telemetry is disabled. Every dump also captures the current frame through the WebGPU capture bridge and downloads it as lossless `<world>-<dump.id>.webp`, independent of telemetry.
 
-Query VictoriaLogs with `service.name:=gallery event.name:=ego.dump _time:1h | sort by(_time desc)` (use `knottingham` or `sandbox` for those worlds). World-space `hit.point` and `hit.normal` in the JSON message provide placement coordinates. Use `dump.id` to retrieve all hit records for a snapshot.
+Query VictoriaLogs with `service.name:=slop.gallery event.name:=ego.dump _time:1h | sort by(_time desc)` (add `world:=knottingham` or similar to narrow it to one world). World-space `hit.point` and `hit.normal` in the JSON message provide placement coordinates. Use `dump.id` to retrieve all hit records for a snapshot.
 
 Native WebMCP exposes read-only `get_aim`, `get_telemetry`, `dump_knots`, `dump_portrait_slots`, `analyze_world` and `get_loading_items` plus `download_frame` and `set_wireframe` through `document.modelContext`. The first two inspect player aim and telemetry delivery. `dump_knots` returns every Knot of the current world: Knottingham’s selection with live session rarity edits, or the gallery’s showcased ones, like the one on the Salon’s pedestal, while their rooms are mounted. `dump_portrait_slots` returns the world’s portrait slots, including the edits made on this page under `?edit_portrait_slots`. `download_frame` renders the current view through the WebGPU capture bridge and downloads it as lossless `<name>.webp` (or `.png` with `format: 'png'`), the same way X dumps save their screenshot. It returns the file name, size and byte count plus `dump`, the X dump snapshot (with `context` and `query`) taken right before the frame, or null without a player. The default name is `<world>-<dump id>`, matching X screenshots. Unlike X, the tool does not log, copy or play a sound. `analyze_world` sorts the scene’s meshes and lights into the rooms whose fences hold them (see `scripts/analyzeWorld.ts`), `get_loading_items` lists what is still loading, which captures wait for, and `set_wireframe` drives the wireframe flood of headless renders. The tools do not move the player, acquire focus or enable telemetry. Their registrations are removed on unmount/HMR using AbortSignals.
 

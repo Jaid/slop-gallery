@@ -118,7 +118,9 @@ test('gallery adapters record bounded state and lifecycle data without private g
   expect(records).not.toContain('private artwork')
   expect(records).not.toContain('private-first-id')
   expect(telemetry.resource).toMatchObject({
-    'service.name': 'gallery',
+    'service.name': 'slop.gallery',
+    'service.namespace': 'web',
+    world: 'gallery',
     'service.instance.id': 'test-session',
   })
   const metricBodies = requests.filter(request => request.url === endpoints.metrics).flatMap(request => request.body.trim().split('\n').filter(Boolean)).map(line => JSON.parse(line) as {
@@ -157,14 +159,16 @@ test('gallery telemetry sends native Victoria logs/metrics and OTLP traces strai
     metric: {
       __name__: 'ego.position.x',
       room: 'sienna',
-      'service.name': 'gallery',
+      'service.name': 'slop.gallery',
+      world: 'gallery',
     },
     values: [4.2],
     timestamps: [1234],
   })
   expect(JSON.parse(logsRequest.body.trim().split('\n')[0]) as unknown).toMatchObject({
     _msg: 'Gallery event: verification',
-    'service.name': 'gallery',
+    'service.name': 'slop.gallery',
+    world: 'gallery',
   })
   expect(JSON.parse(tracesRequest.body)).toHaveProperty('resourceSpans')
   expect(metricsRequest.headers.get('content-type')).toContain('application')
