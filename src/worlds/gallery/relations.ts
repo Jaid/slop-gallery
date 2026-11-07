@@ -105,7 +105,7 @@ export const openings: ReadonlyArray<Opening> = [
     holes: [['forge-vestibule', 'bastion']],
   },
   {
-    // The grille through the vestibule’s wall, where the cistern’s flat wall touches it back to back with a hole of its own; that wall’s other air behind it, the passages under the Forge, lies nowhere near the grille.
+    // The window through the vestibule’s wall, where the cistern’s flat wall touches it back to back with a hole of its own; that wall’s other air behind it, the passages under the Forge, lies nowhere near the window.
     rooms: ['bastion', 'forge'],
     holes: [['forge-vestibule', 'cistern']],
   },
@@ -228,7 +228,7 @@ const relations = {
     // Through its window, across the Lobby and through the Salon’s window, as the Salon sees across it the other way
     rooms: ['bastion', 'lobby', 'salon', 'vesper', 'banquet', 'antechamber', 'oculus', 'sienna', 'exhibition'],
     floorMirror: 'base',
-    // The last lantern along the approach hangs right before the vestibule’s arch, and the cistern’s shines out through the grille.
+    // The last lantern along the approach hangs right before the vestibule’s arch, and the cistern’s shines out through the window.
     visibleLamps: {
       bastion: ['lantern_strip', 'lantern_cistern'],
     },

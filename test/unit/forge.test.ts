@@ -134,7 +134,7 @@ describe('the Forge’s vestibule', () => {
       expect(pz).toBeCloseTo(northZ, 9)
       expect(wallPosition(wall, hole.u, 0, 0.5)[2]).toBeCloseTo(northZ + facing * 0.5, 9)
     }
-    // Each arch spans as much straight across between its jambs as what it opens onto: the arch into the room, and the approach, twice as wide. Besides them, only the grille onto the Bastion’s cistern pierces this ring.
+    // Each arch spans as much straight across between its jambs as what it opens onto: the arch into the room, and the approach, twice as wide. Besides them, only the window into the Bastion’s cistern pierces this ring.
     expect(ring.holes!.map(hole => hole.name)).toEqual([...vestibuleArches.map(arch => arch.name), 'cistern'])
     expect(vestibuleArches.map(arch => vestibuleArchOpening(forgeRoundVestibule, arch).width)).toEqual([forgeArch.width, climbApproach.width])
     for (const arch of vestibuleArches) {

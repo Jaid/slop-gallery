@@ -2,7 +2,7 @@ import type {WallReservation} from '#src/lib/placement/wallGeometry.ts'
 import type {RoomWall} from '../base/Room.ts'
 
 import {alchemyCannon, alchemyPipe, workbench} from '#src/lib/gallery/alchemy/alchemyMachine.ts'
-import {cisternGrilleHole} from '#src/lib/gallery/cistern/grille.ts'
+import {cisternWindowHole} from '#src/lib/gallery/cistern/window.ts'
 import forge, {forgeVestibule} from '#src/lib/gallery/forge.ts'
 import {forgeArch, forgeRoundVestibule} from '#src/lib/gallery/forgeVestibule.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
@@ -60,12 +60,12 @@ export default {
     ],
   },
   west,
-  // The vestibule’s round wall, one ring facing its center, with its two arches and the grille onto the Bastion’s cistern on the north side, where it touches the cistern’s flat wall.
+  // The vestibule’s round wall, one ring facing its center, with its two arches and the window into the Bastion’s cistern on the north side, where it touches the cistern’s flat wall.
   vestibule: {
     ...vestibule,
     holes: {
       ...vestibule.holes,
-      cistern: cisternGrilleHole(vestibule, roomOrigins.forge),
+      cistern: cisternWindowHole(vestibule, roomOrigins.forge),
     },
   },
 } satisfies Record<string, RoomWall>

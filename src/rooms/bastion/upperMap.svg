@@ -22,7 +22,7 @@
     <mask id="bastion-upper-height">
       <path d="M -24.3 10.3 L -24.3 4.3 L -17 4.3 L -17 10.3 Z" fill="#ffffff" stroke="#ffffff" stroke-width="0.1"/>
       <path d="M -24.3 4.3 A 6.15 6.15 0 0 1 -12 4.3 Z" fill="#e6e6e6" stroke="#e6e6e6" stroke-width="0.1"/>
-      <path d="M -14 4.195 A 4.15 4.15 0 0 0 -22.3 4.195" fill="none" stroke="#b8b8b8" stroke-width="0.42"/>
+      <path d="M -14 4.195 V 2.995 A 4.15 4.15 0 0 0 -22.3 2.995 V 4.195" fill="none" stroke="#b8b8b8" stroke-width="0.42"/>
       <path d="M -25.3 27.538 L -25.245 27.536 L -25.191 27.531 L -24.721 31.604 L -25.01 31.629 L -25.3 31.638 Z" fill="url(#bastion-upper-0)"/>
       <path d="M -25.207 27.533 L -25.153 27.526 L -25.099 27.516 L -24.232 31.523 L -24.517 31.577 L -24.805 31.613 Z" fill="url(#bastion-upper-1)"/>
       <path d="M -25.115 27.519 L -25.061 27.507 L -25.009 27.492 L -23.754 31.395 L -24.032 31.476 L -24.315 31.541 Z" fill="url(#bastion-upper-2)"/>

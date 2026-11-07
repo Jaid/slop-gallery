@@ -38,7 +38,7 @@ export default {
       position: [x - originX, y - 0.3 - originY, z - originZ] as const,
     }]
   })),
-  // Under the cistern’s half dome, lighting the channel and shining out through the grille into the Forge’s vestibule, which throws its bars onto the vestibule’s floor.
+  // Under the cistern’s half dome, lighting the channel and shining out through the window into the Forge’s vestibule.
   lantern_cistern: {
     ...climbLamps.lantern_mouth,
     position: [cisternLantern.light[0] - originX, cisternLantern.light[1] - 0.3 - originY, cisternLantern.light[2] - originZ],

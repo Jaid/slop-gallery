@@ -2,13 +2,14 @@ import type {Vec3} from '../../../src/lib/gallery/types.ts'
 import type {BufferGeometry} from 'three/webgpu'
 
 import RAPIER from '@dimforge/rapier3d-compat'
-import {BoxGeometry, ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
+import {ExtrudeGeometry, Matrix4, Quaternion, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../../src/lib/gallery/architecture.ts'
 import {bastionCrater} from '../../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate, bastionNetwork, climbMouthHollow} from '../../../src/lib/gallery/bastionNetwork.ts'
 import {cisternBackstop} from '../../../src/lib/gallery/cistern/cistern.ts'
-import CisternGeometry, {cisternGrilleGeometry} from '../../../src/lib/gallery/cistern/CisternGeometry.ts'
+import CisternGeometry, {cisternWindowGeometry} from '../../../src/lib/gallery/cistern/CisternGeometry.ts'
+import InflowGeometry from '../../../src/lib/gallery/cistern/InflowGeometry.ts'
 import {climbMouth} from '../../../src/lib/gallery/climb.ts'
 import {slabCorners} from '../../../src/lib/gallery/floorPolygons.ts'
 import forge from '../../../src/lib/gallery/forge.ts'
@@ -28,8 +29,6 @@ type Shape = {
   dead?: boolean
   /** welded, so nothing catches on its facets’ inner edges, with its skin, like `MeshSurfaceCollider` */
   fix?: boolean
-  /** without friction by the Min rule, and dead */
-  polished?: boolean
   rotation?: number
   translation?: Vec3
   triangles: [Float32Array, Uint32Array]
@@ -78,7 +77,7 @@ export function bastionColliders() {
   return colliders
 }
 
-/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and the Bastion’s cistern behind the vestibule, its floor, its polished channel and backstop and the grille onto the vestibule. */
+/** The Bastion’s colliders and the Forge’s: its walls, its floor, its vestibule’s floor and the reveals of its arches, and the Bastion’s cistern behind the vestibule, its floor, its dead channel, its polished backstop, its inflow’s pipe and the window onto the vestibule. */
 export function forgeAndBastionColliders() {
   const colliders = bastionColliders()
   colliders.walls(['forge'])
@@ -111,18 +110,16 @@ export function forgeAndBastionColliders() {
   cistern.dispose()
   const [depth, width, height] = cisternBackstop.size
   const [faceX, , faceZ] = cisternBackstop.face
-  const backstop = new BoxGeometry(width, height, depth)
-  backstop.translate(faceX, cisternBackstop.underside + height / 2, faceZ - depth / 2)
-  colliders.shapes.push({
-    triangles: colliderGeometry(backstop),
-    polished: true,
+  colliders.boxes.push({
+    halfExtents: [width / 2, height / 2, depth / 2],
+    translation: [faceX, cisternBackstop.underside + height / 2, faceZ - depth / 2],
   })
-  backstop.dispose()
-  const grille = cisternGrilleGeometry()
-  for (const part of [grille.reveal, grille.bars]) {
-    colliders.surface(part)
-  }
-  grille.dispose()
+  const inflow = new InflowGeometry
+  colliders.surface(inflow.collision)
+  inflow.dispose()
+  const reveal = cisternWindowGeometry()
+  colliders.surface(reveal)
+  reveal.dispose()
   return colliders
 }
 
@@ -152,17 +149,20 @@ export function addOrb(world: RAPIER.World, position: Vec3) {
 
 /** Collects the shapes once, as the game builds them, to put into as many worlds as asked. */
 class Colliders {
+  /** boxes without friction, giving nothing back, like the cistern’s backstop */
+  readonly boxes: Array<{
+    halfExtents: Vec3
+    translation: Vec3
+  }> = []
+
   readonly hulls: Array<Float32Array> = []
   readonly shapes: Array<Shape> = []
 
   /** Puts all of them into the world. */
   into(world: RAPIER.World) {
-    for (const {dead, fix, polished, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
+    for (const {dead, fix, rotation, translation, triangles: [vertices, indices]} of this.shapes) {
       const shape = fix ? RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin) : RAPIER.ColliderDesc.trimesh(vertices, indices)
-      if (polished) {
-        shape.setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min)
-      }
-      if (polished || dead) {
+      if (dead) {
         shape.setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min)
       }
       if (translation) {
@@ -176,6 +176,9 @@ class Colliders {
     }
     for (const vertices of this.hulls) {
       world.createCollider(RAPIER.ColliderDesc.convexHull(vertices)!)
+    }
+    for (const {halfExtents, translation} of this.boxes) {
+      world.createCollider(RAPIER.ColliderDesc.cuboid(...halfExtents).setTranslation(...translation).setFriction(0).setFrictionCombineRule(RAPIER.CoefficientCombineRule.Min).setRestitution(0).setRestitutionCombineRule(RAPIER.CoefficientCombineRule.Min))
     }
   }
 

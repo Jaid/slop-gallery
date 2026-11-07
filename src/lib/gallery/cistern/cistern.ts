@@ -1,41 +1,47 @@
 import type {Wall} from '../../placement/wallGeometry.ts'
 import type {Vec3} from '../types.ts'
 
+import {defaultEgoOptions} from 'ego-player/motor'
+
 import {cannonLaunch, flight} from '../alchemy/alchemyMachine.ts'
 import {wallFace} from '../architectureDimensions.ts'
 import {climbCrossfall, climbCulvert, climbRun} from '../climb.ts'
 import {orbRadius} from '../orbs/index.ts'
-import {cisternGrille, cisternGrilleHole} from './grille.ts'
+import {cisternWindow, cisternWindowHole} from './window.ts'
 
 type Point = readonly [x: number, z: number]
 
-const [grilleX, wallZ] = cisternGrille.center
-/** the face of the cistern’s flat wall, where the channel begins behind the grille and leaves through the culvert */
-const faceZ = cisternGrille.channelZ
+const [windowX, wallZ] = cisternWindow.center
+/** the face of the cistern’s flat wall, where the channel begins behind the window and leaves through the culvert */
+const faceZ = cisternWindow.channelZ
 /** the radius of the channel’s round bottom */
 const bore = 0.21
 /** how high the channel’s sides stand upright over the middle of its round bottom, low for the orbs drifting along it */
 const sides = 0.05
-/** the radius of the channel’s turn, from behind the grille on the vestibule’s axis round to the run’s axis, where the culvert lies */
-const turnRadius = (grilleX - climbCulvert.x) / 2
-/** the middle of its turn, on the face of the flat wall */
-const turnCenter: Point = [grilleX - turnRadius, faceZ]
-const loop = turnRadius * Math.PI
+/** how far the channel runs straight north from the face of the flat wall before it turns, and straight back south to it after its turn: as far as leaves the floor beyond its turn a strip to fall toward it, inside the round wall */
+const leg = 1.2
+/** the radius of its turn, from the leg behind the window on the vestibule’s axis round to the leg on the run’s axis, where the culvert lies */
+const turnRadius = (windowX - climbCulvert.x) / 2
+/** the middle of its turn, where its legs end */
+const turnCenter: Point = [windowX - turnRadius, faceZ - leg]
+const turnLength = turnRadius * Math.PI
+/** how far along it it meets the face of the flat wall again, on its way out through the culvert */
+const loop = leg * 2 + turnLength
 /** how far its lip stands out of the approach’s north wall */
 const lip = 0.06
 /** how long it runs straight south through the flat wall and the approach’s wall back to back with it, out over the approach’s floor */
 const outletRun = wallFace * 2 + lip
 const length = loop + outletRun
-/** how high the floor stands by the channel at the grille: level with the grille’s sill */
-const floorAtGrille = cisternGrille.sill
-/** how far in front of the backstop the shot’s orb has its middle as it meets it, and how far the backstop stands from the face of the flat wall */
-const backstopGap = 0.3
+/** how high the floor stands by the channel at the window: a step under the window’s sill */
+const floorAtWindow = cisternWindow.sill - cisternWindow.step
+/** how far the backstop stands from the face of the flat wall: far enough for a player who crawled in through the window to stand up between them */
+const backstopGap = (defaultEgoOptions.radius + defaultEgoOptions.contactOffset) * 2 + 0.06
 /** how deep the backstop is, along the channel, and how far it reaches to either side of the channel’s middle */
 const backstopSize = [0.35, 0.55] as const
 /** how much room the orb has under the backstop, drifting along the channel’s bottom */
 const backstopClearance = 0.05
 /** where the channel’s bottom lies at its start, low enough under the floor at the backstop for an orb to drift on under it */
-const startBottom = floorAtGrille - orbRadius * 2 - backstopClearance - 0.03
+const startBottom = floorAtWindow - orbRadius * 2 - backstopClearance - 0.03
 /** where it lies at its lip, a few centimeters over the culvert’s sill */
 const lipBottom = climbCulvert.bottom + 0.04
 /** how steeply the channel falls, evenly all along */
@@ -44,27 +50,38 @@ const channelFall = (startBottom - lipBottom) / length
 const bottom = (along: number) => startBottom - channelFall * along
 /** How high its sides stand `along` meters along it, where the floor beside them lies no higher. */
 const rim = (along: number) => bottom(along) + bore + sides
+/** how far along it its head rises out of it, from where its bottom runs evenly up to where it lies flush with the floor at the window, for a player to walk out of it onto the window’s sill */
+const head: readonly [from: number, to: number] = [0.3, 0.5]
+/** How low its bottom lies `along` meters along it, rising up its head to the floor. */
+const bed = (along: number) => Math.max(bottom(along), floorAtWindow - (floorAtWindow - bottom(head[1])) * Math.max(along - head[0], 0) / (head[1] - head[0]))
 /** Where the channel’s middle lies in plan `along` meters along it, and which way it runs there. */
 function plan(along: number): {
   direction: Point
   point: Point
 } {
-  if (along <= loop) {
-    const angle = along / turnRadius
+  const [cx, cz] = turnCenter
+  if (along <= leg) {
     return {
-      point: [turnCenter[0] + turnRadius * Math.cos(angle), turnCenter[1] - turnRadius * Math.sin(angle)],
+      point: [windowX, faceZ - along],
+      direction: [0, -1],
+    }
+  }
+  if (along <= leg + turnLength) {
+    const angle = (along - leg) / turnRadius
+    return {
+      point: [cx + turnRadius * Math.cos(angle), cz - turnRadius * Math.sin(angle)],
       direction: [-Math.sin(angle), -Math.cos(angle)],
     }
   }
   return {
-    point: [turnCenter[0] - turnRadius, faceZ + along - loop],
+    point: [cx - turnRadius, cz + along - leg - turnLength],
     direction: [0, 1],
   }
 }
 
 /**
- * The channel round the cistern’s floor: a groove of stone with a round bottom and low upright sides, sunk into the floor, from behind the grille in a semicircle counter-clockwise to the flat wall again and straight out through the culvert in the approach’s north wall, on the run’s axis, its lip over the approach’s floor.
- * It falls evenly all along, and its water runs along it and spills off its lip, onto the drain in front of the culvert. Whatever drops into it rolls out with the water, steeply enough that an orb set down in it never comes to rest.
+ * The channel round the cistern’s floor: a groove of stone with a round bottom and low upright sides, sunk into the floor, from behind the window, where it rises flush with the floor, straight north, round a half turn counter-clockwise, straight back south to the flat wall and on out through the culvert in the approach’s north wall, on the run’s axis, its lip over the approach’s floor.
+ * It falls evenly all along. Its water pours into it from the inflow’s spout just past the backstop, runs along it and spills off its lip onto the drain in front of the culvert. Whatever drops into it rolls out with the water, steeply enough that an orb set down in it never comes to rest.
  * All values are in meters, in the world’s frame.
  */
 export const cisternChannel = {
@@ -72,16 +89,25 @@ export const cisternChannel = {
   sides,
   length,
   lip,
+  /** how long each of its straight legs is, before and after its turn */
+  leg,
   turn: {
     center: turnCenter,
     radius: turnRadius,
-    end: loop,
+    /** how far along it its turn starts and ends */
+    from: leg,
+    to: leg + turnLength,
   },
+  loop,
   /** how far along it its middle crosses the center line of the flat wall, on its way out through the culvert */
   crossing: loop + wallFace,
   /** how steeply it falls, per meter along it */
   fall: channelFall,
+  /** where its bottom would lie if it fell evenly all the way from the face of the flat wall */
   bottom,
+  /** where its bottom lies, rising out of it at its head */
+  bed,
+  head,
   rim,
   /** Where its middle lies `along` meters along it in plan, as high as its sides would be if they rose to a full circle round its bottom, and which way it runs there, in 3D. */
   at(along: number) {
@@ -113,27 +139,27 @@ const radius = turnCenter[0] - (climbCulvert.x - climbRun.width / 2)
 const [spring, rise] = [2.8, 2.6]
 /** how steeply the floor falls toward the channel from both sides, like the climb’s paving toward its middle */
 const apronFall = climbCrossfall
-/** how steeply the floor falls downstream beside the channel: from the grille’s sill down to the channel’s sides where it leaves through the culvert, steeper than the channel, so the floor never lies under its sides */
-const apronSlope = (floorAtGrille - rim(loop)) / loop
+/** how steeply the floor falls downstream beside the channel: from the window’s sill down to the channel’s sides where it leaves through the culvert, steeper than the channel, so the floor never lies under its sides */
+const apronSlope = (floorAtWindow - rim(loop)) / loop
 /** How high the floor stands beside the channel’s sides, `along` meters down it. */
-const apronEdge = (along: number) => floorAtGrille - apronSlope * Math.min(along, loop)
-/** how far the floor reaches from the turn’s center to the channel’s sides, inside its turn and outside of it */
+const apronEdge = (along: number) => floorAtWindow - apronSlope * Math.min(along, loop)
+/** how far the floor reaches from the line between the ends of the channel’s legs to its sides, inside its turn and outside of it */
 const [innerEdge, outerEdge] = [turnRadius - bore, turnRadius + bore]
 /** how far along the channel the backstop stands, from its south face to its north face */
 const backstopAlong = [backstopGap, backstopGap + backstopSize[0]] as const
 /** flat, as high as the floor beside the channel at its north face, where the floor lies lowest under it: sunk into the floor a little everywhere else */
 const backstopUnderside = apronEdge(backstopAlong[1])
-if (rim(0) > apronEdge(0) || bottom(backstopAlong[0]) + orbRadius * 2 + backstopClearance > backstopUnderside + 1e-9 || impact[1] < backstopUnderside + 0.02) {
-  throw new RangeError('The cistern’s channel needs to sink into its floor, and its backstop to stop the shot over the channel, which runs on under it.')
+if (rim(0) > apronEdge(0) || head[1] > faceZ - impact[2] || bottom(backstopAlong[0]) + orbRadius * 2 + backstopClearance > backstopUnderside + 1e-9 || impact[1] < backstopUnderside + 0.05 || backstopAlong[1] > leg) {
+  throw new RangeError('The cistern’s channel needs to sink into its floor, and its backstop to stop the shot over the channel’s first leg, past its head, which runs on under it.')
 }
 
 /**
- * The backstop over the channel right behind the grille: a block of stone lying across the channel on the floor, faced with an iron plate square to the cannon’s shot, which stops every orb dead, drops it into the channel and lets it drift on under it.
+ * The backstop over the channel behind the window: a block of stone lying across the channel on the floor, faced with an iron plate square to the cannon’s shot, which stops every orb dead, drops it into the channel and lets it drift on under it.
  * Its face’s middle and its size are in the world’s frame: its depth along the channel, its width across it, and its height over its underside.
  */
 export const cisternBackstop = {
   /** the middle of its face, on the shot’s line, at the height of the orb’s middle as it meets it */
-  face: [grilleX, impact[1], faceZ - backstopGap] as Vec3,
+  face: [windowX, impact[1], faceZ - backstopGap] as Vec3,
   /** where the shot’s orb has its middle as it meets it */
   impact,
   underside: backstopUnderside,
@@ -141,8 +167,8 @@ export const cisternBackstop = {
 }
 
 /**
- * The Bastion’s cistern behind the Forge’s vestibule, a half-round chamber of castle stone under a ribbed half dome, which the alchemy machine shoots orbs into through the grille in the vestibule’s north wall: its flat wall, which the vestibule’s round wall touches back to back, runs on behind the approach, and its round wall springs from the approach’s west wall.
- * The channel winds round its floor, which falls toward it from all sides, so whatever lands in the cistern rolls into the channel and drifts out through the culvert. Nobody walks in it: the grille’s cells are an orb’s size and the culvert lies low.
+ * The Bastion’s cistern behind the Forge’s vestibule, a half-round chamber of castle stone under a ribbed half dome, which the alchemy machine shoots orbs into through the window in the vestibule’s north wall: its flat wall, which the vestibule’s round wall touches back to back, runs on behind the approach, and its round wall springs from the approach’s west wall.
+ * The channel winds round its floor, which falls toward it from all sides, so whatever lands in the cistern rolls into the channel and drifts out through the culvert. A player gets in only by ducking through the window, to fetch what was thrown in; the culvert lies low.
  * All values are in meters, in the world’s frame.
  */
 export const cistern = {
@@ -160,13 +186,13 @@ export const cistern = {
   outerEdge,
   apronEdge,
   /** how high its floor lies at its lowest, by the channel where it leaves, and at its highest, in the middle of the channel’s turn */
-  floorRange: [apronEdge(loop), floorAtGrille + apronFall * innerEdge] as const,
+  floorRange: [apronEdge(loop), floorAtWindow + apronFall * innerEdge] as const,
 }
 
 /** how many ribs run up the half dome, evenly round it between its ends */
 export const cisternDomeRibs = 7
 /**
- * The lantern hanging from the half dome over the floor inside the channel’s turn, between two of the dome’s ribs, which lights the cistern and shines out through the grille into the vestibule: the middle of its body, and where its rod meets the dome, straight above it, with the dome’s face there, facing down.
+ * The lantern hanging from the half dome over the floor inside the channel’s turn, between two of the dome’s ribs, which lights the cistern and shines out through the window into the vestibule: the middle of its body, and where its rod meets the dome, straight above it, with the dome’s face there, facing down.
  * In the world’s frame.
  */
 export const cisternLantern = (() => {
@@ -188,8 +214,44 @@ export const cisternLantern = (() => {
   }
 })()
 
+/** how far down the channel the inflow’s water pours into it, just past the backstop */
+const inflowAlong = backstopAlong[1] + 0.12
+/** how high the inflow’s pipe leaves the foot of the half dome, and how high it turns down over the channel */
+const [inflowLeaves, inflowTurns] = [3.35, 2.95]
+/** how high its spout’s mouth hangs, clear over the head of a player standing beside the channel under it */
+const inflowMouth = apronEdge(inflowAlong) + defaultEgoOptions.height + 0.12
 /**
- * How high the cistern’s floor lies under the point in plan: falling toward the channel from its round wall and from the middle of the channel’s turn, which stands highest, and downstream along it.
+ * The pipe that feeds the cistern’s channel: out of the foot of the half dome near the east end of the round wall, halfway to its first rib, sloping down over the floor toward the channel and turning down over it just past the backstop, into a short spout the water pours out of into the channel.
+ * Its corners in the world’s frame: where it leaves the half dome’s inside, with the dome’s normal there, facing into the cistern, where it turns down, and its mouth; and how far down the channel its water lands, and how high the water’s surface lies there.
+ */
+export const cisternInflow = (() => {
+  const azimuth = Math.PI / (cisternDomeRibs + 1) / 2
+  const inside = radius - wallFace
+  const elevation = Math.asin((inflowLeaves - spring) / rise)
+  const [cos, sin] = [Math.cos(elevation), Math.sin(elevation)]
+  const [outward, upward] = [cos / inside, sin / rise]
+  const norm = Math.hypot(outward, upward)
+  const [x, , z] = cisternChannel.at(inflowAlong).point
+  return {
+    leaves: [cistern.center[0] + inside * cos * Math.cos(azimuth), inflowLeaves, cistern.center[1] - inside * cos * Math.sin(azimuth)] as Vec3,
+    normal: [-outward / norm * Math.cos(azimuth), -upward / norm, outward / norm * Math.sin(azimuth)] as Vec3,
+    turns: [x, inflowTurns, z] as Vec3,
+    mouth: [x, inflowMouth, z] as Vec3,
+    along: inflowAlong,
+  }
+})()
+if (inflowAlong > leg || inflowMouth > inflowTurns - 0.2) {
+  throw new RangeError('The cistern’s inflow has to pour into the channel’s first leg, out of a spout under its turn.')
+}
+
+/** Where the half dome’s inside lies straight over the point in plan, inside the cistern. */
+export function cisternDomeHeight(x: number, z: number) {
+  const out = Math.hypot(x - cistern.center[0], z - cistern.center[1]) / (radius - wallFace)
+  return spring + rise * Math.sqrt(Math.max(0, 1 - out ** 2))
+}
+
+/**
+ * How high the cistern’s floor lies under the point in plan: falling toward the channel from its round wall and from the line between the ends of the channel’s legs, which stands highest, and downstream along it.
  * Over the channel, as high as the floor beside it.
  */
 export function cisternFloorHeight(x: number, z: number) {
@@ -218,12 +280,19 @@ export function insideCistern([x, y, z]: Vec3) {
   return floor !== undefined && y >= floor - 1 && y <= cistern.crown
 }
 
-/** How far round the channel’s turn the point in plan lies, from its start, and how far from the turn’s center; on the flat wall’s side, the nearer of its ends. */
+/** How far along the channel the point in plan lies abreast of it, and how far from the line between the ends of its legs, which its middle runs round at the turn’s radius: beside its legs, square to them, and round its turn, from the turn’s center. */
 function polar(x: number, z: number) {
-  const angle = Math.atan2(turnCenter[1] - z, x - turnCenter[0])
+  const [cx, cz] = turnCenter
+  if (z >= cz) {
+    const into = Math.min(Math.max(faceZ - z, 0), leg)
+    return {
+      along: x >= cx ? into : loop - into,
+      out: Math.abs(x - cx),
+    }
+  }
   return {
-    along: Math.min(Math.max(angle < -Math.PI / 2 ? Math.PI : angle, 0), Math.PI) * turnRadius,
-    out: Math.hypot(x - turnCenter[0], z - turnCenter[1]),
+    along: leg + Math.atan2(cz - z, x - cx) * turnRadius,
+    out: Math.hypot(x - cx, z - cz),
   }
 }
 /** how many boxes the cistern’s air is cut into, in strips from west to east */
@@ -275,7 +344,7 @@ const roundWall: Omit<Wall, 'id'> = {
   cornice: false,
 }
 /**
- * The cistern’s walls: the flat one, with the grille onto the vestibule and the culvert onto the approach in it, and the round one under the half dome.
+ * The cistern’s walls: the flat one, with the window onto the vestibule and the culvert onto the approach in it, and the round one under the half dome.
  * They stand on the cistern’s floor, and their baseboards follow it.
  */
 export const cisternWalls: ReadonlyArray<Wall> = [
@@ -285,7 +354,7 @@ export const cisternWalls: ReadonlyArray<Wall> = [
     baseboardProfile: floorContact(flatWall, u => [cistern.center[0] - u, faceZ]),
     holes: [
       {
-        ...cisternGrilleHole(flatWall, [0, 0, 0]),
+        ...cisternWindowHole(flatWall, [0, 0, 0]),
         name: 'vestibule',
       },
       {

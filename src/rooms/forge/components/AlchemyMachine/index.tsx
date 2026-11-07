@@ -65,7 +65,7 @@ const pipeCapsules = (() => {
 const breechBlock = alchemyCannon.breech.map((value, axis) => value + alchemyCannon.axis[axis] * trunnionReach / 2) as Vec3
 
 /**
- * The alchemy machine against the Forge’s south wall: a workbench with the machine’s brass sink let into its east end, and an orb holder on its west end, the machine’s iron body under the sink, and its pipe out of the body, up the wall and into a cannon over the bench, which shoots across the Forge through the arch into the vestibule and through the grille there into the Bastion’s cistern.
+ * The alchemy machine against the Forge’s south wall: a workbench with the machine’s brass sink let into its east end, and an orb holder on its west end, the machine’s iron body under the sink, and its pipe out of the body, up the wall and into a cannon over the bench, which shoots across the Forge through the arch into the vestibule and through the window there into the Bastion’s cistern.
  * An orb thrown or dropped into the sink rolls down its throat into the body, which works on it for a while, its window glowing, and shoots it out of the cannon, see {@link AlchemyWorks}.
  */
 export default function AlchemyMachine() {
