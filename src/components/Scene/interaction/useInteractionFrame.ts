@@ -59,7 +59,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
     rooms.current?.update(bodyPose.center)
-    geofences.current?.update(bodyPose.center)
+    geofences.current?.update(bodyPose.center, bodyPose.velocity)
     cursor.current.set(0, 0)
     if (dragPose.active) {
       const bounds = renderer.domElement.getBoundingClientRect()
