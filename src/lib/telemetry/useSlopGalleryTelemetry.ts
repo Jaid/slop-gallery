@@ -3,12 +3,20 @@ import type {GalleryStore} from './types.ts'
 
 import {useEffect} from 'react'
 
+import recordPermalink from './recordPermalink.ts'
+
 export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry | null, store: GalleryStore, events?: EventTarget) {
   useEffect(() => {
     if (!telemetry) {
       return
     }
-    let stop: (() => void) | undefined = telemetry.connect(store, events)
+    // Every attachment starts a session span of its own, which the permalink it runs with belongs in.
+    const connect = () => {
+      const disconnect = telemetry.connect(store, events)
+      recordPermalink(telemetry)
+      return disconnect
+    }
+    let stop: (() => void) | undefined = connect()
     const pagehide = () => {
       // From pagehide on, BrowserVictoriaClient dispatches every admitted record right away, so the
       // session/gameplay spans and the detach log that closing the attachment produces still leave the page.
@@ -16,7 +24,7 @@ export default function useSlopGalleryTelemetry(telemetry: SlopGalleryTelemetry 
       stop = undefined
     }
     const pageshow = () => {
-      stop ??= telemetry.connect(store, events)
+      stop ??= connect()
     }
     window.addEventListener('pagehide', pagehide)
     window.addEventListener('pageshow', pageshow)
