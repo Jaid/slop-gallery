@@ -3,6 +3,7 @@ import type {Vec3} from './types.ts'
 
 import {vaultShellThickness, wallFace} from './architectureDimensions.ts'
 import {bastionLinkStart, bastionLinkStripZ, bastionLinkWidth, bastionPassages} from './bastion.ts'
+import {cisternFloor, insideCistern} from './cistern/cistern.ts'
 import {climbCrossfall, climbHairpin, climbMouth, climbPassages} from './climb.ts'
 import gateMouseHole from './gateMouseHole.ts'
 import lodge, {lodgeEastWindow} from './lodge.ts'
@@ -176,12 +177,12 @@ export const bastionLinkGate = {
 }
 export const bastionNetwork = [...bastionPassages, ...climbPassages, bastionLink, lodgeSpur]
 
-/** All floors under a point, including the upper run where it crosses the lower passages. */
+/** All floors under a point, including the upper run where it crosses the lower passages, and the cistern’s over the Lodge and the curve. */
 export function bastionFloors(x: number, z: number) {
-  return bastionNetwork.flatMap(passage => passage.floorAt(x, z) ?? [])
+  return [...bastionNetwork, {floorAt: cisternFloor}].flatMap(part => part.floorAt(x, z) ?? [])
 }
 
-/** Whether the position lies between any Bastion passage’s floor and vault. */
+/** Whether the position lies between any Bastion passage’s floor and vault, or in the cistern. */
 export function insideBastion(position: Vec3) {
-  return bastionNetwork.some(passage => passage.contains(position))
+  return bastionNetwork.some(passage => passage.contains(position)) || insideCistern(position)
 }

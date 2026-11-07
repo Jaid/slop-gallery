@@ -4,13 +4,14 @@ import {afterAll, describe, expect, test} from 'bun:test'
 
 import RAPIER from '@dimforge/rapier3d-compat'
 import EgoMotor from 'ego-player/motor'
-import {Box2, ExtrudeGeometry, Matrix4, Quaternion, Vector2, Vector3} from 'three/webgpu'
+import {Box2, ExtrudeGeometry, Matrix4, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector2, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry, wallFace} from '../../src/lib/gallery/architecture.ts'
 import {vaultShellThickness} from '../../src/lib/gallery/architectureDimensions.ts'
-import {bastionDoorway} from '../../src/lib/gallery/bastion.ts'
+import {bastionClearance, bastionDoorway} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate, climbMouthHollow} from '../../src/lib/gallery/bastionNetwork.ts'
-import {climbApproach, climbArch, climbCrossfall, climbDoorway, climbHairpin, climbLanterns, climbMouth, climbRun, climbScreen} from '../../src/lib/gallery/climb.ts'
+import {insideCisternPlan} from '../../src/lib/gallery/cistern/cistern.ts'
+import {climbApproach, climbArch, climbCrossfall, climbCulvert, climbDoorway, climbDrain, climbHairpin, climbLanterns, climbMouth, climbRun} from '../../src/lib/gallery/climb.ts'
 import {easedRampGradient} from '../../src/lib/gallery/easedRamp.ts'
 import {insidePolygon, slabCorners} from '../../src/lib/gallery/floorPolygons.ts'
 import forge, {forgeVestibule} from '../../src/lib/gallery/forge.ts'
@@ -21,7 +22,7 @@ import tower, {towerBridge, towerFloorHeight} from '../../src/lib/gallery/oculus
 import RouteVaultGeometry from '../../src/lib/gallery/passages/RouteVaultGeometry.ts'
 import VaultGeometry from '../../src/lib/gallery/passages/VaultGeometry.ts'
 import roundRevealGeometry from '../../src/lib/gallery/roundRevealGeometry.ts'
-import {roundVestibuleFloorShape} from '../../src/lib/gallery/roundVestibule.ts'
+import {roundVestibuleFloorShape, vestibuleArchOpening} from '../../src/lib/gallery/roundVestibule.ts'
 import {vesper} from '../../src/lib/gallery/vesper.ts'
 import {weldedSurfaceSkin} from '../../src/lib/physics/weldedSurface.ts'
 import {insideOpening, wallCoordinates, wallPosition} from '../../src/lib/placement/wallGeometry.ts'
@@ -54,8 +55,8 @@ vestibulePlacement.makeRotationY(vestibuleWall.rotation).setPosition(...vestibul
 /** the vestibule’s floor slab and the reveals of its arches, in world meters */
 const vestibuleParts = [
   vestibuleFloor,
-  ...vestibuleArches.map(({name}) => {
-    const reveal = roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, climbArch)
+  ...vestibuleArches.map(arch => {
+    const reveal = roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === arch.name)!, vestibuleArchOpening(forgeRoundVestibule, arch))
     return reveal.applyMatrix4(vestibulePlacement)
   }),
 ]
@@ -115,15 +116,14 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
     expect(climbMouth.floorY).toBeCloseTo(tower.floorY + tower.height + towerBridge.rise, 9)
     expect(route.y).toBe(climbMouth.floorY)
     expect(route.height).toBe(climbMouth.height)
-    // The hairpin tops out half a meter under it; the run eases up the rest of the way to the screen wall, and the approach runs on level.
+    // The hairpin tops out half a meter under it; the run eases up the rest of the way to the approach, which runs on level.
     expect(route.end.y).toBe(-0.5)
     expect(climbRun.route.y).toBe(route.end.y)
     expect(climbRun.route.end.y).toBe(0)
     expect(climbRun.route.pieces.every(piece => piece.startHeight === 3.1 && piece.endHeight === 3.1)).toBe(true)
     expect(climbApproach.route.pieces.every(piece => piece.startY === 0 && piece.endY === 0 && piece.startHeight === 3.1 && piece.endHeight === 3.1)).toBe(true)
-    // As wide as the Bastion up to the screen wall, and narrower on to the vestibule
-    expect([climbMouth.width, climbHairpin.width, climbRun.width]).toEqual([4, 4, 4])
-    expect(climbApproach.width).toBe(2.6)
+    // As wide as the Bastion all the way to the vestibule
+    expect([climbMouth.width, climbHairpin.width, climbRun.width, climbApproach.width]).toEqual([4, 4, 4, 4])
   })
   test('the hairpin eases up by the whole climb over its two legs and its turn, no steeper than 1 in 4', () => {
     const [west, turn, east] = route.pieces
@@ -198,7 +198,7 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
     const below = slopGallery.room('bastion').air.filter(box => box.max.y < climbApproach.route.y && above.some(region => region.intersectsBox(area([[box.min.x, box.min.z], [box.max.x, box.max.z]]))))
     expect(below.length).toBeGreaterThan(0)
     expect(Math.max(...below.map(box => box.max.y)) + Math.max(vaultShellThickness, 0.24) + 0.3).toBeLessThan(climbApproach.route.y - 0.24)
-    // All round its turn and along its strip, the approach’s walls keep clear of the Forge’s, their faces more than 30 cm apart.
+    // All round its turn and along its strip, the approach’s walls keep the Bastion’s clearance off the Forge’s, as the run does along its west wall.
     const [west, east] = [forge.center[0] - forge.size[0] / 2, forge.center[0] + forge.size[0] / 2]
     const [north, south] = [forge.center[1] - forge.size[1] / 2, forge.center[1] + forge.size[1] / 2]
     for (const station of along(climbApproach)) {
@@ -206,7 +206,7 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
         const reach = climbApproach.reach(station, side)
         const [x, z] = [station.point[0] - Math.sin(station.heading) * side * reach, station.point[1] + Math.cos(station.heading) * side * reach]
         const apart = Math.hypot(Math.max(west - x, 0, x - east), Math.max(north - z, 0, z - south))
-        expect(apart - wallFace * 2).toBeGreaterThan(0.3)
+        expect(apart).toBeGreaterThanOrEqual(bastionClearance - 1e-9)
       }
     }
     // Behind the Forge’s west wall, the hairpin’s east leg keeps the Bastion’s clearance, and the turn stays off the Vesper’s.
@@ -227,49 +227,59 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
           const out = passage.reach(station, side) + 0.2
           const beside: Vec3 = [x - Math.sin(heading) * side * out, y + 1.6, z + Math.cos(heading) * side * out]
           expect(passage.floorAt(beside[0], beside[2])).toBeUndefined()
-          // The approach begins in the screen wall’s arch, behind which the broad run ends, and its strip runs into the vestibule’s arch, where the Forge begins.
-          if (passage !== climbApproach || station.along > 0.3 && station.along < passage.route.length - 0.3) {
-            expect(insideGallery(beside)).toBe(false)
+          // Its strip runs into the vestibule’s arch, where the Forge begins, and behind the approach’s north wall lies the Bastion’s cistern.
+          if (passage !== climbApproach || station.along < passage.route.length - 0.3) {
+            expect(insideGallery(beside)).toBe(passage === climbApproach && insideCisternPlan(beside[0], beside[2]))
           }
         }
       }
     }
   })
-  test('the screen wall closes the broad run where the narrow approach begins, with an arch as wide and as high as the approach’s vault', () => {
-    const screen = wallById('bastion-climb_screen')
-    const [screenX, screenZ] = climbRun.route.end.point
-    expect(screen.center[0]).toBeCloseTo(screenX, 9)
-    expect(screen.center[2]).toBeCloseTo(screenZ, 9)
-    expect(screen.center[1]).toBe(0)
-    expect(screen.width).toBe(climbRun.width)
-    expect(screen.height + 0.3).toBe(climbRun.route.height)
-    expect(screen.rotation).toBe(0)
-    expect(screen.sticky).toBe(false)
-    expect(screen.cornice).toBe(false)
-    expect(screen.miters).toEqual([1, 1])
-    expect(architecture.find(({wall}) => wall.id === 'bastion-climb_screen')!.geometry.cornice).toEqual([])
+  test('the approach turns on from the run as wide as it, widening out into the corner behind its turn: its north wall closes the run across its whole width, facing down it, with the cistern’s culvert in its middle, and a chamfer leads back to the strip’s north wall', () => {
+    expect(walls.some(wall => wall.id === 'bastion-climb_screen')).toBe(false)
     expect([...climbRun.walls, ...climbApproach.walls].every(wall => wall.cornice === false)).toBe(true)
-    expect(screen.holes).toEqual([{
-      ...climbArch,
-      name: 'approach',
-      u: 0,
-    }])
-    expect(climbScreen).toMatchObject({
-      id: 'bastion-climb_screen',
-      room: 'bastion',
-    })
-    // Its arch is the approach’s section: the approach’s walls stand at its jambs, and its crown at the approach’s.
+    // Where the run ends, the approach’s walls stand where the run’s do.
     const start = climbApproach.route.at(0)
-    expect([-1, 1].map(side => climbApproach.reach(start, side))).toEqual([climbArch.width / 2, climbArch.width / 2])
+    expect([-1, 1].map(side => climbApproach.reach(start, side))).toEqual([climbRun.width / 2, climbRun.width / 2])
     expect(climbApproach.route.height).toBe(climbArch.height)
-    // Facing south down the run: half a meter in front of it lies the run’s floor, half a meter behind it the approach’s.
-    const [frontX, , frontZ] = wallPosition(screen, 1.5, 0, 0.5)
-    const [backX, , backZ] = wallPosition(screen, 0, 0, -0.5)
-    expect(climbRun.floorAt(frontX, frontZ)).toBeCloseTo(0, 3)
-    expect(climbApproach.floorAt(backX, backZ)).toBe(0)
-    expect(climbApproach.floorAt(frontX, frontZ)).toBeUndefined()
+    const [runX] = climbRun.route.end.point
+    const northWallZ = forgeVestibule.center[1] - forgeVestibule.radius
+    // The outline’s walls come first, in its first piece’s place.
+    const [west, north, chamfer] = climbApproach.walls
+    expect(west.center[0]).toBeCloseTo(runX - climbRun.width / 2, 9)
+    expect(north.center[0]).toBeCloseTo(runX, 9)
+    expect(north.center[2]).toBeCloseTo(northWallZ, 9)
+    expect(north.width).toBeCloseTo(climbRun.width, 9)
+    expect(north.rotation).toBeCloseTo(0, 9)
+    expect(chamfer.rotation).toBeCloseTo(-Math.PI / 4, 9)
+    expect(north.holes!.map(hole => hole.name)).toEqual(['cistern'])
+    expect(north.holes![0].u).toBeCloseTo(climbCulvert.x - north.center[0], 9)
+    // Its floor reaches into the corner behind the turn and on to the north wall, and nowhere past it.
+    expect(climbApproach.floorAt(runX - climbRun.width / 2 + 0.2, northWallZ + 0.2)).toBe(0)
+    expect(climbApproach.floorAt(runX, northWallZ + 0.05)).toBe(0)
+    expect(climbApproach.floorAt(runX, northWallZ - 0.05)).toBeUndefined()
+    // Facing down the run, half a meter in front of the culvert lies the approach’s floor, with the drain the culvert spills into.
+    const [frontX, , frontZ] = wallPosition(north, north.holes![0].u, 0, 0.5)
+    expect(climbApproach.floorAt(frontX, frontZ)).toBe(0)
+    expect(climbApproach.drains).toHaveLength(1)
+    // The paving that shows is cut round the drain, the one that collides runs on under its grate.
+    const vault = routeVaults[2]
+    expect(vault.paving).not.toBe(vault.pavingCollision)
+    const down = new Vector3(0, -1, 0)
+    const [drainX, drainZ] = climbDrain.center
+    const hits = (geometry: typeof vault.paving) => {
+      const material = new MeshBasicMaterial
+      try {
+        const ray = new Raycaster(new Vector3(drainX, 1, drainZ), down)
+        return ray.intersectObject(new Mesh(geometry, material)).length > 0
+      } finally {
+        material.dispose()
+      }
+    }
+    expect(hits(vault.paving)).toBe(false)
+    expect(hits(vault.pavingCollision)).toBe(true)
   })
-  test('the run north falls gently toward the hairpin, no steeper than 1 in 10, so orbs the Forge’s alchemy machine shoots off roll on down it, and lies level for its last meter before the screen wall', () => {
+  test('the run north falls gently toward the hairpin, no steeper than 1 in 10, so orbs drifting out of the cistern roll on down it, and lies level for its last meter before the approach', () => {
     let previous = climbRun.route.y
     for (let distance = 0.05; distance <= climbRun.route.length; distance += 0.05) {
       const {y} = climbRun.route.at(distance)
@@ -430,7 +440,7 @@ describe('the Bastion’s way from the Oculus up to the Forge', () => {
           world.createCollider(RAPIER.ColliderDesc.trimesh(...colliderGeometry(geometry)))
         }
         // The paving and the mouth’s sunken paving welded, as the game builds them, like the walls
-        for (const geometry of [...routeVaults.map(vault => vault.paving), sunkenPaving]) {
+        for (const geometry of [...routeVaults.map(vault => vault.pavingCollision), sunkenPaving]) {
           const [vertices, indices] = colliderGeometry(geometry)
           world.createCollider(RAPIER.ColliderDesc.trimesh(vertices, indices, RAPIER.TriMeshFlags.FIX_INTERNAL_EDGES).setContactSkin(weldedSurfaceSkin))
         }

@@ -2,10 +2,9 @@ import type {WallReservation} from '#src/lib/placement/wallGeometry.ts'
 import type {RoomWall} from '../base/Room.ts'
 
 import {alchemyCannon, alchemyPipe, workbench} from '#src/lib/gallery/alchemy/alchemyMachine.ts'
-import {climbArch} from '#src/lib/gallery/climb.ts'
+import {cisternGrilleHole} from '#src/lib/gallery/cistern/grille.ts'
 import forge, {forgeVestibule} from '#src/lib/gallery/forge.ts'
-import {forgeTurnHole} from '#src/lib/gallery/forgeTurn.ts'
-import {forgeRoundVestibule} from '#src/lib/gallery/forgeVestibule.ts'
+import {forgeArch, forgeRoundVestibule} from '#src/lib/gallery/forgeVestibule.ts'
 import roomOrigins from '#src/lib/gallery/layout.ts'
 import {forgeWindow, lobbyWindowHole} from '#src/lib/gallery/lobbyWindows.ts'
 import {roundVestibuleWall} from '#src/lib/gallery/roundVestibule.ts'
@@ -35,12 +34,12 @@ const [benchX] = workbench.center
 const riserX = alchemyPipe.corners[1][0]
 
 export default {
-  // The arch into the vestibule, where its round wall touches the middle of this one, as wide and as high as the approach’s vault, which the alchemy machine’s cannon shoots orbs through.
+  // The arch into the vestibule, where its round wall touches the middle of this one, which the alchemy machine’s cannon shoots orbs through.
   north: {
     ...north,
     holes: {
       vestibule: {
-        ...climbArch,
+        ...forgeArch,
         u: wallCoordinates(north, [vestibuleX - originX, 0, vestibuleZ + radius - originZ]),
       },
     },
@@ -61,12 +60,12 @@ export default {
     ],
   },
   west,
-  // The vestibule’s round wall, one ring facing its center, with its two arches and the redirection pipe’s inlet on the north side.
+  // The vestibule’s round wall, one ring facing its center, with its two arches and the grille onto the Bastion’s cistern on the north side, where it touches the cistern’s flat wall.
   vestibule: {
     ...vestibule,
     holes: {
       ...vestibule.holes,
-      pipe_inlet: forgeTurnHole(vestibule, roomOrigins.forge),
+      cistern: cisternGrilleHole(vestibule, roomOrigins.forge),
     },
   },
 } satisfies Record<string, RoomWall>

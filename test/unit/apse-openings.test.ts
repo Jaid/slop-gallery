@@ -8,7 +8,7 @@ import EgoMotor from 'ego-player/motor'
 import {DoubleSide, Mesh, MeshBasicMaterial, Quaternion, Raycaster, Vector3} from 'three/webgpu'
 
 import {colliderGeometry, createArchitectureGeometry} from '../../src/lib/gallery/architecture.ts'
-import {barDepth} from '../../src/lib/gallery/BarredOpeningGeometry.ts'
+import {barDepth} from '../../src/lib/gallery/architectureDimensions.ts'
 import {apseOpeningPoint, apseOpenings, bastionClearance, bastionCurve, bastionLanterns} from '../../src/lib/gallery/bastion.ts'
 import {bastionLinkGate} from '../../src/lib/gallery/bastionNetwork.ts'
 import {oculusPlatform} from '../../src/lib/gallery/lowerGallery.ts'

@@ -25,20 +25,18 @@ const sightDepth = 3
 const portalDepth = 0.8
 /** how far a box may reach in front of a wall and still count as lying behind it */
 const behindTolerance = 0.01
-/** Whether the box’s floor plan lies behind the wall and reaches across the hole’s width. Its middle counts too, since the corners of a box around a round room, like the air of a round vestibule, lie behind its ring wall. */
+/**
+ * Whether the box’s floor plan lies behind the wall, straight behind the hole: its middle across from the hole. Its middle counts as one of its corners, since the corners of a box around a round room, like the air of a round vestibule, lie behind its ring wall.
+ * Behind a ring wall lies everything outside it, like the room a round vestibule opens off, which only lies straight behind its own arch.
+ */
 const behindHole = (wall: Wall, hole: WallOpening, {min, max}: Box3) => {
-  let from = Number.POSITIVE_INFINITY
-  let to = Number.NEGATIVE_INFINITY
   const middle: Vec3 = [(min.x + max.x) / 2, 0, (min.z + max.z) / 2]
   for (const point of [middle, ...[min.x, max.x].flatMap(x => [min.z, max.z].map((z): Vec3 => [x, 0, z]))]) {
     if (wallOffset(wall, point) > behindTolerance) {
       return false
     }
-    const u = wallCoordinates(wall, point)
-    from = Math.min(from, u)
-    to = Math.max(to, u)
   }
-  return from < hole.u + hole.width / 2 && to > hole.u - hole.width / 2
+  return Math.abs(wallCoordinates(wall, middle) - hole.u) <= hole.width / 2
 }
 /** The floor mirrors what lies above it below its surface, and the reflection must show what lies behind an opening too. */
 const withReflection = (box: Box3, bottom: number, top: number) => box.expandByPoint(new Vector3(box.min.x, bottom - (top - bottom), box.min.z)).expandByPoint(new Vector3(box.max.x, top, box.max.z))

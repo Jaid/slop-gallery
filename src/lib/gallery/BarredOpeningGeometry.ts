@@ -4,7 +4,7 @@ import {BoxGeometry, BufferGeometry, CylinderGeometry, Float32BufferAttribute, M
 
 import {mergeParts} from '../geometry.ts'
 import {openingArc, openingTop} from '../placement/wallGeometry.ts'
-import {wallFace} from './architectureDimensions.ts'
+import {barDepth} from './architectureDimensions.ts'
 import {bendGeometry, curveSegments, sliceAlongX} from './CurvedBoxGeometry.ts'
 import openingOutline from './openingOutline.ts'
 
@@ -13,6 +13,8 @@ export type BarredOpeningOptions = {
   back?: WallOpening
   /** the heights of the flat iron bands across the bars, over the wall’s foot */
   bands: ReadonlyArray<number>
+  /** how many cells the upright bars split the opening into across, evenly; as many as keep them at most {@link barSpacing} apart if left out */
+  columns?: number
   /** how far behind the wall’s center line the opening runs on, through the gap to the wall it meets there */
   depth: number
   /** a low mouse hole through the bars, in the wall’s own coordinates */
@@ -21,12 +23,12 @@ export type BarredOpeningOptions = {
 type Point = readonly [x: number, y: number, z: number]
 type Triangle = readonly [Point, Point, Point]
 
-/** how far in front of the wall’s center line the bars stand: halfway through its plaster, where the opening is just as wide as on the wall’s face */
-export const barDepth = wallFace / 2
 /** how far apart the bars stand, at most, along the wall’s center line */
 const barSpacing = 0.15
-const barRadius = 0.016
-const bandHeight = 0.05
+/** the radius of an upright bar */
+export const barRadius = 0.016
+/** how tall a flat band across the bars is */
+export const bandHeight = 0.05
 const bandThickness = 0.014
 /** how deep the iron reaches into the stone around the opening */
 const embed = 0.06
@@ -36,10 +38,11 @@ const margin = 0.25
 const centroid = (points: ReadonlyArray<Vector2>) => points.reduce((sum, point) => sum.add(point), new Vector2).multiplyScalar(1 / points.length)
 
 /**
- * The iron in an opening through a wall, in the wall’s own frame and unbent: upright bars evenly spaced across it, at most {@link barSpacing} apart, reaching into the stone round it at both ends, and flat bands across them at the `bands` heights over the wall’s foot, all {@link barDepth} in front of the wall’s center line.
+ * The iron in an opening through a wall, in the wall’s own frame and unbent: upright bars evenly spaced across it, splitting it into `columns` cells or at most {@link barSpacing} apart, reaching into the stone round it at both ends, and flat bands across them at the `bands` heights over the wall’s foot, all {@link barDepth} in front of the wall’s center line.
  * A `hatch` leaves a low opening through the bars at their foot, framed by a flat strap bent round it: the bars over it stand on the strap, and bands lower than its head stop at it on both sides.
  */
-export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {curveRadius, hatch}: {
+export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {columns, curveRadius, hatch}: {
+  columns?: number
   /** the wall’s, along which the bands bend */
   curveRadius?: number
   /** the low opening through the bars, in the wall’s coordinates like the opening, from its foot */
@@ -58,7 +61,7 @@ export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {cur
     const head = Math.sqrt(Math.max(0, (radius + bandHeight) ** 2 - (y - center) ** 2))
     return y <= center ? jamb : Math.min(jamb, head)
   }
-  const count = Math.ceil(hole.width / barSpacing) - 1
+  const count = (columns ?? Math.ceil(hole.width / barSpacing)) - 1
   for (let i = 0; i < count; i++) {
     const u = hole.u - halfWidth + hole.width * (i + 1) / (count + 1)
     // Over the hatch, a bar stands on the middle of its strap.
@@ -91,7 +94,8 @@ export function barredIron(hole: WallOpening, bands: ReadonlyArray<number>, {cur
     const spring = center + Math.sqrt(Math.max(0, middle ** 2 - jamb ** 2))
     const foot = (hatch.bottom ?? 0) - embed
     for (const side of [-1, 1]) {
-      parts.push(new BoxGeometry(bandHeight, spring - foot, bandThickness).translate(hatch.u + side * jamb, (foot + spring) / 2, barDepth))
+      const strap = new BoxGeometry(bandHeight, spring - foot, bandThickness)
+      parts.push(strap.translate(hatch.u + side * jamb, (foot + spring) / 2, barDepth))
     }
     const start = Math.atan2(Math.sqrt(Math.max(0, middle ** 2 - jamb ** 2)), jamb)
     const chords = 12
@@ -118,7 +122,7 @@ export default class BarredOpeningGeometry {
   readonly bars: BufferGeometry
   readonly reveal: BufferGeometry
 
-  constructor(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation' | 'width'>, hole: WallOpening, {bands, depth, back = hole, hatch}: BarredOpeningOptions) {
+  constructor(wall: Pick<Wall, 'center' | 'curveRadius' | 'rotation' | 'width'>, hole: WallOpening, {bands, columns, depth, back = hole, hatch}: BarredOpeningOptions) {
     const bottom = hole.bottom ?? 0
     const halfWidth = hole.width / 2
     const front = openingOutline(hole)
@@ -152,6 +156,7 @@ export default class BarredOpeningGeometry {
     }
     const reveal = solid.geometry()
     const iron = barredIron(hole, bands, {
+      columns,
       curveRadius: wall.curveRadius,
       hatch,
     })

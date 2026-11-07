@@ -157,8 +157,8 @@ describe('floor-following wall baseboards', () => {
     const ramped = walls.filter(wall => wall.id.startsWith('bastion-curve_') && wall.baseboardProfile)
     // the runs and turns down from the east doorway and up toward the Lodge, the straight east wall and the chamfer outside them
     expect(ramped.map(wall => wall.id)).toEqual([0, 1, 4, 14, 15].map(index => `bastion-curve_wall_${index}`))
-    // The western climb’s hairpin climbs on all six of its walls and its run north falls toward it on both of its; see climb.test.ts.
-    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !/^bastion-(?:climb_hairpin|climb_run|link|lodge-spur)_/.test(wall.id)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
+    // The western climb’s hairpin climbs on all six of its walls and its run north falls toward it on both of its, see climb.test.ts, and the cistern’s floor falls toward its channel along both of its, see forge-alchemy.test.ts.
+    expect(walls.filter(wall => wall.baseboardProfile && !ramped.includes(wall) && !/^bastion-(?:cistern|climb_hairpin|climb_run|link|lodge-spur)_/.test(wall.id)).map(wall => wall.id).toSorted()).toEqual(['oculus-east', 'oculus-west'])
     expect(ramped.filter(wall => wall.curveRadius)).toHaveLength(1)
     const material = new MeshBasicMaterial
     for (const wall of ramped) {

@@ -41,6 +41,8 @@ export type RoutedPassageOptions = {
   cornice?: boolean
   /** its paving falling toward its centerline, level across if left out */
   crossfall?: RouteCrossfall
+  /** holes cut through its paving where a drain’s grate lies over a sump, each an outline in plan that lies on its floor: only through what shows, as its collider runs on under the grate, for whatever rolls over it */
+  drains?: ReadonlyArray<ReadonlyArray<Point>>
   /** repair internal paving edges for rolling objects; disable on straight paving where Rapier’s edge repair destabilizes resting convex hulls */
   fixPavingEdges?: boolean
   openings?: ReadonlyArray<RouteOpening>
@@ -105,6 +107,8 @@ export default class RoutedPassage {
   readonly creases: ReadonlyArray<number>
   /** how its paving falls toward its centerline, if it does */
   readonly crossfall?: RouteCrossfall
+  /** the holes cut through what shows of its paving for drains, each an outline in plan */
+  readonly drains: ReadonlyArray<ReadonlyArray<Point>>
   readonly fixPavingEdges: boolean
   /** the room’s id followed by the passage’s own, which its walls’ ids start with */
   readonly name: string
@@ -117,7 +121,7 @@ export default class RoutedPassage {
   /** a wall on each side of each of the route’s pieces in turn, the left one first, where the walls of an outline take the place of those of its side along its stretch, in its first piece’s place */
   readonly walls: ReadonlyArray<Wall>
 
-  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, crossfall, openings = [], outlines = [], pits = [], fixPavingEdges = true}: RoutedPassageOptions = {}) {
+  constructor(readonly id: string, readonly room: RoomId, readonly route: PassageRoute, readonly width = 2.6, {cornice = true, crossfall, drains = [], openings = [], outlines = [], pits = [], fixPavingEdges = true}: RoutedPassageOptions = {}) {
     this.fixPavingEdges = fixPavingEdges
     if (!(width > 0) || route.pieces.some(piece => Math.min(piece.startHeight, piece.endHeight) <= width / 2 || piece.kind === 'arc' && piece.radius <= width / 2)) {
       throw new RangeError('A routed passage needs a positive width, room for its vault all along and turns wider than half of it.')
@@ -194,10 +198,11 @@ export default class RoutedPassage {
       }]
     }
     this.walls = walls
-    if (pits.some(pit => pit.length < 3 || pit.some(([x, z]) => this.stationAt(x, z) === undefined))) {
-      throw new RangeError(`The pits of ${this.name} need at least three corners, all on its floor.`)
+    if ([...pits, ...drains].some(pit => pit.length < 3 || pit.some(([x, z]) => this.stationAt(x, z) === undefined))) {
+      throw new RangeError(`The pits and drains of ${this.name} need at least three corners, all on its floor.`)
     }
     this.pits = pits
+    this.drains = drains
   }
 
   /** Boxes around the passage’s air, from its floor to its ceiling, each piece cut into as many as it takes for none to reach more than `slack` meters past the passage’s walls. */

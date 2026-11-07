@@ -1,7 +1,8 @@
 import type {Vec3} from '../types.ts'
 
 import {wallFace} from '../architectureDimensions.ts'
-import forge, {forgeVestibule} from '../forge.ts'
+import {cisternGrille} from '../cistern/grille.ts'
+import forge from '../forge.ts'
 
 const southZ = forge.center[1] + forge.size[1] / 2
 /** where the face of the Forge’s south wall stands, which the alchemy machine stands against */
@@ -95,15 +96,14 @@ const feed = 0.32
 const barrel = 0.95
 /** how far down the barrel from its muzzle an orb starts, already flying */
 const launchDepth = 0.3
-const [vestibuleX, vestibuleZ] = forgeVestibule.center
 
 /**
- * Where the cannon sends every orb: through the arch into the vestibule, high enough over its middle to leave the orb clear of its crown, and on into the mouth of the redirection pipe, low on the vestibule’s north wall, just over its baseboard, standing out of it toward the arch.
+ * Where the cannon sends every orb: through the arch into the vestibule, as high over its middle as leaves the orb clear of its crown, so the barrel stands raised over a visitor’s head, and on through the middle of the lowest cell of the grille in the vestibule’s north wall, into the Bastion’s cistern.
  * All values are in the world’s frame.
  */
 export const cannonTarget = {
-  arch: [vestibuleX, 2.6, northZ] as Vec3,
-  mouth: [vestibuleX, 0.88, vestibuleZ - forgeVestibule.radius + wallFace + 0.25] as Vec3,
+  arch: [cisternGrille.center[0], 2.75, northZ] as Vec3,
+  grille: cisternGrille.aim,
 }
 
 /** How the cannon lies when its barrel points north along the room’s axis, raised by `elevation` radians: its axis, breech and muzzle, and where an orb starts down the barrel. */
@@ -143,14 +143,14 @@ function speedThroughArch(elevation: number) {
   }
   return (low + high) / 2
 }
-/** The cannon’s elevation, by bisection: of the shots through the arch at its target height, the one that comes down into the pipe’s mouth, as the steeper the barrel, the slower and the more steeply falling the shot. */
+/** The cannon’s elevation, by bisection: of the shots through the arch at its target height, the one that comes down through the grille’s cell, as the steeper the barrel, the slower and the more steeply falling the shot. */
 const elevation = (() => {
   let [low, high] = [0, Math.PI / 3]
   for (let iteration = 0; iteration < 60; iteration++) {
     const middle = (low + high) / 2
     const {axis, start} = cannonPose(middle)
     const speed = speedThroughArch(middle)
-    if (heightAt(start, axis.map(value => value * speed) as Vec3, cannonTarget.mouth[2]) > cannonTarget.mouth[1]) {
+    if (heightAt(start, axis.map(value => value * speed) as Vec3, cannonTarget.grille[2]) > cannonTarget.grille[1]) {
       low = middle
     } else {
       high = middle
@@ -179,7 +179,7 @@ export const alchemyPipe = {
 }
 
 /**
- * The alchemy machine’s cannon, which shoots every orb the machine is done with across the Forge, through the arch into the vestibule and into the redirection pipe’s mouth there: a bronze barrel on an iron bracket out of the south wall, fed by the pipe at its breech.
+ * The alchemy machine’s cannon, which shoots every orb the machine is done with across the Forge, through the arch into the vestibule and through the grille there into the Bastion’s cistern: a bronze barrel on an iron bracket out of the south wall, fed by the pipe at its breech.
  * Its points are in the world’s frame, its lengths in meters.
  */
 export const alchemyCannon = {
@@ -215,7 +215,7 @@ export function *flight(position: Vec3, velocity: Vec3): Generator<Vec3> {
 }
 
 /**
- * How an orb leaves the cannon: its middle `depth` meters down the barrel from the muzzle, flying along the barrel at the speed that carries it, step by step, through the arch and into the middle of the pipe’s mouth.
+ * How an orb leaves the cannon: its middle `depth` meters down the barrel from the muzzle, flying along the barrel at the speed that carries it, step by step, through the arch and through the middle of the grille’s lowest cell.
  */
 export const cannonLaunch = (() => {
   const speed = speedThroughArch(elevation)
@@ -226,19 +226,12 @@ export const cannonLaunch = (() => {
   }
 })()
 
-/** The orb’s free flight from the cannon to the pipe’s mouth, after every step of the physics, and how steeply it falls as it gets there: its fall per meter flown across. */
+/** The orb’s free flight from the cannon through the grille, after every step of the physics, up to the last step short of the face of the cistern’s wall behind it. */
 export const cannonFlight = (() => {
   const points: Array<Vec3> = []
-  const [, vy, vz] = cannonLaunch.velocity
   for (const point of flight(cannonLaunch.position, cannonLaunch.velocity)) {
-    if (point[2] <= cannonTarget.mouth[2]) {
-      const previous = points.at(-1)!
-      const share = (previous[2] - cannonTarget.mouth[2]) / (previous[2] - point[2])
-      const time = (points.length + share) / physicsSteps.rate
-      return {
-        points,
-        fall: (gravity * time + vy) / vz,
-      }
+    if (point[2] <= cisternGrille.channelZ) {
+      return {points}
     }
     points.push(point)
   }

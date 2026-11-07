@@ -7,6 +7,7 @@ import BastionAmbience from '#src/lib/audio/ambience/moods/BastionAmbience.ts'
 import reverberation from '#src/lib/audio/transformers/reverberation.ts'
 import {bastionOrigin, bastionTransition} from '#src/lib/gallery/bastion.ts'
 import {bastionNetwork} from '#src/lib/gallery/bastionNetwork.ts'
+import {cisternChunks} from '#src/lib/gallery/cistern/cistern.ts'
 import {climbApex, climbHairpin} from '#src/lib/gallery/climb.ts'
 import RoomMood from '#src/lib/moods/RoomMood.ts'
 
@@ -24,13 +25,13 @@ import walls from './walls.ts'
 const slack = 0.35
 
 /**
- * The connected castle-stone passages from both Oculus bridges, around its apse to the Lodge and up the western hairpin to the Forge.
+ * The connected castle-stone passages from both Oculus bridges, around its apse to the Lodge and up the western hairpin to the Forge, and the cistern behind the Forge’s vestibule, which the alchemy machine shoots its orbs into.
  * Laid out around the middle of its curve, at the height of its floor there.
  */
 export default class Bastion extends Room {
-  override readonly air = chunkBoxes(bastionNetwork.flatMap(passage => passage.chunks(slack)), bastionOrigin)
+  override readonly air = chunkBoxes([...bastionNetwork.flatMap(passage => passage.chunks(slack)), ...cisternChunks()], bastionOrigin)
   override readonly description = 'Cold stone. Long shadows. Light through iron bars.'
-  // Height-bounded because the west wing passes under Forge and above Lodge. It also takes precedence over the Oculus’ apse box.
+  // Height-bounded because the west wing passes under Forge and above Lodge, and the cistern over the Lodge and the curve. It also takes precedence over the Oculus’ apse box.
   override readonly fence = new Geofence(this.air.map(box => ({
     ...footprint([box]),
     y: box.min.y - 1,

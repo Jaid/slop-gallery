@@ -15,12 +15,13 @@ import lodgeTimber from '#src/lib/gallery/lodgeTimber.ts'
 import {lightIndoors} from '#src/lib/materials/lights/index.ts'
 import LodgeWoodMaterial from '#src/lib/materials/LodgeWoodMaterial.ts'
 import PlankMaterial from '#src/lib/materials/PlankMaterial.ts'
+import BastionCistern from '#src/rooms/bastion/components/BastionCistern/index.tsx'
 import BastionCrater from '#src/rooms/bastion/components/BastionCrater/index.tsx'
 import BastionGate from '#src/rooms/bastion/components/BastionGate/index.tsx'
 
 const lanterns = Object.values(bastionLanterns)
 
-/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Forge, with the crater in the landing where the link opens. */
+/** Both castle-stone wings and their curved link: around the apse into Lodge and up the western hairpin into Forge, with the crater in the landing where the link opens and the cistern behind the Forge’s vestibule. */
 export default function BastionRoom({material, wood}: {
   material: NodeMaterial
   wood: Texture
@@ -34,6 +35,7 @@ export default function BastionRoom({material, wood}: {
     <CoveredRoute lanterns={Object.values(climbLanterns)} material={material} passage={climbHairpin} />
     <CoveredRoute lanterns={[climbRunLantern]} material={material} passage={climbRun} />
     <CoveredRoute lanterns={[climbApproachLantern]} material={material} passage={climbApproach} />
+    <BastionCistern stone={material} />
     <CoveredRoute lanterns={bastionLinkLanterns} material={material} passage={bastionLink} />
     <CoveredRoute lanterns={lodgeSpurLanterns} material={material} passage={lodgeSpur} />
     <BastionGate />

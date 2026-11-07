@@ -7,7 +7,13 @@ import {insideRoundVestibule} from './roundVestibule.ts'
 
 const floorY = roomOrigins.forge[1]
 
-/** The vestibule’s arches: south into the Forge, through the middle of its north wall, and west onto the Bastion’s approach. */
+/** The arch between the Forge and its vestibule, through the middle of the room’s north wall and the vestibule’s wall touching it there: as high as the approach’s vault, but narrower, as wide as the Bastion’s doorways into the Lodge. */
+export const forgeArch = {
+  ...climbArch,
+  width: 2.6,
+} as const
+
+/** The vestibule’s arches: south into the Forge, through the middle of its north wall, and west onto the Bastion’s approach, as wide as the approach. */
 export const vestibuleArches = [
   {
     name: 'forge',
@@ -16,14 +22,15 @@ export const vestibuleArches = [
   {
     name: 'bastion',
     angle: Math.PI,
+    width: climbArch.width,
   },
 ] as const satisfies ReadonlyArray<VestibuleArch>
 
-/** The Forge’s vestibule as a round vestibule: every arch lines up with the approach’s vault, which ends where the plane touching the vestibule’s wall at the west arch’s middle crosses its center line. */
+/** The Forge’s vestibule as a round vestibule: every arch lines up with what it opens onto, the west one with the approach’s vault, which ends where the plane touching the vestibule’s wall at the west arch’s middle crosses its center line. */
 export const forgeRoundVestibule = {
   center: forgeVestibule.center,
   radius: forgeVestibule.radius,
-  arch: climbArch,
+  arch: forgeArch,
   arches: vestibuleArches,
 } satisfies RoundVestibule
 

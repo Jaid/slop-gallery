@@ -11,18 +11,16 @@ import RoomFloor from '#component/RoomFloor'
 import Box from '#src/components/Scene/primitives.tsx'
 import StaticBatch from '#src/components/Scene/StaticBatch.tsx'
 import {colliderGeometry} from '#src/lib/gallery/architecture.ts'
-import {climbArch} from '#src/lib/gallery/climb.ts'
 import {floorThickness} from '#src/lib/gallery/floors.ts'
 import {forgeRooflight, forgeVestibule} from '#src/lib/gallery/forge.ts'
 import {forgeRoundVestibule, vestibuleArches} from '#src/lib/gallery/forgeVestibule.ts'
 import roundRevealGeometry from '#src/lib/gallery/roundRevealGeometry.ts'
-import {roundVestibuleFloorShape} from '#src/lib/gallery/roundVestibule.ts'
+import {roundVestibuleFloorShape, vestibuleArchOpening} from '#src/lib/gallery/roundVestibule.ts'
 import {salonCeiling} from '#src/lib/gallery/salon.ts'
 import gold from '#src/lib/materials/gold.ts'
 import VaultGlassMaterial from '#src/lib/materials/VaultGlassMaterial.ts'
 import {getGraphicsProfile} from '#src/lib/rendering/graphicsMode.ts'
 import AlchemyMachine from '#src/rooms/forge/components/AlchemyMachine/index.tsx'
-import ForgeTurn from '#src/rooms/forge/components/ForgeTurn/index.tsx'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 const room = slopGallery.room('forge')
@@ -30,7 +28,7 @@ const vestibuleWall = slopGallery.walls.find(wall => wall.id === 'forge-vestibul
 const circleSegments = 96
 /** how far in from the vestibule’s wall its brass ring lies, on the line of the room’s inlays */
 const vestibuleInlay = 1.25
-/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight, with the alchemy machine against its south wall, whose cannon shoots orbs across it into its round vestibule north of it, alike on a smaller scale, where a gutter lets them fly off toward the Bastion. */
+/** The Forge: a workshop with plain walls and floors for now, under a plaster ceiling pierced by a round rooflight, with the alchemy machine against its south wall, whose cannon shoots orbs across it into its round vestibule north of it, alike on a smaller scale, and on through the grille in its north wall into the Bastion’s cistern. */
 export default function ForgeRoom({glass, masonry, stone, wood}: {
   glass: Material
   /** the Bastion’s stone, which lines the vestibule’s arch onto its approach */
@@ -63,7 +61,6 @@ export default function ForgeRoom({glass, masonry, stone, wood}: {
       <Rooflight gilt={gold} layout={forgeRooflight} name='forge-rooflight' plaster={plaster} />
     </group>
     <Vestibule floorReflections={floorReflections} masonry={masonry} plaster={plaster} />
-    <ForgeTurn />
     <AlchemyMachine />
   </group>
 }
@@ -176,9 +173,9 @@ function Vestibule({floorReflections, masonry, plaster}: {
     })
     slab.rotateX(-Math.PI / 2).translate(0, -floorThickness, 0)
     const inlay = ring(radius - vestibuleInlay - 0.013, radius - vestibuleInlay + 0.013, 0.012).translate(0, 0.009, 0)
-    const reveals = vestibuleArches.map(({name}) => ({
-      name,
-      geometry: roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === name)!, climbArch),
+    const reveals = vestibuleArches.map(arch => ({
+      name: arch.name,
+      geometry: roundRevealGeometry(vestibuleWall, vestibuleWall.holes!.find(hole => hole.name === arch.name)!, vestibuleArchOpening(forgeRoundVestibule, arch)),
     }))
     const outline = new Shape
     outline.absarc(0, 0, radius, 0, Math.PI * 2, false)

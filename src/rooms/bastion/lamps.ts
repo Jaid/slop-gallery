@@ -2,6 +2,7 @@ import type {Lamp} from '../base/Room.ts'
 
 import {bastionCurve, bastionLanterns, bastionOrigin} from '#src/lib/gallery/bastion.ts'
 import {bastionLink, bastionLinkLanterns, lodgeSpur, lodgeSpurLanterns} from '#src/lib/gallery/bastionNetwork.ts'
+import {cisternLantern} from '#src/lib/gallery/cistern/cistern.ts'
 import {routeLight} from '#src/lib/gallery/pendants/mounts.ts'
 
 import climbLamps from './climbLamps.ts'
@@ -37,6 +38,12 @@ export default {
       position: [x - originX, y - 0.3 - originY, z - originZ] as const,
     }]
   })),
+  // Under the cistern’s half dome, lighting the channel and shining out through the grille into the Forge’s vestibule, which throws its bars onto the vestibule’s floor.
+  lantern_cistern: {
+    ...climbLamps.lantern_mouth,
+    position: [cisternLantern.light[0] - originX, cisternLantern.light[1] - 0.3 - originY, cisternLantern.light[2] - originZ],
+    range: 9,
+  },
   // The curve’s lanterns, hung low, stronger than the corridor’s and fading more gently: a little way north of the mouth, which the Oculus sees, and behind the apse’s gate, which the Lodge also looks down the approach at.
   lantern_east: lantern(bastionLanterns.east),
   // It throws the bars of the gate onto the platform right in front of it and those of the windows beside it, slanting through them, far out across it: it reaches that far, fading more gently, and shines a little lower than the other one.

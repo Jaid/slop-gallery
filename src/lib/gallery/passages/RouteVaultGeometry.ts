@@ -87,9 +87,9 @@ function sweep(runs: ReadonlyArray<ReadonlyArray<RouteStation>>, section: Sectio
   }
   return parts
 }
-/** The paving with the passage’s pits broken through it, their outlines’ faces left standing as the broken edges of its slab. */
-function breakPits(paving: BufferGeometry, passage: RoutedPassage) {
-  if (!passage.pits.length) {
+/** The paving with the holes broken through it, the passage’s pits or its drains, their outlines’ faces left standing as the edges of its slab. */
+function breakPits(paving: BufferGeometry, passage: RoutedPassage, pits: ReadonlyArray<ReadonlyArray<readonly [number, number]>>) {
+  if (!pits.length) {
     return paving
   }
   const evaluator = new Evaluator
@@ -107,7 +107,7 @@ function breakPits(paving: BufferGeometry, passage: RoutedPassage) {
   let retained: BufferGeometry | undefined
   try {
     let result = brush(paving)
-    for (const pit of passage.pits) {
+    for (const pit of pits) {
       const floors = pit.map(([x, z]) => passage.floorAt(x, z)!)
       const bottom = Math.min(...floors) - pavingThickness - 0.1
       // Drawn with its y turned to −z, it is extruded upward once it lies down.
@@ -132,12 +132,17 @@ function breakPits(paving: BufferGeometry, passage: RoutedPassage) {
     material.dispose()
   }
 }
-/** Join overlapping solid vault envelopes before hollowing them out. Unioning thin shells against the same air surface leaves coplanar cuts that tear holes through the barrel. */
-function openVault(geometry: BufferGeometry, passage: RoutedPassage, air: BufferGeometry) {
-  const openings = passage.walls.flatMap(wall => (wall.curveRadius ? [] : (wall.holes ?? []).map(hole => ({
+/** The openings through the passage’s straight walls that reach up into its vault, past where it springs from them anywhere along the route; the vault passes over lower ones whole. */
+function vaultOpenings(passage: RoutedPassage) {
+  const spring = Math.min(...passage.route.pieces.map(piece => Math.min(piece.startY + piece.startHeight, piece.endY + piece.endHeight))) - passage.width / 2
+  return passage.walls.flatMap(wall => (wall.curveRadius ? [] : (wall.holes ?? []).filter(hole => wall.center[1] + hole.height > spring).map(hole => ({
     wall,
     hole,
   }))))
+}
+/** Join overlapping solid vault envelopes before hollowing them out. Unioning thin shells against the same air surface leaves coplanar cuts that tear holes through the barrel. */
+function openVault(geometry: BufferGeometry, passage: RoutedPassage, air: BufferGeometry) {
+  const openings = vaultOpenings(passage)
   if (!openings.length) {
     air.dispose()
     return geometry
@@ -194,8 +199,10 @@ function openVault(geometry: BufferGeometry, passage: RoutedPassage, air: Buffer
  * Where an outline widens the passage, the vault spans out to its walls as a half ellipse as high as the barrel, creased where the outline turns its corners, like a groin.
  */
 export default class RouteVaultGeometry {
-  /** the slab under the floor, flush with the passage’s walls, broken through by its pits */
+  /** the slab under the floor, flush with the passage’s walls, broken through by its pits and cut round its drains */
   readonly paving: BufferGeometry
+  /** what collides of the paving: broken through by its pits, but running on under its drains’ grates; the paving itself without drains */
+  readonly pavingCollision: BufferGeometry
   readonly ribs: BufferGeometry
   readonly shell: BufferGeometry
 
@@ -236,12 +243,12 @@ export default class RouteVaultGeometry {
         below === undefined ? [[right + padding, spring], [-left - padding, spring]] : [[right + padding, spring], [right + padding, foot], [-left - padding, foot], [-left - padding, spring]],
       ]
     }, true))
-    const hasOpenings = passage.walls.some(wall => !wall.curveRadius && wall.holes?.length)
+    const hasOpenings = vaultOpenings(passage).length > 0
     this.shell = hasOpenings ? openVault(solid(vaultShellThickness), passage, solid(0, 0.5)) : mergeParts(sweep(runs(0, route.length), ring(0, vaultShellThickness), true))
     this.ribs = mergeParts(passage.ribs.flatMap(along => sweep(runs(along - routeRibDepth / 2, along + routeRibDepth / 2), ring(-routeRibThickness, 0), true)))
     /** how many strips the paving is cut into from either wall to the centerline, at most `pavingStrip` wide, so it bends with its crossfall and stays close to flat through the twist of a ramp round a turn */
     const strips = Math.ceil(width / 2 / pavingStrip)
-    this.paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {
+    const paving = breakPits(mergeParts(sweep(runs(0, route.length), station => {
       const [left, right] = [-1, 1].map(side => passage.reach(station, side))
       const across = [
         ...Array.from({length: strips + 1}, (_, index) => -left + left * index / strips),
@@ -253,12 +260,15 @@ export default class RouteVaultGeometry {
         [[right, -pavingThickness], [-left, -pavingThickness]],
         [[-left, -pavingThickness], [-left, 0]],
       ]
-    })), passage)
+    })), passage, passage.pits)
+    this.pavingCollision = paving
+    this.paving = passage.drains.length ? breakPits(paving.clone(), passage, passage.drains) : paving
   }
 
   dispose() {
     this.shell.dispose()
     this.ribs.dispose()
     this.paving.dispose()
+    this.pavingCollision.dispose()
   }
 }

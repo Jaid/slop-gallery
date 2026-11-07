@@ -5,6 +5,8 @@ export const baseboardCapHeight = 0.04
 
 export const wallTop = 5.8
 export const wallFace = 0.105
+/** how far in front of its wall’s center line the iron of a barred opening stands: halfway through its plaster, where the opening is just as wide as on the wall’s face */
+export const barDepth = wallFace / 2
 export const wallOpeningTrim = 0.17
 /** how thick a passage’s stone barrel vault is, which springs from its walls’ center lines and so stands this far out behind them */
 export const vaultShellThickness = 0.22

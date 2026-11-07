@@ -182,7 +182,8 @@ describe('boolean architecture', () => {
                   const highestFloor = Math.max(...floors)
                   const lowestFloor = Math.min(...floors)
                   const lowerBand = baseboard - (wall.baseboardCapHeight ?? baseboardCapHeight)
-                  if (y >= highestFloor + baseboard) {
+                  // Under a floor standing higher than the wall’s foot, the jamb runs on bare, like over the baseboard.
+                  if (y >= highestFloor + baseboard || y < lowestFloor) {
                     depth = wallFace
                   } else if (y >= lowestFloor + lowerBand && y < highestFloor + baseboard) {
                     depth = 0.25

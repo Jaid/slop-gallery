@@ -13,7 +13,7 @@ import RouteVaultGeometry from '#src/lib/gallery/passages/RouteVaultGeometry.ts'
 import {routePendantMounts} from '#src/lib/gallery/pendants/mounts.ts'
 import {passageLantern, passageLanternGlow} from '#src/lib/gallery/pendants/passageLantern.ts'
 
-/** A stone-vaulted passage along a winding route, its paving and vault swept along it, with lanterns hung from the vault at the given distances along the route. Their lamps belong to the room, see its `lamps.ts`. */
+/** A stone-vaulted passage along a winding route, its paving and vault swept along it, with lanterns hung from the vault at the given distances along the route. Their lamps belong to the room, see its `lamps.ts`. Its drains’ grates and sumps are the room’s to build. */
 export default function CoveredRoute({passage, material, lanterns}: {
   lanterns: ReadonlyArray<number>
   material: Material
@@ -21,7 +21,7 @@ export default function CoveredRoute({passage, material, lanterns}: {
 }) {
   const geometry = useDisposable(useMemo(() => new RouteVaultGeometry(passage), [passage]))
   const mounts = useMemo(() => routePendantMounts(passage, [geometry.shell, geometry.ribs], lanterns), [geometry, lanterns, passage])
-  const paving = colliderGeometry(geometry.paving)
+  const paving = colliderGeometry(geometry.pavingCollision)
   const collision = [geometry.shell, geometry.ribs].map(colliderGeometry)
   return <group name={passage.name}>
     <RigidBody colliders={false} type='fixed'>
