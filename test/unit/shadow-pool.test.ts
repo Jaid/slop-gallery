@@ -66,17 +66,34 @@ test('a slot follows its light where it moved this frame, before the frame updat
   expect(slot.position.y).toBeCloseTo(0)
   expect(slot.position.z).toBeCloseTo(-4)
 })
-test('nearer lights win free slots, holders keep theirs and the rest go without', () => {
+test('the nearest lights hold the slots, a holder until another comes clearly nearer, and the rest go without', () => {
   const world = setup(1)
   const far = lamp(world.scene, -20, true)
   const near = lamp(world.scene, -4, true)
   update(world)
   expect(world.pool.isLent(near)).toBe(true)
-  // Walking around doesn’t take the slot away from its holder.
-  near.position.z = -30
+  expect(world.pool.isLent(far)).toBe(false)
+  // Only a little farther than the other, the holder keeps its slot.
+  near.position.z = -20.5
   update(world)
   expect(world.pool.isLent(near)).toBe(true)
   expect(world.pool.isLent(far)).toBe(false)
+  near.position.z = -30
+  update(world)
+  expect(world.pool.isLent(near)).toBe(false)
+  expect(world.pool.isLent(far)).toBe(true)
+})
+test('a light out of view keeps its slot only while no light in view needs it', () => {
+  const world = setup(1)
+  const light = lamp(world.scene, -4, true)
+  update(world)
+  light.position.z = 20
+  update(world)
+  expect(world.pool.isLent(light)).toBe(true)
+  const ahead = lamp(world.scene, -10, true)
+  update(world)
+  expect(world.pool.isLent(light)).toBe(false)
+  expect(world.pool.isLent(ahead)).toBe(true)
 })
 test('dark lights and lights out of view free or never take slots', () => {
   const world = setup(1)

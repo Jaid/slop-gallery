@@ -8,6 +8,8 @@ import {isShadowSlot, lightShadow, shadowSlotKey, useLightEdits} from './lightLe
 export const shadowSlotCount = 4
 /** how far a slot’s shadow reaches when its light has no cutoff, in meters */
 const openReach = 30
+/** how much nearer than a light holding a slot another must come to take it over, in meters, so two lights about as near don’t trade it back and forth, rendering their shadow maps afresh each time */
+const holdMargin = 1
 
 type Candidate = {
   distance: number
@@ -40,7 +42,7 @@ export function wantsShadow(light: Light) {
  *
  * Every shadow-casting light adds its own lighting and shadow code to every lit material, and switching `castShadow` rebuilds them all. The pool’s lights always exist and always cast,
  * so lending them out never rebuilds anything: a slot takes over its light’s place, color, reach and strength, and the batched loop skips the light while it is lent a slot.
- * A light keeps its slot until it goes dark or stops asking. Lights out of view never take a slot; lights in view take free slots first, nearest first, then those of lights out of view. Any left over go without.
+ * The slots go to the nearest lights in view, a light holding one counting as a little nearer, so it keeps it until another comes clearly nearer, it goes dark or stops asking, or it is out of view while one in view needs it. Lights out of view never take a slot, and any left over go without.
  */
 export class ShadowPool {
   /** called once whenever more lights in view ask for a shadow than there are slots, with all of them; not again until they fit */
@@ -110,18 +112,20 @@ export class ShadowPool {
       this.onOverflow?.(inView)
     }
     this.overflowing = overflowing
+    const rank = ({distance, light}: Candidate) => (this.sources.includes(light) ? distance - holdMargin : distance)
+    // Lights out of view only keep the slots they hold while no light in view needs them.
+    const contenders = candidates.values().filter(candidate => candidate.inView || this.sources.includes(candidate.light)).toArray()
+    const chosen = new Set(contenders.toSorted((a, b) => Number(b.inView) - Number(a.inView) || rank(a) - rank(b)).slice(0, this.slots.length).map(candidate => candidate.light))
+    // Lights staying keep their slots, so only the newcomers’ shadow maps render afresh.
     for (const [index, source] of this.sources.entries()) {
-      if (source && !candidates.has(source)) {
+      if (source && !chosen.has(source)) {
         this.sources[index] = null
       }
     }
-    const waiting = candidates.values().filter(candidate => candidate.inView && !this.sources.includes(candidate.light)).toArray().toSorted((a, b) => a.distance - b.distance)
-    for (const candidate of waiting) {
-      const index = this.slotFor(candidates)
-      if (index === undefined) {
-        continue
+    for (const light of chosen) {
+      if (!this.sources.includes(light)) {
+        this.sources[this.sources.indexOf(null)] = light
       }
-      this.sources[index] = candidate.light
     }
     this.lent.clear()
     for (const [index, slot] of this.slots.entries()) {
@@ -150,16 +154,6 @@ export class ShadowPool {
     this.overflowing = false
     this.sources.fill(null)
     this.lent.clear()
-  }
-
-  /** a free slot, else that of a light out of view */
-  private slotFor(candidates: ReadonlyMap<PointLight, Candidate>) {
-    const free = this.sources.indexOf(null)
-    if (free !== -1) {
-      return free
-    }
-    const index = this.sources.findIndex(source => !candidates.get(source!)!.inView)
-    return index === -1 ? undefined : index
   }
 }
 
