@@ -34,11 +34,4 @@ export default {
     position: [-3.5, 2, 4.78],
     rotation: Math.PI,
   },
-  east_0: {
-    wallId: 'east',
-    ratio: '1:1',
-    area: 15_000,
-    position: [4.78, 2, 1.5],
-    rotation: -Math.PI / 2,
-  },
 } satisfies Record<string, RoomPortraitSlot>
