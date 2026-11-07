@@ -1,32 +1,50 @@
 import type Fusion from '../gallery/fusion/Fusion.ts'
+import type FusionRecipe from '../gallery/fusion/FusionRecipe.ts'
 import type SlopGalleryTelemetry from './SlopGalleryTelemetry.ts'
 import type {Attributes, Span} from 'victoria-browser-client'
 
 import {errorType} from 'victoria-browser-errors'
 
-/** how a fusion ended: its result flipped out, it came back as it went in, the player broke it off, it went wrong, or it was dropped without an outcome, like when its portrait went away mid-request or the director was disposed */
+/** how a fusion ended: a new output portrait flipped out, the hung portrait itself came back out as the output as nothing was contributed to merge it with, the player broke it off, it went wrong, or it was dropped without an outcome, like when its hung portrait went away mid-request or the director was disposed */
 export type FusionTraceOutcome = 'aborted' | 'canceled' | 'failed' | 'succeeded' | 'unchanged'
+/** an item among a fusion’s ingredients */
+export type FusionTraceItem = {
+  /** whether a success uses it up, like an orb */
+  consumed: boolean
+  /** its prop id */
+  id: string
+}
+export type FusionTraceOptions = {
+  /** more attributes for the span, like the mode and the room */
+  attributes?: Attributes
+  /** the items among the ingredients, in their order */
+  items?: ReadonlyArray<FusionTraceItem>
+  /** the fusion’s ingredients, the hung portrait first, and whether they leave it unchanged */
+  recipe: Pick<FusionRecipe, 'ingredients' | 'unchanged'>
+}
 
 const seconds = (value: number | undefined) => (value === undefined ? undefined : Math.round(value * 1000) / 1000)
 
 /**
- * A fusion as a `gallery.fusion` span, from its portal opening until its director is done with it, under the active session context. The image model’s request is a `gallery.fusion.generate` span inside it.
+ * A fusion, which merges 2 to 4 ingredients, the first always the hung portrait, into one output portrait, as a `gallery.fusion` span from its portal opening until its director is done with it, under the active session context. The image model’s request is a `gallery.fusion.generate` span inside it.
  * The player breaking the fusion off by jumping into its portal is a `gallery.fusion.cancellation_triggered` event on it, and its end tells the outcome.
  */
 export default class FusionTrace {
   readonly span: Span
   private ended = false
   private error: string | undefined
+  private readonly unchanged: boolean
 
-  constructor(private readonly telemetry: SlopGalleryTelemetry, private readonly fusion: Fusion, private readonly unchanged: boolean, attributes: Attributes) {
+  constructor(private readonly telemetry: SlopGalleryTelemetry, private readonly fusion: Fusion, {attributes, items = [], recipe}: FusionTraceOptions) {
+    this.unchanged = recipe.unchanged
+    const consumable = items.filter(item => item.consumed)
     this.span = telemetry.startSpan('gallery.fusion', {attributes: {
       'fusion.id': fusion.id,
-      'fusion.partner': fusion.spec.partner.kind,
-      'fusion.unchanged': unchanged,
-      ...fusion.spec.partner.kind === 'item' ? {
-        'item.id': fusion.spec.partner.id,
-        'item.consumed': fusion.spec.partner.consumed ?? false,
-      } : {},
+      'fusion.ingredients': recipe.ingredients.length,
+      'fusion.ingredient_kinds': recipe.ingredients.map(ingredient => ingredient.kind).join(','),
+      'fusion.unchanged': recipe.unchanged,
+      ...items.length ? {'fusion.items': items.map(item => item.id).join(',')} : {},
+      ...consumable.length ? {'fusion.consumable_items': consumable.map(item => item.id).join(',')} : {},
       ...attributes,
     }})
     // Only the player breaking the fusion off aborts its signal.

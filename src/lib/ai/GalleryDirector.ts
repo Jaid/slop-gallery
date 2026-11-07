@@ -435,11 +435,18 @@ export default class GalleryDirector {
     fusion.resultFrame = recipe.frame ?? arrivalFrame(fusion.launch().position, spec.work.position, spec.work.id)
     this.fusions.add(fusion)
     if (telemetry) {
-      this.traces.set(fusion, new FusionTrace(telemetry, fusion, recipe.unchanged, {
-        mode: this.usingAi ? 'ai' : 'local',
-        aspect: spec.work.width / spec.work.height,
-        ingredients: recipe.ingredients.length,
-        room: useGallery.getState().room,
+      const {partner} = spec
+      this.traces.set(fusion, new FusionTrace(telemetry, fusion, {
+        recipe,
+        items: partner.kind === 'item' ? [{
+          id: partner.id,
+          consumed: partner.consumed ?? false,
+        }] : [],
+        attributes: {
+          mode: this.usingAi ? 'ai' : 'local',
+          aspect: spec.work.width / spec.work.height,
+          room: useGallery.getState().room,
+        },
       }))
     }
     return fusion

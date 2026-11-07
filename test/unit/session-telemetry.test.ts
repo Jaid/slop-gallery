@@ -1,4 +1,5 @@
 import type {FusionSpec} from '../../src/lib/gallery/fusion/Fusion.ts'
+import type {FusionIngredient} from '../../src/lib/gallery/fusion/FusionRecipe.ts'
 import type {FusionTiming} from '../../src/lib/gallery/fusion/timing.ts'
 
 import {afterEach, expect, test} from 'bun:test'
@@ -226,12 +227,28 @@ const openFusion = (partner: FusionSpec['partner'] = {
   }),
   timing: brief,
 })
+/** a recipe of ingredients of these kinds, the hung portrait first */
+const recipeOf = (kinds: Array<FusionIngredient['kind']>, unchanged = false) => ({
+  ingredients: kinds.map((kind, index) => ({
+    kind,
+    title: `ingredient ${index}`,
+    contributions: [],
+  })),
+  unchanged,
+})
 test('a fusion is one span from its portal opening to its end, with the model’s request inside', async () => {
   const {telemetry, spans} = createTelemetry()
   const fusion = openFusion()
-  const trace = new FusionTrace(telemetry, fusion, false, {
-    mode: 'local',
-    room: 'lobby',
+  const trace = new FusionTrace(telemetry, fusion, {
+    recipe: recipeOf(['portrait', 'item']),
+    items: [{
+      id: 'prop-orb-horror',
+      consumed: true,
+    }],
+    attributes: {
+      mode: 'local',
+      room: 'lobby',
+    },
   })
   await trace.generate(async span => {
     span.setAttributes({width: 1024})
@@ -249,10 +266,11 @@ test('a fusion is one span from its portal opening to its end, with the model’
   expect(parent.status.code).toBe(1)
   expect(attributesOf(parent.attributes)).toMatchObject({
     'fusion.id': fusion.id,
-    'fusion.partner': 'item',
+    'fusion.ingredients': 2,
+    'fusion.ingredient_kinds': 'portrait,item',
     'fusion.unchanged': false,
-    'item.id': 'prop-orb-horror',
-    'item.consumed': true,
+    'fusion.items': 'prop-orb-horror',
+    'fusion.consumable_items': 'prop-orb-horror',
     mode: 'local',
     room: 'lobby',
     'fusion.outcome': 'succeeded',
@@ -267,7 +285,7 @@ test('jumping into the portal marks the span with the cancellation trigger, and 
     kind: 'portrait',
     id: 'b',
   })
-  const trace = new FusionTrace(telemetry, fusion, false, {})
+  const trace = new FusionTrace(telemetry, fusion, {recipe: recipeOf(['portrait', 'portrait'])})
   await Bun.sleep(30)
   expect(fusion.cancel()).toBe(true)
   // The broken-off request rejects with the signal’s reason, which does not make it a failure.
@@ -281,10 +299,10 @@ test('jumping into the portal marks the span with the cancellation trigger, and 
   expect(cancellation['fusion.elapsed_s']).toBeGreaterThanOrEqual(0.03)
   const attributes = attributesOf(span.attributes)
   expect(attributes).toMatchObject({
-    'fusion.partner': 'portrait',
+    'fusion.ingredient_kinds': 'portrait,portrait',
     'fusion.outcome': 'canceled',
   })
-  expect(attributes).not.toHaveProperty('item.id')
+  expect(attributes).not.toHaveProperty('fusion.items')
   expect(attributes).not.toHaveProperty('error.type')
   expect(attributes['fusion.canceled_at_s']).toBe(cancellation['fusion.elapsed_s'])
   expect(span.status.code).toBe(1)
@@ -293,16 +311,16 @@ test('jumping into the portal marks the span with the cancellation trigger, and 
 test('a fusion that went wrong ends as an error with the error’s type, one that was dropped as aborted and one with nothing contributed as unchanged', async () => {
   const {telemetry, spans} = createTelemetry()
   const failing = openFusion()
-  const failed = new FusionTrace(telemetry, failing, false, {})
+  const failed = new FusionTrace(telemetry, failing, {recipe: recipeOf(['portrait', 'item'])})
   failed.fail(new TypeError('the model broke'))
   await failing.fail()
   failed.end()
   const dropping = openFusion()
-  const dropped = new FusionTrace(telemetry, dropping, false, {})
+  const dropped = new FusionTrace(telemetry, dropping, {recipe: recipeOf(['portrait', 'item'])})
   dropping.abort()
   dropped.end()
   const echoing = openFusion()
-  const echoed = new FusionTrace(telemetry, echoing, true, {})
+  const echoed = new FusionTrace(telemetry, echoing, {recipe: recipeOf(['portrait', 'item'], true)})
   await echoing.succeed('own image')
   echoing.emerge()
   echoed.end()
@@ -315,5 +333,29 @@ test('a fusion that went wrong ends as an error with the error’s type, one tha
   ])
   expect(attributesOf(exported[0].attributes)['error.type']).toBe('TypeError')
   expect(JSON.stringify(exported)).not.toContain('the model broke')
+  await telemetry.shutdown()
+})
+test('a fusion of up to four ingredients lists every one by its kind and every item, and only the consumable ones as such', async () => {
+  const {telemetry, spans} = createTelemetry()
+  const fusion = openFusion()
+  const trace = new FusionTrace(telemetry, fusion, {
+    recipe: recipeOf(['portrait', 'item', 'portrait', 'item']),
+    items: [{
+      id: 'prop-orb-spook',
+      consumed: true,
+    }, {
+      id: 'prop-pumpkin',
+      consumed: false,
+    }],
+  })
+  fusion.abort()
+  trace.end()
+  const [span] = await spans()
+  expect(attributesOf(span.attributes)).toMatchObject({
+    'fusion.ingredients': 4,
+    'fusion.ingredient_kinds': 'portrait,item,portrait,item',
+    'fusion.items': 'prop-orb-spook,prop-pumpkin',
+    'fusion.consumable_items': 'prop-orb-spook',
+  })
   await telemetry.shutdown()
 })
