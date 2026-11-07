@@ -12,6 +12,8 @@ import {isPortraitLabelHit} from '#src/lib/gallery/portraitLabel.ts'
 import portraitObjects from '#src/lib/gallery/portraitObjects.ts'
 import followRooms from '#src/lib/gallery/roomSession.ts'
 import interactionHint from '#src/lib/interactionHint.ts'
+import GeofenceTelemetry from '#src/lib/telemetry/GeofenceTelemetry.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 import world from '#src/worlds/current.ts'
 
 import {propObjects} from '../GrabbableProp.tsx'
@@ -30,12 +32,17 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
   ray,
 }: InteractionFrameRefs) {
   const rooms = useRef<ReturnType<typeof followRooms> | null>(null)
+  const geofences = useRef<GeofenceTelemetry | null>(null)
   useEffect(() => {
     const session = followRooms(bodyPose.center)
     rooms.current = session
+    const fences = telemetry ? new GeofenceTelemetry(telemetry, world.geofences, bodyPose.center, id => world.roomById(id)?.title) : null
+    geofences.current = fences
     return () => {
       session.removeAllListeners()
+      fences?.dispose()
       rooms.current = null
+      geofences.current = null
     }
   }, [])
   useFrame(() => {
@@ -52,6 +59,7 @@ export default function useInteractionFrame(camera: RootState['camera'], rendere
     cameraPose.position = camera.position.toArray()
     cameraPose.direction = direction.current.toArray()
     rooms.current?.update(bodyPose.center)
+    geofences.current?.update(bodyPose.center)
     cursor.current.set(0, 0)
     if (dragPose.active) {
       const bounds = renderer.domElement.getBoundingClientRect()
