@@ -15,6 +15,7 @@ import {alchemyCannon, alchemySink, cannonLaunch, holderSpot, inSinkThroat, mach
 import {orbAround, transmutedOrb} from '#src/lib/gallery/alchemy/flavor.ts'
 import {orbSeat} from '#src/lib/gallery/OrbHolderGeometry.ts'
 import {orbRadius, transparentOrb} from '#src/lib/gallery/orbs/index.ts'
+import {telemetry} from '#src/lib/telemetry/index.ts'
 import slopGallery from '#src/worlds/gallery/index.ts'
 
 import {charging} from './CannonFx.ts'
@@ -182,6 +183,11 @@ export default class AlchemyWorks {
     const {x, y, z} = prop.body.translation()
     const output = transmutedOrb(orb, propPositions(), roomAt, Math.random())
     const product = output === orb ? id : `${output.propId}-alchemy-${++this.counts.made}`
+    telemetry?.event('alchemy.brewed', {
+      'orb.from': orb.id,
+      'orb.to': output.id,
+      'orb.changed': output !== orb,
+    }, output === orb ? `Alchemy kept ${orb.title} unchanged` : `Alchemy turned ${orb.title} into ${output.title}`)
     if (product !== id) {
       this.fx.prepare(product, output.effect)
       this.add({
