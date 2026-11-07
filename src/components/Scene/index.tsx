@@ -17,6 +17,7 @@ import Portraits from '#component/Portraits'
 import PortraitSlotEditor from '#component/PortraitSlotEditor'
 import PortraitSlots from '#component/PortraitSlots'
 import Skybox from '#component/Skybox'
+import StickySurfaces from '#component/StickySurfaces'
 import WebmcpBridge from '#component/WebmcpBridge'
 import {isShowingAmbienceEmitters} from '#src/lib/audio/ambience/ambienceEmitters.ts'
 import {useGallery} from '#src/lib/gallery.ts'
@@ -24,6 +25,7 @@ import {useIntro} from '#src/lib/gallery/intro.ts'
 import {isEditingPortraitSlots, isShowingPortraitSlots} from '#src/lib/gallery/portraitSlotStore.ts'
 import {pendingRooms} from '#src/lib/gallery/roomLoading.ts'
 import {useHiddenUi} from '#src/lib/hiddenUi.ts'
+import {isShowingSticky} from '#src/lib/placement/showSticky.ts'
 import {GalleryRenderer} from '#src/lib/rendering/GalleryRenderer.ts'
 import {isShowingLamps} from '#src/lib/rendering/lightLevels.ts'
 import {telemetry} from '#src/lib/telemetry/index.ts'
@@ -50,6 +52,7 @@ export default function Scene() {
     <FusionRemains />
     {/* Hidden with O, the markers keep working: editors still aim, drag and switch what they mark. */}
     <group name='scene-ui' visible={!uiHidden}>
+      <Branch if={isShowingSticky} then={StickySurfaces} />
       <Branch if={isShowingPortraitSlots} then={PortraitSlots} />
       <Branch if={isEditingPortraitSlots} then={PortraitSlotEditor} />
       <Branch if={isShowingLamps} then={LightMarkers} />

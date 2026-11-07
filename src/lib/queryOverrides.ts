@@ -16,6 +16,7 @@ import {readPortraitSlotEditing, readShowPortraitSlots} from './gallery/portrait
 import {readRoom, readSpawn} from './gallery/spawn.ts'
 import {readMood} from './moods/forcedMood.ts'
 import {readKnotRotation} from './physics/rotatingKnots.ts'
+import {readShowSticky} from './placement/showSticky.ts'
 import {readAlbedo} from './rendering/albedo.ts'
 import {readAntiAliasing} from './rendering/antiAliasing.ts'
 import {readFov} from './rendering/fov.ts'
@@ -77,6 +78,7 @@ const readers: Record<string, Reader> = {
   show_ambience_emitters: readShowAmbienceEmitters,
   show_lamps: readShowLamps,
   show_portrait_slots: readShowPortraitSlots,
+  show_sticky: readShowSticky,
   show_wireframe: readShowWireframe,
   spawn: readSpawn,
   stream_budget: readStreamBudget,
