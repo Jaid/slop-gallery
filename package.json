@@ -75,6 +75,7 @@
     "use-narrator": "workspace:*",
     "use-pause-menu": "workspace:*",
     "victoria-browser-client": "0.4.0",
+    "victoria-browser-errors": "workspace:*",
     "vite-plugin-import-voice-sample": "workspace:*",
     "vite-plugin-jxl": "workspace:*",
     "vite-plugin-jxl-headers": "workspace:*",

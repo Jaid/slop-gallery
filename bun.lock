@@ -43,6 +43,7 @@
         "use-narrator": "workspace:*",
         "use-pause-menu": "workspace:*",
         "victoria-browser-client": "0.4.0",
+        "victoria-browser-errors": "workspace:*",
         "vite-plugin-import-voice-sample": "workspace:*",
         "vite-plugin-jxl": "workspace:*",
         "vite-plugin-jxl-headers": "workspace:*",
@@ -370,6 +371,16 @@
       "optionalPeers": [
         "react",
       ],
+    },
+    "packages/victoria-browser-errors": {
+      "name": "victoria-browser-errors",
+      "version": "0.1.0",
+      "devDependencies": {
+        "victoria-browser-client": "0.4.0",
+      },
+      "peerDependencies": {
+        "victoria-browser-client": "^0.4.0",
+      },
     },
     "packages/vite-plugin-bake-three": {
       "name": "vite-plugin-bake-three",
@@ -1864,6 +1875,8 @@
     "verkit": ["verkit@0.5.0", "", {}, "sha512-u4J1hr6Y+C/hit34GwL3eIcUf3wngT8TlYUjK7tk0jxydKLAq3sYvifjdTDA6U3KCKRcQCQDGf/srjxfZF3l7g=="],
 
     "victoria-browser-client": ["victoria-browser-client@0.4.0", "", {}, "sha512-9/NV1ByXVGH3YfOpMOrZ2ytC9ForqnT29Z/echNpKORsD9Z6mExCIu5WfdjJ4xCnFQv9VeAGj/YPUEnmW+8XKw=="],
+
+    "victoria-browser-errors": ["victoria-browser-errors@workspace:packages/victoria-browser-errors"],
 
     "vite": ["vite@8.3.5", "", { "dependencies": { "lightningcss": "^1.33.0", "picomatch": "^4.0.7", "postcss": "^8.5.30", "rolldown": "~1.2.14", "tinyglobby": "^0.2.17" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "peerDependencies": { "@types/node": "^20.19.0 || >=22.12.0", "@vitejs/devtools": "^0.7.1 || ^0.8.0", "esbuild": "^0.27.0 || ^0.28.0", "jiti": ">=1.21.0", "less": "^4.0.0", "sass": "^1.70.0", "sass-embedded": "^1.70.0", "stylus": ">=0.54.8", "sugarss": "^5.0.0", "terser": "^5.16.0", "tsx": "^4.8.1", "yaml": "^2.4.2" }, "optionalPeers": ["@types/node", "@vitejs/devtools", "esbuild", "jiti", "less", "sass", "sass-embedded", "stylus", "sugarss", "terser", "tsx", "yaml"], "bin": { "vite": "bin/vite.js" } }, "sha512-z1YpjieJ9g0ebTmQpLBv/oq9E3F9EIlOe+7LahW8SrE3LTiG3udBRUXQOlYXP9b+IC2q2phHeVxj9xGlw34OEQ=="],
 

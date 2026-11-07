@@ -1,0 +1,33 @@
+{
+  "name": "victoria-browser-errors",
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Uncaught error and unhandled rejection logs for victoria-browser-client, without exception messages",
+  "funding": "https://github.com/sponsors/Jaid",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Jaid/slop.gallery.git",
+    "directory": "packages/victoria-browser-errors"
+  },
+  "main": "src/main.ts",
+  "exports": {
+    ".": "./src/main.ts"
+  },
+  "scripts": {
+    "test": "bun test --max-concurrency 1 ./test"
+  },
+  "peerDependencies": {
+    "victoria-browser-client": "^0.4.0"
+  },
+  "devDependencies": {
+    "victoria-browser-client": "0.4.0"
+  },
+  "files": [
+    "src",
+    "readme.md",
+    "license.txt"
+  ],
+  "sideEffects": false,
+  "types": "./src/main.ts"
+}
