@@ -228,6 +228,10 @@ export function handleGalleryKey(event: KeyboardEvent) {
   if (event.code === crosshairToggleKey && s.locked && !s.dragging) {
     crosshair.toggle()
   }
+  if (event.code === 'F9' && isDevelopmentMode) {
+    event.preventDefault()
+    debugger
+  }
   if (event.code === hiddenUiKey && isDevelopmentMode) {
     toggleHiddenUi()
   }
